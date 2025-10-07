@@ -1,0 +1,33 @@
+{
+  "name": "souvera_user_management",
+  "version": "0.1.0",
+  "description": "Moderne Nextcloud Benutzerverwaltung",
+  "private": true,
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
+    "watch": "webpack --mode development --watch"
+  },
+  "dependencies": {
+    "@nextcloud/axios": "^2.4.0",
+    "@nextcloud/l10n": "^2.2.0",
+    "@nextcloud/router": "^2.2.0",
+    "@nextcloud/vue": "^8.0.0",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "@vue/compiler-sfc": "^3.3.4",
+    "babel-loader": "^9.1.2",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "vue-loader": "^17.2.2",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "not dead"
+  ]
+}

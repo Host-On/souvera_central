@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>souvera_user_management</id>
+    <name>Souvera User Management</name>
+    <summary>Moderne Benutzerverwaltung mit Echtzeit-Validierung und Lizenz-Management</summary>
+    <description><![CDATA[
+        Diese Custom Nextcloud App ersetzt die Standard-Benutzerverwaltung durch eine moderne,
+        benutzerfreundliche Lösung mit Echtzeit-Validierung und Lizenz-Management.
+
+        Features:
+        - Übersichtliche Single-Page-Editor UI
+        - Live-Validierung mit Domain-Checks
+        - Lizenz-Tracking in Echtzeit
+        - Proaktive Fehlermeldungen
+        - Responsive Design
+    ]]></description>
+    <version>0.1.0</version>
+    <licence>agpl</licence>
+    <author>Souvera</author>
+    <namespace>SouveraUserManagement</namespace>
+    <category>organization</category>
+    <bugs>https://github.com/yourusername/souvera_user_management/issues</bugs>
+
+    <dependencies>
+        <nextcloud min-version="25" max-version="29"/>
+    </dependencies>
+
+    <navigations>
+        <navigation>
+            <name>User Management</name>
+            <route>souvera_user_management.page.index</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
+</info>
