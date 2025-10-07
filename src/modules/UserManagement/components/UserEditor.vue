@@ -17,15 +17,20 @@
           <label for="username" class="required">
             {{ t('souvera_central', 'Benutzername') }}
           </label>
-          <input
-            id="username"
-            v-model="formData.username"
-            type="text"
-            :disabled="isEditMode"
-            :class="{ 'error': errors.username }"
-            @input="validateUsername"
-            required
-          />
+          <div class="input-with-icon">
+            <input
+              id="username"
+              v-model="formData.username"
+              type="text"
+              :disabled="isEditMode"
+              :class="{ 'error': errors.username, 'success': formData.username && !isEditMode && !errors.username && !validating.username }"
+              @input="debouncedUsernameCheck"
+              @blur="validateUsernameNow"
+              required
+            />
+            <span v-if="validating.username" class="input-icon icon-loading-small"></span>
+            <span v-else-if="formData.username && !isEditMode && !errors.username" class="input-icon icon-checkmark success-icon"></span>
+          </div>
           <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
           <p v-else class="help-text">{{ t('souvera_central', 'Eindeutiger Benutzername, kann später nicht geändert werden') }}</p>
         </div>
@@ -51,23 +56,49 @@
           <label for="email" class="required">
             {{ t('souvera_central', 'E-Mail') }}
           </label>
+
+          <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
+          <div v-if="allowedDomains.length > 0" class="email-input-group">
+            <input
+              id="emailLocalPart"
+              v-model="emailLocalPart"
+              type="text"
+              class="email-local-part"
+              :class="{ 'error': errors.email }"
+              @input="updateFullEmail"
+              placeholder="benutzername"
+              required
+            />
+            <span class="email-separator">@</span>
+            <select
+              v-model="emailDomain"
+              class="email-domain-select"
+              :class="{ 'error': errors.email }"
+              @change="updateFullEmail"
+              required
+            >
+              <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
+              <option v-for="domain in allowedDomains" :key="domain" :value="domain">
+                {{ domain }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Normale Email-Eingabe wenn keine Domains konfiguriert -->
           <input
+            v-else
             id="email"
             v-model="formData.email"
             type="email"
             :class="{ 'error': errors.email }"
             @input="validateEmail"
-            @blur="validateEmailDomain"
             required
           />
+
           <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
-          <p v-else-if="validating.email" class="validating-message">
-            <span class="icon-loading-small"></span>
-            {{ t('souvera_central', 'Validiere Domain...') }}
-          </p>
-          <p v-else-if="formData.email && !errors.email" class="success-message">
+          <p v-else-if="formData.email && !errors.email && allowedDomains.length === 0" class="success-message">
             <span class="icon-checkmark"></span>
-            {{ t('souvera_central', 'E-Mail-Domain ist gültig') }}
+            {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
           </p>
         </div>
 
@@ -91,8 +122,9 @@
         <!-- Gruppen -->
         <div class="form-group">
           <label for="groups">
-            {{ t('souvera_central', 'Gruppen') }}
+            {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
           </label>
+          <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
           <div class="groups-selector">
             <div v-for="group in availableGroups" :key="group.id" class="group-checkbox">
               <input
@@ -106,11 +138,31 @@
           </div>
         </div>
 
+        <!-- Gruppen-Administration -->
+        <div class="form-group">
+          <label for="adminGroups">
+            {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
+          </label>
+          <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
+          <div class="groups-selector">
+            <div v-for="group in availableGroups" :key="group.id" class="group-checkbox">
+              <input
+                :id="'admingroup-' + group.id"
+                v-model="formData.adminGroups"
+                type="checkbox"
+                :value="group.id"
+              />
+              <label :for="'admingroup-' + group.id">{{ group.displayName }}</label>
+            </div>
+          </div>
+        </div>
+
         <!-- Speicherplatz Quota -->
         <div class="form-group">
           <label for="quota">
-            {{ t('souvera_central', 'Speicherplatz') }}
+            {{ t('souvera_central', 'Kontingent') }}
           </label>
+          <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
           <select id="quota" v-model="formData.quota">
             <option value="default">{{ t('souvera_central', 'Standard') }}</option>
             <option value="1 GB">1 GB</option>
@@ -120,6 +172,20 @@
             <option value="100 GB">100 GB</option>
             <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
           </select>
+        </div>
+
+        <!-- Manager -->
+        <div class="form-group">
+          <label for="manager">
+            {{ t('souvera_central', 'Manager') }}
+          </label>
+          <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
+          <input
+            id="manager"
+            v-model="formData.manager"
+            type="text"
+            :placeholder="t('souvera_central', 'Manager-Benutzername')"
+          />
         </div>
 
         <!-- Aktiv/Deaktiviert -->
@@ -141,7 +207,12 @@
           </button>
           <button type="submit" class="primary" :disabled="!isFormValid || saving">
             <span v-if="saving" class="icon-loading-small"></span>
-            {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
+            <template v-if="isEditMode">
+              {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
+            </template>
+            <template v-else>
+              {{ saving ? t('souvera_central', 'Erstellt...') : t('souvera_central', 'Benutzer erstellen') }}
+            </template>
           </button>
         </div>
       </form>
@@ -161,6 +232,10 @@ export default {
     user: {
       type: Object,
       default: null
+    },
+    allowedDomains: {
+      type: Array,
+      default: () => []
     }
   },
 
@@ -174,9 +249,13 @@ export default {
         email: '',
         password: '',
         groups: [],
+        adminGroups: [],
         quota: 'default',
+        manager: '',
         enabled: true
       },
+      emailLocalPart: '',
+      emailDomain: '',
       errors: {
         username: null,
         displayName: null,
@@ -184,10 +263,12 @@ export default {
         password: null
       },
       validating: {
+        username: false,
         email: false
       },
       availableGroups: [],
-      saving: false
+      saving: false,
+      usernameCheckTimeout: null
     }
   },
 
@@ -218,9 +299,23 @@ export default {
         email: this.user.email,
         password: '',
         groups: this.user.groups.map(g => g.id),
+        adminGroups: [],
         quota: this.user.quota.quota,
+        manager: '',
         enabled: this.user.enabled
       }
+
+      // Parse Email für Dropdown
+      if (this.user.email && this.allowedDomains.length > 0) {
+        const parts = this.user.email.split('@')
+        if (parts.length === 2) {
+          this.emailLocalPart = parts[0]
+          this.emailDomain = parts[1]
+        }
+      }
+    } else if (this.allowedDomains.length > 0) {
+      // Bei neuem User erste Domain vorauswählen
+      this.emailDomain = this.allowedDomains[0]
     }
   },
 
@@ -237,6 +332,86 @@ export default {
         console.error('Fehler beim Laden der Gruppen:', error)
         // Fallback
         this.availableGroups = []
+      }
+    },
+
+    updateFullEmail() {
+      if (this.emailLocalPart && this.emailDomain) {
+        this.formData.email = `${this.emailLocalPart}@${this.emailDomain}`
+        this.validateEmail()
+      } else {
+        this.formData.email = ''
+      }
+    },
+
+    debouncedUsernameCheck() {
+      // Clear previous timeout
+      if (this.usernameCheckTimeout) {
+        clearTimeout(this.usernameCheckTimeout)
+      }
+
+      // Einfache Validierung sofort
+      this.errors.username = null
+      if (!this.formData.username) {
+        this.errors.username = this.t('souvera_central', 'Benutzername ist erforderlich')
+        return
+      }
+
+      if (this.formData.username.length < 3) {
+        this.errors.username = this.t('souvera_central', 'Benutzername muss mindestens 3 Zeichen lang sein')
+        return
+      }
+
+      // API-Check mit delay
+      this.usernameCheckTimeout = setTimeout(() => {
+        this.validateUsernameNow()
+      }, 500)
+    },
+
+    async validateUsernameNow() {
+      if (this.isEditMode) {
+        return
+      }
+
+      if (!this.formData.username || this.formData.username.length < 3) {
+        this.validating.username = false
+        return
+      }
+
+      this.validating.username = true
+      this.errors.username = null
+
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.formData.username })
+        console.log('Checking username availability:', this.formData.username, 'URL:', url)
+        const response = await axios.get(url)
+        console.log('Username check response:', response.data)
+
+        // OCS API: HTTP status ist immer 200, aber meta.statuscode zeigt echten Status
+        const ocsStatusCode = response.data?.ocs?.meta?.statuscode
+        console.log('OCS Status Code:', ocsStatusCode)
+
+        if (ocsStatusCode === 100) {
+          // User gefunden (statuscode 100 = OK) = Username bereits vergeben
+          console.log('Username taken!')
+          this.errors.username = this.t('souvera_central', 'Benutzername bereits vergeben')
+        } else if (ocsStatusCode === 404) {
+          // User nicht gefunden = Username verfügbar ✓
+          console.log('Username available!')
+          this.errors.username = null
+        }
+      } catch (error) {
+        console.log('Username check error:', error)
+        // Bei echtem HTTP-Fehler (Netzwerk, Server down etc.)
+        if (error.response?.status === 404) {
+          // Username verfügbar
+          console.log('Username available (404)!')
+          this.errors.username = null
+        } else {
+          console.error('Fehler bei Username-Prüfung:', error)
+        }
+      } finally {
+        this.validating.username = false
       }
     },
 
@@ -492,11 +667,15 @@ export default {
 .form-group input[type="password"],
 .form-group select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  height: 46px;
+  box-sizing: border-box;
   transition: border-color 0.2s;
+  background: var(--color-main-background);
 }
 
 .form-group input:focus,
@@ -509,9 +688,79 @@ export default {
   border-color: var(--color-error);
 }
 
+.form-group input.success {
+  border-color: var(--color-success);
+}
+
 .form-group input:disabled {
   background: var(--color-background-dark);
   cursor: not-allowed;
+}
+
+/* Input with Icon (for validation feedback) */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon input {
+  flex: 1;
+  padding-right: 40px;
+}
+
+.input-icon {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+}
+
+.input-icon.success-icon {
+  color: var(--color-success);
+  opacity: 1;
+}
+
+/* Email Input Group */
+.email-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.email-local-part {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  box-sizing: border-box;
+}
+
+.email-separator {
+  font-weight: 600;
+  color: var(--color-text-lighter);
+}
+
+.email-domain-select {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+  font-size: 15px;
+  line-height: 1.5;
+  height: 46px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.email-domain-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.email-domain-select.error {
+  border-color: var(--color-error);
 }
 
 /* Messages */

@@ -4,6 +4,7 @@
     <UserEditor
       v-if="showEditor"
       :user="selectedUser"
+      :allowed-domains="allowedDomains"
       @close="closeEditor"
       @saved="handleUserSaved"
     />
@@ -108,6 +109,7 @@ export default {
       users: [],
       loading: true,
       licenseTotal: 10,
+      allowedDomains: [],
       selectedUser: null,
       showEditor: false
     }
@@ -128,6 +130,7 @@ export default {
         const config = response.data.ocs?.data || response.data.data || response.data
 
         this.licenseTotal = config.max_licenses || 10
+        this.allowedDomains = config.allowed_domains || []
 
         console.log('Loaded config:', config)
       } catch (error) {
