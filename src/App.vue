@@ -20,7 +20,7 @@
             <span class="license-info">{{ users.length }} von {{ licenseTotal }} Lizenzen genutzt</span>
           </div>
         </div>
-        <button class="primary" @click="createNewUser">
+        <button class="primary" @click="createNewUser" :disabled="isLicenseLimitReached" :title="isLicenseLimitReached ? t('souvera_central', 'Lizenzlimit erreicht') : ''">
           <span class="icon-add"></span>
           {{ t('souvera_central', 'Neuer Benutzer') }}
         </button>
@@ -104,6 +104,12 @@ export default {
     UserEditor
   },
 
+  computed: {
+    isLicenseLimitReached() {
+      return this.users.length >= this.licenseTotal
+    }
+  },
+
   data() {
     return {
       users: [],
@@ -178,6 +184,10 @@ export default {
     },
 
     createNewUser() {
+      if (this.isLicenseLimitReached) {
+        alert(this.t('souvera_central', 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'))
+        return
+      }
       this.selectedUser = null
       this.showEditor = true
     },

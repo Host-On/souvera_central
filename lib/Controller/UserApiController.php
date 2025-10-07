@@ -160,8 +160,8 @@ class UserApiController extends OCSController {
             if ($currentUserCount >= $maxLicenses) {
                 error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ', Max: ' . $maxLicenses);
                 return new DataResponse(
-                    ['error' => 'Lizenzlimit erreicht. Maximal ' . $maxLicenses . ' Benutzer erlaubt.'],
-                    Http::STATUS_FORBIDDEN
+                    ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'],
+                    Http::STATUS_CONFLICT
                 );
             }
 
