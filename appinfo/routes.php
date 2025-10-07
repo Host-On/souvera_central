@@ -20,6 +20,9 @@ return [
         // Groups API-Routen
         ['name' => 'user_api#listGroups', 'url' => '/api/groups', 'verb' => 'GET'],
 
+        // Config API-Route
+        ['name' => 'user_api#getConfig', 'url' => '/api/config', 'verb' => 'GET'],
+
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],
     ]

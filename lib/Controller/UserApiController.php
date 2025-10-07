@@ -15,12 +15,14 @@ use OCP\IUserManager;
 use OCP\IGroupManager;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
+use OCA\SouveraUserManagement\Service\ConfigService;
 
 class UserApiController extends OCSController {
     private $userManager;
     private $groupManager;
     private $config;
     private $logger;
+    private $configService;
 
     public function __construct(
         string $appName,
@@ -28,13 +30,15 @@ class UserApiController extends OCSController {
         IUserManager $userManager,
         IGroupManager $groupManager,
         IConfig $config,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ConfigService $configService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
         $this->groupManager = $groupManager;
         $this->config = $config;
         $this->logger = $logger;
+        $this->configService = $configService;
     }
 
     /**
@@ -145,6 +149,28 @@ class UserApiController extends OCSController {
                         'email_empty' => empty($email),
                         'password_empty' => empty($password)
                     ]],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Lizenz-Limit prüfen
+            $maxLicenses = $this->configService->getMaxLicenses();
+            $currentUserCount = count($this->userManager->search(''));
+
+            if ($currentUserCount >= $maxLicenses) {
+                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ', Max: ' . $maxLicenses);
+                return new DataResponse(
+                    ['error' => 'Lizenzlimit erreicht. Maximal ' . $maxLicenses . ' Benutzer erlaubt.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // E-Mail-Domain validieren
+            if (!$this->configService->isEmailDomainAllowed($email)) {
+                $allowedDomains = $this->configService->getAllowedDomains();
+                error_log('FEHLER: E-Mail-Domain nicht erlaubt: ' . $email . ' - Erlaubte Domains: ' . implode(', ', $allowedDomains));
+                return new DataResponse(
+                    ['error' => 'E-Mail-Domain nicht erlaubt. Erlaubte Domains: ' . implode(', ', $allowedDomains)],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -356,6 +382,27 @@ class UserApiController extends OCSController {
     }
 
     /**
+     * Config-Informationen abrufen
+     *
+     * @NoAdminRequired
+     */
+    public function getConfig(): DataResponse {
+        try {
+            return new DataResponse([
+                'max_licenses' => $this->configService->getMaxLicenses(),
+                'allowed_domains' => $this->configService->getAllowedDomains(),
+                'current_user_count' => count($this->userManager->search('')),
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Laden der Config: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
      * Debug-Endpoint für Troubleshooting
      *
      * @NoAdminRequired
@@ -373,6 +420,10 @@ class UserApiController extends OCSController {
             'user_manager_exists' => $this->userManager !== null,
             'group_manager_exists' => $this->groupManager !== null,
             'logger_exists' => $this->logger !== null,
+            'config' => [
+                'max_licenses' => $this->configService->getMaxLicenses(),
+                'allowed_domains' => $this->configService->getAllowedDomains(),
+            ],
         ];
 
         error_log('Debug info: ' . json_encode($debugInfo));

@@ -115,10 +115,25 @@ export default {
 
   mounted() {
     this.loadUsers()
+    this.loadConfig()
   },
 
   methods: {
     t,
+
+    async loadConfig() {
+      try {
+        const url = generateUrl('/apps/souvera_user_management/api/config')
+        const response = await axios.get(url)
+        const config = response.data.ocs?.data || response.data.data || response.data
+
+        this.licenseTotal = config.max_licenses || 10
+
+        console.log('Loaded config:', config)
+      } catch (error) {
+        console.error('Fehler beim Laden der Config:', error)
+      }
+    },
 
     async loadUsers() {
       try {
