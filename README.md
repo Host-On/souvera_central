@@ -1,6 +1,11 @@
-# Souvera User Management
+# Souvera Central
 
-Nextcloud App für erweiterte Benutzerverwaltung mit Lizenzlimit und Domain-Whitelist.
+**Die modulare Management-Zentrale für Nextcloud.**
+
+Souvera Central ist eine erweiterbare Plattform für verschiedene Management-Module:
+- **User Management**: Benutzerverwaltung mit Lizenz-Limits
+- **Gruppen Management**: (coming soon)
+- **Security & Audit**: (coming soon)
 
 ## Entwicklung
 
@@ -32,15 +37,15 @@ $CONFIG = array(
    *
    * Maximale Anzahl an Benutzern, die erstellt werden dürfen
    */
-  'souvera_user_management.max_licenses' => 10,
+  'souvera_central.max_licenses' => 10,
 
   /**
-   * Souvera User Management - Erlaubte E-Mail-Domains
+   * Souvera Central - Erlaubte E-Mail-Domains
    *
    * Array von erlaubten E-Mail-Domains für neue Benutzer
    * Leeres Array = alle Domains erlaubt
    */
-  'souvera_user_management.allowed_domains' => [
+  'souvera_central.allowed_domains' => [
     'example.com',
     'test.de',
     'company.org',
@@ -52,34 +57,34 @@ $CONFIG = array(
 
 | Parameter | Typ | Beschreibung | Standard |
 |-----------|-----|--------------|----------|
-| `souvera_user_management.max_licenses` | `int` | Maximale Anzahl erlaubter Benutzer | `10` |
-| `souvera_user_management.allowed_domains` | `array` | Whitelist erlaubter E-Mail-Domains. Leeres Array = alle Domains erlaubt | `[]` |
+| `souvera_central.max_licenses` | `int` | Maximale Anzahl erlaubter Benutzer | `10` |
+| `souvera_central.allowed_domains` | `array` | Whitelist erlaubter E-Mail-Domains. Leeres Array = alle Domains erlaubt | `[]` |
 
 ### Beispiel-Konfigurationen
 
 **Produktionsumgebung (limitiert):**
 ```php
-'souvera_user_management.max_licenses' => 50,
-'souvera_user_management.allowed_domains' => ['company.com', 'subsidiary.com'],
+'souvera_central.max_licenses' => 50,
+'souvera_central.allowed_domains' => ['company.com', 'subsidiary.com'],
 ```
 
 **Entwicklungsumgebung (unlimitiert):**
 ```php
-'souvera_user_management.max_licenses' => 999,
-'souvera_user_management.allowed_domains' => [], // Alle Domains erlaubt
+'souvera_central.max_licenses' => 999,
+'souvera_central.allowed_domains' => [], // Alle Domains erlaubt
 ```
 
 **Streng limitiert:**
 ```php
-'souvera_user_management.max_licenses' => 5,
-'souvera_user_management.allowed_domains' => ['example.com'],
+'souvera_central.max_licenses' => 5,
+'souvera_central.allowed_domains' => ['example.com'],
 ```
 
 ### Konfiguration abrufen
 
 **Via API:**
 ```bash
-curl http://localhost:8080/apps/souvera_user_management/api/config
+curl http://localhost:8080/apps/souvera_central/api/config
 ```
 
 **Response:**
@@ -97,7 +102,7 @@ curl http://localhost:8080/apps/souvera_user_management/api/config
 
 **Im Frontend:**
 ```javascript
-const response = await axios.get(generateUrl('/apps/souvera_user_management/api/config'))
+const response = await axios.get(generateUrl('/apps/souvera_central/api/config'))
 const config = response.data.ocs.data
 
 console.log('Max Lizenzen:', config.max_licenses)

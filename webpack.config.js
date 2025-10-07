@@ -1,5 +1,5 @@
 /**
- * Webpack Configuration für Souvera User Management
+ * Webpack Configuration für Souvera Central
  */
 
 const path = require('path')
@@ -11,8 +11,8 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'js'),
-    filename: 'souvera_user_management-[name].js',
-    chunkFilename: 'souvera_user_management-[name].js'
+    filename: 'souvera_central-[name].js',
+    chunkFilename: 'souvera_central-[name].js'
   },
   module: {
     rules: [

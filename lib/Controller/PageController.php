@@ -5,7 +5,7 @@
  * Verwaltet das Rendern der Haupt-Seite
  */
 
-namespace OCA\SouveraUserManagement\Controller;
+namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -28,7 +28,7 @@ class PageController extends Controller {
      */
     public function index(): TemplateResponse {
         // Lade Vue.js JavaScript
-        Util::addScript($this->appName, 'souvera_user_management-main');
+        Util::addScript($this->appName, 'souvera_central-main');
 
         // Lade CSS
         Util::addStyle($this->appName, 'main');

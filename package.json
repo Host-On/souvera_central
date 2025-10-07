@@ -1,7 +1,7 @@
 {
-  "name": "souvera_user_management",
-  "version": "0.1.0",
-  "description": "Moderne Nextcloud Benutzerverwaltung",
+  "name": "souvera_central",
+  "version": "0.2.0",
+  "description": "Souvera Central - Modulare Management-Zentrale für Nextcloud",
   "private": true,
   "scripts": {
     "build": "webpack --mode production",

@@ -13,7 +13,7 @@
       <!-- Header mit Lizenz-Info -->
       <div class="page-header">
         <div class="header-content">
-          <h2>{{ t('souvera_user_management', 'Benutzer') }}</h2>
+          <h2>{{ t('souvera_central', 'Benutzer') }}</h2>
           <div class="license-status">
             <span class="icon-quota"></span>
             <span class="license-info">{{ users.length }} von {{ licenseTotal }} Lizenzen genutzt</span>
@@ -21,14 +21,14 @@
         </div>
         <button class="primary" @click="createNewUser">
           <span class="icon-add"></span>
-          {{ t('souvera_user_management', 'Neuer Benutzer') }}
+          {{ t('souvera_central', 'Neuer Benutzer') }}
         </button>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <div class="icon-loading"></div>
-        <p>{{ t('souvera_user_management', 'Lade Benutzer...') }}</p>
+        <p>{{ t('souvera_central', 'Lade Benutzer...') }}</p>
       </div>
 
       <!-- User Table -->
@@ -36,13 +36,13 @@
         <table class="users-table">
           <thead>
             <tr>
-              <th class="user-column">{{ t('souvera_user_management', 'Benutzername') }}</th>
-              <th class="displayname-column">{{ t('souvera_user_management', 'Anzeigename') }}</th>
-              <th class="email-column">{{ t('souvera_user_management', 'E-Mail') }}</th>
-              <th class="groups-column">{{ t('souvera_user_management', 'Gruppen') }}</th>
-              <th class="quota-column">{{ t('souvera_user_management', 'Speicherplatz') }}</th>
-              <th class="status-column">{{ t('souvera_user_management', 'Status') }}</th>
-              <th class="actions-column">{{ t('souvera_user_management', 'Aktionen') }}</th>
+              <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
+              <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
+              <th class="email-column">{{ t('souvera_central', 'E-Mail') }}</th>
+              <th class="groups-column">{{ t('souvera_central', 'Gruppen') }}</th>
+              <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
+              <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
+              <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -66,13 +66,13 @@
               <td class="quota-column">{{ user.quota.quota }}</td>
               <td class="status-column">
                 <span :class="['status-badge', user.enabled ? 'status-enabled' : 'status-disabled']">
-                  {{ user.enabled ? t('souvera_user_management', 'Aktiv') : t('souvera_user_management', 'Deaktiviert') }}
+                  {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Deaktiviert') }}
                 </span>
               </td>
               <td class="actions-column">
                 <div class="user-actions">
-                  <button class="icon-rename" :title="t('souvera_user_management', 'Bearbeiten')" @click.stop="editUser(user)"></button>
-                  <button class="icon-delete" :title="t('souvera_user_management', 'Löschen')" @click.stop="deleteUser(user)"></button>
+                  <button class="icon-rename" :title="t('souvera_central', 'Bearbeiten')" @click.stop="editUser(user)"></button>
+                  <button class="icon-delete" :title="t('souvera_central', 'Löschen')" @click.stop="deleteUser(user)"></button>
                 </div>
               </td>
             </tr>
@@ -83,8 +83,8 @@
       <!-- Empty State -->
       <div v-else class="empty-state">
         <div class="icon-user icon-large"></div>
-        <h3>{{ t('souvera_user_management', 'Noch keine Benutzer') }}</h3>
-        <p>{{ t('souvera_user_management', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
+        <h3>{{ t('souvera_central', 'Noch keine Benutzer') }}</h3>
+        <p>{{ t('souvera_central', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import UserEditor from './components/UserEditor.vue'
+import UserEditor from './modules/UserManagement/components/UserEditor.vue'
 
 export default {
   name: 'App',
@@ -123,7 +123,7 @@ export default {
 
     async loadConfig() {
       try {
-        const url = generateUrl('/apps/souvera_user_management/api/config')
+        const url = generateUrl('/apps/souvera_central/api/config')
         const response = await axios.get(url)
         const config = response.data.ocs?.data || response.data.data || response.data
 
@@ -138,7 +138,7 @@ export default {
     async loadUsers() {
       try {
         this.loading = true
-        const url = generateUrl('/apps/souvera_user_management/api/users')
+        const url = generateUrl('/apps/souvera_central/api/users')
         console.log('Lade Benutzer von:', url)
         const response = await axios.get(url)
         console.log('API Response:', response.data)
@@ -196,19 +196,19 @@ export default {
     },
 
     async deleteUser(user) {
-      if (!confirm(this.t('souvera_user_management', 'Möchten Sie den Benutzer "{user}" wirklich löschen?', { user: user.displayName }))) {
+      if (!confirm(this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich löschen?', { user: user.displayName }))) {
         return
       }
 
       try {
-        const url = generateUrl('/apps/souvera_user_management/api/users/{id}', { id: user.id })
+        const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: user.id })
         await axios.delete(url)
         console.log('User deleted:', user.id)
         await this.loadUsers()
       } catch (error) {
         console.error('Fehler beim Löschen:', error)
 
-        let errorMessage = this.t('souvera_user_management', 'Fehler beim Löschen')
+        let errorMessage = this.t('souvera_central', 'Fehler beim Löschen')
         if (error.response?.data?.ocs?.data?.error) {
           errorMessage = error.response.data.ocs.data.error
         } else if (error.response?.data?.error) {

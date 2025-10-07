@@ -1,11 +1,11 @@
 <?php
 /**
- * Souvera User Management - User API Controller
+ * Souvera Central - User Management Module - API Controller
  *
  * API-Endpunkte für Benutzerverwaltung
  */
 
-namespace OCA\SouveraUserManagement\Controller;
+namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -15,7 +15,7 @@ use OCP\IUserManager;
 use OCP\IGroupManager;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
-use OCA\SouveraUserManagement\Service\ConfigService;
+use OCA\SouveraCentral\Service\ConfigService;
 
 class UserApiController extends OCSController {
     private $userManager;

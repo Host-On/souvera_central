@@ -4,9 +4,9 @@
     <div class="editor-header">
       <button class="back-button" @click="$emit('close')">
         <span class="icon-arrow-left"></span>
-        {{ t('souvera_user_management', 'Zurück') }}
+        {{ t('souvera_central', 'Zurück') }}
       </button>
-      <h2>{{ isEditMode ? t('souvera_user_management', 'Benutzer bearbeiten') : t('souvera_user_management', 'Neuer Benutzer') }}</h2>
+      <h2>{{ isEditMode ? t('souvera_central', 'Benutzer bearbeiten') : t('souvera_central', 'Neuer Benutzer') }}</h2>
     </div>
 
     <!-- Form -->
@@ -15,7 +15,7 @@
         <!-- Benutzername -->
         <div class="form-group">
           <label for="username" class="required">
-            {{ t('souvera_user_management', 'Benutzername') }}
+            {{ t('souvera_central', 'Benutzername') }}
           </label>
           <input
             id="username"
@@ -27,13 +27,13 @@
             required
           />
           <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
-          <p v-else class="help-text">{{ t('souvera_user_management', 'Eindeutiger Benutzername, kann später nicht geändert werden') }}</p>
+          <p v-else class="help-text">{{ t('souvera_central', 'Eindeutiger Benutzername, kann später nicht geändert werden') }}</p>
         </div>
 
         <!-- Anzeigename -->
         <div class="form-group">
           <label for="displayName" class="required">
-            {{ t('souvera_user_management', 'Anzeigename') }}
+            {{ t('souvera_central', 'Anzeigename') }}
           </label>
           <input
             id="displayName"
@@ -49,7 +49,7 @@
         <!-- E-Mail -->
         <div class="form-group">
           <label for="email" class="required">
-            {{ t('souvera_user_management', 'E-Mail') }}
+            {{ t('souvera_central', 'E-Mail') }}
           </label>
           <input
             id="email"
@@ -63,18 +63,18 @@
           <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
           <p v-else-if="validating.email" class="validating-message">
             <span class="icon-loading-small"></span>
-            {{ t('souvera_user_management', 'Validiere Domain...') }}
+            {{ t('souvera_central', 'Validiere Domain...') }}
           </p>
           <p v-else-if="formData.email && !errors.email" class="success-message">
             <span class="icon-checkmark"></span>
-            {{ t('souvera_user_management', 'E-Mail-Domain ist gültig') }}
+            {{ t('souvera_central', 'E-Mail-Domain ist gültig') }}
           </p>
         </div>
 
         <!-- Passwort (nur bei neuem User) -->
         <div v-if="!isEditMode" class="form-group">
           <label for="password" class="required">
-            {{ t('souvera_user_management', 'Passwort') }}
+            {{ t('souvera_central', 'Passwort') }}
           </label>
           <input
             id="password"
@@ -85,13 +85,13 @@
             required
           />
           <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
-          <p v-else class="help-text">{{ t('souvera_user_management', 'Mindestens 10 Zeichen') }}</p>
+          <p v-else class="help-text">{{ t('souvera_central', 'Mindestens 10 Zeichen') }}</p>
         </div>
 
         <!-- Gruppen -->
         <div class="form-group">
           <label for="groups">
-            {{ t('souvera_user_management', 'Gruppen') }}
+            {{ t('souvera_central', 'Gruppen') }}
           </label>
           <div class="groups-selector">
             <div v-for="group in availableGroups" :key="group.id" class="group-checkbox">
@@ -109,16 +109,16 @@
         <!-- Speicherplatz Quota -->
         <div class="form-group">
           <label for="quota">
-            {{ t('souvera_user_management', 'Speicherplatz') }}
+            {{ t('souvera_central', 'Speicherplatz') }}
           </label>
           <select id="quota" v-model="formData.quota">
-            <option value="default">{{ t('souvera_user_management', 'Standard') }}</option>
+            <option value="default">{{ t('souvera_central', 'Standard') }}</option>
             <option value="1 GB">1 GB</option>
             <option value="5 GB">5 GB</option>
             <option value="10 GB">10 GB</option>
             <option value="50 GB">50 GB</option>
             <option value="100 GB">100 GB</option>
-            <option value="none">{{ t('souvera_user_management', 'Unbegrenzt') }}</option>
+            <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
           </select>
         </div>
 
@@ -130,18 +130,18 @@
             type="checkbox"
           />
           <label for="enabled">
-            {{ t('souvera_user_management', 'Benutzer aktiviert') }}
+            {{ t('souvera_central', 'Benutzer aktiviert') }}
           </label>
         </div>
 
         <!-- Form Actions -->
         <div class="form-actions">
           <button type="button" class="secondary" @click="$emit('close')">
-            {{ t('souvera_user_management', 'Abbrechen') }}
+            {{ t('souvera_central', 'Abbrechen') }}
           </button>
           <button type="submit" class="primary" :disabled="!isFormValid || saving">
             <span v-if="saving" class="icon-loading-small"></span>
-            {{ saving ? t('souvera_user_management', 'Speichert...') : t('souvera_user_management', 'Speichern') }}
+            {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
           </button>
         </div>
       </form>
@@ -229,7 +229,7 @@ export default {
 
     async loadGroups() {
       try {
-        const url = generateUrl('/apps/souvera_user_management/api/groups')
+        const url = generateUrl('/apps/souvera_central/api/groups')
         const response = await axios.get(url)
         const groups = response.data.ocs?.data?.groups || response.data.data?.groups || response.data.groups || []
         this.availableGroups = groups
@@ -244,17 +244,17 @@ export default {
       this.errors.username = null
 
       if (!this.formData.username) {
-        this.errors.username = this.t('souvera_user_management', 'Benutzername ist erforderlich')
+        this.errors.username = this.t('souvera_central', 'Benutzername ist erforderlich')
         return
       }
 
       if (this.formData.username.length < 3) {
-        this.errors.username = this.t('souvera_user_management', 'Benutzername muss mindestens 3 Zeichen lang sein')
+        this.errors.username = this.t('souvera_central', 'Benutzername muss mindestens 3 Zeichen lang sein')
         return
       }
 
       if (!/^[a-zA-Z0-9_-]+$/.test(this.formData.username)) {
-        this.errors.username = this.t('souvera_user_management', 'Nur Buchstaben, Zahlen, _ und - erlaubt')
+        this.errors.username = this.t('souvera_central', 'Nur Buchstaben, Zahlen, _ und - erlaubt')
       }
     },
 
@@ -262,7 +262,7 @@ export default {
       this.errors.displayName = null
 
       if (!this.formData.displayName) {
-        this.errors.displayName = this.t('souvera_user_management', 'Anzeigename ist erforderlich')
+        this.errors.displayName = this.t('souvera_central', 'Anzeigename ist erforderlich')
       }
     },
 
@@ -270,13 +270,13 @@ export default {
       this.errors.email = null
 
       if (!this.formData.email) {
-        this.errors.email = this.t('souvera_user_management', 'E-Mail ist erforderlich')
+        this.errors.email = this.t('souvera_central', 'E-Mail ist erforderlich')
         return
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(this.formData.email)) {
-        this.errors.email = this.t('souvera_user_management', 'Ungültige E-Mail-Adresse')
+        this.errors.email = this.t('souvera_central', 'Ungültige E-Mail-Adresse')
       }
     },
 
@@ -297,7 +297,7 @@ export default {
 
         // TODO: Gegen Nextcloud Config oder externe API validieren
       } catch (error) {
-        this.errors.email = this.t('souvera_user_management', 'Domain-Validierung fehlgeschlagen')
+        this.errors.email = this.t('souvera_central', 'Domain-Validierung fehlgeschlagen')
       } finally {
         this.validating.email = false
       }
@@ -307,12 +307,12 @@ export default {
       this.errors.password = null
 
       if (!this.formData.password && !this.isEditMode) {
-        this.errors.password = this.t('souvera_user_management', 'Passwort ist erforderlich')
+        this.errors.password = this.t('souvera_central', 'Passwort ist erforderlich')
         return
       }
 
       if (this.formData.password && this.formData.password.length < 10) {
-        this.errors.password = this.t('souvera_user_management', 'Passwort muss mindestens 10 Zeichen lang sein')
+        this.errors.password = this.t('souvera_central', 'Passwort muss mindestens 10 Zeichen lang sein')
       }
     },
 
@@ -333,7 +333,7 @@ export default {
       try {
         if (this.isEditMode) {
           // Update existing user
-          const url = generateUrl('/apps/souvera_user_management/api/users/{id}', { id: this.formData.username })
+          const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.formData.username })
 
           console.log('=== UPDATE USER REQUEST ===')
           console.log('URL:', url)
@@ -358,7 +358,7 @@ export default {
           console.log('Data:', response.data)
         } else {
           // Create new user
-          const url = generateUrl('/apps/souvera_user_management/api/users')
+          const url = generateUrl('/apps/souvera_central/api/users')
           const payload = {
             username: this.formData.username,
             displayName: this.formData.displayName,
@@ -394,7 +394,7 @@ export default {
         console.error('Error response headers:', error.response?.headers)
 
         // Zeige Fehlermeldung
-        let errorMessage = this.t('souvera_user_management', 'Fehler beim Speichern')
+        let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
         let debugInfo = ''
 
         if (error.response?.data?.ocs?.data?.error) {

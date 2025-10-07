@@ -5,7 +5,7 @@
  * Liest Read-Only Konfiguration aus config.php (System Config)
  */
 
-namespace OCA\SouveraUserManagement\Service;
+namespace OCA\SouveraCentral\Service;
 
 use OCP\IConfig;
 
@@ -22,7 +22,7 @@ class ConfigService {
      * @return int
      */
     public function getMaxLicenses(): int {
-        return (int) $this->config->getSystemValue('souvera_user_management.max_licenses', 10);
+        return (int) $this->config->getSystemValue('souvera_central.max_licenses', 10);
     }
 
     /**
@@ -31,7 +31,7 @@ class ConfigService {
      * @return array
      */
     public function getAllowedDomains(): array {
-        $domains = $this->config->getSystemValue('souvera_user_management.allowed_domains', []);
+        $domains = $this->config->getSystemValue('souvera_central.allowed_domains', []);
 
         // Falls als String kommasepariert in config.php
         if (is_string($domains)) {
@@ -72,7 +72,7 @@ class ConfigService {
      * @return string|null
      */
     public function getLicenseKey(): ?string {
-        return $this->config->getSystemValue('souvera_user_management.license_key', null);
+        return $this->config->getSystemValue('souvera_central.license_key', null);
     }
 
     /**
@@ -81,6 +81,6 @@ class ConfigService {
      * @return string|null
      */
     public function getDomainValidationApiUrl(): ?string {
-        return $this->config->getSystemValue('souvera_user_management.domain_validation_api', null);
+        return $this->config->getSystemValue('souvera_central.domain_validation_api', null);
     }
 }

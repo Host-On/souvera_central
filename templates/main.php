@@ -5,8 +5,8 @@
  * Basis-HTML-Struktur für die Vue.js App
  */
 
-script('souvera_user_management', 'souvera_user_management-main');
-style('souvera_user_management', 'main');
+script('souvera_central', 'souvera_central-main');
+style('souvera_central', 'main');
 ?>
 
 <div id="app-souvera-user-management">
