@@ -27,7 +27,7 @@
     <bugs>https://github.com/souvera/souvera_central/issues</bugs>
 
     <dependencies>
-        <nextcloud min-version="25" max-version="29"/>
+        <nextcloud min-version="25" max-version="30"/>
     </dependencies>
 
     <navigations>
