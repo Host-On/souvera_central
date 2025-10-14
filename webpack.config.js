@@ -14,6 +14,8 @@ module.exports = {
     filename: 'souvera_central-[name].js',
     chunkFilename: 'souvera_central-[name].js'
   },
+  // Source Maps ohne eval() für Nextcloud CSP-Kompatibilität
+  devtool: 'source-map',
   module: {
     rules: [
       {
