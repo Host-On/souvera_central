@@ -42,40 +42,70 @@ class UserApiController extends OCSController {
     }
 
     /**
-     * Liste aller Benutzer abrufen
+     * Liste aller Benutzer abrufen mit Suche und Pagination
      *
      * @NoAdminRequired
+     * @param string $search Suchbegriff für Username, Displayname oder E-Mail
+     * @param int $limit Anzahl der Ergebnisse pro Seite (Standard: 20)
+     * @param int $offset Start-Offset für Pagination (Standard: 0)
      */
-    public function list(): DataResponse {
-        $this->logger->info('UserApiController::list() aufgerufen');
+    public function list(string $search = '', int $limit = 20, int $offset = 0): DataResponse {
+        $this->logger->info('UserApiController::list() aufgerufen - search: "' . $search . '", limit: ' . $limit . ', offset: ' . $offset);
 
         try {
-            $users = [];
-            $this->logger->info('Suche nach Benutzern...');
-            $allUsers = $this->userManager->search('');
-            $this->logger->info('Gefundene Benutzer: ' . count($allUsers));
+            // Alle Benutzer durchsuchen (Nextcloud UserManager hat keine native Pagination)
+            $searchTerm = trim($search);
+            $allUsers = $this->userManager->search($searchTerm);
+            $this->logger->info('Gefundene Benutzer (vor Filter): ' . count($allUsers));
 
+            $allUsersData = [];
             foreach ($allUsers as $user) {
                 $userId = $user->getUID();
-                $this->logger->debug('Verarbeite Benutzer: ' . $userId);
+                $displayName = $user->getDisplayName();
+                $email = $user->getEMailAddress() ?? '';
+
+                // Zusätzlicher Filter: Suche in Username, Displayname und E-Mail
+                if (!empty($searchTerm)) {
+                    $searchLower = mb_strtolower($searchTerm);
+                    $userIdLower = mb_strtolower($userId);
+                    $displayNameLower = mb_strtolower($displayName);
+                    $emailLower = mb_strtolower($email);
+
+                    // Überspringe User, die nicht matchen
+                    if (
+                        strpos($userIdLower, $searchLower) === false &&
+                        strpos($displayNameLower, $searchLower) === false &&
+                        strpos($emailLower, $searchLower) === false
+                    ) {
+                        continue;
+                    }
+                }
 
                 $userData = [
                     'id' => $userId,
-                    'displayName' => $user->getDisplayName(),
-                    'email' => $user->getEMailAddress() ?? '',
+                    'displayName' => $displayName,
+                    'email' => $email,
                     'enabled' => $user->isEnabled(),
                     'lastLogin' => $user->getLastLogin(),
                     'quota' => $this->getUserQuota($userId),
                     'groups' => $this->getUserGroups($userId),
                 ];
-                $users[] = $userData;
+                $allUsersData[] = $userData;
             }
 
-            $this->logger->info('Rückgabe von ' . count($users) . ' Benutzern');
+            $totalCount = count($allUsersData);
+            $this->logger->info('Gefundene Benutzer (nach Filter): ' . $totalCount);
+
+            // Pagination anwenden
+            $paginatedUsers = array_slice($allUsersData, $offset, $limit);
+            $this->logger->info('Rückgabe von ' . count($paginatedUsers) . ' Benutzern (Seite)');
 
             return new DataResponse([
-                'users' => $users,
-                'total' => count($users)
+                'users' => $paginatedUsers,
+                'total' => $totalCount,
+                'limit' => $limit,
+                'offset' => $offset,
+                'hasMore' => ($offset + $limit) < $totalCount
             ]);
         } catch (\Exception $e) {
             $this->logger->error('Fehler in UserApiController::list(): ' . $e->getMessage(), [

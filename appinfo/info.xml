@@ -32,9 +32,13 @@
 
     <navigations>
         <navigation>
-            <name>Souvera Central</name>
+            <name>Central</name>
             <route>souvera_central.page.index</route>
             <icon>app.svg</icon>
         </navigation>
     </navigations>
+
+    <commands>
+        <command>OCA\SouveraCentral\Command\SeedTestUsers</command>
+    </commands>
 </info>

@@ -24,6 +24,7 @@
       <!-- User Management -->
       <UserManagement
         v-else-if="currentRoute === 'users'"
+        :key="routeKey"
         :allowed-domains="allowedDomains"
         :license-total="licenseTotal"
         @users-loaded="updateUserCount"
@@ -69,6 +70,7 @@ export default {
   data() {
     return {
       currentRoute: 'dashboard',
+      currentPath: '', // Vollständiger Pfad für routeKey
       userCount: 0,
       activeUserCount: 0,
       groupCount: 0,
@@ -77,16 +79,74 @@ export default {
     }
   },
 
+  computed: {
+    routeKey() {
+      // Key basiert auf vollständigem Pfad, nicht nur Route
+      // So wird Component auch bei /users -> /users/new neu gemountet
+      return this.currentPath
+    }
+  },
+
+  watch: {
+    currentRoute() {
+      // Update currentPath wenn Route sich ändert
+      this.updateCurrentPath()
+    }
+  },
+
   mounted() {
     this.loadConfig()
     this.loadStats()
+    this.initializeRouting()
+  },
+
+  beforeUnmount() {
+    // Cleanup event listener
+    window.removeEventListener('popstate', this.handlePopState)
   },
 
   methods: {
     t,
 
+    initializeRouting() {
+      // Lese initialRoute aus data-Attribut vom Backend
+      const appElement = document.getElementById('app-souvera-user-management')
+      const initialRoute = appElement?.getAttribute('data-initial-route') || 'dashboard'
+
+      this.currentRoute = initialRoute
+      this.updateCurrentPath()
+
+      // Listen for browser back/forward
+      window.addEventListener('popstate', this.handlePopState)
+    },
+
+    updateCurrentPath() {
+      // Speichere vollständigen Pfad für routeKey
+      this.currentPath = window.location.pathname
+    },
+
+    handlePopState() {
+      // Extract route from URL path
+      const path = window.location.pathname
+      const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|settings)/)
+
+      if (match && match[1]) {
+        this.currentRoute = match[1]
+      } else {
+        this.currentRoute = 'dashboard'
+      }
+
+      this.updateCurrentPath()
+    },
+
     handleNavigation(route) {
       this.currentRoute = route
+
+      // Update URL using history.pushState
+      const url = generateUrl('/apps/souvera_central/' + route)
+      window.history.pushState({ route }, '', url)
+
+      this.updateCurrentPath()
     },
 
     updateUserCount(count) {
@@ -110,18 +170,38 @@ export default {
 
     async loadStats() {
       try {
+        // Hole alle Benutzer (ohne Limit) für Stats
         const url = generateUrl('/apps/souvera_central/api/users')
-        const response = await axios.get(url)
+        const response = await axios.get(url, {
+          params: {
+            limit: 999999, // Alle Benutzer
+            offset: 0
+          }
+        })
 
-        const users = response.data.ocs?.data?.users || response.data.data?.users || response.data.users || []
+        const data = response.data.ocs?.data || response.data.data || response.data
+        const users = data.users || []
 
-        this.userCount = users.length
+        // Nutze 'total' aus der API Response (korrekte Gesamtzahl)
+        this.userCount = data.total || users.length
         this.activeUserCount = users.filter(user => user.enabled).length
 
-        // TODO: Load actual group count from API when available
-        this.groupCount = 0
+        // Lade Gruppen-Anzahl
+        await this.loadGroupCount()
       } catch (error) {
         console.error('Fehler beim Laden der Statistiken:', error)
+      }
+    },
+
+    async loadGroupCount() {
+      try {
+        const url = generateUrl('/apps/souvera_central/api/groups')
+        const response = await axios.get(url)
+        const data = response.data.ocs?.data || response.data.data || response.data
+        this.groupCount = data.total || (data.groups || []).length
+      } catch (error) {
+        console.error('Fehler beim Laden der Gruppen-Anzahl:', error)
+        this.groupCount = 0
       }
     }
   }
@@ -169,8 +249,10 @@ button.primary:disabled {
   cursor: not-allowed;
 }
 
-button.primary .icon-add {
-  font-size: 16px;
+button.primary [class^="icon-"],
+button.primary [class*=" icon-"] {
+  color: inherit;
+  filter: none;
 }
 
 /* Scrollbar Styling */

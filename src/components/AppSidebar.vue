@@ -6,31 +6,23 @@
     </div>
 
     <nav class="sidebar-nav">
-      <button
+      <a
         v-for="item in navigationItems"
         :key="item.id"
+        :href="item.url"
         :class="['nav-item', { active: currentRoute === item.id }]"
-        @click="navigateTo(item.id)"
+        @click.prevent="navigateTo(item.id, item.url)"
       >
         <span :class="['icon', item.icon]"></span>
         <span class="nav-label">{{ item.label }}</span>
-      </button>
+      </a>
     </nav>
-
-    <div class="sidebar-footer">
-      <div class="license-info">
-        <span class="icon-quota"></span>
-        <div class="license-details">
-          <span class="license-count">{{ userCount }} / {{ licenseTotal }}</span>
-          <span class="license-label">{{ t('souvera_central', 'Lizenzen') }}</span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
   name: 'AppSidebar',
@@ -48,7 +40,7 @@ export default {
       type: Number,
       default: 10
     }
-  },
+  }
 
   data() {
     return {
@@ -56,22 +48,26 @@ export default {
         {
           id: 'dashboard',
           label: this.t('souvera_central', 'Dashboard'),
-          icon: 'icon-home'
+          icon: 'icon-home',
+          url: generateUrl('/apps/souvera_central/dashboard')
         },
         {
           id: 'users',
           label: this.t('souvera_central', 'Benutzerverwaltung'),
-          icon: 'icon-user'
+          icon: 'icon-user',
+          url: generateUrl('/apps/souvera_central/users')
         },
         {
           id: 'groups',
           label: this.t('souvera_central', 'Gruppenverwaltung'),
-          icon: 'icon-group'
+          icon: 'icon-group',
+          url: generateUrl('/apps/souvera_central/groups')
         },
         {
           id: 'settings',
           label: this.t('souvera_central', 'Einstellungen'),
-          icon: 'icon-settings'
+          icon: 'icon-settings',
+          url: generateUrl('/apps/souvera_central/settings')
         }
       ]
     }
@@ -80,7 +76,9 @@ export default {
   methods: {
     t,
 
-    navigateTo(route) {
+    navigateTo(route, url) {
+      // Emit navigation event to parent (App.vue)
+      // Parent will handle pushState and route change
       this.$emit('navigate', route)
     }
   }
@@ -101,19 +99,21 @@ export default {
 .sidebar-header {
   padding: 30px 20px 20px;
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-main-background);
 }
 
 .sidebar-header h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  color: var(--color-primary-element);
+  color: var(--color-main-text);
 }
 
 .subtitle {
   margin: 5px 0 0;
   font-size: 13px;
-  color: var(--color-text-lighter);
+  color: var(--color-text-maxcontrast);
+  opacity: 0.7;
 }
 
 /* Navigation */
@@ -121,6 +121,7 @@ export default {
   flex: 1;
   padding: 20px 10px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .nav-item {
@@ -139,15 +140,20 @@ export default {
   font-size: 15px;
   font-weight: 500;
   color: var(--color-main-text);
+  white-space: nowrap;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .nav-item:hover {
   background: var(--color-background-hover);
+  color: var(--color-main-text);
 }
 
 .nav-item.active {
-  background: var(--color-primary-element-light);
+  background: var(--color-primary-element);
   color: var(--color-primary-element-text);
+  font-weight: 600;
 }
 
 .nav-item .icon {
@@ -159,46 +165,16 @@ export default {
 
 .nav-item.active .icon {
   opacity: 1;
+  filter: brightness(0) invert(1);
+}
+
+.nav-item:hover .icon {
+  opacity: 0.9;
 }
 
 .nav-label {
   flex: 1;
-}
-
-/* Footer */
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.license-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--color-background-dark);
-  border-radius: var(--border-radius-large);
-}
-
-.license-info .icon-quota {
-  font-size: 20px;
-  opacity: 0.7;
-}
-
-.license-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.license-count {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-main-text);
-}
-
-.license-label {
-  font-size: 12px;
-  color: var(--color-text-lighter);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

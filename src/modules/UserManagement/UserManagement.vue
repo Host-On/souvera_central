@@ -15,15 +15,54 @@
       <div class="page-header">
         <div class="header-content">
           <h2>{{ t('souvera_central', 'Benutzerverwaltung') }}</h2>
-          <div class="license-status">
+          <div class="license-status" :class="{ 'license-warning': isLicenseWarning, 'license-critical': isLicenseLimitReached }">
             <span class="icon-quota"></span>
-            <span class="license-info">{{ users.length }} von {{ licenseTotal }} Lizenzen genutzt</span>
+            <span class="license-info">{{ totalUsers }} von {{ licenseTotal }} Lizenzen genutzt</span>
           </div>
         </div>
         <button class="primary" @click="createNewUser" :disabled="isLicenseLimitReached" :title="isLicenseLimitReached ? t('souvera_central', 'Lizenzlimit erreicht') : ''">
           <span class="icon-add"></span>
           {{ t('souvera_central', 'Neuer Benutzer') }}
         </button>
+      </div>
+
+      <!-- KRITISCHES WARNING: Lizenzlimit erreicht -->
+      <div v-if="isLicenseLimitReached" class="critical-warning">
+        <div class="warning-content">
+          <span class="icon-error warning-icon"></span>
+          <div class="warning-text">
+            <h3>{{ t('souvera_central', 'Lizenzlimit erreicht!') }}</h3>
+            <p>{{ t('souvera_central', 'Sie haben {count} von {total} Lizenzen genutzt. Es können keine weiteren Benutzer erstellt werden.', { count: totalUsers, total: licenseTotal }) }}</p>
+          </div>
+          <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button">
+            <span class="icon-external"></span>
+            {{ t('souvera_central', 'Lizenzen erweitern') }}
+          </a>
+        </div>
+      </div>
+
+      <!-- WARNING: Lizenzlimit bald erreicht (80%+) -->
+      <div v-else-if="isLicenseWarning" class="warning-banner">
+        <div class="warning-content">
+          <span class="icon-alert warning-icon"></span>
+          <div class="warning-text">
+            <h3>{{ t('souvera_central', 'Lizenzlimit bald erreicht') }}</h3>
+            <p>{{ t('souvera_central', 'Sie haben {count} von {total} Lizenzen genutzt ({percentage}%). Erweitern Sie rechtzeitig Ihre Lizenzen.', { count: totalUsers, total: licenseTotal, percentage: licensePercentage }) }}</p>
+          </div>
+          <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button secondary">
+            <span class="icon-external"></span>
+            {{ t('souvera_central', 'Kontakt') }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Suchfeld -->
+      <div class="search-bar">
+        <SearchField
+          v-model="searchQuery"
+          :placeholder="t('souvera_central', 'Suche nach Benutzername, Name oder E-Mail...')"
+          @search="handleSearch"
+        />
       </div>
 
       <!-- Loading State -->
@@ -33,59 +72,72 @@
       </div>
 
       <!-- User Table -->
-      <div v-else-if="users.length > 0" class="users-table-wrapper">
-        <table class="users-table">
-          <thead>
-            <tr>
-              <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
-              <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
-              <th class="email-column">{{ t('souvera_central', 'E-Mail') }}</th>
-              <th class="groups-column">{{ t('souvera_central', 'Gruppen') }}</th>
-              <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
-              <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
-              <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in users" :key="user.id" class="user-row" @click="selectUser(user)">
-              <td class="user-column">
-                <div class="user-info">
-                  <span class="icon-user"></span>
-                  <span class="username">{{ user.id }}</span>
-                </div>
-              </td>
-              <td class="displayname-column">{{ user.displayName }}</td>
-              <td class="email-column">{{ user.email || '-' }}</td>
-              <td class="groups-column">
-                <div class="groups-list">
-                  <span v-for="group in user.groups" :key="group.id" class="group-badge">
-                    {{ group.displayName }}
+      <div v-else-if="users.length > 0" class="table-container">
+        <div class="users-table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
+                <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
+                <th class="email-column">{{ t('souvera_central', 'E-Mail') }}</th>
+                <th class="groups-column">{{ t('souvera_central', 'Gruppen') }}</th>
+                <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
+                <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
+                <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in users" :key="user.id" class="user-row" @click="selectUser(user)">
+                <td class="user-column">
+                  <div class="user-info">
+                    <span class="icon-user"></span>
+                    <span class="username">{{ user.id }}</span>
+                  </div>
+                </td>
+                <td class="displayname-column">{{ user.displayName }}</td>
+                <td class="email-column">{{ user.email || '-' }}</td>
+                <td class="groups-column">
+                  <div class="groups-list">
+                    <span v-for="group in user.groups" :key="group.id" class="group-badge">
+                      {{ group.displayName }}
+                    </span>
+                    <span v-if="user.groups.length === 0" class="text-muted">-</span>
+                  </div>
+                </td>
+                <td class="quota-column">{{ user.quota.quota }}</td>
+                <td class="status-column">
+                  <span :class="['status-badge', user.enabled ? 'status-enabled' : 'status-disabled']">
+                    {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Deaktiviert') }}
                   </span>
-                  <span v-if="user.groups.length === 0" class="text-muted">-</span>
-                </div>
-              </td>
-              <td class="quota-column">{{ user.quota.quota }}</td>
-              <td class="status-column">
-                <span :class="['status-badge', user.enabled ? 'status-enabled' : 'status-disabled']">
-                  {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Deaktiviert') }}
-                </span>
-              </td>
-              <td class="actions-column">
-                <div class="user-actions">
-                  <button class="icon-rename" :title="t('souvera_central', 'Bearbeiten')" @click.stop="editUser(user)"></button>
-                  <button class="icon-delete" :title="t('souvera_central', 'Löschen')" @click.stop="deleteUser(user)"></button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+                <td class="actions-column">
+                  <div class="user-actions">
+                    <button class="icon-rename" :title="t('souvera_central', 'Bearbeiten')" @click.stop="editUser(user)"></button>
+                    <button class="icon-delete" :title="t('souvera_central', 'Löschen')" @click.stop="deleteUser(user)"></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <Pagination
+          :current-page="currentPage"
+          :per-page="perPage"
+          :total="totalUsers"
+          @page-change="handlePageChange"
+          @per-page-change="handlePerPageChange"
+        />
       </div>
 
       <!-- Empty State -->
       <div v-else class="empty-state">
         <div class="icon-user icon-large"></div>
-        <h3>{{ t('souvera_central', 'Noch keine Benutzer') }}</h3>
-        <p>{{ t('souvera_central', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
+        <h3 v-if="searchQuery">{{ t('souvera_central', 'Keine Benutzer gefunden') }}</h3>
+        <h3 v-else>{{ t('souvera_central', 'Noch keine Benutzer') }}</h3>
+        <p v-if="searchQuery">{{ t('souvera_central', 'Versuchen Sie einen anderen Suchbegriff.') }}</p>
+        <p v-else>{{ t('souvera_central', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
       </div>
     </div>
   </div>
@@ -96,12 +148,16 @@ import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import UserEditor from './components/UserEditor.vue'
+import SearchField from '../../components/SearchField.vue'
+import Pagination from '../../components/Pagination.vue'
 
 export default {
   name: 'UserManagement',
 
   components: {
-    UserEditor
+    UserEditor,
+    SearchField,
+    Pagination
   },
 
   props: {
@@ -117,33 +173,93 @@ export default {
 
   computed: {
     isLicenseLimitReached() {
-      return this.users.length >= this.licenseTotal
+      return this.totalUsers >= this.licenseTotal
+    },
+
+    licensePercentage() {
+      if (this.licenseTotal === 0) return 0
+      return Math.round((this.totalUsers / this.licenseTotal) * 100)
+    },
+
+    isLicenseWarning() {
+      return !this.isLicenseLimitReached && (this.totalUsers / this.licenseTotal) >= 0.8
     }
   },
 
   data() {
     return {
       users: [],
+      totalUsers: 0,
       loading: true,
       selectedUser: null,
-      showEditor: false
+      showEditor: false,
+      searchQuery: '',
+      currentPage: 1,
+      perPage: 20
     }
   },
 
   mounted() {
     this.loadUsers()
+    this.checkInitialAction()
   },
 
   methods: {
     t,
 
+    checkInitialAction() {
+      // Prüfe ob wir von /users/new oder /users/edit/:id kommen
+      const appElement = document.getElementById('app-souvera-user-management')
+      const action = appElement?.getAttribute('data-action') || ''
+      const userId = appElement?.getAttribute('data-user-id') || ''
+
+      if (action === 'new') {
+        this.createNewUser()
+      } else if (action === 'edit' && userId) {
+        // Lade User und öffne Editor
+        this.loadAndEditUser(userId)
+      }
+    },
+
+    async loadAndEditUser(userId) {
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: userId })
+        const response = await axios.get(url)
+
+        // Check OCS statuscode
+        const statusCode = response.data?.ocs?.meta?.statuscode
+        if (statusCode === 100) {
+          const user = response.data.ocs.data
+          // Convert groups
+          user.groups = Array.isArray(user.groups)
+            ? user.groups
+            : Object.values(user.groups || {})
+
+          this.selectedUser = user
+          this.showEditor = true
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden des Benutzers:', error)
+      }
+    },
+
     async loadUsers() {
       try {
         this.loading = true
-        const url = generateUrl('/apps/souvera_central/api/users')
-        const response = await axios.get(url)
+        const offset = (this.currentPage - 1) * this.perPage
 
-        const users = response.data.ocs?.data?.users || response.data.data?.users || response.data.users || []
+        const url = generateUrl('/apps/souvera_central/api/users')
+        const response = await axios.get(url, {
+          params: {
+            search: this.searchQuery,
+            limit: this.perPage,
+            offset: offset
+          }
+        })
+
+        const data = response.data.ocs?.data || response.data.data || response.data
+        const users = data.users || []
+        this.totalUsers = data.total || 0
 
         // Fix groups: Convert object to array
         this.users = users.map(user => ({
@@ -153,8 +269,10 @@ export default {
             : Object.values(user.groups || {})
         }))
 
-        // Emit user count to parent
-        this.$emit('users-loaded', this.users.length)
+        // Emit total user count to parent (für Dashboard)
+        this.$emit('users-loaded', this.totalUsers)
+
+        console.log('Geladene Benutzer:', this.users.length, 'von', this.totalUsers)
       } catch (error) {
         console.error('Fehler beim Laden der Benutzer:', error)
       } finally {
@@ -162,7 +280,31 @@ export default {
       }
     },
 
+    handleSearch(query) {
+      console.log('Suche:', query)
+      this.searchQuery = query
+      this.currentPage = 1 // Zurück zur ersten Seite bei neuer Suche
+      this.loadUsers()
+    },
+
+    handlePageChange(page) {
+      console.log('Seite wechseln:', page)
+      this.currentPage = page
+      this.loadUsers()
+    },
+
+    handlePerPageChange(perPage) {
+      console.log('Pro-Seite ändern:', perPage)
+      this.perPage = perPage
+      this.currentPage = 1 // Zurück zur ersten Seite
+      this.loadUsers()
+    },
+
     selectUser(user) {
+      // Navigate to /users/edit/:id
+      const url = generateUrl('/apps/souvera_central/users/edit/{id}', { id: user.id })
+      window.history.pushState({}, '', url)
+
       this.selectedUser = user
       this.showEditor = true
     },
@@ -172,21 +314,38 @@ export default {
         alert(this.t('souvera_central', 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'))
         return
       }
+
+      // Navigate to /users/new
+      const url = generateUrl('/apps/souvera_central/users/new')
+      window.history.pushState({}, '', url)
+
       this.selectedUser = null
       this.showEditor = true
     },
 
     editUser(user) {
+      // Navigate to /users/edit/:id
+      const url = generateUrl('/apps/souvera_central/users/edit/{id}', { id: user.id })
+      window.history.pushState({}, '', url)
+
       this.selectedUser = user
       this.showEditor = true
     },
 
     closeEditor() {
+      // Navigate zurück zu /users
+      const url = generateUrl('/apps/souvera_central/users')
+      window.history.pushState({}, '', url)
+
       this.showEditor = false
       this.selectedUser = null
     },
 
     async handleUserSaved() {
+      // Navigate zurück zu /users
+      const url = generateUrl('/apps/souvera_central/users')
+      window.history.pushState({}, '', url)
+
       this.showEditor = false
       this.selectedUser = null
       await this.loadUsers()
@@ -234,7 +393,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -266,6 +425,11 @@ export default {
   opacity: 0.7;
 }
 
+/* Search Bar */
+.search-bar {
+  margin-bottom: 20px;
+}
+
 /* Loading State */
 .loading-state {
   display: flex;
@@ -280,12 +444,17 @@ export default {
   color: var(--color-text-lighter);
 }
 
-/* User Table */
-.users-table-wrapper {
+/* Table Container */
+.table-container {
   background: var(--color-main-background);
   border-radius: var(--border-radius-large);
   overflow: hidden;
   box-shadow: 0 0 3px var(--color-box-shadow);
+}
+
+/* User Table */
+.users-table-wrapper {
+  overflow-x: auto;
 }
 
 .users-table {
@@ -372,60 +541,76 @@ export default {
 .groups-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .group-badge {
   display: inline-block;
-  padding: 4px 8px;
-  background: var(--color-primary-element-light);
+  padding: 6px 12px;
+  background: var(--color-primary-element);
   color: var(--color-primary-element-text);
-  border-radius: var(--border-radius);
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--border-radius-large);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .text-muted {
-  color: var(--color-text-lighter);
+  color: var(--color-text-maxcontrast);
+  font-size: 14px;
 }
 
 /* Status Badge */
 .status-badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: var(--border-radius-large);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .status-enabled {
-  background: #d4edda;
-  color: #155724;
+  background: var(--color-success);
+  color: white;
 }
 
 .status-disabled {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--color-error);
+  color: white;
 }
 
 /* Actions */
 .user-actions {
   display: flex;
-  gap: 5px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
 .user-actions button {
-  opacity: 0.6;
-  transition: opacity 0.2s;
-  background: none;
-  border: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
   cursor: pointer;
-  padding: 8px;
+  padding: 0;
+  transition: all 0.2s;
+  color: var(--color-main-text);
+  opacity: 1;
 }
 
 .user-actions button:hover {
-  opacity: 1;
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element);
+  transform: scale(1.1);
+}
+
+.user-actions button.icon-delete:hover {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: white;
 }
 
 /* Empty State */
@@ -450,5 +635,143 @@ export default {
 
 .empty-state p {
   margin: 0;
+}
+
+/* KRITISCHES WARNING BANNER */
+.critical-warning {
+  margin-bottom: 30px;
+  padding: 25px 30px;
+  background: var(--color-error);
+  border: 2px solid var(--color-error);
+  border-radius: var(--border-radius-large);
+  box-shadow: 0 4px 12px var(--color-box-shadow);
+}
+
+.critical-warning .warning-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--color-primary-element-text);
+}
+
+.critical-warning .warning-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+  color: var(--color-primary-element-text);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.critical-warning .warning-text {
+  flex: 1;
+}
+
+.critical-warning h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary-element-text);
+}
+
+.critical-warning p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-primary-element-text);
+  opacity: 0.95;
+}
+
+.contact-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--color-main-background);
+  color: var(--color-error);
+  border: 2px solid var(--color-error);
+  border-radius: var(--border-radius-large);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.contact-button:hover {
+  background: var(--color-background-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-box-shadow);
+}
+
+/* WARNING BANNER (80%+) */
+.warning-banner {
+  margin-bottom: 30px;
+  padding: 20px 25px;
+  background: var(--color-warning);
+  border: 2px solid var(--color-warning);
+  border-radius: var(--border-radius-large);
+  box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.warning-banner .warning-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--color-main-text);
+}
+
+.warning-banner .warning-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  color: var(--color-main-text);
+  opacity: 0.8;
+}
+
+.warning-banner .warning-text {
+  flex: 1;
+}
+
+.warning-banner h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-main-text);
+}
+
+.warning-banner p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-main-text);
+}
+
+.contact-button.secondary {
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+  border: 2px solid var(--color-main-text);
+  box-shadow: 0 2px 6px var(--color-box-shadow);
+}
+
+.contact-button.secondary:hover {
+  background: var(--color-background-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px var(--color-box-shadow);
+}
+
+/* License Status Badge Colors */
+.license-status.license-warning {
+  background: var(--color-warning);
+  color: var(--color-main-text);
+  border: 1px solid var(--color-warning);
+}
+
+.license-status.license-critical {
+  background: var(--color-error);
+  color: var(--color-primary-element-text);
+  border: 1px solid var(--color-error);
 }
 </style>

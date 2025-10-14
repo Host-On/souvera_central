@@ -594,7 +594,7 @@ export default {
 
 <style scoped>
 .user-editor-page {
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--color-main-background);
@@ -782,7 +782,7 @@ export default {
 .success-message {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #28a745;
+  color: var(--color-success);
   display: flex;
   align-items: center;
   gap: 5px;

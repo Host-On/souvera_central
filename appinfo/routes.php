@@ -7,8 +7,16 @@
 
 return [
     'routes' => [
-        // Haupt-Seite
+        // Haupt-Seite (Dashboard)
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
+
+        // Module-Seiten
+        ['name' => 'page#dashboard', 'url' => '/dashboard', 'verb' => 'GET'],
+        ['name' => 'page#users', 'url' => '/users', 'verb' => 'GET'],
+        ['name' => 'page#users_new', 'url' => '/users/new', 'verb' => 'GET'],
+        ['name' => 'page#users_edit', 'url' => '/users/edit/{id}', 'verb' => 'GET'],
+        ['name' => 'page#groups', 'url' => '/groups', 'verb' => 'GET'],
+        ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
 
         // User API-Routen
         ['name' => 'user_api#list', 'url' => '/api/users', 'verb' => 'GET'],
