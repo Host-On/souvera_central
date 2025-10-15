@@ -630,7 +630,7 @@ class UserApiController extends OCSController {
             $emailText .= "Viel Erfolg!\n";
             $emailText .= "Ihr " . $defaults->getName() . " Team";
 
-            $message->setPlainTextBody($emailText);
+            $message->setBody($emailText, 'text/plain');
 
             // E-Mail versenden
             $mailer->send($message);

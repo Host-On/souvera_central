@@ -47,6 +47,10 @@ return [
         // Config API-Route
         ['name' => 'user_api#getConfig', 'url' => '/api/config', 'verb' => 'GET'],
 
+        // Settings API-Routen
+        ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
+        ['name' => 'settings_api#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
+
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],
     ]

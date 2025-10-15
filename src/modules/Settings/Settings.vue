@@ -2,65 +2,104 @@
     <div class="settings-container">
         <div class="page-header">
             <h2>{{ t('souvera_central', 'Einstellungen') }}</h2>
+            <p class="header-subtitle">{{ t('souvera_central', 'Kontoverwaltungseinstellungen') }}</p>
         </div>
 
-        <div class="settings-content">
-            <div class="settings-section">
-                <h3>{{ t('souvera_central', 'Lizenz-Konfiguration') }}</h3>
-                <div class="setting-item">
-                    <label>{{ t('souvera_central', 'Maximale Lizenzen') }}:</label>
-                    <input type="number" :value="licenseTotal" readonly disabled />
-                    <p class="setting-hint">{{ t('souvera_central', 'Wird in der config.php konfiguriert') }}</p>
-                </div>
-            </div>
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-state">
+            <div class="icon-loading"></div>
+            <p>{{ t('souvera_central', 'Lade Einstellungen...') }}</p>
+        </div>
 
+        <!-- Settings Content -->
+        <div v-else class="settings-content">
+            <!-- 1. E-MAIL SENDEN -->
             <div class="settings-section">
-                <h3>{{ t('souvera_central', 'E-Mail-Domains') }}</h3>
-                <div class="setting-item">
-                    <label>{{ t('souvera_central', 'Erlaubte Domains') }}:</label>
-                    <div class="domains-list">
-                        <span v-for="(domain, index) in allowedDomains" :key="index" class="domain-badge">
-                            {{ domain }}
-                        </span>
-                        <span v-if="allowedDomains.length === 0" class="text-muted">
-                            {{ t('souvera_central', 'Keine Domains konfiguriert') }}
-                        </span>
-                    </div>
-                    <p class="setting-hint">{{ t('souvera_central', 'Wird in der config.php konfiguriert') }}</p>
+                <div class="section-header">
+                    <span class="icon-mail"></span>
+                    <h3>{{ t('souvera_central', 'E-Mail senden') }}</h3>
+                    <span
+                        class="status-badge"
+                        :class="settings.email.send_to_new_users ? 'status-active' : 'status-inactive'"
+                    >
+                        {{ settings.email.send_to_new_users ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                    </span>
                 </div>
-            </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'Automatisches Versenden von Willkommens-Emails an neue Benutzer') }}
+                </p>
 
-            <div class="settings-section">
-                <h3>{{ t('souvera_central', 'System-Information') }}</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                        <span class="info-value">0.2.0</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">{{ t('souvera_central', 'App-ID') }}:</span>
-                        <span class="info-value">souvera_central</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">{{ t('souvera_central', 'Status') }}:</span>
-                        <span class="info-value status-active">{{ t('souvera_central', 'Aktiv') }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="coming-soon-notice">
-                <span class="icon-info"></span>
-                <div>
-                    <strong>{{ t('souvera_central', 'Weitere Einstellungen in Entwicklung') }}</strong>
-                    <p>
+                <div class="settings-group">
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            v-model="settings.email.send_to_new_users"
+                            @change="saveSettings"
+                            class="checkbox"
+                        />
+                        <span>{{ t('souvera_central', 'E-Mail an neue Benutzer senden') }}</span>
+                    </label>
+                    <p class="setting-hint">
                         {{
                             t(
                                 'souvera_central',
-                                'Zusätzliche Konfigurationsoptionen werden in zukünftigen Versionen verfügbar sein.'
+                                'Wenn aktiviert, erhalten neue Benutzer automatisch eine Willkommens-Email mit ihren Login-Daten.'
                             )
                         }}
                     </p>
                 </div>
+            </div>
+
+            <!-- 2. STANDARDEINSTELLUNGEN -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <span class="icon-quota"></span>
+                    <h3>{{ t('souvera_central', 'Standardeinstellungen') }}</h3>
+                </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'Standard-Werte für neue Benutzer') }}
+                </p>
+
+                <div class="settings-group">
+                    <label class="field-label">{{ t('souvera_central', 'Standard Speicherkontingent') }}</label>
+
+                    <select v-model="settings.defaults.quota" @change="saveSettings" class="quota-select">
+                        <option value="default">{{ t('souvera_central', 'Standard') }}</option>
+                        <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
+                        <option value="1 GB">1 GB</option>
+                        <option value="5 GB">5 GB</option>
+                        <option value="10 GB">10 GB</option>
+                        <option value="50 GB">50 GB</option>
+                        <option value="100 GB">100 GB</option>
+                        <option value="custom">{{ t('souvera_central', 'Benutzerdefiniert') }}</option>
+                    </select>
+
+                    <!-- Custom Quota Input -->
+                    <div v-if="settings.defaults.quota === 'custom'" class="custom-quota-input">
+                        <input
+                            type="text"
+                            v-model="customQuota"
+                            @blur="saveCustomQuota"
+                            @keyup.enter="saveCustomQuota"
+                            :placeholder="t('souvera_central', 'z.B. 25 GB, 500 MB')"
+                            class="input-field"
+                        />
+                        <p class="setting-hint">
+                            {{ t('souvera_central', 'Verwenden Sie Abkürzungen wie MB, GB, TB (z.B. "25 GB")') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Indicator -->
+            <div v-if="saving" class="save-indicator">
+                <div class="icon-loading-small"></div>
+                <span>{{ t('souvera_central', 'Speichere...') }}</span>
+            </div>
+
+            <div v-if="saveSuccess" class="save-indicator success">
+                <span class="icon-checkmark"></span>
+                <span>{{ t('souvera_central', 'Gespeichert') }}</span>
             </div>
         </div>
     </div>
@@ -68,23 +107,93 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
     name: 'Settings',
 
-    props: {
-        licenseTotal: {
-            type: Number,
-            default: 10
-        },
-        allowedDomains: {
-            type: Array,
-            default: () => []
+    data() {
+        return {
+            loading: true,
+            saving: false,
+            saveSuccess: false,
+            customQuota: '',
+            settings: {
+                email: {
+                    send_to_new_users: false
+                },
+                defaults: {
+                    quota: 'default'
+                }
+            }
         }
     },
 
+    mounted() {
+        this.loadSettings()
+    },
+
     methods: {
-        t
+        t,
+
+        async loadSettings() {
+            try {
+                this.loading = true
+                const url = generateUrl('/apps/souvera_central/api/settings')
+                const response = await axios.get(url)
+
+                // OCS Response Format
+                const data = response.data.ocs?.data || response.data.data || response.data
+
+                if (data) {
+                    this.settings = {
+                        email: data.email || this.settings.email,
+                        defaults: data.defaults || this.settings.defaults
+                    }
+
+                    console.log('Einstellungen geladen:', this.settings)
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der Einstellungen:', error)
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async saveSettings() {
+            try {
+                this.saving = true
+                this.saveSuccess = false
+
+                const url = generateUrl('/apps/souvera_central/api/settings')
+                await axios.put(url, this.settings)
+
+                // Success-Feedback anzeigen
+                this.saveSuccess = true
+                setTimeout(() => {
+                    this.saveSuccess = false
+                }, 2000)
+
+                console.log('Einstellungen gespeichert:', this.settings)
+
+                // Emit event für andere Komponenten
+                this.$emit('settings-updated', this.settings)
+            } catch (error) {
+                console.error('Fehler beim Speichern der Einstellungen:', error)
+                alert(this.t('souvera_central', 'Fehler beim Speichern der Einstellungen'))
+            } finally {
+                this.saving = false
+            }
+        },
+
+        saveCustomQuota() {
+            const value = this.customQuota.trim()
+            if (value) {
+                this.settings.defaults.quota = value
+                this.saveSettings()
+            }
+        }
     }
 }
 </script>
@@ -92,10 +201,11 @@ export default {
 <style scoped>
 .settings-container {
     padding: 30px;
-    max-width: 1000px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
+/* Header */
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 20px;
@@ -103,56 +213,187 @@ export default {
 }
 
 .page-header h2 {
-    margin: 0;
+    margin: 0 0 5px;
     font-size: 28px;
     font-weight: 600;
 }
 
+.header-subtitle {
+    margin: 0;
+    color: var(--color-text-lighter);
+    font-size: 14px;
+}
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 15px;
+}
+
+.loading-state p {
+    color: var(--color-text-lighter);
+}
+
+/* Settings Content */
 .settings-content {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 25px;
 }
 
+/* Settings Section */
 .settings-section {
     background: var(--color-main-background);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
     padding: 25px;
+    transition: box-shadow 0.2s;
 }
 
-.settings-section h3 {
-    margin: 0 0 20px;
-    font-size: 18px;
+.settings-section:hover {
+    box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.section-header span[class^='icon-'] {
+    font-size: 24px;
+    color: var(--color-primary);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 20px;
     font-weight: 600;
     color: var(--color-main-text);
+    flex: 1;
 }
 
-.setting-item {
-    margin-bottom: 20px;
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--border-radius-large);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
-.setting-item:last-child {
-    margin-bottom: 0;
+.status-badge.status-active {
+    background: var(--color-success);
+    color: white;
 }
 
-.setting-item label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: var(--color-text-lighter);
-}
-
-.setting-item input[type='number'] {
-    width: 100%;
-    max-width: 200px;
-    padding: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
+.status-badge.status-inactive {
     background: var(--color-background-dark);
+    color: var(--color-text-lighter);
+    border: 1px solid var(--color-border);
+}
+
+.section-description {
+    margin: 0 0 20px;
+    color: var(--color-text-lighter);
     font-size: 14px;
 }
 
+/* Settings Group */
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.checkbox-label:hover {
+    background: var(--color-background-hover);
+}
+
+.checkbox-label input[type='checkbox'] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.checkbox-label span {
+    font-size: 14px;
+    color: var(--color-main-text);
+}
+
+/* Field Label */
+.field-label {
+    display: block;
+    font-weight: 600;
+    color: var(--color-main-text);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* Quota Select */
+.quota-select {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    background: var(--color-main-background);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.quota-select:hover {
+    border-color: var(--color-primary);
+}
+
+.quota-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-element-light);
+}
+
+/* Custom Quota Input */
+.custom-quota-input {
+    margin-top: 10px;
+}
+
+.input-field {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: var(--color-main-background);
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-element-light);
+}
+
+/* Setting Hint */
 .setting-hint {
     margin: 8px 0 0;
     font-size: 13px;
@@ -160,87 +401,46 @@ export default {
     font-style: italic;
 }
 
-.domains-list {
+/* Save Indicator */
+.save-indicator {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius);
-    min-height: 50px;
     align-items: center;
-}
-
-.domain-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    background: var(--color-primary-element-light);
-    color: var(--color-primary-element-text);
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.text-muted {
-    color: var(--color-text-lighter);
-    font-style: italic;
-}
-
-.info-grid {
-    display: grid;
-    gap: 15px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius);
-}
-
-.info-label {
-    font-weight: 500;
-    color: var(--color-text-lighter);
-}
-
-.info-value {
-    font-weight: 600;
-    color: var(--color-main-text);
-}
-
-.status-active {
-    color: var(--color-success);
-}
-
-.coming-soon-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 20px;
-    background: var(--color-background-dark);
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--color-main-background);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
-    border-left: 4px solid var(--color-primary-element);
+    box-shadow: 0 4px 16px var(--color-box-shadow);
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
 }
 
-.coming-soon-notice .icon-info {
-    font-size: 24px;
-    color: var(--color-primary-element);
-    flex-shrink: 0;
-    margin-top: 2px;
+.save-indicator.success {
+    border-color: var(--color-success);
+    background: var(--color-success);
+    color: white;
 }
 
-.coming-soon-notice strong {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--color-main-text);
+.save-indicator .icon-loading-small {
+    width: 20px;
+    height: 20px;
 }
 
-.coming-soon-notice p {
-    margin: 0;
-    color: var(--color-text-lighter);
-    font-size: 14px;
+.save-indicator .icon-checkmark {
+    font-size: 20px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 </style>

@@ -141,11 +141,17 @@ export default {
             showEditor: false,
             searchQuery: '',
             currentPage: 1,
-            perPage: 20
+            perPage: 20,
+            settings: {
+                sorting: {
+                    groups: 'displayName'
+                }
+            }
         }
     },
 
     mounted() {
+        this.loadSettings()
         this.loadGroups()
         this.checkInitialAction()
     },
@@ -181,6 +187,21 @@ export default {
             }
         },
 
+        async loadSettings() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/settings')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data
+
+                if (data && data.sorting) {
+                    this.settings.sorting = data.sorting
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der Einstellungen:', error)
+                // Fallback auf Default-Sortierung
+            }
+        },
+
         async loadGroups() {
             try {
                 this.loading = true
@@ -196,19 +217,39 @@ export default {
                 })
 
                 const data = response.data.ocs?.data || response.data.data || response.data
-                this.groups = data.groups || []
+                let groups = data.groups || []
+
+                // Sortierung anwenden (nur auf aktuell geladene Gruppen)
+                groups = this.sortGroups(groups)
+
+                this.groups = groups
                 this.totalGroups = data.total || 0
 
                 // Emit total group count to parent (für Dashboard)
                 this.$emit('groups-loaded', this.totalGroups)
 
-                console.log('Geladene Gruppen:', this.groups.length, 'von', this.totalGroups)
+                console.log('Geladene Gruppen:', this.groups.length, 'von', this.totalGroups, '| Sortierung:', this.settings.sorting.groups)
             } catch (error) {
                 console.error('Fehler beim Laden der Gruppen:', error)
                 this.showError(error, this.t('souvera_central', 'Fehler beim Laden der Gruppen'))
             } finally {
                 this.loading = false
             }
+        },
+
+        sortGroups(groups) {
+            const sortMode = this.settings.sorting.groups || 'displayName'
+
+            return [...groups].sort((a, b) => {
+                if (sortMode === 'id') {
+                    return a.id.localeCompare(b.id)
+                } else if (sortMode === 'userCount') {
+                    return (b.userCount || 0) - (a.userCount || 0) // Absteigende Sortierung
+                } else {
+                    // displayName (default)
+                    return (a.displayName || a.id).localeCompare(b.displayName || b.id)
+                }
+            })
         },
 
         handleSearch(query) {

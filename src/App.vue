@@ -214,7 +214,7 @@ export default {
 /* Global App Styles */
 #app-souvera-central {
     display: flex;
-    height: 100vh;
+    height: 100%;
     width: 100%;
     overflow: hidden;
     background: var(--color-main-background);

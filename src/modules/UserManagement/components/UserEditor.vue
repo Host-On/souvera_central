@@ -249,6 +249,19 @@
                 </div>
             </form>
         </div>
+
+        <!-- Confirmation Modal -->
+        <ConfirmationModal
+            :is-open="confirmModal.isOpen"
+            :title="confirmModal.title"
+            :message="confirmModal.message"
+            :details="confirmModal.details"
+            :type="confirmModal.type"
+            :confirm-text="confirmModal.confirmText"
+            :cancel-text="confirmModal.cancelText"
+            @confirm="confirmModal.onConfirm"
+            @close="closeConfirmModal"
+        />
     </div>
 </template>
 
@@ -258,13 +271,15 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import ManagerSelector from './ManagerSelector.vue'
 import GroupSelector from './GroupSelector.vue'
+import ConfirmationModal from '../../../components/ConfirmationModal.vue'
 
 export default {
     name: 'UserEditor',
 
     components: {
         ManagerSelector,
-        GroupSelector
+        GroupSelector,
+        ConfirmationModal
     },
 
     props: {
@@ -310,7 +325,25 @@ export default {
             resendingEmail: false,
             wipingDevices: false,
             usernameCheckTimeout: null,
-            initialManagerData: null
+            initialManagerData: null,
+            settings: {
+                defaults: {
+                    quota: 'default'
+                },
+                email: {
+                    send_to_new_users: false
+                }
+            },
+            confirmModal: {
+                isOpen: false,
+                title: '',
+                message: '',
+                details: '',
+                type: 'info',
+                confirmText: 'Bestätigen',
+                cancelText: 'Abbrechen',
+                onConfirm: () => {}
+            }
         }
     },
 
@@ -335,6 +368,7 @@ export default {
 
     mounted() {
         this.loadGroups()
+        this.loadSettings()
 
         if (this.isEditMode) {
             this.formData = {
@@ -362,9 +396,16 @@ export default {
                     this.emailDomain = parts[1]
                 }
             }
-        } else if (this.allowedDomains.length > 0) {
-            // Bei neuem User erste Domain vorauswählen
-            this.emailDomain = this.allowedDomains[0]
+        } else {
+            // Bei neuem User: Settings laden und Default-Quota setzen
+            this.loadSettings().then(() => {
+                this.formData.quota = this.settings.defaults.quota
+            })
+
+            // Erste Domain vorauswählen
+            if (this.allowedDomains.length > 0) {
+                this.emailDomain = this.allowedDomains[0]
+            }
         }
     },
 
@@ -382,6 +423,23 @@ export default {
                 console.error('Fehler beim Laden der Gruppen:', error)
                 // Fallback
                 this.availableGroups = []
+            }
+        },
+
+        async loadSettings() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/settings')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data
+
+                if (data) {
+                    this.settings = {
+                        defaults: data.defaults || this.settings.defaults,
+                        email: data.email || this.settings.email
+                    }
+                }
+            } catch (error) {
+                console.error('Fehler beim Laden der Einstellungen:', error)
             }
         },
 
@@ -608,6 +666,20 @@ export default {
                     console.log('Headers:', response.headers)
                     console.log('Data:', response.data)
                     console.log('Full Response:', response)
+
+                    // Auto-Email senden wenn aktiviert
+                    if (this.settings.email.send_to_new_users) {
+                        try {
+                            const emailUrl = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', {
+                                id: this.formData.username
+                            })
+                            await axios.post(emailUrl)
+                            console.log('Willkommens-Email automatisch versendet an:', this.formData.email)
+                        } catch (emailError) {
+                            console.warn('Fehler beim automatischen Versenden der Willkommens-Email:', emailError)
+                            // Nicht blockieren, nur warnen
+                        }
+                    }
                 }
 
                 this.$emit('saved')
@@ -659,63 +731,143 @@ export default {
             }
         },
 
-        async resendWelcomeEmail() {
-            if (!confirm(this.t('souvera_central', 'Möchten Sie die Willkommens-Email wirklich erneut versenden?'))) {
-                return
-            }
+        resendWelcomeEmail() {
+            this.confirmModal = {
+                isOpen: true,
+                title: this.t('souvera_central', 'Willkommens-Email versenden?'),
+                message: this.t(
+                    'souvera_central',
+                    'Möchten Sie die Willkommens-Email an "{user}" wirklich erneut versenden?',
+                    { user: this.formData.displayName }
+                ),
+                details: this.t('souvera_central', 'Die E-Mail wird an: {email} gesendet', {
+                    email: this.formData.email
+                }),
+                type: 'info',
+                confirmText: this.t('souvera_central', 'Email senden'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    this.resendingEmail = true
 
-            this.resendingEmail = true
+                    try {
+                        const url = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', {
+                            id: this.formData.username
+                        })
+                        await axios.post(url)
 
-            try {
-                const url = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', {
-                    id: this.formData.username
-                })
-                await axios.post(url)
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Email versendet!'),
+                            message: this.t('souvera_central', 'Die Willkommens-Email wurde erfolgreich versendet.'),
+                            details: this.t('souvera_central', 'Die E-Mail wurde an {email} gesendet', {
+                                email: this.formData.email
+                            }),
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Versenden der Willkommens-Email:', error)
+                        const errorMessage =
+                            error.response?.data?.ocs?.data?.error ||
+                            error.response?.data?.error ||
+                            this.t('souvera_central', 'Fehler beim Versenden der E-Mail')
 
-                alert(this.t('souvera_central', 'Willkommens-Email wurde erfolgreich versendet'))
-            } catch (error) {
-                console.error('Fehler beim Versenden der Willkommens-Email:', error)
-                const errorMessage =
-                    error.response?.data?.ocs?.data?.error ||
-                    error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Versenden der E-Mail')
-                alert(errorMessage)
-            } finally {
-                this.resendingEmail = false
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler beim Versenden'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } finally {
+                        this.resendingEmail = false
+                    }
+                }
             }
         },
 
-        async wipeDevices() {
-            const confirmed = confirm(
-                this.t(
+        wipeDevices() {
+            this.confirmModal = {
+                isOpen: true,
+                title: this.t('souvera_central', 'Alle Geräte trennen?'),
+                message: this.t(
                     'souvera_central',
-                    'WARNUNG: Diese Aktion trennt ALLE Geräte dieses Benutzers und löscht lokale Daten. Der Benutzer muss sich überall neu anmelden. Fortfahren?'
-                )
-            )
+                    'Möchten Sie wirklich ALLE Geräte von "{user}" trennen und lokale Daten löschen?',
+                    { user: this.formData.displayName }
+                ),
+                details: this.t(
+                    'souvera_central',
+                    'WARNUNG: Der Benutzer wird auf allen Geräten abgemeldet und muss sich überall neu anmelden. Diese Aktion kann nicht rückgängig gemacht werden!'
+                ),
+                type: 'danger',
+                confirmText: this.t('souvera_central', 'Ja, alle Geräte trennen'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    this.wipingDevices = true
 
-            if (!confirmed) {
-                return
+                    try {
+                        const url = generateUrl('/apps/souvera_central/api/users/{id}/wipe-devices', {
+                            id: this.formData.username
+                        })
+                        await axios.post(url)
+
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Geräte getrennt!'),
+                            message: this.t('souvera_central', 'Alle Geräte wurden erfolgreich getrennt.'),
+                            details: this.t(
+                                'souvera_central',
+                                'Der Benutzer "{user}" wurde auf allen Geräten abgemeldet.',
+                                { user: this.formData.displayName }
+                            ),
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Trennen der Geräte:', error)
+                        const errorMessage =
+                            error.response?.data?.ocs?.data?.error ||
+                            error.response?.data?.error ||
+                            this.t('souvera_central', 'Fehler beim Trennen der Geräte')
+
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } finally {
+                        this.wipingDevices = false
+                    }
+                }
             }
+        },
 
-            this.wipingDevices = true
-
-            try {
-                const url = generateUrl('/apps/souvera_central/api/users/{id}/wipe-devices', {
-                    id: this.formData.username
-                })
-                await axios.post(url)
-
-                alert(this.t('souvera_central', 'Alle Geräte wurden erfolgreich getrennt'))
-            } catch (error) {
-                console.error('Fehler beim Trennen der Geräte:', error)
-                const errorMessage =
-                    error.response?.data?.ocs?.data?.error ||
-                    error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Trennen der Geräte')
-                alert(errorMessage)
-            } finally {
-                this.wipingDevices = false
-            }
+        closeConfirmModal() {
+            this.confirmModal.isOpen = false
         }
     }
 }

@@ -83,4 +83,61 @@ class ConfigService {
     public function getDomainValidationApiUrl(): ?string {
         return $this->config->getSystemValue('souvera_central.domain_validation_api', null);
     }
+
+    // ============================================================================
+    // App-Einstellungen (App Config - in Nextcloud DB gespeichert)
+    // ============================================================================
+
+    /**
+     * Sichtbarkeits-Einstellung für ein Feld abrufen
+     *
+     * @param string $field - z.B. 'manager', 'groups', 'email', etc.
+     * @return bool
+     */
+    public function getVisibilitySetting(string $field): bool {
+        return (bool) $this->config->getAppValue('souvera_central', 'settings.visibility.' . $field, '1');
+    }
+
+    /**
+     * Alle Sichtbarkeits-Einstellungen abrufen
+     *
+     * @return array
+     */
+    public function getAllVisibilitySettings(): array {
+        return [
+            'manager' => $this->getVisibilitySetting('manager'),
+            'groups' => $this->getVisibilitySetting('groups'),
+            'storage_location' => $this->getVisibilitySetting('storage_location'),
+            'last_login' => $this->getVisibilitySetting('last_login'),
+            'email' => $this->getVisibilitySetting('email'),
+            'backend' => $this->getVisibilitySetting('backend'),
+        ];
+    }
+
+    /**
+     * Gruppen-Sortierung abrufen
+     *
+     * @return string - 'id', 'displayName', oder 'userCount'
+     */
+    public function getGroupSorting(): string {
+        return $this->config->getAppValue('souvera_central', 'settings.sorting.groups', 'displayName');
+    }
+
+    /**
+     * Prüfen ob E-Mails an neue Benutzer gesendet werden sollen
+     *
+     * @return bool
+     */
+    public function getSendEmailToNewUsers(): bool {
+        return (bool) $this->config->getAppValue('souvera_central', 'settings.email.send_to_new_users', '0');
+    }
+
+    /**
+     * Standard-Quota für neue Benutzer abrufen
+     *
+     * @return string - z.B. 'default', '5 GB', 'none'
+     */
+    public function getDefaultQuota(): string {
+        return $this->config->getAppValue('souvera_central', 'settings.defaults.quota', 'default');
+    }
 }

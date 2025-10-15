@@ -104,7 +104,6 @@
                                 <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
                                 <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
                                 <th class="email-column">{{ t('souvera_central', 'E-Mail') }}</th>
-                                <th class="groups-column">{{ t('souvera_central', 'Gruppen') }}</th>
                                 <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
                                 <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
                                 <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
@@ -120,14 +119,6 @@
                                 </td>
                                 <td class="displayname-column">{{ user.displayName }}</td>
                                 <td class="email-column">{{ user.email || '-' }}</td>
-                                <td class="groups-column">
-                                    <div class="groups-list">
-                                        <span v-for="group in user.groups" :key="group.id" class="group-badge">
-                                            {{ group.displayName }}
-                                        </span>
-                                        <span v-if="user.groups.length === 0" class="text-muted">-</span>
-                                    </div>
-                                </td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
                                 <td class="status-column">
                                     <!-- Eigener User: Nur Badge ohne Toggle -->
@@ -660,10 +651,6 @@ export default {
     width: 250px;
 }
 
-.groups-column {
-    width: 200px;
-}
-
 .quota-column {
     width: 120px;
 }
@@ -686,28 +673,6 @@ export default {
 
 .username {
     font-weight: 500;
-}
-
-/* Groups */
-.groups-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.group-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
-    border-radius: var(--border-radius-large);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.text-muted {
-    color: var(--color-text-maxcontrast);
-    font-size: 14px;
 }
 
 /* Status Badge Container (für eigenen User) */
