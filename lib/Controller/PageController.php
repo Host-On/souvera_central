@@ -23,7 +23,6 @@ class PageController extends Controller {
     /**
      * Rendert die Haupt-Seite der App
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function index(): TemplateResponse {
@@ -33,7 +32,6 @@ class PageController extends Controller {
     /**
      * Rendert das Dashboard
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function dashboard(): TemplateResponse {
@@ -43,7 +41,6 @@ class PageController extends Controller {
     /**
      * Rendert die Benutzerverwaltung
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function users(): TemplateResponse {
@@ -53,7 +50,6 @@ class PageController extends Controller {
     /**
      * Rendert "Neuer Benutzer"
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function usersNew(): TemplateResponse {
@@ -63,7 +59,6 @@ class PageController extends Controller {
     /**
      * Rendert "Benutzer bearbeiten"
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function usersEdit(string $id): TemplateResponse {
@@ -73,7 +68,6 @@ class PageController extends Controller {
     /**
      * Rendert die Gruppenverwaltung
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function groups(): TemplateResponse {
@@ -83,7 +77,6 @@ class PageController extends Controller {
     /**
      * Rendert die Einstellungen
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function settings(): TemplateResponse {

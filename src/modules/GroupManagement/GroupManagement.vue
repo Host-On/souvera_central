@@ -154,6 +154,16 @@ export default {
         this.loadSettings()
         this.loadGroups()
         this.checkInitialAction()
+
+        // Event-Listener für URL-Änderungen
+        window.addEventListener('popstate', this.handleUrlChange) // Browser Back/Forward
+        window.addEventListener('route-changed', this.handleUrlChange) // Sidebar-Navigation
+    },
+
+    beforeUnmount() {
+        // Cleanup event listeners
+        window.removeEventListener('popstate', this.handleUrlChange)
+        window.removeEventListener('route-changed', this.handleUrlChange)
     },
 
     methods: {
@@ -170,6 +180,21 @@ export default {
             } else if (action === 'edit' && groupId) {
                 // Lade Gruppe und öffne Editor
                 this.loadAndEditGroup(groupId)
+            }
+        },
+
+        handleUrlChange() {
+            // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
+            const path = window.location.pathname
+            console.log('URL changed to:', path)
+
+            // Wenn URL zu /groups (ohne /new oder /edit/:id) geht → Editor schließen
+            if (path.endsWith('/groups') || path === generateUrl('/apps/souvera_central/groups')) {
+                if (this.showEditor) {
+                    console.log('Closing editor due to URL change')
+                    this.showEditor = false
+                    this.selectedGroup = null
+                }
             }
         },
 

@@ -31,8 +31,6 @@ class SettingsApiController extends OCSController {
 
     /**
      * Einstellungen abrufen
-     *
-     * @NoAdminRequired
      */
     public function getSettings(): DataResponse {
         $this->logger->info('SettingsApiController::getSettings() aufgerufen');
@@ -74,8 +72,6 @@ class SettingsApiController extends OCSController {
 
     /**
      * Einstellungen speichern
-     *
-     * @NoAdminRequired
      */
     public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null): DataResponse {
         $this->logger->info('SettingsApiController::updateSettings() aufgerufen');

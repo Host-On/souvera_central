@@ -39,7 +39,6 @@ class GroupApiController extends OCSController {
     /**
      * Liste aller Gruppen abrufen mit Suche und Pagination
      *
-     * @NoAdminRequired
      * @param string $search Suchbegriff für Gruppenname
      * @param int $limit Anzahl der Ergebnisse pro Seite (Standard: 20)
      * @param int $offset Start-Offset für Pagination (Standard: 0)
@@ -109,8 +108,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Einzelne Gruppe abrufen
-     *
-     * @NoAdminRequired
      */
     public function get(string $id): DataResponse {
         $this->logger->info('GroupApiController::get() aufgerufen für Gruppe: ' . $id);
@@ -146,8 +143,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Neue Gruppe erstellen
-     *
-     * @NoAdminRequired
      */
     public function create(string $groupId = '', string $displayName = ''): DataResponse {
         $this->logger->info('GroupApiController::create() aufgerufen für Gruppe: ' . $groupId);
@@ -218,8 +213,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Gruppe aktualisieren
-     *
-     * @NoAdminRequired
      */
     public function update(string $id, ?string $displayName = null): DataResponse {
         $this->logger->info('GroupApiController::update() aufgerufen für Gruppe: ' . $id);
@@ -265,8 +258,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Gruppe löschen
-     *
-     * @NoAdminRequired
      */
     public function delete(string $id): DataResponse {
         $this->logger->info('GroupApiController::delete() aufgerufen für Gruppe: ' . $id);
@@ -317,8 +308,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Mitglieder einer Gruppe abrufen
-     *
-     * @NoAdminRequired
      */
     public function getMembers(string $id, string $search = '', int $limit = 100, int $offset = 0): DataResponse {
         $this->logger->info('GroupApiController::getMembers() aufgerufen für Gruppe: ' . $id);
@@ -392,8 +381,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Benutzer zu Gruppe hinzufügen
-     *
-     * @NoAdminRequired
      */
     public function addMember(string $id, string $userId): DataResponse {
         $this->logger->info('GroupApiController::addMember() aufgerufen - Gruppe: ' . $id . ', User: ' . $userId);
@@ -454,8 +441,6 @@ class GroupApiController extends OCSController {
 
     /**
      * Benutzer aus Gruppe entfernen
-     *
-     * @NoAdminRequired
      */
     public function removeMember(string $id, string $userId): DataResponse {
         $this->logger->info('GroupApiController::removeMember() aufgerufen - Gruppe: ' . $id . ', User: ' . $userId);

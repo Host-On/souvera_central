@@ -48,7 +48,6 @@ class UserApiController extends OCSController {
     /**
      * Liste aller Benutzer abrufen mit Suche und Pagination
      *
-     * @NoAdminRequired
      * @param string $search Suchbegriff für Username, Displayname oder E-Mail
      * @param int $limit Anzahl der Ergebnisse pro Seite (Standard: 20)
      * @param int $offset Start-Offset für Pagination (Standard: 0)
@@ -124,8 +123,6 @@ class UserApiController extends OCSController {
 
     /**
      * Einzelnen Benutzer abrufen
-     *
-     * @NoAdminRequired
      */
     public function get(string $id): DataResponse {
         try {
@@ -160,8 +157,6 @@ class UserApiController extends OCSController {
 
     /**
      * Benutzer suchen (für Autocomplete)
-     *
-     * @NoAdminRequired
      */
     public function search(string $query = '', int $limit = 10): DataResponse {
         $this->logger->info('UserApiController::search() aufgerufen - query: "' . $query . '"');
@@ -199,8 +194,6 @@ class UserApiController extends OCSController {
 
     /**
      * Neuen Benutzer erstellen
-     *
-     * @NoAdminRequired
      */
     public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = ''): DataResponse {
         error_log('=== UserApiController::create() START ===');
@@ -213,6 +206,14 @@ class UserApiController extends OCSController {
             $postData = file_get_contents('php://input');
             error_log('POST body: ' . $postData);
 
+            // USERNAME/EMAIL-SYNC: Username automatisch aus Email setzen
+            // Grund: Stalwart Mail-Server benötigt Username = Email für IMAP-Login
+            if (!empty($email)) {
+                $username = $email;
+                error_log('Username/Email-Sync: Username automatisch auf Email gesetzt: ' . $username);
+                $this->logger->info('Username/Email-Sync aktiviert: ' . $username);
+            }
+
             // Validierung
             if (empty($username) || empty($displayName) || empty($email) || empty($password)) {
                 error_log('FEHLER: Pflichtfelder fehlen - username empty: ' . (empty($username) ? 'YES' : 'NO'));
@@ -223,6 +224,16 @@ class UserApiController extends OCSController {
                         'email_empty' => empty($email),
                         'password_empty' => empty($password)
                     ]],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Validierung: Username muss Email entsprechen (doppelte Absicherung)
+            if ($username !== $email) {
+                error_log('FEHLER: Username und Email müssen identisch sein');
+                $this->logger->error('Username/Email-Mismatch verhindert: username=' . $username . ', email=' . $email);
+                return new DataResponse(
+                    ['error' => 'Username und Email müssen identisch sein (erforderlich für Mail-Server Integration)'],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -333,8 +344,6 @@ class UserApiController extends OCSController {
 
     /**
      * Benutzer aktualisieren
-     *
-     * @NoAdminRequired
      */
     public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null): DataResponse {
         $this->logger->info('UserApiController::update() aufgerufen für User: ' . $id);
@@ -357,8 +366,19 @@ class UserApiController extends OCSController {
 
             // E-Mail aktualisieren
             if ($email !== null) {
+                // USERNAME/EMAIL-SYNC: Email-Änderung blockieren
+                // Grund: Username kann in Nextcloud nicht geändert werden, daher muss Email locked sein
+                $currentEmail = $user->getEMailAddress();
+                if ($email !== $currentEmail) {
+                    $this->logger->warning('Email-Änderung blockiert für User: ' . $id . ' (alt: ' . $currentEmail . ', neu: ' . $email . ')');
+                    return new DataResponse(
+                        ['error' => 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden (erforderlich für Mail-Server Integration)'],
+                        Http::STATUS_BAD_REQUEST
+                    );
+                }
+                // Falls Email identisch ist, trotzdem setzen (no-op, aber konsistent)
                 $user->setEMailAddress($email);
-                $this->logger->debug('E-Mail aktualisiert: ' . $email);
+                $this->logger->debug('E-Mail unverändert: ' . $email);
             }
 
             // Quota aktualisieren
@@ -428,8 +448,6 @@ class UserApiController extends OCSController {
 
     /**
      * Benutzer löschen
-     *
-     * @NoAdminRequired
      */
     public function delete(string $id): DataResponse {
         $this->logger->info('UserApiController::delete() aufgerufen für User: ' . $id);
@@ -473,8 +491,6 @@ class UserApiController extends OCSController {
 
     /**
      * Benutzer aktivieren
-     *
-     * @NoAdminRequired
      */
     public function enable(string $id): DataResponse {
         $this->logger->info('UserApiController::enable() aufgerufen für User: ' . $id);
@@ -507,8 +523,6 @@ class UserApiController extends OCSController {
 
     /**
      * Benutzer deaktivieren
-     *
-     * @NoAdminRequired
      */
     public function disable(string $id): DataResponse {
         $this->logger->info('UserApiController::disable() aufgerufen für User: ' . $id);
@@ -551,8 +565,6 @@ class UserApiController extends OCSController {
 
     /**
      * Alle Geräte trennen und lokale Daten löschen (Wipe Devices)
-     *
-     * @NoAdminRequired
      */
     public function wipeDevices(string $id): DataResponse {
         $this->logger->info('UserApiController::wipeDevices() aufgerufen für User: ' . $id);
@@ -590,8 +602,6 @@ class UserApiController extends OCSController {
 
     /**
      * Willkommens-Email erneut versenden
-     *
-     * @NoAdminRequired
      */
     public function resendWelcomeEmail(string $id): DataResponse {
         $this->logger->info('UserApiController::resendWelcomeEmail() aufgerufen für User: ' . $id);
@@ -654,8 +664,6 @@ class UserApiController extends OCSController {
 
     /**
      * Aktuellen Benutzer abrufen
-     *
-     * @NoAdminRequired
      */
     public function getCurrentUser(): DataResponse {
         try {
@@ -684,8 +692,6 @@ class UserApiController extends OCSController {
 
     /**
      * Config-Informationen abrufen
-     *
-     * @NoAdminRequired
      */
     public function getConfig(): DataResponse {
         try {
@@ -705,8 +711,6 @@ class UserApiController extends OCSController {
 
     /**
      * Debug-Endpoint für Troubleshooting
-     *
-     * @NoAdminRequired
      */
     public function debug(): DataResponse {
         error_log('=== DEBUG ENDPOINT CALLED ===');
@@ -734,8 +738,6 @@ class UserApiController extends OCSController {
 
     /**
      * Liste aller Gruppen abrufen
-     *
-     * @NoAdminRequired
      */
     public function listGroups(): DataResponse {
         $this->logger->info('UserApiController::listGroups() aufgerufen');

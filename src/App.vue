@@ -145,6 +145,10 @@ export default {
             window.history.pushState({ route }, '', url)
 
             this.updateCurrentPath()
+
+            // WICHTIG: Dispatch custom event damit Child-Komponenten reagieren können
+            // popstate wird NICHT bei pushState gefeuert!
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route, url } }))
         },
 
         updateUserCount(count) {

@@ -278,6 +278,16 @@ export default {
         this.loadCurrentUser()
         this.loadUsers()
         this.checkInitialAction()
+
+        // Event-Listener für URL-Änderungen
+        window.addEventListener('popstate', this.handleUrlChange) // Browser Back/Forward
+        window.addEventListener('route-changed', this.handleUrlChange) // Sidebar-Navigation
+    },
+
+    beforeUnmount() {
+        // Cleanup event listeners
+        window.removeEventListener('popstate', this.handleUrlChange)
+        window.removeEventListener('route-changed', this.handleUrlChange)
     },
 
     methods: {
@@ -307,6 +317,21 @@ export default {
             } else if (action === 'edit' && userId) {
                 // Lade User und öffne Editor
                 this.loadAndEditUser(userId)
+            }
+        },
+
+        handleUrlChange() {
+            // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
+            const path = window.location.pathname
+            console.log('URL changed to:', path)
+
+            // Wenn URL zu /users (ohne /new oder /edit/:id) geht → Editor schließen
+            if (path.endsWith('/users') || path === generateUrl('/apps/souvera_central/users')) {
+                if (this.showEditor) {
+                    console.log('Closing editor due to URL change')
+                    this.showEditor = false
+                    this.selectedUser = null
+                }
             }
         },
 

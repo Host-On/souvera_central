@@ -14,36 +14,7 @@
         <!-- Form -->
         <div class="editor-content">
             <form @submit.prevent="saveUser" class="user-form">
-                <!-- Benutzername -->
-                <div class="form-group">
-                    <label for="username" class="required">
-                        {{ t('souvera_central', 'Benutzername') }}
-                    </label>
-                    <div class="input-with-icon">
-                        <input
-                            id="username"
-                            v-model="formData.username"
-                            type="text"
-                            :disabled="isEditMode"
-                            :class="{
-                                error: errors.username,
-                                success: formData.username && !isEditMode && !errors.username && !validating.username
-                            }"
-                            @input="debouncedUsernameCheck"
-                            @blur="validateUsernameNow"
-                            required
-                        />
-                        <span v-if="validating.username" class="input-icon icon-loading-small"></span>
-                        <span
-                            v-else-if="formData.username && !isEditMode && !errors.username"
-                            class="input-icon icon-checkmark success-icon"
-                        ></span>
-                    </div>
-                    <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
-                    <p v-else class="help-text">
-                        {{ t('souvera_central', 'Eindeutiger Benutzername, kann später nicht geändert werden') }}
-                    </p>
-                </div>
+                <!-- Benutzername-Feld entfernt: Username wird automatisch aus Email generiert (Backend) -->
 
                 <!-- Anzeigename -->
                 <div class="form-group">
@@ -298,7 +269,6 @@ export default {
     data() {
         return {
             formData: {
-                username: '',
                 displayName: '',
                 email: '',
                 password: '',
@@ -311,20 +281,17 @@ export default {
             emailLocalPart: '',
             emailDomain: '',
             errors: {
-                username: null,
                 displayName: null,
                 email: null,
                 password: null
             },
             validating: {
-                username: false,
                 email: false
             },
             availableGroups: [],
             saving: false,
             resendingEmail: false,
             wipingDevices: false,
-            usernameCheckTimeout: null,
             initialManagerData: null,
             settings: {
                 defaults: {
@@ -354,11 +321,9 @@ export default {
 
         isFormValid() {
             return (
-                this.formData.username &&
                 this.formData.displayName &&
                 this.formData.email &&
                 (!this.isEditMode ? this.formData.password : true) &&
-                !this.errors.username &&
                 !this.errors.displayName &&
                 !this.errors.email &&
                 !this.errors.password
@@ -372,7 +337,6 @@ export default {
 
         if (this.isEditMode) {
             this.formData = {
-                username: this.user.id,
                 displayName: this.user.displayName,
                 email: this.user.email,
                 password: '',
@@ -452,95 +416,6 @@ export default {
             }
         },
 
-        debouncedUsernameCheck() {
-            // Clear previous timeout
-            if (this.usernameCheckTimeout) {
-                clearTimeout(this.usernameCheckTimeout)
-            }
-
-            // Einfache Validierung sofort
-            this.errors.username = null
-            if (!this.formData.username) {
-                this.errors.username = this.t('souvera_central', 'Benutzername ist erforderlich')
-                return
-            }
-
-            if (this.formData.username.length < 3) {
-                this.errors.username = this.t('souvera_central', 'Benutzername muss mindestens 3 Zeichen lang sein')
-                return
-            }
-
-            // API-Check mit delay
-            this.usernameCheckTimeout = setTimeout(() => {
-                this.validateUsernameNow()
-            }, 500)
-        },
-
-        async validateUsernameNow() {
-            if (this.isEditMode) {
-                return
-            }
-
-            if (!this.formData.username || this.formData.username.length < 3) {
-                this.validating.username = false
-                return
-            }
-
-            this.validating.username = true
-            this.errors.username = null
-
-            try {
-                const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.formData.username })
-                console.log('Checking username availability:', this.formData.username, 'URL:', url)
-                const response = await axios.get(url)
-                console.log('Username check response:', response.data)
-
-                // OCS API: HTTP status ist immer 200, aber meta.statuscode zeigt echten Status
-                const ocsStatusCode = response.data?.ocs?.meta?.statuscode
-                console.log('OCS Status Code:', ocsStatusCode)
-
-                if (ocsStatusCode === 100) {
-                    // User gefunden (statuscode 100 = OK) = Username bereits vergeben
-                    console.log('Username taken!')
-                    this.errors.username = this.t('souvera_central', 'Benutzername bereits vergeben')
-                } else if (ocsStatusCode === 404) {
-                    // User nicht gefunden = Username verfügbar ✓
-                    console.log('Username available!')
-                    this.errors.username = null
-                }
-            } catch (error) {
-                console.log('Username check error:', error)
-                // Bei echtem HTTP-Fehler (Netzwerk, Server down etc.)
-                if (error.response?.status === 404) {
-                    // Username verfügbar
-                    console.log('Username available (404)!')
-                    this.errors.username = null
-                } else {
-                    console.error('Fehler bei Username-Prüfung:', error)
-                }
-            } finally {
-                this.validating.username = false
-            }
-        },
-
-        validateUsername() {
-            this.errors.username = null
-
-            if (!this.formData.username) {
-                this.errors.username = this.t('souvera_central', 'Benutzername ist erforderlich')
-                return
-            }
-
-            if (this.formData.username.length < 3) {
-                this.errors.username = this.t('souvera_central', 'Benutzername muss mindestens 3 Zeichen lang sein')
-                return
-            }
-
-            if (!/^[a-zA-Z0-9_-]+$/.test(this.formData.username)) {
-                this.errors.username = this.t('souvera_central', 'Nur Buchstaben, Zahlen, _ und - erlaubt')
-            }
-        },
-
         validateDisplayName() {
             this.errors.displayName = null
 
@@ -601,7 +476,6 @@ export default {
 
         async saveUser() {
             // Validate all fields
-            this.validateUsername()
             this.validateDisplayName()
             this.validateEmail()
             this.validatePassword()
@@ -616,7 +490,8 @@ export default {
             try {
                 if (this.isEditMode) {
                     // Update existing user
-                    const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.formData.username })
+                    // Username wird aus user.id genommen (wurde bei Erstellung aus Email generiert)
+                    const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.user.id })
 
                     console.log('=== UPDATE USER REQUEST ===')
                     console.log('URL:', url)
@@ -642,9 +517,10 @@ export default {
                     console.log('Data:', response.data)
                 } else {
                     // Create new user
+                    // Username wird vom Backend automatisch aus Email generiert
                     const url = generateUrl('/apps/souvera_central/api/users')
                     const payload = {
-                        username: this.formData.username,
+                        username: this.formData.email, // Backend setzt username = email automatisch
                         displayName: this.formData.displayName,
                         email: this.formData.email,
                         password: this.formData.password,
@@ -670,8 +546,9 @@ export default {
                     // Auto-Email senden wenn aktiviert
                     if (this.settings.email.send_to_new_users) {
                         try {
+                            // Username ist Email (vom Backend gesetzt)
                             const emailUrl = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', {
-                                id: this.formData.username
+                                id: this.formData.email
                             })
                             await axios.post(emailUrl)
                             console.log('Willkommens-Email automatisch versendet an:', this.formData.email)
@@ -750,8 +627,9 @@ export default {
                     this.resendingEmail = true
 
                     try {
+                        // Username ist Email (im Edit-Mode ist user.id = Email)
                         const url = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', {
-                            id: this.formData.username
+                            id: this.user.id
                         })
                         await axios.post(url)
 
@@ -817,8 +695,9 @@ export default {
                     this.wipingDevices = true
 
                     try {
+                        // Username ist Email (im Edit-Mode ist user.id = Email)
                         const url = generateUrl('/apps/souvera_central/api/users/{id}/wipe-devices', {
-                            id: this.formData.username
+                            id: this.user.id
                         })
                         await axios.post(url)
 

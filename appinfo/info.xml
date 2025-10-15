@@ -31,7 +31,7 @@
     </dependencies>
 
     <navigations>
-        <navigation>
+        <navigation role="admin">
             <name>Central</name>
             <route>souvera_central.page.index</route>
             <icon>app.svg</icon>
