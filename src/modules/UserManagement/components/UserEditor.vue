@@ -138,17 +138,11 @@
                         {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
                     </label>
                     <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
-                    <div class="groups-selector">
-                        <div v-for="group in availableGroups" :key="group.id" class="group-checkbox">
-                            <input
-                                :id="'group-' + group.id"
-                                v-model="formData.groups"
-                                type="checkbox"
-                                :value="group.id"
-                            />
-                            <label :for="'group-' + group.id">{{ group.displayName }}</label>
-                        </div>
-                    </div>
+                    <GroupSelector
+                        v-model="formData.groups"
+                        :available-groups="availableGroups"
+                        mode="member"
+                    />
                 </div>
 
                 <!-- Gruppen-Administration -->
@@ -157,17 +151,11 @@
                         {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
                     </label>
                     <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
-                    <div class="groups-selector">
-                        <div v-for="group in availableGroups" :key="group.id" class="group-checkbox">
-                            <input
-                                :id="'admingroup-' + group.id"
-                                v-model="formData.adminGroups"
-                                type="checkbox"
-                                :value="group.id"
-                            />
-                            <label :for="'admingroup-' + group.id">{{ group.displayName }}</label>
-                        </div>
-                    </div>
+                    <GroupSelector
+                        v-model="formData.adminGroups"
+                        :available-groups="availableGroups"
+                        mode="admin"
+                    />
                 </div>
 
                 <!-- Speicherplatz Quota -->
@@ -269,12 +257,14 @@ import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import ManagerSelector from './ManagerSelector.vue'
+import GroupSelector from './GroupSelector.vue'
 
 export default {
     name: 'UserEditor',
 
     components: {
-        ManagerSelector
+        ManagerSelector,
+        GroupSelector
     },
 
     props: {
@@ -934,37 +924,6 @@ export default {
     display: flex;
     align-items: center;
     gap: 5px;
-}
-
-/* Groups Selector */
-.groups-selector {
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: 12px;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.group-checkbox {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    border-radius: var(--border-radius);
-    transition: background 0.2s;
-}
-
-.group-checkbox:hover {
-    background: var(--color-background-hover);
-}
-
-.group-checkbox input[type='checkbox'] {
-    margin: 0 10px 0 0;
-}
-
-.group-checkbox label {
-    margin: 0;
-    cursor: pointer;
-    font-weight: normal;
 }
 
 /* Checkbox Group */
