@@ -19,14 +19,30 @@ return [
         ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
 
         // User API-Routen
+        ['name' => 'user_api#getCurrentUser', 'url' => '/api/users/current', 'verb' => 'GET'],
         ['name' => 'user_api#list', 'url' => '/api/users', 'verb' => 'GET'],
+        ['name' => 'user_api#search', 'url' => '/api/users/search', 'verb' => 'GET'],
         ['name' => 'user_api#get', 'url' => '/api/users/{id}', 'verb' => 'GET'],
         ['name' => 'user_api#create', 'url' => '/api/users', 'verb' => 'POST'],
         ['name' => 'user_api#update', 'url' => '/api/users/{id}', 'verb' => 'PUT'],
         ['name' => 'user_api#delete', 'url' => '/api/users/{id}', 'verb' => 'DELETE'],
+        ['name' => 'user_api#enable', 'url' => '/api/users/{id}/enable', 'verb' => 'POST'],
+        ['name' => 'user_api#disable', 'url' => '/api/users/{id}/disable', 'verb' => 'POST'],
+        ['name' => 'user_api#wipeDevices', 'url' => '/api/users/{id}/wipe-devices', 'verb' => 'POST'],
+        ['name' => 'user_api#resendWelcomeEmail', 'url' => '/api/users/{id}/resend-welcome-email', 'verb' => 'POST'],
 
-        // Groups API-Routen
+        // Groups API-Routen (einfache Liste für User-Management)
         ['name' => 'user_api#listGroups', 'url' => '/api/groups', 'verb' => 'GET'],
+
+        // Group Management API-Routen (vollständige CRUD-Operationen)
+        ['name' => 'group_api#list', 'url' => '/api/groups/manage', 'verb' => 'GET'],
+        ['name' => 'group_api#get', 'url' => '/api/groups/manage/{id}', 'verb' => 'GET'],
+        ['name' => 'group_api#create', 'url' => '/api/groups/manage', 'verb' => 'POST'],
+        ['name' => 'group_api#update', 'url' => '/api/groups/manage/{id}', 'verb' => 'PUT'],
+        ['name' => 'group_api#delete', 'url' => '/api/groups/manage/{id}', 'verb' => 'DELETE'],
+        ['name' => 'group_api#getMembers', 'url' => '/api/groups/manage/{id}/members', 'verb' => 'GET'],
+        ['name' => 'group_api#addMember', 'url' => '/api/groups/manage/{id}/members', 'verb' => 'POST'],
+        ['name' => 'group_api#removeMember', 'url' => '/api/groups/manage/{id}/members/{userId}', 'verb' => 'DELETE'],
 
         // Config API-Route
         ['name' => 'user_api#getConfig', 'url' => '/api/config', 'verb' => 'GET'],

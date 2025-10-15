@@ -180,11 +180,9 @@
             {{ t('souvera_central', 'Manager') }}
           </label>
           <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
-          <input
-            id="manager"
+          <ManagerSelector
             v-model="formData.manager"
-            type="text"
-            :placeholder="t('souvera_central', 'Manager-Benutzername')"
+            :initial-manager="initialManagerData"
           />
         </div>
 
@@ -198,6 +196,24 @@
           <label for="enabled">
             {{ t('souvera_central', 'Benutzer aktiviert') }}
           </label>
+        </div>
+
+        <!-- Danger Zone (nur im Edit-Mode) -->
+        <div v-if="isEditMode" class="danger-zone">
+          <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
+          <div class="danger-actions">
+            <button type="button" class="action-button secondary" @click="resendWelcomeEmail" :disabled="resendingEmail">
+              <span v-if="resendingEmail" class="icon-loading-small"></span>
+              <span v-else class="icon-mail"></span>
+              {{ resendingEmail ? t('souvera_central', 'Sendet...') : t('souvera_central', 'Willkommens-Email erneut versenden') }}
+            </button>
+
+            <button type="button" class="action-button danger" @click="wipeDevices" :disabled="wipingDevices">
+              <span v-if="wipingDevices" class="icon-loading-small"></span>
+              <span v-else class="icon-delete"></span>
+              {{ wipingDevices ? t('souvera_central', 'Trennt...') : t('souvera_central', 'Alle Geräte trennen & Daten löschen') }}
+            </button>
+          </div>
         </div>
 
         <!-- Form Actions -->
@@ -224,9 +240,14 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import ManagerSelector from './ManagerSelector.vue'
 
 export default {
   name: 'UserEditor',
+
+  components: {
+    ManagerSelector
+  },
 
   props: {
     user: {
@@ -268,7 +289,10 @@ export default {
       },
       availableGroups: [],
       saving: false,
-      usernameCheckTimeout: null
+      resendingEmail: false,
+      wipingDevices: false,
+      usernameCheckTimeout: null,
+      initialManagerData: null
     }
   },
 
@@ -301,8 +325,13 @@ export default {
         groups: this.user.groups.map(g => g.id),
         adminGroups: [],
         quota: this.user.quota.quota,
-        manager: '',
+        manager: this.user.manager || '',
         enabled: this.user.enabled
+      }
+
+      // Manager-Daten für ManagerSelector vorbereiten
+      if (this.user.manager) {
+        this.loadManagerData(this.user.manager)
       }
 
       // Parse Email für Dropdown
@@ -525,7 +554,8 @@ export default {
             email: this.formData.email,
             groups: this.formData.groups,
             quota: this.formData.quota,
-            enabled: this.formData.enabled
+            enabled: this.formData.enabled,
+            manager: this.formData.manager
           })
 
           console.log('=== UPDATE USER RESPONSE ===')
@@ -541,7 +571,8 @@ export default {
             password: this.formData.password,
             groups: this.formData.groups,
             quota: this.formData.quota,
-            enabled: this.formData.enabled
+            enabled: this.formData.enabled,
+            manager: this.formData.manager
           }
 
           console.log('=== CREATE USER REQUEST ===')
@@ -586,6 +617,70 @@ export default {
         alert(errorMessage + (debugInfo ? '\n\nDebug: ' + debugInfo : '')) // TODO: Bessere Error-UI
       } finally {
         this.saving = false
+      }
+    },
+
+    async loadManagerData(managerId) {
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: managerId })
+        const response = await axios.get(url)
+        const userData = response.data.ocs?.data || response.data.data || response.data
+
+        if (userData) {
+          this.initialManagerData = {
+            id: userData.id,
+            displayName: userData.displayName,
+            email: userData.email || ''
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Manager-Daten:', error)
+      }
+    },
+
+    async resendWelcomeEmail() {
+      if (!confirm(this.t('souvera_central', 'Möchten Sie die Willkommens-Email wirklich erneut versenden?'))) {
+        return
+      }
+
+      this.resendingEmail = true
+
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/{id}/resend-welcome-email', { id: this.formData.username })
+        await axios.post(url)
+
+        alert(this.t('souvera_central', 'Willkommens-Email wurde erfolgreich versendet'))
+      } catch (error) {
+        console.error('Fehler beim Versenden der Willkommens-Email:', error)
+        const errorMessage = error.response?.data?.ocs?.data?.error || error.response?.data?.error || this.t('souvera_central', 'Fehler beim Versenden der E-Mail')
+        alert(errorMessage)
+      } finally {
+        this.resendingEmail = false
+      }
+    },
+
+    async wipeDevices() {
+      const confirmed = confirm(
+        this.t('souvera_central', 'WARNUNG: Diese Aktion trennt ALLE Geräte dieses Benutzers und löscht lokale Daten. Der Benutzer muss sich überall neu anmelden. Fortfahren?')
+      )
+
+      if (!confirmed) {
+        return
+      }
+
+      this.wipingDevices = true
+
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/{id}/wipe-devices', { id: this.formData.username })
+        await axios.post(url)
+
+        alert(this.t('souvera_central', 'Alle Geräte wurden erfolgreich getrennt'))
+      } catch (error) {
+        console.error('Fehler beim Trennen der Geräte:', error)
+        const errorMessage = error.response?.data?.ocs?.data?.error || error.response?.data?.error || this.t('souvera_central', 'Fehler beim Trennen der Geräte')
+        alert(errorMessage)
+      } finally {
+        this.wipingDevices = false
       }
     }
   }
@@ -889,5 +984,68 @@ export default {
 
 .form-actions button.secondary:hover {
   background: var(--color-background-hover);
+}
+
+/* Danger Zone */
+.danger-zone {
+  margin-top: 40px;
+  padding: 25px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-large);
+  background: var(--color-background-dark);
+}
+
+.danger-zone h3 {
+  margin: 0 0 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.danger-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  border: none;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.secondary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.action-button.secondary:hover:not(:disabled) {
+  background: var(--color-primary-element-light);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.action-button.danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.action-button.danger:hover:not(:disabled) {
+  background: #c9302c;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 </style>

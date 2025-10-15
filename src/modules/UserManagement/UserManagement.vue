@@ -87,7 +87,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.id" class="user-row" @click="selectUser(user)">
+              <tr v-for="user in users" :key="user.id" class="user-row">
                 <td class="user-column">
                   <div class="user-info">
                     <span class="icon-user"></span>
@@ -106,9 +106,24 @@
                 </td>
                 <td class="quota-column">{{ user.quota.quota }}</td>
                 <td class="status-column">
-                  <span :class="['status-badge', user.enabled ? 'status-enabled' : 'status-disabled']">
+                  <!-- Eigener User: Nur Badge ohne Toggle -->
+                  <div v-if="user.id === currentUserId" class="status-badge-container">
+                    <span :class="['status-badge', 'status-enabled']">
+                      <span class="status-icon icon-checkmark"></span>
+                      {{ t('souvera_central', 'Aktiv') }}
+                    </span>
+                    <span class="own-user-hint">(Sie)</span>
+                  </div>
+                  <!-- Andere User: Toggle-Button -->
+                  <button
+                    v-else
+                    :class="['status-toggle', user.enabled ? 'status-enabled' : 'status-disabled']"
+                    :title="user.enabled ? t('souvera_central', 'Benutzer deaktivieren') : t('souvera_central', 'Benutzer aktivieren')"
+                    @click.stop="toggleUserStatus(user)"
+                  >
+                    <span class="status-icon" :class="user.enabled ? 'icon-checkmark' : 'icon-close'"></span>
                     {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Deaktiviert') }}
-                  </span>
+                  </button>
                 </td>
                 <td class="actions-column">
                   <div class="user-actions">
@@ -140,6 +155,19 @@
         <p v-else>{{ t('souvera_central', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :is-open="confirmModal.isOpen"
+      :title="confirmModal.title"
+      :message="confirmModal.message"
+      :details="confirmModal.details"
+      :type="confirmModal.type"
+      :confirm-text="confirmModal.confirmText"
+      :cancel-text="confirmModal.cancelText"
+      @confirm="confirmModal.onConfirm"
+      @close="closeConfirmModal"
+    />
   </div>
 </template>
 
@@ -150,6 +178,7 @@ import { generateUrl } from '@nextcloud/router'
 import UserEditor from './components/UserEditor.vue'
 import SearchField from '../../components/SearchField.vue'
 import Pagination from '../../components/Pagination.vue'
+import ConfirmationModal from '../../components/ConfirmationModal.vue'
 
 export default {
   name: 'UserManagement',
@@ -157,7 +186,8 @@ export default {
   components: {
     UserEditor,
     SearchField,
-    Pagination
+    Pagination,
+    ConfirmationModal
   },
 
   props: {
@@ -195,17 +225,42 @@ export default {
       showEditor: false,
       searchQuery: '',
       currentPage: 1,
-      perPage: 20
+      perPage: 20,
+      currentUserId: null, // ID des aktuell angemeldeten Benutzers
+      confirmModal: {
+        isOpen: false,
+        title: '',
+        message: '',
+        details: '',
+        type: 'info',
+        confirmText: 'Bestätigen',
+        cancelText: 'Abbrechen',
+        onConfirm: () => {}
+      }
     }
   },
 
   mounted() {
+    this.loadCurrentUser()
     this.loadUsers()
     this.checkInitialAction()
   },
 
   methods: {
     t,
+
+    async loadCurrentUser() {
+      try {
+        const url = generateUrl('/apps/souvera_central/api/users/current')
+        const response = await axios.get(url)
+        const data = response.data.ocs?.data || response.data.data || response.data
+
+        this.currentUserId = data.id
+        console.log('Aktueller Benutzer geladen:', this.currentUserId)
+      } catch (error) {
+        console.error('Fehler beim Laden des aktuellen Benutzers:', error)
+      }
+    },
 
     checkInitialAction() {
       // Prüfe ob wir von /users/new oder /users/edit/:id kommen
@@ -300,15 +355,6 @@ export default {
       this.loadUsers()
     },
 
-    selectUser(user) {
-      // Navigate to /users/edit/:id
-      const url = generateUrl('/apps/souvera_central/users/edit/{id}', { id: user.id })
-      window.history.pushState({}, '', url)
-
-      this.selectedUser = user
-      this.showEditor = true
-    },
-
     createNewUser() {
       if (this.isLicenseLimitReached) {
         alert(this.t('souvera_central', 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'))
@@ -372,6 +418,60 @@ export default {
 
         alert(errorMessage)
       }
+    },
+
+    async toggleUserStatus(user) {
+      // Öffne Confirmation Modal
+      const action = user.enabled ? 'deaktivieren' : 'aktivieren'
+      const actionPast = user.enabled ? 'deaktiviert' : 'aktiviert'
+
+      this.confirmModal = {
+        isOpen: true,
+        title: user.enabled
+          ? this.t('souvera_central', 'Benutzer deaktivieren?')
+          : this.t('souvera_central', 'Benutzer aktivieren?'),
+        message: this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich {action}?', {
+          user: user.displayName,
+          action: action
+        }),
+        details: user.enabled
+          ? this.t('souvera_central', 'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.')
+          : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
+        type: user.enabled ? 'warning' : 'info',
+        confirmText: user.enabled
+          ? this.t('souvera_central', 'Deaktivieren')
+          : this.t('souvera_central', 'Aktivieren'),
+        cancelText: this.t('souvera_central', 'Abbrechen'),
+        onConfirm: async () => {
+          try {
+            const apiAction = user.enabled ? 'disable' : 'enable'
+            const url = generateUrl('/apps/souvera_central/api/users/{id}/{action}', { id: user.id, action: apiAction })
+
+            await axios.post(url)
+
+            // Status lokal aktualisieren ohne komplettes Reload
+            user.enabled = !user.enabled
+
+            // Success-Feedback (optional)
+            console.log(`Benutzer ${user.displayName} wurde ${actionPast}`)
+          } catch (error) {
+            console.error('Fehler beim Ändern des Benutzer-Status:', error)
+
+            let errorMessage = this.t('souvera_central', 'Fehler beim Ändern des Status')
+            if (error.response?.data?.ocs?.data?.error) {
+              errorMessage = error.response.data.ocs.data.error
+            } else if (error.response?.data?.error) {
+              errorMessage = error.response.data.error
+            }
+
+            alert(errorMessage)
+          }
+        }
+      }
+    },
+
+    closeConfirmModal() {
+      this.confirmModal.isOpen = false
     }
   }
 }
@@ -480,11 +580,6 @@ export default {
 .users-table tbody tr {
   border-bottom: 1px solid var(--color-border);
   transition: background-color 0.2s;
-  cursor: pointer;
-}
-
-.users-table tbody tr:hover {
-  background: var(--color-background-hover);
 }
 
 .users-table tbody tr:last-child {
@@ -559,23 +654,76 @@ export default {
   font-size: 14px;
 }
 
-/* Status Badge */
+/* Status Badge Container (für eigenen User) */
+.status-badge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .status-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   border-radius: var(--border-radius-large);
   font-size: 13px;
   font-weight: 600;
 }
 
-.status-enabled {
+.status-badge.status-enabled {
   background: var(--color-success);
   color: white;
 }
 
-.status-disabled {
+.own-user-hint {
+  font-size: 12px;
+  color: var(--color-text-lighter);
+  font-style: italic;
+  padding-left: 4px;
+}
+
+/* Status Toggle Button (für andere User) */
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--border-radius-large);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.status-toggle.status-enabled {
+  background: var(--color-success);
+  color: white;
+}
+
+.status-toggle.status-enabled:hover {
+  background: #46a049;
+}
+
+.status-toggle.status-disabled {
   background: var(--color-error);
   color: white;
+}
+
+.status-toggle.status-disabled:hover {
+  background: #c9302c;
+}
+
+.status-icon {
+  font-size: 14px;
+  opacity: 0.9;
 }
 
 /* Actions */

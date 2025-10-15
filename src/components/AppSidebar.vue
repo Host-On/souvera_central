@@ -40,7 +40,7 @@ export default {
       type: Number,
       default: 10
     }
-  }
+  },
 
   data() {
     return {

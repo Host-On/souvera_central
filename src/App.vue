@@ -33,6 +33,8 @@
       <!-- Group Management -->
       <GroupManagement
         v-else-if="currentRoute === 'groups'"
+        :key="routeKey"
+        @groups-loaded="updateGroupCount"
       />
 
       <!-- Settings -->
@@ -151,6 +153,10 @@ export default {
 
     updateUserCount(count) {
       this.userCount = count
+    },
+
+    updateGroupCount(count) {
+      this.groupCount = count
     },
 
     async loadConfig() {

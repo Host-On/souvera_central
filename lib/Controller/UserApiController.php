@@ -16,6 +16,7 @@ use OCP\IGroupManager;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCP\IUserSession;
 
 class UserApiController extends OCSController {
     private $userManager;
@@ -23,6 +24,7 @@ class UserApiController extends OCSController {
     private $config;
     private $logger;
     private $configService;
+    private $userSession;
 
     public function __construct(
         string $appName,
@@ -31,7 +33,8 @@ class UserApiController extends OCSController {
         IGroupManager $groupManager,
         IConfig $config,
         LoggerInterface $logger,
-        ConfigService $configService
+        ConfigService $configService,
+        IUserSession $userSession
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -39,6 +42,7 @@ class UserApiController extends OCSController {
         $this->config = $config;
         $this->logger = $logger;
         $this->configService = $configService;
+        $this->userSession = $userSession;
     }
 
     /**
@@ -142,6 +146,7 @@ class UserApiController extends OCSController {
                 'lastLogin' => $user->getLastLogin(),
                 'quota' => $this->getUserQuota($id),
                 'groups' => $this->getUserGroups($id),
+                'manager' => $this->config->getUserValue($id, 'souvera_central', 'manager', ''),
             ];
 
             return new DataResponse($userData);
@@ -154,11 +159,50 @@ class UserApiController extends OCSController {
     }
 
     /**
+     * Benutzer suchen (für Autocomplete)
+     *
+     * @NoAdminRequired
+     */
+    public function search(string $query = '', int $limit = 10): DataResponse {
+        $this->logger->info('UserApiController::search() aufgerufen - query: "' . $query . '"');
+
+        try {
+            if (empty($query) || strlen($query) < 2) {
+                return new DataResponse([
+                    'users' => []
+                ]);
+            }
+
+            // Benutzer durchsuchen
+            $users = $this->userManager->search($query, $limit);
+            $results = [];
+
+            foreach ($users as $user) {
+                $results[] = [
+                    'id' => $user->getUID(),
+                    'displayName' => $user->getDisplayName(),
+                    'email' => $user->getEMailAddress() ?? ''
+                ];
+            }
+
+            return new DataResponse([
+                'users' => $results
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler bei User-Suche: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
      * Neuen Benutzer erstellen
      *
      * @NoAdminRequired
      */
-    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true): DataResponse {
+    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = ''): DataResponse {
         error_log('=== UserApiController::create() START ===');
         error_log('Empfangene Parameter: username=' . $username . ', displayName=' . $displayName . ', email=' . $email . ', groups=' . json_encode($groups));
 
@@ -251,6 +295,12 @@ class UserApiController extends OCSController {
                 }
             }
 
+            // Manager setzen
+            if (!empty($manager)) {
+                $this->config->setUserValue($username, 'souvera_central', 'manager', $manager);
+                $this->logger->debug('Manager gesetzt: ' . $manager);
+            }
+
             $this->logger->info('Benutzer erfolgreich erstellt: ' . $username);
             error_log('=== UserApiController::create() SUCCESS ===');
 
@@ -286,7 +336,7 @@ class UserApiController extends OCSController {
      *
      * @NoAdminRequired
      */
-    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null): DataResponse {
+    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null): DataResponse {
         $this->logger->info('UserApiController::update() aufgerufen für User: ' . $id);
 
         try {
@@ -339,6 +389,16 @@ class UserApiController extends OCSController {
                         $this->logger->debug('User zu Gruppe hinzugefügt: ' . $groupId);
                     }
                 }
+            }
+
+            // Manager aktualisieren
+            if ($manager !== null) {
+                if (empty($manager)) {
+                    $this->config->deleteUserValue($id, 'souvera_central', 'manager');
+                } else {
+                    $this->config->setUserValue($id, 'souvera_central', 'manager', $manager);
+                }
+                $this->logger->debug('Manager aktualisiert: ' . $manager);
             }
 
             $this->logger->info('Benutzer erfolgreich aktualisiert: ' . $id);
@@ -404,6 +464,217 @@ class UserApiController extends OCSController {
             $this->logger->error('Fehler beim Löschen des Benutzers: ' . $e->getMessage(), [
                 'exception' => $e
             ]);
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Benutzer aktivieren
+     *
+     * @NoAdminRequired
+     */
+    public function enable(string $id): DataResponse {
+        $this->logger->info('UserApiController::enable() aufgerufen für User: ' . $id);
+
+        try {
+            $user = $this->userManager->get($id);
+
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            $user->setEnabled(true);
+            $this->logger->info('Benutzer erfolgreich aktiviert: ' . $id);
+
+            return new DataResponse([
+                'success' => true,
+                'enabled' => true
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Aktivieren des Benutzers: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Benutzer deaktivieren
+     *
+     * @NoAdminRequired
+     */
+    public function disable(string $id): DataResponse {
+        $this->logger->info('UserApiController::disable() aufgerufen für User: ' . $id);
+
+        try {
+            // Prüfe ob User versucht sich selbst zu deaktivieren
+            $currentUser = $this->userSession->getUser();
+            if ($currentUser !== null && $currentUser->getUID() === $id) {
+                $this->logger->warning('Benutzer ' . $id . ' versuchte sich selbst zu deaktivieren - verhindert!');
+                return new DataResponse(
+                    ['error' => 'Sie können sich nicht selbst deaktivieren. Bitte wenden Sie sich an einen anderen Administrator.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $user = $this->userManager->get($id);
+
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            $user->setEnabled(false);
+            $this->logger->info('Benutzer erfolgreich deaktiviert: ' . $id);
+
+            return new DataResponse([
+                'success' => true,
+                'enabled' => false
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Deaktivieren des Benutzers: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Alle Geräte trennen und lokale Daten löschen (Wipe Devices)
+     *
+     * @NoAdminRequired
+     */
+    public function wipeDevices(string $id): DataResponse {
+        $this->logger->info('UserApiController::wipeDevices() aufgerufen für User: ' . $id);
+
+        try {
+            $user = $this->userManager->get($id);
+
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            // Alle Auth-Tokens des Benutzers löschen (Sessions, App-Passwörter, etc.)
+            $tokenProvider = \OC::$server->query(\OC\Authentication\Token\IProvider::class);
+            $tokenProvider->invalidateTokensOfUser($user->getUID());
+
+            $this->logger->info('Alle Geräte/Sessions für Benutzer erfolgreich getrennt: ' . $id);
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'Alle Geräte wurden getrennt und lokale Daten gelöscht'
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Trennen der Geräte: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Willkommens-Email erneut versenden
+     *
+     * @NoAdminRequired
+     */
+    public function resendWelcomeEmail(string $id): DataResponse {
+        $this->logger->info('UserApiController::resendWelcomeEmail() aufgerufen für User: ' . $id);
+
+        try {
+            $user = $this->userManager->get($id);
+
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            $email = $user->getEMailAddress();
+            if (empty($email)) {
+                return new DataResponse(
+                    ['error' => 'Benutzer hat keine E-Mail-Adresse'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Mailer und Defaults-Service laden
+            $mailer = \OC::$server->getMailer();
+            $defaults = \OC::$server->query(\OCP\Defaults::class);
+
+            // E-Mail-Template erstellen
+            $message = $mailer->createMessage();
+            $message->setTo([$email => $user->getDisplayName()]);
+            $message->setSubject('Willkommen bei ' . $defaults->getName());
+
+            $emailText = "Hallo " . $user->getDisplayName() . ",\n\n";
+            $emailText .= "Willkommen bei " . $defaults->getName() . "!\n\n";
+            $emailText .= "Ihr Benutzername: " . $user->getUID() . "\n";
+            $emailText .= "Login-URL: " . $defaults->getBaseUrl() . "\n\n";
+            $emailText .= "Viel Erfolg!\n";
+            $emailText .= "Ihr " . $defaults->getName() . " Team";
+
+            $message->setPlainTextBody($emailText);
+
+            // E-Mail versenden
+            $mailer->send($message);
+
+            $this->logger->info('Willkommens-Email erfolgreich versendet an: ' . $email);
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'Willkommens-Email wurde erneut versendet'
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Versenden der Willkommens-Email: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return new DataResponse(
+                ['error' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Aktuellen Benutzer abrufen
+     *
+     * @NoAdminRequired
+     */
+    public function getCurrentUser(): DataResponse {
+        try {
+            $currentUser = $this->userSession->getUser();
+
+            if ($currentUser === null) {
+                return new DataResponse(
+                    ['error' => 'Kein Benutzer angemeldet'],
+                    Http::STATUS_UNAUTHORIZED
+                );
+            }
+
+            return new DataResponse([
+                'id' => $currentUser->getUID(),
+                'displayName' => $currentUser->getDisplayName(),
+                'email' => $currentUser->getEMailAddress() ?? ''
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Laden des aktuellen Benutzers: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
