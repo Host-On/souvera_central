@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+js/
+*.min.js
+*.min.css
+vendor/
+lib/vendor/
+coverage/
+.next/
+out/
