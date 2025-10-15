@@ -453,6 +453,16 @@ class UserApiController extends OCSController {
         $this->logger->info('UserApiController::delete() aufgerufen für User: ' . $id);
 
         try {
+            // Prüfe ob User versucht sich selbst zu löschen
+            $currentUser = $this->userSession->getUser();
+            if ($currentUser !== null && $currentUser->getUID() === $id) {
+                $this->logger->warning('Benutzer ' . $id . ' versuchte sich selbst zu löschen - verhindert!');
+                return new DataResponse(
+                    ['error' => 'Sie können Ihr eigenes Konto nicht löschen. Bitte wenden Sie sich an einen anderen Administrator.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $user = $this->userManager->get($id);
 
             if ($user === null) {
@@ -461,9 +471,6 @@ class UserApiController extends OCSController {
                     Http::STATUS_NOT_FOUND
                 );
             }
-
-            // Verhindere Löschen des eigenen Accounts
-            // TODO: Aktuellen User prüfen
 
             $success = $user->delete();
 

@@ -121,48 +121,28 @@
                                 <td class="email-column">{{ user.email || '-' }}</td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
                                 <td class="status-column">
-                                    <!-- Eigener User: Nur Badge ohne Toggle -->
-                                    <div v-if="user.id === currentUserId" class="status-badge-container">
-                                        <span :class="['status-badge', 'status-enabled']">
-                                            <span class="status-icon icon-checkmark"></span>
-                                            {{ t('souvera_central', 'Aktiv') }}
-                                        </span>
-                                        <span class="own-user-hint">(Sie)</span>
-                                    </div>
-                                    <!-- Andere User: Toggle-Button -->
-                                    <button
-                                        v-else
-                                        :class="['status-toggle', user.enabled ? 'status-enabled' : 'status-disabled']"
-                                        :title="
-                                            user.enabled
-                                                ? t('souvera_central', 'Benutzer deaktivieren')
-                                                : t('souvera_central', 'Benutzer aktivieren')
-                                        "
-                                        @click.stop="toggleUserStatus(user)"
-                                    >
+                                    <div class="status-indicator">
                                         <span
-                                            class="status-icon"
-                                            :class="user.enabled ? 'icon-checkmark' : 'icon-close'"
+                                            :class="['status-icon', user.enabled ? 'icon-checkmark-color' : 'icon-close']"
+                                            :title="user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv')"
                                         ></span>
-                                        {{
-                                            user.enabled
-                                                ? t('souvera_central', 'Aktiv')
-                                                : t('souvera_central', 'Deaktiviert')
-                                        }}
-                                    </button>
+                                    </div>
                                 </td>
                                 <td class="actions-column">
                                     <div class="user-actions">
                                         <button
-                                            class="icon-rename"
                                             :title="t('souvera_central', 'Bearbeiten')"
                                             @click.stop="editUser(user)"
-                                        ></button>
+                                        >
+                                            <span class="icon-rename"></span>
+                                        </button>
                                         <button
-                                            class="icon-delete"
+                                            v-if="user.id !== currentUserId"
                                             :title="t('souvera_central', 'Löschen')"
                                             @click.stop="deleteUser(user)"
-                                        ></button>
+                                        >
+                                            <span class="icon-delete"></span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -457,86 +437,68 @@ export default {
             await this.loadUsers()
         },
 
-        async deleteUser(user) {
-            if (
-                !confirm(
-                    this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich löschen?', {
-                        user: user.displayName
-                    })
-                )
-            ) {
-                return
-            }
-
-            try {
-                const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: user.id })
-                await axios.delete(url)
-                await this.loadUsers()
-            } catch (error) {
-                console.error('Fehler beim Löschen:', error)
-
-                let errorMessage = this.t('souvera_central', 'Fehler beim Löschen')
-                if (error.response?.data?.ocs?.data?.error) {
-                    errorMessage = error.response.data.ocs.data.error
-                } else if (error.response?.data?.error) {
-                    errorMessage = error.response.data.error
-                }
-
-                alert(errorMessage)
-            }
-        },
-
-        async toggleUserStatus(user) {
-            // Öffne Confirmation Modal
-            const action = user.enabled ? 'deaktivieren' : 'aktivieren'
-            const actionPast = user.enabled ? 'deaktiviert' : 'aktiviert'
-
+        deleteUser(user) {
             this.confirmModal = {
                 isOpen: true,
-                title: user.enabled
-                    ? this.t('souvera_central', 'Benutzer deaktivieren?')
-                    : this.t('souvera_central', 'Benutzer aktivieren?'),
-                message: this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich {action}?', {
-                    user: user.displayName,
-                    action: action
-                }),
-                details: user.enabled
-                    ? this.t(
-                          'souvera_central',
-                          'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
-                      )
-                    : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
-                type: user.enabled ? 'warning' : 'info',
-                confirmText: user.enabled
-                    ? this.t('souvera_central', 'Deaktivieren')
-                    : this.t('souvera_central', 'Aktivieren'),
+                title: this.t('souvera_central', 'Benutzer löschen?'),
+                message: this.t(
+                    'souvera_central',
+                    'Möchten Sie den Benutzer "{user}" wirklich unwiderruflich löschen?',
+                    { user: user.displayName }
+                ),
+                details: this.t(
+                    'souvera_central',
+                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
+                ),
+                type: 'danger',
+                confirmText: this.t('souvera_central', 'Ja, Benutzer löschen'),
                 cancelText: this.t('souvera_central', 'Abbrechen'),
                 onConfirm: async () => {
                     try {
-                        const apiAction = user.enabled ? 'disable' : 'enable'
-                        const url = generateUrl('/apps/souvera_central/api/users/{id}/{action}', {
-                            id: user.id,
-                            action: apiAction
-                        })
+                        const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: user.id })
+                        await axios.delete(url)
 
-                        await axios.post(url)
-
-                        // Status lokal aktualisieren ohne komplettes Reload
-                        user.enabled = !user.enabled
-
-                        // Success-Feedback (optional)
-                        console.log(`Benutzer ${user.displayName} wurde ${actionPast}`)
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Benutzer gelöscht!'),
+                            message: this.t('souvera_central', 'Der Benutzer wurde erfolgreich gelöscht.'),
+                            details: this.t(
+                                'souvera_central',
+                                '"{user}" wurde dauerhaft entfernt.',
+                                { user: user.displayName }
+                            ),
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                                this.loadUsers()
+                            }
+                        }
                     } catch (error) {
-                        console.error('Fehler beim Ändern des Benutzer-Status:', error)
+                        console.error('Fehler beim Löschen:', error)
 
-                        let errorMessage = this.t('souvera_central', 'Fehler beim Ändern des Status')
+                        let errorMessage = this.t('souvera_central', 'Fehler beim Löschen')
                         if (error.response?.data?.ocs?.data?.error) {
                             errorMessage = error.response.data.ocs.data.error
                         } else if (error.response?.data?.error) {
                             errorMessage = error.response.data.error
                         }
 
-                        alert(errorMessage)
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler beim Löschen'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
                     }
                 }
             }
@@ -700,76 +662,24 @@ export default {
     font-weight: 500;
 }
 
-/* Status Badge Container (für eigenen User) */
-.status-badge-container {
+/* Status Indicator */
+.status-indicator {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-}
-
-.status-badge {
-    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: var(--border-radius-large);
-    font-size: 13px;
-    font-weight: 600;
+    justify-content: center;
 }
 
-.status-badge.status-enabled {
-    background: var(--color-success);
-    color: white;
+.status-indicator .status-icon {
+    font-size: 24px;
+    opacity: 1;
 }
 
-.own-user-hint {
-    font-size: 12px;
-    color: var(--color-text-lighter);
-    font-style: italic;
-    padding-left: 4px;
+.status-indicator .icon-checkmark-color {
+    color: var(--color-success);
 }
 
-/* Status Toggle Button (für andere User) */
-.status-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: var(--border-radius-large);
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.status-toggle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
-}
-
-.status-toggle.status-enabled {
-    background: var(--color-success);
-    color: white;
-}
-
-.status-toggle.status-enabled:hover {
-    background: #46a049;
-}
-
-.status-toggle.status-disabled {
-    background: var(--color-error);
-    color: white;
-}
-
-.status-toggle.status-disabled:hover {
-    background: #c9302c;
-}
-
-.status-icon {
-    font-size: 14px;
-    opacity: 0.9;
+.status-indicator .icon-close {
+    color: var(--color-error);
 }
 
 /* Actions */

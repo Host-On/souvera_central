@@ -72,12 +72,12 @@
                                 <td class="actions-column">
                                     <div class="group-actions">
                                         <button
-                                            class="icon-rename"
                                             :title="t('souvera_central', 'Bearbeiten')"
                                             @click.stop="editGroup(group)"
-                                        ></button>
+                                        >
+                                            <span class="icon-rename"></span>
+                                        </button>
                                         <button
-                                            class="icon-delete"
                                             :title="
                                                 group.isProtected
                                                     ? t('souvera_central', 'Systemgruppe kann nicht gelöscht werden')
@@ -85,7 +85,9 @@
                                             "
                                             :disabled="group.isProtected"
                                             @click.stop="deleteGroup(group)"
-                                        ></button>
+                                        >
+                                            <span class="icon-delete"></span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

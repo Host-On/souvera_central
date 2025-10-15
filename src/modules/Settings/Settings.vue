@@ -18,27 +18,22 @@
                 <div class="section-header">
                     <span class="icon-mail"></span>
                     <h3>{{ t('souvera_central', 'E-Mail senden') }}</h3>
-                    <span
-                        class="status-badge"
-                        :class="settings.email.send_to_new_users ? 'status-active' : 'status-inactive'"
-                    >
-                        {{ settings.email.send_to_new_users ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
-                    </span>
                 </div>
                 <p class="section-description">
                     {{ t('souvera_central', 'Automatisches Versenden von Willkommens-Emails an neue Benutzer') }}
                 </p>
 
                 <div class="settings-group">
-                    <label class="checkbox-label">
-                        <input
-                            type="checkbox"
-                            v-model="settings.email.send_to_new_users"
-                            @change="saveSettings"
-                            class="checkbox"
-                        />
-                        <span>{{ t('souvera_central', 'E-Mail an neue Benutzer senden') }}</span>
-                    </label>
+                    <button
+                        class="toggle-button"
+                        :class="settings.email.send_to_new_users ? 'toggle-active' : 'toggle-inactive'"
+                        @click="toggleEmailSending"
+                    >
+                        <span class="toggle-icon" :class="settings.email.send_to_new_users ? 'icon-checkmark' : 'icon-close'"></span>
+                        <span class="toggle-text">
+                            {{ settings.email.send_to_new_users ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                        </span>
+                    </button>
                     <p class="setting-hint">
                         {{
                             t(
@@ -61,32 +56,24 @@
                 </p>
 
                 <div class="settings-group">
-                    <label class="field-label">{{ t('souvera_central', 'Standard Speicherkontingent') }}</label>
+                    <label class="field-label">
+                        <span class="icon-quota"></span>
+                        {{ t('souvera_central', 'Standard Speicherkontingent') }}
+                    </label>
 
-                    <select v-model="settings.defaults.quota" @change="saveSettings" class="quota-select">
-                        <option value="default">{{ t('souvera_central', 'Standard') }}</option>
-                        <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
-                        <option value="1 GB">1 GB</option>
-                        <option value="5 GB">5 GB</option>
-                        <option value="10 GB">10 GB</option>
-                        <option value="50 GB">50 GB</option>
-                        <option value="100 GB">100 GB</option>
-                        <option value="custom">{{ t('souvera_central', 'Benutzerdefiniert') }}</option>
-                    </select>
-
-                    <!-- Custom Quota Input -->
-                    <div v-if="settings.defaults.quota === 'custom'" class="custom-quota-input">
-                        <input
-                            type="text"
-                            v-model="customQuota"
-                            @blur="saveCustomQuota"
-                            @keyup.enter="saveCustomQuota"
-                            :placeholder="t('souvera_central', 'z.B. 25 GB, 500 MB')"
-                            class="input-field"
-                        />
-                        <p class="setting-hint">
-                            {{ t('souvera_central', 'Verwenden Sie Abkürzungen wie MB, GB, TB (z.B. "25 GB")') }}
-                        </p>
+                    <!-- Quota Grid -->
+                    <div class="quota-grid">
+                        <button
+                            v-for="option in quotaOptions"
+                            :key="option.value"
+                            class="quota-option"
+                            :class="{ 'quota-selected': settings.defaults.quota === option.value }"
+                            @click="selectQuota(option.value)"
+                        >
+                            <span class="quota-icon" :class="option.icon"></span>
+                            <span class="quota-label">{{ option.label }}</span>
+                            <span v-if="settings.defaults.quota === option.value" class="selected-indicator icon-checkmark"></span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -126,7 +113,16 @@ export default {
                 defaults: {
                     quota: 'default'
                 }
-            }
+            },
+            quotaOptions: [
+                { value: 'default', label: this.t('souvera_central', 'Standard'), icon: 'icon-quota' },
+                { value: 'none', label: this.t('souvera_central', 'Unbegrenzt'), icon: 'icon-category-disabled' },
+                { value: '1 GB', label: '1 GB', icon: 'icon-quota' },
+                { value: '5 GB', label: '5 GB', icon: 'icon-quota' },
+                { value: '10 GB', label: '10 GB', icon: 'icon-quota' },
+                { value: '50 GB', label: '50 GB', icon: 'icon-quota' },
+                { value: '100 GB', label: '100 GB', icon: 'icon-quota' }
+            ]
         }
     },
 
@@ -193,6 +189,16 @@ export default {
                 this.settings.defaults.quota = value
                 this.saveSettings()
             }
+        },
+
+        toggleEmailSending() {
+            this.settings.email.send_to_new_users = !this.settings.email.send_to_new_users
+            this.saveSettings()
+        },
+
+        selectQuota(value) {
+            this.settings.defaults.quota = value
+            this.saveSettings()
         }
     }
 }
@@ -278,27 +284,58 @@ export default {
     flex: 1;
 }
 
-/* Status Badge */
-.status-badge {
+/* Toggle Button */
+.toggle-button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 12px;
+    padding: 14px 28px;
     border-radius: var(--border-radius-large);
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--color-box-shadow);
+    min-width: 180px;
+    justify-content: center;
 }
 
-.status-badge.status-active {
+.toggle-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
+}
+
+.toggle-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px var(--color-box-shadow);
+}
+
+.toggle-button.toggle-active {
     background: var(--color-success);
     color: white;
 }
 
-.status-badge.status-inactive {
-    background: var(--color-background-dark);
-    color: var(--color-text-lighter);
-    border: 1px solid var(--color-border);
+.toggle-button.toggle-active:hover {
+    background: #46a049;
+}
+
+.toggle-button.toggle-inactive {
+    background: var(--color-error);
+    color: white;
+}
+
+.toggle-button.toggle-inactive:hover {
+    background: #c9302c;
+}
+
+.toggle-icon {
+    font-size: 20px;
+    opacity: 0.95;
+}
+
+.toggle-text {
+    font-size: 16px;
 }
 
 .section-description {
@@ -342,55 +379,140 @@ export default {
 
 /* Field Label */
 .field-label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 600;
     color: var(--color-main-text);
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: 16px;
+    font-size: 15px;
 }
 
-/* Quota Select */
-.quota-select {
-    width: 100%;
-    max-width: 300px;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    background: var(--color-main-background);
-    font-size: 14px;
+.field-label .icon-quota {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+/* Quota Grid */
+.quota-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.quota-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 16px;
+    background: var(--color-background-dark);
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius-large);
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
+    min-height: 100px;
 }
 
-.quota-select:hover {
-    border-color: var(--color-primary);
+.quota-option:hover {
+    background: var(--color-background-hover);
+    border-color: var(--color-primary-element);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
 }
 
-.quota-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-element-light);
+.quota-option.quota-selected {
+    background: var(--color-primary-element-light);
+    border-color: var(--color-primary-element);
+    box-shadow: 0 0 0 3px var(--color-primary-element-light);
+}
+
+.quota-icon {
+    font-size: 32px;
+    opacity: 0.7;
+    color: var(--color-primary-element);
+}
+
+.quota-option.quota-selected .quota-icon {
+    opacity: 1;
+    color: var(--color-primary-element);
+}
+
+.quota-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+    text-align: center;
+}
+
+.selected-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 18px;
+    color: var(--color-success);
+    background: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Custom Quota Input */
 .custom-quota-input {
-    margin-top: 10px;
+    margin-top: 8px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-quota-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-background-dark);
+    border: 2px solid var(--color-primary-element);
+    border-radius: var(--border-radius-large);
+    transition: all 0.2s;
+}
+
+.custom-quota-field:focus-within {
+    box-shadow: 0 0 0 3px var(--color-primary-element-light);
+}
+
+.custom-quota-field .icon-edit {
+    font-size: 20px;
+    color: var(--color-primary-element);
+    flex-shrink: 0;
 }
 
 .input-field {
-    width: 100%;
-    max-width: 300px;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    background: var(--color-main-background);
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--color-main-text);
+    font-weight: 500;
 }
 
 .input-field:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-element-light);
 }
 
 /* Setting Hint */

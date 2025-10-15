@@ -103,31 +103,6 @@
                     <p v-else class="help-text">{{ t('souvera_central', 'Mindestens 10 Zeichen') }}</p>
                 </div>
 
-                <!-- Gruppen -->
-                <div class="form-group">
-                    <label for="groups">
-                        {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
-                    </label>
-                    <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
-                    <GroupSelector
-                        v-model="formData.groups"
-                        :available-groups="availableGroups"
-                        mode="member"
-                    />
-                </div>
-
-                <!-- Gruppen-Administration -->
-                <div class="form-group">
-                    <label for="adminGroups">
-                        {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
-                    </label>
-                    <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
-                    <GroupSelector
-                        v-model="formData.adminGroups"
-                        :available-groups="availableGroups"
-                        mode="admin"
-                    />
-                </div>
 
                 <!-- Speicherplatz Quota -->
                 <div class="form-group">
@@ -155,18 +130,72 @@
                     <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
                 </div>
 
-                <!-- Aktiv/Deaktiviert -->
-                <div class="form-group checkbox-group">
-                    <input id="enabled" v-model="formData.enabled" type="checkbox" />
-                    <label for="enabled">
-                        {{ t('souvera_central', 'Benutzer aktiviert') }}
-                    </label>
+                <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
+                <div v-if="isEditMode" class="form-group">
+                    <label>{{ t('souvera_central', 'Status') }}</label>
+                    <div class="status-display">
+                        <span :class="['status-icon', formData.enabled ? 'icon-checkmark-color' : 'icon-close']"></span>
+                        <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
+                            {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                        </span>
+                    </div>
+                    <p class="help-text">
+                        {{ t('souvera_central', 'Status kann über "Erweiterte Aktionen" geändert werden') }}
+                    </p>
+                </div>
+
+                <!-- Gruppen Zone -->
+                <div class="groups-zone">
+                    <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
+
+                    <!-- Gruppen -->
+                    <div class="form-group">
+                        <label for="groups">
+                            {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
+                        </label>
+                        <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
+                        <GroupSelector
+                            v-model="formData.groups"
+                            :available-groups="availableGroups"
+                            mode="member"
+                        />
+                    </div>
+
+                    <!-- Gruppen-Administration -->
+                    <div class="form-group">
+                        <label for="adminGroups">
+                            {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
+                        </label>
+                        <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
+                        <GroupSelector
+                            v-model="formData.adminGroups"
+                            :available-groups="availableGroups"
+                            mode="admin"
+                        />
+                    </div>
                 </div>
 
                 <!-- Danger Zone (nur im Edit-Mode) -->
                 <div v-if="isEditMode" class="danger-zone">
                     <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
                     <div class="danger-actions">
+                        <button
+                            type="button"
+                            :class="['action-button', formData.enabled ? 'warning' : 'success']"
+                            @click="toggleUserStatus"
+                            :disabled="togglingStatus"
+                        >
+                            <span v-if="togglingStatus" class="icon-loading-small"></span>
+                            <span v-else :class="formData.enabled ? 'icon-close' : 'icon-checkmark'"></span>
+                            {{
+                                togglingStatus
+                                    ? t('souvera_central', 'Speichert...')
+                                    : formData.enabled
+                                    ? t('souvera_central', 'Benutzer deaktivieren')
+                                    : t('souvera_central', 'Benutzer aktivieren')
+                            }}
+                        </button>
+
                         <button
                             type="button"
                             class="action-button secondary"
@@ -194,6 +223,22 @@
                                 wipingDevices
                                     ? t('souvera_central', 'Trennt...')
                                     : t('souvera_central', 'Alle Geräte trennen & Daten löschen')
+                            }}
+                        </button>
+
+                        <button
+                            type="button"
+                            class="action-button danger"
+                            @click="deleteUser"
+                            :disabled="deletingUser || isOwnAccount"
+                            :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                        >
+                            <span v-if="deletingUser" class="icon-loading-small"></span>
+                            <span v-else class="icon-delete"></span>
+                            {{
+                                deletingUser
+                                    ? t('souvera_central', 'Löscht...')
+                                    : t('souvera_central', 'Konto löschen')
                             }}
                         </button>
                     </div>
@@ -292,7 +337,10 @@ export default {
             saving: false,
             resendingEmail: false,
             wipingDevices: false,
+            togglingStatus: false,
+            deletingUser: false,
             initialManagerData: null,
+            currentUserId: null,
             settings: {
                 defaults: {
                     quota: 'default'
@@ -328,12 +376,17 @@ export default {
                 !this.errors.email &&
                 !this.errors.password
             )
+        },
+
+        isOwnAccount() {
+            return this.isEditMode && this.user && this.currentUserId && this.user.id === this.currentUserId
         }
     },
 
     mounted() {
         this.loadGroups()
         this.loadSettings()
+        this.loadCurrentUser()
 
         if (this.isEditMode) {
             this.formData = {
@@ -375,6 +428,18 @@ export default {
 
     methods: {
         t,
+
+        async loadCurrentUser() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/users/current')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data
+                this.currentUserId = data.id
+                console.log('Current user ID:', this.currentUserId)
+            } catch (error) {
+                console.error('Fehler beim Laden des aktuellen Benutzers:', error)
+            }
+        },
 
         async loadGroups() {
             try {
@@ -675,6 +740,87 @@ export default {
             }
         },
 
+        toggleUserStatus() {
+            const action = this.formData.enabled ? 'deaktivieren' : 'aktivieren'
+            const actionPast = this.formData.enabled ? 'deaktiviert' : 'aktiviert'
+
+            this.confirmModal = {
+                isOpen: true,
+                title: this.formData.enabled
+                    ? this.t('souvera_central', 'Benutzer deaktivieren?')
+                    : this.t('souvera_central', 'Benutzer aktivieren?'),
+                message: this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich {action}?', {
+                    user: this.formData.displayName,
+                    action: action
+                }),
+                details: this.formData.enabled
+                    ? this.t(
+                          'souvera_central',
+                          'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
+                      )
+                    : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
+                type: this.formData.enabled ? 'warning' : 'info',
+                confirmText: this.formData.enabled
+                    ? this.t('souvera_central', 'Deaktivieren')
+                    : this.t('souvera_central', 'Aktivieren'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    this.togglingStatus = true
+
+                    try {
+                        const apiAction = this.formData.enabled ? 'disable' : 'enable'
+                        const url = generateUrl('/apps/souvera_central/api/users/{id}/{action}', {
+                            id: this.user.id,
+                            action: apiAction
+                        })
+
+                        await axios.post(url)
+
+                        // Status lokal aktualisieren
+                        this.formData.enabled = !this.formData.enabled
+
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Status geändert!'),
+                            message: this.t('souvera_central', 'Der Benutzer wurde erfolgreich {action}.', {
+                                action: actionPast
+                            }),
+                            details: '',
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Ändern des Status:', error)
+                        const errorMessage =
+                            error.response?.data?.ocs?.data?.error ||
+                            error.response?.data?.error ||
+                            this.t('souvera_central', 'Fehler beim Ändern des Status')
+
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } finally {
+                        this.togglingStatus = false
+                    }
+                }
+            }
+        },
+
         wipeDevices() {
             this.confirmModal = {
                 isOpen: true,
@@ -740,6 +886,78 @@ export default {
                         }
                     } finally {
                         this.wipingDevices = false
+                    }
+                }
+            }
+        },
+
+        deleteUser() {
+            this.confirmModal = {
+                isOpen: true,
+                title: this.t('souvera_central', 'Konto löschen?'),
+                message: this.t(
+                    'souvera_central',
+                    'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?',
+                    { user: this.formData.displayName }
+                ),
+                details: this.t(
+                    'souvera_central',
+                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
+                ),
+                type: 'danger',
+                confirmText: this.t('souvera_central', 'Ja, Konto löschen'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    this.deletingUser = true
+
+                    try {
+                        const url = generateUrl('/apps/souvera_central/api/users/{id}', {
+                            id: this.user.id
+                        })
+                        await axios.delete(url)
+
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Konto gelöscht!'),
+                            message: this.t('souvera_central', 'Das Konto wurde erfolgreich gelöscht.'),
+                            details: this.t(
+                                'souvera_central',
+                                'Der Benutzer "{user}" wurde dauerhaft entfernt.',
+                                { user: this.formData.displayName }
+                            ),
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                                // Schließe Editor und kehre zur Liste zurück
+                                this.$emit('saved')
+                                this.$emit('close')
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Löschen des Benutzers:', error)
+                        const errorMessage =
+                            error.response?.data?.ocs?.data?.error ||
+                            error.response?.data?.error ||
+                            this.t('souvera_central', 'Fehler beim Löschen des Benutzers')
+
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    } finally {
+                        this.deletingUser = false
                     }
                 }
             }
@@ -957,21 +1175,64 @@ export default {
     gap: 5px;
 }
 
-/* Checkbox Group */
-.checkbox-group {
+/* Status Display */
+.status-display {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 12px 16px;
+    background: var(--color-background-dark);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
 }
 
-.checkbox-group input[type='checkbox'] {
-    margin: 0;
+.status-display .status-icon {
+    font-size: 24px;
 }
 
-.checkbox-group label {
-    margin: 0;
-    cursor: pointer;
-    font-weight: normal;
+.status-display .icon-checkmark-color {
+    color: var(--color-success);
+}
+
+.status-display .icon-close {
+    color: var(--color-error);
+}
+
+.status-display .status-text {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.status-display .status-text.status-active {
+    color: var(--color-success);
+}
+
+.status-display .status-text.status-inactive {
+    color: var(--color-error);
+}
+
+/* Groups Zone */
+.groups-zone {
+    margin-top: 30px;
+    padding: 25px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-background-dark);
+}
+
+.groups-zone h3 {
+    margin: 0 0 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-light);
+}
+
+.groups-zone .form-group {
+    margin-bottom: 20px;
+}
+
+.groups-zone .form-group:last-child {
+    margin-bottom: 0;
 }
 
 /* Form Actions */
@@ -1020,6 +1281,12 @@ export default {
     background: var(--color-background-hover);
 }
 
+button.primary {
+    background-color: var(--color-primary-element);
+    border: none;
+    color: var(--color-primary-element-text);
+}
+
 /* Danger Zone */
 .danger-zone {
     margin-top: 40px;
@@ -1061,6 +1328,13 @@ export default {
     cursor: not-allowed;
 }
 
+.action-button [class^='icon-'],
+.action-button [class*=' icon-'] {
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
+    opacity: 1 !important;
+}
+
 .action-button.secondary {
     background: var(--color-primary);
     color: white;
@@ -1079,6 +1353,34 @@ export default {
 
 .action-button.danger:hover:not(:disabled) {
     background: #c9302c;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.action-button.warning {
+    background: var(--color-warning);
+    color: white;
+}
+
+.action-button.warning [class^='icon-'],
+.action-button.warning [class*=' icon-'] {
+    color: white !important;
+    filter: invert(1) brightness(100) !important;
+}
+
+.action-button.warning:hover:not(:disabled) {
+    background: #e6a23c;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.action-button.success {
+    background: var(--color-success);
+    color: white;
+}
+
+.action-button.success:hover:not(:disabled) {
+    background: #46a049;
     transform: translateY(-2px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
 }

@@ -272,9 +272,9 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px 6px 12px;
+    padding: 4px 8px 4px 10px;
     border-radius: var(--border-radius-large);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.2s;
 }
@@ -291,7 +291,14 @@ export default {
 
 .pill-icon {
     opacity: 0.9;
-    font-size: 14px;
+    font-size: 12px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
 }
 
 .pill-label {
