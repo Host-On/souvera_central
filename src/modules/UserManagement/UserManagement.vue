@@ -280,9 +280,8 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
 
                 this.currentUserId = data.id
-                console.log('Aktueller Benutzer geladen:', this.currentUserId)
             } catch (error) {
-                console.error('Fehler beim Laden des aktuellen Benutzers:', error)
+                // Error handling
             }
         },
 
@@ -303,12 +302,10 @@ export default {
         handleUrlChange() {
             // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
             const path = window.location.pathname
-            console.log('URL changed to:', path)
 
             // Wenn URL zu /users (ohne /new oder /edit/:id) geht → Editor schließen
             if (path.endsWith('/users') || path === generateUrl('/apps/souvera_central/users')) {
                 if (this.showEditor) {
-                    console.log('Closing editor due to URL change')
                     this.showEditor = false
                     this.selectedUser = null
                 }
@@ -331,7 +328,7 @@ export default {
                     this.showEditor = true
                 }
             } catch (error) {
-                console.error('Fehler beim Laden des Benutzers:', error)
+                // Error handling
             }
         },
 
@@ -361,30 +358,25 @@ export default {
 
                 // Emit total user count to parent (für Dashboard)
                 this.$emit('users-loaded', this.totalUsers)
-
-                console.log('Geladene Benutzer:', this.users.length, 'von', this.totalUsers)
             } catch (error) {
-                console.error('Fehler beim Laden der Benutzer:', error)
+                // Error handling
             } finally {
                 this.loading = false
             }
         },
 
         handleSearch(query) {
-            console.log('Suche:', query)
             this.searchQuery = query
             this.currentPage = 1 // Zurück zur ersten Seite bei neuer Suche
             this.loadUsers()
         },
 
         handlePageChange(page) {
-            console.log('Seite wechseln:', page)
             this.currentPage = page
             this.loadUsers()
         },
 
         handlePerPageChange(perPage) {
-            console.log('Pro-Seite ändern:', perPage)
             this.perPage = perPage
             this.currentPage = 1 // Zurück zur ersten Seite
             this.loadUsers()
@@ -477,8 +469,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Löschen:', error)
-
                         let errorMessage = this.t('souvera_central', 'Fehler beim Löschen')
                         if (error.response?.data?.ocs?.data?.error) {
                             errorMessage = error.response.data.ocs.data.error

@@ -263,7 +263,7 @@ export default {
 
                 this.selectedMembers = members.map((m) => m.id)
             } catch (error) {
-                console.error('Fehler beim Laden der Gruppenmitglieder:', error)
+                // Error loading group members
             }
         },
 
@@ -286,7 +286,7 @@ export default {
                     email: user.email || ''
                 }))
             } catch (error) {
-                console.error('Fehler beim Laden der Benutzer:', error)
+                // Error loading users
                 this.availableUsers = []
             } finally {
                 this.loadingUsers = false
@@ -299,7 +299,6 @@ export default {
             this.validateDisplayName()
 
             if (!this.isFormValid) {
-                console.warn('Form validation failed')
                 return
             }
 
@@ -312,20 +311,12 @@ export default {
                         id: this.formData.groupId
                     })
 
-                    console.log('=== UPDATE GROUP REQUEST ===')
-                    console.log('URL:', url)
-                    console.log('Payload:', {
-                        displayName: this.formData.displayName
-                    })
-
                     await axios.put(url, {
                         displayName: this.formData.displayName
                     })
 
                     // Update group members
                     await this.updateGroupMembers()
-
-                    console.log('=== GROUP UPDATED SUCCESSFULLY ===')
                 } else {
                     // Create new group
                     const url = generateUrl('/apps/souvera_central/api/groups/manage')
@@ -334,22 +325,12 @@ export default {
                         displayName: this.formData.displayName
                     }
 
-                    console.log('=== CREATE GROUP REQUEST ===')
-                    console.log('URL:', url)
-                    console.log('Payload:', payload)
-
                     await axios.post(url, payload)
-
-                    console.log('=== GROUP CREATED SUCCESSFULLY ===')
                 }
 
                 this.$emit('saved')
                 this.$emit('close')
             } catch (error) {
-                console.error('=== ERROR beim Speichern ===')
-                console.error('Error object:', error)
-                console.error('Error response:', error.response)
-
                 // Zeige Fehlermeldung
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
 
@@ -386,9 +367,8 @@ export default {
                         id: this.formData.groupId
                     })
                     await axios.post(addUrl, { userId })
-                    console.log('Added user to group:', userId)
                 } catch (error) {
-                    console.error('Fehler beim Hinzufügen von User:', userId, error)
+                    // Error adding user to group
                 }
             }
 
@@ -400,9 +380,8 @@ export default {
                         userId
                     })
                     await axios.delete(removeUrl)
-                    console.log('Removed user from group:', userId)
                 } catch (error) {
-                    console.error('Fehler beim Entfernen von User:', userId, error)
+                    // Error removing user from group
                 }
             }
         }

@@ -53,13 +53,10 @@ class UserApiController extends OCSController {
      * @param int $offset Start-Offset für Pagination (Standard: 0)
      */
     public function list(string $search = '', int $limit = 20, int $offset = 0): DataResponse {
-        $this->logger->info('UserApiController::list() aufgerufen - search: "' . $search . '", limit: ' . $limit . ', offset: ' . $offset);
-
         try {
             // Alle Benutzer durchsuchen (Nextcloud UserManager hat keine native Pagination)
             $searchTerm = trim($search);
             $allUsers = $this->userManager->search($searchTerm);
-            $this->logger->info('Gefundene Benutzer (vor Filter): ' . count($allUsers));
 
             $allUsersData = [];
             foreach ($allUsers as $user) {
@@ -97,11 +94,9 @@ class UserApiController extends OCSController {
             }
 
             $totalCount = count($allUsersData);
-            $this->logger->info('Gefundene Benutzer (nach Filter): ' . $totalCount);
 
             // Pagination anwenden
             $paginatedUsers = array_slice($allUsersData, $offset, $limit);
-            $this->logger->info('Rückgabe von ' . count($paginatedUsers) . ' Benutzern (Seite)');
 
             return new DataResponse([
                 'users' => $paginatedUsers,
@@ -111,9 +106,6 @@ class UserApiController extends OCSController {
                 'hasMore' => ($offset + $limit) < $totalCount
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler in UserApiController::list(): ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -159,8 +151,6 @@ class UserApiController extends OCSController {
      * Benutzer suchen (für Autocomplete)
      */
     public function search(string $query = '', int $limit = 10): DataResponse {
-        $this->logger->info('UserApiController::search() aufgerufen - query: "' . $query . '"');
-
         try {
             if (empty($query) || strlen($query) < 2) {
                 return new DataResponse([
@@ -184,7 +174,6 @@ class UserApiController extends OCSController {
                 'users' => $results
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler bei User-Suche: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -199,8 +188,6 @@ class UserApiController extends OCSController {
         error_log('=== UserApiController::create() START ===');
         error_log('Empfangene Parameter: username=' . $username . ', displayName=' . $displayName . ', email=' . $email . ', groups=' . json_encode($groups));
 
-        $this->logger->info('UserApiController::create() aufgerufen für User: ' . $username);
-
         try {
             // Debug: Alle POST-Daten loggen
             $postData = file_get_contents('php://input');
@@ -211,7 +198,6 @@ class UserApiController extends OCSController {
             if (!empty($email)) {
                 $username = $email;
                 error_log('Username/Email-Sync: Username automatisch auf Email gesetzt: ' . $username);
-                $this->logger->info('Username/Email-Sync aktiviert: ' . $username);
             }
 
             // Validierung
@@ -231,7 +217,6 @@ class UserApiController extends OCSController {
             // Validierung: Username muss Email entsprechen (doppelte Absicherung)
             if ($username !== $email) {
                 error_log('FEHLER: Username und Email müssen identisch sein');
-                $this->logger->error('Username/Email-Mismatch verhindert: username=' . $username . ', email=' . $email);
                 return new DataResponse(
                     ['error' => 'Username und Email müssen identisch sein (erforderlich für Mail-Server Integration)'],
                     Http::STATUS_BAD_REQUEST
@@ -272,7 +257,6 @@ class UserApiController extends OCSController {
 
             // User erstellen
             error_log('Erstelle Benutzer mit UserManager: ' . $username);
-            $this->logger->info('Erstelle Benutzer: ' . $username);
             $user = $this->userManager->createUser($username, $password);
 
             if ($user === false || $user === null) {
@@ -302,17 +286,14 @@ class UserApiController extends OCSController {
                 $group = $this->groupManager->get($groupId);
                 if ($group !== null) {
                     $group->addUser($user);
-                    $this->logger->debug('User ' . $username . ' zu Gruppe ' . $groupId . ' hinzugefügt');
                 }
             }
 
             // Manager setzen
             if (!empty($manager)) {
                 $this->config->setUserValue($username, 'souvera_central', 'manager', $manager);
-                $this->logger->debug('Manager gesetzt: ' . $manager);
             }
 
-            $this->logger->info('Benutzer erfolgreich erstellt: ' . $username);
             error_log('=== UserApiController::create() SUCCESS ===');
 
             return new DataResponse([
@@ -332,9 +313,6 @@ class UserApiController extends OCSController {
             error_log('Exception: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
 
-            $this->logger->error('Fehler beim Erstellen des Benutzers: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -346,8 +324,6 @@ class UserApiController extends OCSController {
      * Benutzer aktualisieren
      */
     public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null): DataResponse {
-        $this->logger->info('UserApiController::update() aufgerufen für User: ' . $id);
-
         try {
             $user = $this->userManager->get($id);
 
@@ -361,7 +337,6 @@ class UserApiController extends OCSController {
             // Anzeigename aktualisieren
             if ($displayName !== null) {
                 $user->setDisplayName($displayName);
-                $this->logger->debug('DisplayName aktualisiert: ' . $displayName);
             }
 
             // E-Mail aktualisieren
@@ -370,7 +345,6 @@ class UserApiController extends OCSController {
                 // Grund: Username kann in Nextcloud nicht geändert werden, daher muss Email locked sein
                 $currentEmail = $user->getEMailAddress();
                 if ($email !== $currentEmail) {
-                    $this->logger->warning('Email-Änderung blockiert für User: ' . $id . ' (alt: ' . $currentEmail . ', neu: ' . $email . ')');
                     return new DataResponse(
                         ['error' => 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden (erforderlich für Mail-Server Integration)'],
                         Http::STATUS_BAD_REQUEST
@@ -378,19 +352,16 @@ class UserApiController extends OCSController {
                 }
                 // Falls Email identisch ist, trotzdem setzen (no-op, aber konsistent)
                 $user->setEMailAddress($email);
-                $this->logger->debug('E-Mail unverändert: ' . $email);
             }
 
             // Quota aktualisieren
             if ($quota !== null) {
                 $this->config->setUserValue($id, 'files', 'quota', $quota);
-                $this->logger->debug('Quota aktualisiert: ' . $quota);
             }
 
             // Status aktualisieren
             if ($enabled !== null) {
                 $user->setEnabled($enabled);
-                $this->logger->debug('Enabled status aktualisiert: ' . ($enabled ? 'true' : 'false'));
             }
 
             // Gruppen aktualisieren
@@ -406,7 +377,6 @@ class UserApiController extends OCSController {
                     $group = $this->groupManager->get($groupId);
                     if ($group !== null) {
                         $group->addUser($user);
-                        $this->logger->debug('User zu Gruppe hinzugefügt: ' . $groupId);
                     }
                 }
             }
@@ -418,10 +388,7 @@ class UserApiController extends OCSController {
                 } else {
                     $this->config->setUserValue($id, 'souvera_central', 'manager', $manager);
                 }
-                $this->logger->debug('Manager aktualisiert: ' . $manager);
             }
-
-            $this->logger->info('Benutzer erfolgreich aktualisiert: ' . $id);
 
             return new DataResponse([
                 'success' => true,
@@ -436,9 +403,6 @@ class UserApiController extends OCSController {
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Aktualisieren des Benutzers: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -450,13 +414,10 @@ class UserApiController extends OCSController {
      * Benutzer löschen
      */
     public function delete(string $id): DataResponse {
-        $this->logger->info('UserApiController::delete() aufgerufen für User: ' . $id);
-
         try {
             // Prüfe ob User versucht sich selbst zu löschen
             $currentUser = $this->userSession->getUser();
             if ($currentUser !== null && $currentUser->getUID() === $id) {
-                $this->logger->warning('Benutzer ' . $id . ' versuchte sich selbst zu löschen - verhindert!');
                 return new DataResponse(
                     ['error' => 'Sie können Ihr eigenes Konto nicht löschen. Bitte wenden Sie sich an einen anderen Administrator.'],
                     Http::STATUS_FORBIDDEN
@@ -481,14 +442,9 @@ class UserApiController extends OCSController {
                 );
             }
 
-            $this->logger->info('Benutzer erfolgreich gelöscht: ' . $id);
-
             return new DataResponse(['success' => true]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Löschen des Benutzers: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -500,8 +456,6 @@ class UserApiController extends OCSController {
      * Benutzer aktivieren
      */
     public function enable(string $id): DataResponse {
-        $this->logger->info('UserApiController::enable() aufgerufen für User: ' . $id);
-
         try {
             $user = $this->userManager->get($id);
 
@@ -513,14 +467,12 @@ class UserApiController extends OCSController {
             }
 
             $user->setEnabled(true);
-            $this->logger->info('Benutzer erfolgreich aktiviert: ' . $id);
 
             return new DataResponse([
                 'success' => true,
                 'enabled' => true
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Aktivieren des Benutzers: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -532,13 +484,10 @@ class UserApiController extends OCSController {
      * Benutzer deaktivieren
      */
     public function disable(string $id): DataResponse {
-        $this->logger->info('UserApiController::disable() aufgerufen für User: ' . $id);
-
         try {
             // Prüfe ob User versucht sich selbst zu deaktivieren
             $currentUser = $this->userSession->getUser();
             if ($currentUser !== null && $currentUser->getUID() === $id) {
-                $this->logger->warning('Benutzer ' . $id . ' versuchte sich selbst zu deaktivieren - verhindert!');
                 return new DataResponse(
                     ['error' => 'Sie können sich nicht selbst deaktivieren. Bitte wenden Sie sich an einen anderen Administrator.'],
                     Http::STATUS_FORBIDDEN
@@ -555,14 +504,12 @@ class UserApiController extends OCSController {
             }
 
             $user->setEnabled(false);
-            $this->logger->info('Benutzer erfolgreich deaktiviert: ' . $id);
 
             return new DataResponse([
                 'success' => true,
                 'enabled' => false
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Deaktivieren des Benutzers: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -574,8 +521,6 @@ class UserApiController extends OCSController {
      * Alle Geräte trennen und lokale Daten löschen (Wipe Devices)
      */
     public function wipeDevices(string $id): DataResponse {
-        $this->logger->info('UserApiController::wipeDevices() aufgerufen für User: ' . $id);
-
         try {
             $user = $this->userManager->get($id);
 
@@ -591,10 +536,7 @@ class UserApiController extends OCSController {
                 // Versuche Token Provider (benötigt IUser-Objekt, nicht nur UID)
                 $tokenProvider = \OC::$server->get(\OCP\Authentication\Token\IProvider::class);
                 $tokenProvider->invalidateTokensOfUser($user->getUID(), $user->getUID());
-                $this->logger->info('Tokens über IProvider invalidiert');
             } catch (\Exception $e) {
-                $this->logger->warning('Token Provider fehlgeschlagen, verwende Fallback: ' . $e->getMessage());
-
                 // Fallback: Versuche direkt über DB alle Sessions zu löschen
                 try {
                     $connection = \OC::$server->getDatabaseConnection();
@@ -602,23 +544,16 @@ class UserApiController extends OCSController {
                     $qb->delete('authtoken')
                         ->where($qb->expr()->eq('uid', $qb->createNamedParameter($user->getUID())))
                         ->executeStatement();
-                    $this->logger->info('Auth-Tokens über DB invalidiert');
                 } catch (\Exception $e2) {
-                    $this->logger->error('Fehler beim Invalidieren der Tokens: ' . $e2->getMessage());
                     // Nicht werfen, da wir trotzdem als "erfolgreich" behandeln
                 }
             }
-
-            $this->logger->info('Alle Geräte/Sessions für Benutzer erfolgreich getrennt: ' . $id);
 
             return new DataResponse([
                 'success' => true,
                 'message' => 'Alle Geräte wurden getrennt und lokale Daten gelöscht'
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Trennen der Geräte: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => 'Fehler beim Trennen der Geräte: ' . $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -630,8 +565,6 @@ class UserApiController extends OCSController {
      * Willkommens-Email erneut versenden
      */
     public function resendWelcomeEmail(string $id): DataResponse {
-        $this->logger->info('UserApiController::resendWelcomeEmail() aufgerufen für User: ' . $id);
-
         try {
             $user = $this->userManager->get($id);
 
@@ -671,16 +604,11 @@ class UserApiController extends OCSController {
             // E-Mail versenden
             $mailer->send($message);
 
-            $this->logger->info('Willkommens-Email erfolgreich versendet an: ' . $email);
-
             return new DataResponse([
                 'success' => true,
                 'message' => 'Willkommens-Email wurde erneut versendet'
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Versenden der Willkommens-Email: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -708,7 +636,6 @@ class UserApiController extends OCSController {
                 'email' => $currentUser->getEMailAddress() ?? ''
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Laden des aktuellen Benutzers: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -727,7 +654,6 @@ class UserApiController extends OCSController {
                 'current_user_count' => count($this->userManager->search('')),
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Laden der Config: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -766,8 +692,6 @@ class UserApiController extends OCSController {
      * Liste aller Gruppen abrufen
      */
     public function listGroups(): DataResponse {
-        $this->logger->info('UserApiController::listGroups() aufgerufen');
-
         try {
             $allGroups = $this->groupManager->search('');
             $groups = [];
@@ -780,17 +704,12 @@ class UserApiController extends OCSController {
                 ];
             }
 
-            $this->logger->info('Rückgabe von ' . count($groups) . ' Gruppen');
-
             return new DataResponse([
                 'groups' => $groups,
                 'total' => count($groups)
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Laden der Gruppen: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

@@ -444,9 +444,8 @@ export default {
                 const response = await axios.get(url)
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.currentUserId = data.id
-                console.log('Current user ID:', this.currentUserId)
             } catch (error) {
-                console.error('Fehler beim Laden des aktuellen Benutzers:', error)
+                // Error loading current user
             }
         },
 
@@ -458,8 +457,7 @@ export default {
                     response.data.ocs?.data?.groups || response.data.data?.groups || response.data.groups || []
                 this.availableGroups = groups
             } catch (error) {
-                console.error('Fehler beim Laden der Gruppen:', error)
-                // Fallback
+                // Error loading groups
                 this.availableGroups = []
             }
         },
@@ -477,7 +475,7 @@ export default {
                     }
                 }
             } catch (error) {
-                console.error('Fehler beim Laden der Einstellungen:', error)
+                // Error loading settings
             }
         },
 
@@ -525,8 +523,6 @@ export default {
 
                 // Simulated validation
                 const domain = this.formData.email.split('@')[1]
-                console.log('Validiere Domain:', domain)
-
                 // TODO: Gegen Nextcloud Config oder externe API validieren
             } catch (error) {
                 this.errors.email = this.t('souvera_central', 'Domain-Validierung fehlgeschlagen')
@@ -555,7 +551,6 @@ export default {
             this.validatePassword()
 
             if (!this.isFormValid) {
-                console.warn('Form validation failed')
                 return
             }
 
@@ -567,17 +562,7 @@ export default {
                     // Username wird aus user.id genommen (wurde bei Erstellung aus Email generiert)
                     const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.user.id })
 
-                    console.log('=== UPDATE USER REQUEST ===')
-                    console.log('URL:', url)
-                    console.log('Payload:', {
-                        displayName: this.formData.displayName,
-                        email: this.formData.email,
-                        groups: this.formData.groups,
-                        quota: this.formData.quota,
-                        enabled: this.formData.enabled
-                    })
-
-                    const response = await axios.put(url, {
+                    await axios.put(url, {
                         displayName: this.formData.displayName,
                         email: this.formData.email,
                         groups: this.formData.groups,
@@ -585,10 +570,6 @@ export default {
                         enabled: this.formData.enabled,
                         manager: this.formData.manager
                     })
-
-                    console.log('=== UPDATE USER RESPONSE ===')
-                    console.log('Status:', response.status)
-                    console.log('Data:', response.data)
                 } else {
                     // Create new user
                     // Username wird vom Backend automatisch aus Email generiert
@@ -604,18 +585,7 @@ export default {
                         manager: this.formData.manager
                     }
 
-                    console.log('=== CREATE USER REQUEST ===')
-                    console.log('URL:', url)
-                    console.log('Payload:', payload)
-                    console.log('Payload JSON:', JSON.stringify(payload))
-
-                    const response = await axios.post(url, payload)
-
-                    console.log('=== CREATE USER RESPONSE ===')
-                    console.log('Status:', response.status)
-                    console.log('Headers:', response.headers)
-                    console.log('Data:', response.data)
-                    console.log('Full Response:', response)
+                    await axios.post(url, payload)
 
                     // Auto-Email senden wenn aktiviert
                     if (this.settings.email.send_to_new_users) {
@@ -625,10 +595,9 @@ export default {
                                 id: this.formData.email
                             })
                             await axios.post(emailUrl)
-                            console.log('Willkommens-Email automatisch versendet an:', this.formData.email)
                         } catch (emailError) {
-                            console.warn('Fehler beim automatischen Versenden der Willkommens-Email:', emailError)
-                            // Nicht blockieren, nur warnen
+                            // Error sending welcome email, but don't block
+                        }
                         }
                     }
                 }
@@ -636,29 +605,16 @@ export default {
                 this.$emit('saved')
                 this.$emit('close')
             } catch (error) {
-                console.error('=== ERROR beim Speichern ===')
-                console.error('Error object:', error)
-                console.error('Error response:', error.response)
-                console.error('Error response data:', error.response?.data)
-                console.error('Error response status:', error.response?.status)
-                console.error('Error response headers:', error.response?.headers)
-
                 // Zeige Fehlermeldung
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
-                let debugInfo = ''
 
                 if (error.response?.data?.ocs?.data?.error) {
                     errorMessage = error.response.data.ocs.data.error
-                    debugInfo = JSON.stringify(error.response.data.ocs.data.debug || {})
                 } else if (error.response?.data?.error) {
                     errorMessage = error.response.data.error
-                    debugInfo = JSON.stringify(error.response.data.debug || {})
                 }
 
-                console.error('Error message:', errorMessage)
-                console.error('Debug info:', debugInfo)
-
-                alert(errorMessage + (debugInfo ? '\n\nDebug: ' + debugInfo : '')) // TODO: Bessere Error-UI
+                alert(errorMessage)
             } finally {
                 this.saving = false
             }
@@ -678,7 +634,7 @@ export default {
                     }
                 }
             } catch (error) {
-                console.error('Fehler beim Laden der Manager-Daten:', error)
+                // Error loading manager data
             }
         },
 
@@ -723,7 +679,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Versenden der Willkommens-Email:', error)
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
@@ -804,7 +759,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Ändern des Status:', error)
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
@@ -874,7 +828,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Trennen der Geräte:', error)
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
@@ -946,7 +899,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Löschen des Benutzers:', error)
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||

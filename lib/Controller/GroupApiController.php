@@ -44,13 +44,10 @@ class GroupApiController extends OCSController {
      * @param int $offset Start-Offset für Pagination (Standard: 0)
      */
     public function list(string $search = '', int $limit = 20, int $offset = 0): DataResponse {
-        $this->logger->info('GroupApiController::list() aufgerufen - search: "' . $search . '", limit: ' . $limit . ', offset: ' . $offset);
-
         try {
             // Alle Gruppen durchsuchen
             $searchTerm = trim($search);
             $allGroups = $this->groupManager->search($searchTerm);
-            $this->logger->info('Gefundene Gruppen (vor Filter): ' . count($allGroups));
 
             $allGroupsData = [];
             foreach ($allGroups as $group) {
@@ -82,11 +79,9 @@ class GroupApiController extends OCSController {
             }
 
             $totalCount = count($allGroupsData);
-            $this->logger->info('Gefundene Gruppen (nach Filter): ' . $totalCount);
 
             // Pagination anwenden
             $paginatedGroups = array_slice($allGroupsData, $offset, $limit);
-            $this->logger->info('Rückgabe von ' . count($paginatedGroups) . ' Gruppen (Seite)');
 
             return new DataResponse([
                 'groups' => $paginatedGroups,
@@ -96,9 +91,6 @@ class GroupApiController extends OCSController {
                 'hasMore' => ($offset + $limit) < $totalCount
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler in GroupApiController::list(): ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -110,8 +102,6 @@ class GroupApiController extends OCSController {
      * Einzelne Gruppe abrufen
      */
     public function get(string $id): DataResponse {
-        $this->logger->info('GroupApiController::get() aufgerufen für Gruppe: ' . $id);
-
         try {
             $group = $this->groupManager->get($id);
 
@@ -131,9 +121,6 @@ class GroupApiController extends OCSController {
 
             return new DataResponse($groupData);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler in GroupApiController::get(): ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -145,8 +132,6 @@ class GroupApiController extends OCSController {
      * Neue Gruppe erstellen
      */
     public function create(string $groupId = '', string $displayName = ''): DataResponse {
-        $this->logger->info('GroupApiController::create() aufgerufen für Gruppe: ' . $groupId);
-
         try {
             // Validierung
             if (empty($groupId)) {
@@ -166,7 +151,6 @@ class GroupApiController extends OCSController {
 
             // Prüfen ob Gruppe schon existiert
             if ($this->groupManager->get($groupId) !== null) {
-                $this->logger->warning('Gruppe existiert bereits: ' . $groupId);
                 return new DataResponse(
                     ['error' => 'Gruppe existiert bereits'],
                     Http::STATUS_CONFLICT
@@ -188,8 +172,6 @@ class GroupApiController extends OCSController {
                 $group->setDisplayName($displayName);
             }
 
-            $this->logger->info('Gruppe erfolgreich erstellt: ' . $groupId);
-
             return new DataResponse([
                 'success' => true,
                 'group' => [
@@ -201,9 +183,6 @@ class GroupApiController extends OCSController {
             ], Http::STATUS_CREATED);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Erstellen der Gruppe: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -215,8 +194,6 @@ class GroupApiController extends OCSController {
      * Gruppe aktualisieren
      */
     public function update(string $id, ?string $displayName = null): DataResponse {
-        $this->logger->info('GroupApiController::update() aufgerufen für Gruppe: ' . $id);
-
         try {
             $group = $this->groupManager->get($id);
 
@@ -230,10 +207,7 @@ class GroupApiController extends OCSController {
             // Display Name aktualisieren
             if ($displayName !== null) {
                 $group->setDisplayName($displayName);
-                $this->logger->debug('DisplayName aktualisiert: ' . $displayName);
             }
-
-            $this->logger->info('Gruppe erfolgreich aktualisiert: ' . $id);
 
             return new DataResponse([
                 'success' => true,
@@ -246,9 +220,6 @@ class GroupApiController extends OCSController {
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Aktualisieren der Gruppe: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -260,12 +231,9 @@ class GroupApiController extends OCSController {
      * Gruppe löschen
      */
     public function delete(string $id): DataResponse {
-        $this->logger->info('GroupApiController::delete() aufgerufen für Gruppe: ' . $id);
-
         try {
             // Prüfen ob Gruppe geschützt ist
             if (in_array($id, self::PROTECTED_GROUPS)) {
-                $this->logger->warning('Versuch geschützte Gruppe zu löschen: ' . $id);
                 return new DataResponse(
                     ['error' => 'Systemgruppen können nicht gelöscht werden'],
                     Http::STATUS_FORBIDDEN
@@ -291,14 +259,9 @@ class GroupApiController extends OCSController {
                 );
             }
 
-            $this->logger->info('Gruppe erfolgreich gelöscht: ' . $id);
-
             return new DataResponse(['success' => true]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Löschen der Gruppe: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -310,8 +273,6 @@ class GroupApiController extends OCSController {
      * Mitglieder einer Gruppe abrufen
      */
     public function getMembers(string $id, string $search = '', int $limit = 100, int $offset = 0): DataResponse {
-        $this->logger->info('GroupApiController::getMembers() aufgerufen für Gruppe: ' . $id);
-
         try {
             $group = $this->groupManager->get($id);
 
@@ -369,9 +330,6 @@ class GroupApiController extends OCSController {
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler in GroupApiController::getMembers(): ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -383,8 +341,6 @@ class GroupApiController extends OCSController {
      * Benutzer zu Gruppe hinzufügen
      */
     public function addMember(string $id, string $userId): DataResponse {
-        $this->logger->info('GroupApiController::addMember() aufgerufen - Gruppe: ' . $id . ', User: ' . $userId);
-
         try {
             // Validierung
             if (empty($userId)) {
@@ -421,17 +377,12 @@ class GroupApiController extends OCSController {
             // User zu Gruppe hinzufügen
             $group->addUser($user);
 
-            $this->logger->info('Benutzer erfolgreich zu Gruppe hinzugefügt: ' . $userId . ' -> ' . $id);
-
             return new DataResponse([
                 'success' => true,
                 'message' => 'Benutzer erfolgreich hinzugefügt'
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Hinzufügen des Benutzers zur Gruppe: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -443,8 +394,6 @@ class GroupApiController extends OCSController {
      * Benutzer aus Gruppe entfernen
      */
     public function removeMember(string $id, string $userId): DataResponse {
-        $this->logger->info('GroupApiController::removeMember() aufgerufen - Gruppe: ' . $id . ', User: ' . $userId);
-
         try {
             $group = $this->groupManager->get($id);
             if ($group === null) {
@@ -473,17 +422,12 @@ class GroupApiController extends OCSController {
             // User aus Gruppe entfernen
             $group->removeUser($user);
 
-            $this->logger->info('Benutzer erfolgreich aus Gruppe entfernt: ' . $userId . ' <- ' . $id);
-
             return new DataResponse([
                 'success' => true,
                 'message' => 'Benutzer erfolgreich entfernt'
             ]);
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Entfernen des Benutzers aus der Gruppe: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

@@ -213,12 +213,10 @@ export default {
         handleUrlChange() {
             // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
             const path = window.location.pathname
-            console.log('URL changed to:', path)
 
             // Wenn URL zu /groups (ohne /new oder /edit/:id) geht → Editor schließen
             if (path.endsWith('/groups') || path === generateUrl('/apps/souvera_central/groups')) {
                 if (this.showEditor) {
-                    console.log('Closing editor due to URL change')
                     this.showEditor = false
                     this.selectedGroup = null
                 }
@@ -234,7 +232,6 @@ export default {
                 this.selectedGroup = data
                 this.showEditor = true
             } catch (error) {
-                console.error('Fehler beim Laden der Gruppe:', error)
                 this.showError(error, this.t('souvera_central', 'Fehler beim Laden der Gruppe'))
             }
         },
@@ -249,7 +246,6 @@ export default {
                     this.settings.sorting = data.sorting
                 }
             } catch (error) {
-                console.error('Fehler beim Laden der Einstellungen:', error)
                 // Fallback auf Default-Sortierung
             }
         },
@@ -279,10 +275,7 @@ export default {
 
                 // Emit total group count to parent (für Dashboard)
                 this.$emit('groups-loaded', this.totalGroups)
-
-                console.log('Geladene Gruppen:', this.groups.length, 'von', this.totalGroups, '| Sortierung:', this.settings.sorting.groups)
             } catch (error) {
-                console.error('Fehler beim Laden der Gruppen:', error)
                 this.showError(error, this.t('souvera_central', 'Fehler beim Laden der Gruppen'))
             } finally {
                 this.loading = false
@@ -305,20 +298,17 @@ export default {
         },
 
         handleSearch(query) {
-            console.log('Suche:', query)
             this.searchQuery = query
             this.currentPage = 1 // Zurück zur ersten Seite bei neuer Suche
             this.loadGroups()
         },
 
         handlePageChange(page) {
-            console.log('Seite wechseln:', page)
             this.currentPage = page
             this.loadGroups()
         },
 
         handlePerPageChange(perPage) {
-            console.log('Pro-Seite ändern:', perPage)
             this.perPage = perPage
             this.currentPage = 1 // Zurück zur ersten Seite
             this.loadGroups()
@@ -424,7 +414,6 @@ export default {
                             }
                         }
                     } catch (error) {
-                        console.error('Fehler beim Löschen:', error)
                         const errorMessage = this.getErrorMessage(error, this.t('souvera_central', 'Fehler beim Löschen'))
 
                         // Error Modal

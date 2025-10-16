@@ -147,11 +147,9 @@ export default {
                         email: data.email || this.settings.email,
                         defaults: data.defaults || this.settings.defaults
                     }
-
-                    console.log('Einstellungen geladen:', this.settings)
                 }
             } catch (error) {
-                console.error('Fehler beim Laden der Einstellungen:', error)
+                // Error handling
             } finally {
                 this.loading = false
             }
@@ -171,12 +169,9 @@ export default {
                     this.saveSuccess = false
                 }, 2000)
 
-                console.log('Einstellungen gespeichert:', this.settings)
-
                 // Emit event für andere Komponenten
                 this.$emit('settings-updated', this.settings)
             } catch (error) {
-                console.error('Fehler beim Speichern der Einstellungen:', error)
                 alert(this.t('souvera_central', 'Fehler beim Speichern der Einstellungen'))
             } finally {
                 this.saving = false

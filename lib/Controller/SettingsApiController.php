@@ -33,8 +33,6 @@ class SettingsApiController extends OCSController {
      * Einstellungen abrufen
      */
     public function getSettings(): DataResponse {
-        $this->logger->info('SettingsApiController::getSettings() aufgerufen');
-
         try {
             $settings = [
                 'visibility' => [
@@ -56,13 +54,8 @@ class SettingsApiController extends OCSController {
                 ],
             ];
 
-            $this->logger->info('Einstellungen erfolgreich geladen');
-
             return new DataResponse($settings);
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Laden der Einstellungen: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -74,8 +67,6 @@ class SettingsApiController extends OCSController {
      * Einstellungen speichern
      */
     public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null): DataResponse {
-        $this->logger->info('SettingsApiController::updateSettings() aufgerufen');
-
         try {
             // Visibility Settings
             if ($visibility !== null) {
@@ -137,15 +128,10 @@ class SettingsApiController extends OCSController {
                 }
             }
 
-            $this->logger->info('Einstellungen erfolgreich gespeichert');
-
             // Aktualisierte Einstellungen zurückgeben
             return $this->getSettings();
 
         } catch (\Exception $e) {
-            $this->logger->error('Fehler beim Speichern der Einstellungen: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

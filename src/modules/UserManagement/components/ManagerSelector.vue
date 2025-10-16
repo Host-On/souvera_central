@@ -141,7 +141,6 @@ export default {
                 this.showDropdown = true
                 this.highlightedIndex = -1
             } catch (error) {
-                console.error('Fehler bei User-Suche:', error)
                 this.filteredUsers = []
             } finally {
                 this.searching = false

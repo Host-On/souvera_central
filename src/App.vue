@@ -167,10 +167,8 @@ export default {
 
                 this.licenseTotal = config.max_licenses || 10
                 this.allowedDomains = config.allowed_domains || []
-
-                console.log('Loaded config:', config)
             } catch (error) {
-                console.error('Fehler beim Laden der Config:', error)
+                // Error handling
             }
         },
 
@@ -195,7 +193,7 @@ export default {
                 // Lade Gruppen-Anzahl
                 await this.loadGroupCount()
             } catch (error) {
-                console.error('Fehler beim Laden der Statistiken:', error)
+                // Error handling
             }
         },
 
@@ -206,7 +204,6 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.groupCount = data.total || (data.groups || []).length
             } catch (error) {
-                console.error('Fehler beim Laden der Gruppen-Anzahl:', error)
                 this.groupCount = 0
             }
         }
