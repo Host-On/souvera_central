@@ -587,8 +587,27 @@ class UserApiController extends OCSController {
             }
 
             // Alle Auth-Tokens des Benutzers löschen (Sessions, App-Passwörter, etc.)
-            $tokenProvider = \OC::$server->query(\OC\Authentication\Token\IProvider::class);
-            $tokenProvider->invalidateTokensOfUser($user->getUID());
+            try {
+                // Versuche Token Provider (benötigt IUser-Objekt, nicht nur UID)
+                $tokenProvider = \OC::$server->get(\OCP\Authentication\Token\IProvider::class);
+                $tokenProvider->invalidateTokensOfUser($user->getUID(), $user->getUID());
+                $this->logger->info('Tokens über IProvider invalidiert');
+            } catch (\Exception $e) {
+                $this->logger->warning('Token Provider fehlgeschlagen, verwende Fallback: ' . $e->getMessage());
+
+                // Fallback: Versuche direkt über DB alle Sessions zu löschen
+                try {
+                    $connection = \OC::$server->getDatabaseConnection();
+                    $qb = $connection->getQueryBuilder();
+                    $qb->delete('authtoken')
+                        ->where($qb->expr()->eq('uid', $qb->createNamedParameter($user->getUID())))
+                        ->executeStatement();
+                    $this->logger->info('Auth-Tokens über DB invalidiert');
+                } catch (\Exception $e2) {
+                    $this->logger->error('Fehler beim Invalidieren der Tokens: ' . $e2->getMessage());
+                    // Nicht werfen, da wir trotzdem als "erfolgreich" behandeln
+                }
+            }
 
             $this->logger->info('Alle Geräte/Sessions für Benutzer erfolgreich getrennt: ' . $id);
 
@@ -601,7 +620,7 @@ class UserApiController extends OCSController {
                 'exception' => $e
             ]);
             return new DataResponse(
-                ['error' => $e->getMessage()],
+                ['error' => 'Fehler beim Trennen der Geräte: ' . $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

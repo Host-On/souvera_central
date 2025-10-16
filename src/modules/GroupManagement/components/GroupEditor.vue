@@ -2,11 +2,13 @@
     <div class="group-editor-page">
         <!-- Header -->
         <div class="editor-header">
-            <button class="back-button" @click="$emit('close')">
-                <span class="icon-arrow-left"></span>
-                {{ t('souvera_central', 'Zurück') }}
-            </button>
-            <h2>{{ isEditMode ? t('souvera_central', 'Gruppe bearbeiten') : t('souvera_central', 'Neue Gruppe') }}</h2>
+            <div class="header-left">
+                <button class="back-button" @click="$emit('close')">
+                    <span class="icon-history"></span>
+                    {{ t('souvera_central', 'Zurück zur Übersicht') }}
+                </button>
+                <h2>{{ isEditMode ? t('souvera_central', 'Gruppe bearbeiten') : t('souvera_central', 'Neue Gruppe') }}</h2>
+            </div>
         </div>
 
         <!-- Form -->
@@ -422,30 +424,47 @@ export default {
     border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: center;
-    gap: 20px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
 }
 
 .back-button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: none;
-    border: none;
+    background: var(--color-background-dark);
+    border: 1px solid var(--color-border);
     color: var(--color-primary);
     cursor: pointer;
     font-size: 14px;
-    padding: 8px 12px;
+    font-weight: 500;
+    padding: 10px 16px;
     border-radius: var(--border-radius);
-    transition: background 0.2s;
+    transition: all 0.2s;
+    align-self: flex-start;
 }
 
 .back-button:hover {
-    background: var(--color-background-hover);
+    background: var(--color-primary-element-light);
+    border-color: var(--color-primary);
+    transform: translateX(-2px);
+}
+
+.back-button [class^='icon-'],
+.back-button [class*=' icon-'] {
+    font-size: 16px;
+    color: var(--color-primary) !important;
+    opacity: 1 !important;
 }
 
 .editor-header h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
 }
 

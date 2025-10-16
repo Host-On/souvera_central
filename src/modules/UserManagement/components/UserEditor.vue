@@ -2,13 +2,15 @@
     <div class="user-editor-page">
         <!-- Header -->
         <div class="editor-header">
-            <button class="back-button" @click="$emit('close')">
-                <span class="icon-arrow-left"></span>
-                {{ t('souvera_central', 'Zurück') }}
-            </button>
-            <h2>
-                {{ isEditMode ? t('souvera_central', 'Benutzer bearbeiten') : t('souvera_central', 'Neuer Benutzer') }}
-            </h2>
+            <div class="header-left">
+                <button class="back-button" @click="$emit('close')">
+                    <span class="icon-history"></span>
+                    {{ t('souvera_central', 'Zurück zur Übersicht') }}
+                </button>
+                <h2>
+                    {{ isEditMode ? t('souvera_central', 'Benutzer bearbeiten') : t('souvera_central', 'Neuer Benutzer') }}
+                </h2>
+            </div>
         </div>
 
         <!-- Form -->
@@ -144,34 +146,40 @@
                     </p>
                 </div>
 
-                <!-- Gruppen Zone -->
-                <div class="groups-zone">
-                    <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
+                <!-- Gruppen Zone (Collapsible) -->
+                <div class="groups-zone collapsible">
+                    <button type="button" class="collapsible-header" @click="groupsExpanded = !groupsExpanded">
+                        <span :class="groupsExpanded ? 'icon-triangle-s' : 'icon-triangle-e'"></span>
+                        <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
+                        <span class="optional-badge">{{ t('souvera_central', 'Optional') }}</span>
+                    </button>
 
-                    <!-- Gruppen -->
-                    <div class="form-group">
-                        <label for="groups">
-                            {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
-                        </label>
-                        <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
-                        <GroupSelector
-                            v-model="formData.groups"
-                            :available-groups="availableGroups"
-                            mode="member"
-                        />
-                    </div>
+                    <div v-if="groupsExpanded" class="collapsible-content">
+                        <!-- Gruppen -->
+                        <div class="form-group">
+                            <label for="groups">
+                                {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
+                            </label>
+                            <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
+                            <GroupSelector
+                                v-model="formData.groups"
+                                :available-groups="availableGroups"
+                                mode="member"
+                            />
+                        </div>
 
-                    <!-- Gruppen-Administration -->
-                    <div class="form-group">
-                        <label for="adminGroups">
-                            {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
-                        </label>
-                        <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
-                        <GroupSelector
-                            v-model="formData.adminGroups"
-                            :available-groups="availableGroups"
-                            mode="admin"
-                        />
+                        <!-- Gruppen-Administration -->
+                        <div class="form-group">
+                            <label for="adminGroups">
+                                {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
+                            </label>
+                            <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
+                            <GroupSelector
+                                v-model="formData.adminGroups"
+                                :available-groups="availableGroups"
+                                mode="admin"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -341,6 +349,7 @@ export default {
             deletingUser: false,
             initialManagerData: null,
             currentUserId: null,
+            groupsExpanded: false,
             settings: {
                 defaults: {
                     quota: 'default'
@@ -984,30 +993,47 @@ export default {
     border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: center;
-    gap: 20px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
 }
 
 .back-button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: none;
-    border: none;
+    background: var(--color-background-dark);
+    border: 1px solid var(--color-border);
     color: var(--color-primary);
     cursor: pointer;
     font-size: 14px;
-    padding: 8px 12px;
+    font-weight: 500;
+    padding: 10px 16px;
     border-radius: var(--border-radius);
-    transition: background 0.2s;
+    transition: all 0.2s;
+    align-self: flex-start;
 }
 
 .back-button:hover {
-    background: var(--color-background-hover);
+    background: var(--color-primary-element-light);
+    border-color: var(--color-primary);
+    transform: translateX(-2px);
+}
+
+.back-button [class^='icon-'],
+.back-button [class*=' icon-'] {
+    font-size: 16px;
+    color: var(--color-primary) !important;
+    opacity: 1 !important;
 }
 
 .editor-header h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
 }
 
@@ -1211,27 +1237,77 @@ export default {
     color: var(--color-error);
 }
 
-/* Groups Zone */
-.groups-zone {
+/* Groups Zone (Collapsible) */
+.groups-zone.collapsible {
     margin-top: 30px;
-    padding: 25px;
     border: 2px solid var(--color-border);
     border-radius: var(--border-radius-large);
     background: var(--color-background-dark);
+    padding: 0;
+    overflow: visible;
 }
 
-.groups-zone h3 {
-    margin: 0 0 20px;
+.collapsible-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.collapsible-header:hover {
+    background: var(--color-background-hover);
+}
+
+.collapsible-header span[class^='icon-triangle'] {
+    font-size: 16px;
+    color: var(--color-text-lighter);
+    transition: transform 0.2s;
+}
+
+.collapsible-header h3 {
+    margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: var(--color-text-light);
+    flex: 1;
 }
 
-.groups-zone .form-group {
+.optional-badge {
+    padding: 4px 12px;
+    background: var(--color-primary-element-light);
+    color: var(--color-primary);
+    border-radius: var(--border-radius-large);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.collapsible-content {
+    padding: 0 25px 25px 25px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.collapsible-content .form-group {
     margin-bottom: 20px;
 }
 
-.groups-zone .form-group:last-child {
+.collapsible-content .form-group:last-child {
     margin-bottom: 0;
 }
 

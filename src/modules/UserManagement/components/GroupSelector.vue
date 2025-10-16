@@ -374,9 +374,9 @@ export default {
 }
 
 .dropdown-trigger:hover {
-    background: var(--color-primary-element-light);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    background: rgba(0, 0, 0, 0.1);
+    background-blend-mode: darken;
+    opacity: 0.85;
 }
 
 /* Dropdown Menu */
@@ -390,7 +390,7 @@ export default {
     border-radius: var(--border-radius-large);
     box-shadow: 0 4px 16px var(--color-box-shadow);
     z-index: 1000;
-    max-height: 400px;
+    max-height: min(280px, 30vh);
     display: flex;
     flex-direction: column;
     animation: dropdownSlide 0.2s ease-out;
@@ -459,7 +459,7 @@ export default {
 /* Dropdown List */
 .dropdown-list {
     overflow-y: auto;
-    max-height: 280px;
+    max-height: min(170px, 20vh);
 }
 
 .dropdown-item {

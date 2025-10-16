@@ -114,6 +114,19 @@
                 <p v-else>{{ t('souvera_central', 'Erstellen Sie Ihre erste Gruppe um zu starten.') }}</p>
             </div>
         </div>
+
+        <!-- Confirmation Modal -->
+        <ConfirmationModal
+            :is-open="confirmModal.isOpen"
+            :title="confirmModal.title"
+            :message="confirmModal.message"
+            :details="confirmModal.details"
+            :type="confirmModal.type"
+            :confirm-text="confirmModal.confirmText"
+            :cancel-text="confirmModal.cancelText"
+            @confirm="confirmModal.onConfirm"
+            @close="closeConfirmModal"
+        />
     </div>
 </template>
 
@@ -124,6 +137,7 @@ import { generateUrl } from '@nextcloud/router'
 import GroupEditor from './components/GroupEditor.vue'
 import SearchField from '../../components/SearchField.vue'
 import Pagination from '../../components/Pagination.vue'
+import ConfirmationModal from '../../components/ConfirmationModal.vue'
 
 export default {
     name: 'GroupManagement',
@@ -131,7 +145,8 @@ export default {
     components: {
         GroupEditor,
         SearchField,
-        Pagination
+        Pagination,
+        ConfirmationModal
     },
 
     data() {
@@ -148,6 +163,16 @@ export default {
                 sorting: {
                     groups: 'displayName'
                 }
+            },
+            confirmModal: {
+                isOpen: false,
+                title: '',
+                message: '',
+                details: '',
+                type: 'info',
+                confirmText: 'Bestätigen',
+                cancelText: 'Abbrechen',
+                onConfirm: () => {}
             }
         }
     },
@@ -345,39 +370,96 @@ export default {
             await this.loadGroups()
         },
 
-        async deleteGroup(group) {
+        deleteGroup(group) {
             if (group.isProtected) {
-                alert(this.t('souvera_central', 'Systemgruppen können nicht gelöscht werden'))
-                return
-            }
-
-            if (
-                !confirm(
-                    this.t('souvera_central', 'Möchten Sie die Gruppe "{group}" wirklich löschen?', {
+                this.confirmModal = {
+                    isOpen: true,
+                    title: this.t('souvera_central', 'Systemgruppe'),
+                    message: this.t('souvera_central', 'Systemgruppen können nicht gelöscht werden'),
+                    details: this.t('souvera_central', 'Die Gruppe "{group}" ist eine geschützte Systemgruppe.', {
                         group: group.displayName
-                    })
-                )
-            ) {
+                    }),
+                    type: 'warning',
+                    confirmText: this.t('souvera_central', 'OK'),
+                    cancelText: '',
+                    onConfirm: () => {
+                        this.closeConfirmModal()
+                    }
+                }
                 return
             }
 
-            try {
-                const url = generateUrl('/apps/souvera_central/api/groups/manage/{id}', { id: group.id })
-                await axios.delete(url)
-                await this.loadGroups()
-            } catch (error) {
-                console.error('Fehler beim Löschen:', error)
-                this.showError(error, this.t('souvera_central', 'Fehler beim Löschen'))
+            this.confirmModal = {
+                isOpen: true,
+                title: this.t('souvera_central', 'Gruppe löschen?'),
+                message: this.t('souvera_central', 'Möchten Sie die Gruppe "{group}" wirklich löschen?', {
+                    group: group.displayName
+                }),
+                details: this.t(
+                    'souvera_central',
+                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden!'
+                ),
+                type: 'danger',
+                confirmText: this.t('souvera_central', 'Ja, Gruppe löschen'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    try {
+                        const url = generateUrl('/apps/souvera_central/api/groups/manage/{id}', { id: group.id })
+                        await axios.delete(url)
+
+                        // Success Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Gruppe gelöscht!'),
+                            message: this.t('souvera_central', 'Die Gruppe wurde erfolgreich gelöscht.'),
+                            details: this.t('souvera_central', '"{group}" wurde entfernt.', {
+                                group: group.displayName
+                            }),
+                            type: 'success',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                                this.loadGroups()
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Löschen:', error)
+                        const errorMessage = this.getErrorMessage(error, this.t('souvera_central', 'Fehler beim Löschen'))
+
+                        // Error Modal
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Fehler beim Löschen'),
+                            message: errorMessage,
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => {
+                                this.closeConfirmModal()
+                            }
+                        }
+                    }
+                }
             }
         },
 
-        showError(error, defaultMessage) {
-            let errorMessage = defaultMessage
+        closeConfirmModal() {
+            this.confirmModal.isOpen = false
+        },
+
+        getErrorMessage(error, defaultMessage) {
             if (error.response?.data?.ocs?.data?.error) {
-                errorMessage = error.response.data.ocs.data.error
+                return error.response.data.ocs.data.error
             } else if (error.response?.data?.error) {
-                errorMessage = error.response.data.error
+                return error.response.data.error
             }
+            return defaultMessage
+        },
+
+        showError(error, defaultMessage) {
+            const errorMessage = this.getErrorMessage(error, defaultMessage)
             alert(errorMessage)
         }
     }
