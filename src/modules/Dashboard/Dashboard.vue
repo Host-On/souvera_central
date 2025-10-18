@@ -103,7 +103,7 @@
         <div class="quick-actions">
             <h3>{{ t('souvera_central', 'Schnellaktionen') }}</h3>
             <div class="actions-grid">
-                <button class="action-card" @click="$emit('navigate', 'users')" :disabled="isLicenseLimitReached">
+                <button class="action-card" :disabled="isLicenseLimitReached" @click="$emit('navigate', 'users')">
                     <span class="icon-add"></span>
                     <span class="action-label">{{ t('souvera_central', 'Benutzer erstellen') }}</span>
                 </button>

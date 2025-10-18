@@ -1,12 +1,17 @@
 <template>
     <div class="search-field">
         <span class="icon-search search-icon"></span>
-        <input v-model="searchQuery" type="text" :placeholder="placeholder" class="search-input" @input="handleInput" />
+        <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="placeholder"
+            class="search-input"
+            @input="handleInput" />
         <button
             v-if="searchQuery"
             class="clear-button"
-            @click="clearSearch"
             :title="t('souvera_central', 'Suche löschen')"
+            @click="clearSearch"
         >
             <span class="icon-close"></span>
         </button>

@@ -1,7 +1,11 @@
 <template>
     <div class="group-management-container">
         <!-- Group Editor (Single Page) -->
-        <GroupEditor v-if="showEditor" :group="selectedGroup" @close="closeEditor" @saved="handleGroupSaved" />
+        <GroupEditor
+            v-if="showEditor"
+            :group="selectedGroup"
+            @close="closeEditor"
+            @saved="handleGroupSaved" />
 
         <!-- Haupt-Bereich mit Gruppen-Liste -->
         <div v-else class="groups-list-view">
@@ -48,7 +52,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="group in groups" :key="group.id" class="group-row" @click="selectGroup(group)">
+                            <tr
+                                v-for="group in groups"
+                                :key="group.id"
+                                class="group-row"
+                                @click="selectGroup(group)">
                                 <td class="group-column">
                                     <div class="group-info">
                                         <span class="icon-group"></span>

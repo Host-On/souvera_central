@@ -6,6 +6,7 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('souvera_central', 'Manager suchen...')"
+                class="manager-input"
                 @input="handleSearch"
                 @focus="showDropdown = true"
                 @blur="handleBlur"
@@ -13,7 +14,6 @@
                 @keydown.up.prevent="navigateUp"
                 @keydown.enter.prevent="selectHighlighted"
                 @keydown.esc="closeDropdown"
-                class="manager-input"
             />
             <span v-if="searching" class="icon-loading-small input-icon"></span>
 

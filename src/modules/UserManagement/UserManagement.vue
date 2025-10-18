@@ -25,9 +25,9 @@
                 </div>
                 <button
                     class="primary"
-                    @click="createNewUser"
                     :disabled="isLicenseLimitReached"
                     :title="isLicenseLimitReached ? t('souvera_central', 'Lizenzlimit erreicht') : ''"
+                    @click="createNewUser"
                 >
                     <span class="icon-add"></span>
                     {{ t('souvera_central', 'Neuer Benutzer') }}
@@ -215,21 +215,6 @@ export default {
         }
     },
 
-    computed: {
-        isLicenseLimitReached() {
-            return this.totalUsers >= this.licenseTotal
-        },
-
-        licensePercentage() {
-            if (this.licenseTotal === 0) return 0
-            return Math.round((this.totalUsers / this.licenseTotal) * 100)
-        },
-
-        isLicenseWarning() {
-            return !this.isLicenseLimitReached && this.totalUsers / this.licenseTotal >= 0.8
-        }
-    },
-
     data() {
         return {
             users: [],
@@ -251,6 +236,21 @@ export default {
                 cancelText: 'Abbrechen',
                 onConfirm: () => {}
             }
+        }
+    },
+
+    computed: {
+        isLicenseLimitReached() {
+            return this.totalUsers >= this.licenseTotal
+        },
+
+        licensePercentage() {
+            if (this.licenseTotal === 0) return 0
+            return Math.round((this.totalUsers / this.licenseTotal) * 100)
+        },
+
+        isLicenseWarning() {
+            return !this.isLicenseLimitReached && this.totalUsers / this.licenseTotal >= 0.8
         }
     },
 

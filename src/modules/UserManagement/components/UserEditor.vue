@@ -15,7 +15,7 @@
 
         <!-- Form -->
         <div class="editor-content">
-            <form @submit.prevent="saveUser" class="user-form">
+            <form class="user-form" @submit.prevent="saveUser">
                 <!-- Benutzername-Feld entfernt: Username wird automatisch aus Email generiert (Backend) -->
 
                 <!-- Anzeigename -->
@@ -28,8 +28,8 @@
                         v-model="formData.displayName"
                         type="text"
                         :class="{ error: errors.displayName }"
-                        @input="validateDisplayName"
                         required
+                        @input="validateDisplayName"
                     />
                     <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
                 </div>
@@ -48,17 +48,17 @@
                             type="text"
                             class="email-local-part"
                             :class="{ error: errors.email }"
-                            @input="updateFullEmail"
                             placeholder="benutzername"
                             required
+                            @input="updateFullEmail"
                         />
                         <span class="email-separator">@</span>
                         <select
                             v-model="emailDomain"
                             class="email-domain-select"
                             :class="{ error: errors.email }"
-                            @change="updateFullEmail"
                             required
+                            @change="updateFullEmail"
                         >
                             <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
                             <option v-for="domain in allowedDomains" :key="domain" :value="domain">
@@ -74,8 +74,8 @@
                         v-model="formData.email"
                         type="email"
                         :class="{ error: errors.email }"
-                        @input="validateEmail"
                         required
+                        @input="validateEmail"
                     />
 
                     <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
@@ -98,8 +98,8 @@
                         v-model="formData.password"
                         type="password"
                         :class="{ error: errors.password }"
-                        @input="validatePassword"
                         required
+                        @input="validatePassword"
                     />
                     <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
                     <p v-else class="help-text">{{ t('souvera_central', 'Mindestens 10 Zeichen') }}</p>
@@ -190,8 +190,8 @@
                         <button
                             type="button"
                             :class="['action-button', formData.enabled ? 'warning' : 'success']"
-                            @click="toggleUserStatus"
                             :disabled="togglingStatus"
+                            @click="toggleUserStatus"
                         >
                             <span v-if="togglingStatus" class="icon-loading-small"></span>
                             <span v-else :class="formData.enabled ? 'icon-close' : 'icon-checkmark'"></span>
@@ -199,16 +199,16 @@
                                 togglingStatus
                                     ? t('souvera_central', 'Speichert...')
                                     : formData.enabled
-                                    ? t('souvera_central', 'Benutzer deaktivieren')
-                                    : t('souvera_central', 'Benutzer aktivieren')
+                                        ? t('souvera_central', 'Benutzer deaktivieren')
+                                        : t('souvera_central', 'Benutzer aktivieren')
                             }}
                         </button>
 
                         <button
                             type="button"
                             class="action-button secondary"
-                            @click="resendWelcomeEmail"
                             :disabled="resendingEmail"
+                            @click="resendWelcomeEmail"
                         >
                             <span v-if="resendingEmail" class="icon-loading-small"></span>
                             <span v-else class="icon-mail"></span>
@@ -222,8 +222,8 @@
                         <button
                             type="button"
                             class="action-button danger"
-                            @click="wipeDevices"
                             :disabled="wipingDevices"
+                            @click="wipeDevices"
                         >
                             <span v-if="wipingDevices" class="icon-loading-small"></span>
                             <span v-else class="icon-delete"></span>
@@ -237,9 +237,9 @@
                         <button
                             type="button"
                             class="action-button danger"
-                            @click="deleteUser"
                             :disabled="deletingUser || isOwnAccount"
                             :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                            @click="deleteUser"
                         >
                             <span v-if="deletingUser" class="icon-loading-small"></span>
                             <span v-else class="icon-delete"></span>
@@ -598,7 +598,6 @@ export default {
                         } catch (emailError) {
                             // Error sending welcome email, but don't block
                         }
-                        }
                     }
                 }
 
@@ -719,9 +718,9 @@ export default {
                 }),
                 details: this.formData.enabled
                     ? this.t(
-                          'souvera_central',
-                          'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
-                      )
+                        'souvera_central',
+                        'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
+                    )
                     : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
                 type: this.formData.enabled ? 'warning' : 'info',
                 confirmText: this.formData.enabled

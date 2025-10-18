@@ -11,7 +11,7 @@
                 <span v-if="mode === 'admin'" class="pill-icon icon-password"></span>
                 <span v-else class="pill-icon icon-group"></span>
                 <span class="pill-label">{{ getGroupDisplayName(groupId) }}</span>
-                <button class="pill-remove" @click="removeGroup(groupId)" :title="t('souvera_central', 'Entfernen')">
+                <button class="pill-remove" :title="t('souvera_central', 'Entfernen')" @click="removeGroup(groupId)">
                     <span class="icon-close"></span>
                 </button>
             </div>

@@ -13,7 +13,7 @@
 
         <!-- Form -->
         <div class="editor-content">
-            <form @submit.prevent="saveGroup" class="group-form">
+            <form class="group-form" @submit.prevent="saveGroup">
                 <!-- Gruppen-ID -->
                 <div class="form-group">
                     <label for="groupId" class="required">
@@ -25,8 +25,8 @@
                         type="text"
                         :disabled="isEditMode"
                         :class="{ error: errors.groupId }"
-                        @input="validateGroupId"
                         required
+                        @input="validateGroupId"
                     />
                     <p v-if="errors.groupId" class="error-message">{{ errors.groupId }}</p>
                     <p v-else class="help-text">
@@ -49,8 +49,8 @@
                         v-model="formData.displayName"
                         type="text"
                         :class="{ error: errors.displayName }"
-                        @input="validateDisplayName"
                         required
+                        @input="validateDisplayName"
                     />
                     <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
                     <p v-else class="help-text">

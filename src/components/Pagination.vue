@@ -15,8 +15,8 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === 1"
-                @click="goToPage(1)"
                 :title="t('souvera_central', 'Erste Seite')"
+                @click="goToPage(1)"
             >
                 <span class="icon-double-left"></span>
             </button>
@@ -25,8 +25,8 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === 1"
-                @click="goToPage(currentPage - 1)"
                 :title="t('souvera_central', 'Vorherige Seite')"
+                @click="goToPage(currentPage - 1)"
             >
                 <span class="icon-previous"></span>
             </button>
@@ -47,8 +47,8 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === totalPages"
-                @click="goToPage(currentPage + 1)"
                 :title="t('souvera_central', 'Nächste Seite')"
+                @click="goToPage(currentPage + 1)"
             >
                 <span class="icon-next"></span>
             </button>
@@ -57,8 +57,8 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === totalPages"
-                @click="goToPage(totalPages)"
                 :title="t('souvera_central', 'Letzte Seite')"
+                @click="goToPage(totalPages)"
             >
                 <span class="icon-double-right"></span>
             </button>
