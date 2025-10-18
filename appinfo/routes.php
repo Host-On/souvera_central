@@ -51,6 +51,9 @@ return [
         ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings_api#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
 
+        // Reseller API-Route
+        ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],
+
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],
     ]

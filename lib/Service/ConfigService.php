@@ -84,6 +84,15 @@ class ConfigService {
         return $this->config->getSystemValue('souvera_central.domain_validation_api', null);
     }
 
+    /**
+     * Cloud UUID für Reseller-API Calls
+     *
+     * @return string|null
+     */
+    public function getCloudUUID(): ?string {
+        return $this->config->getSystemValue('souvera_central.cloud_uuid', null);
+    }
+
     // ============================================================================
     // App-Einstellungen (App Config - in Nextcloud DB gespeichert)
     // ============================================================================

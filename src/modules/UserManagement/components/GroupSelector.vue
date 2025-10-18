@@ -79,7 +79,10 @@
                         @click="toggleGroup(group.id)"
                         @mouseenter="highlightedIndex = index"
                     >
-                        <span class="checkbox-icon" :class="isSelected(group.id) ? 'icon-checkmark' : 'icon-add'"></span>
+                        <span
+                            class="checkbox-icon"
+                            :class="isSelected(group.id) ? 'icon-checkmark' : 'icon-add'"
+                        ></span>
                         <div class="group-info">
                             <span class="group-name">{{ group.displayName }}</span>
                             <span class="group-id">{{ group.id }}</span>
@@ -143,8 +146,7 @@ export default {
 
             const query = this.searchQuery.toLowerCase()
             return this.availableGroups.filter(
-                (group) =>
-                    group.id.toLowerCase().includes(query) || group.displayName.toLowerCase().includes(query)
+                (group) => group.id.toLowerCase().includes(query) || group.displayName.toLowerCase().includes(query)
             )
         }
     },

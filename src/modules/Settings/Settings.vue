@@ -29,9 +29,16 @@
                         :class="settings.email.send_to_new_users ? 'toggle-active' : 'toggle-inactive'"
                         @click="toggleEmailSending"
                     >
-                        <span class="toggle-icon" :class="settings.email.send_to_new_users ? 'icon-checkmark' : 'icon-close'"></span>
+                        <span
+                            class="toggle-icon"
+                            :class="settings.email.send_to_new_users ? 'icon-checkmark' : 'icon-close'"
+                        ></span>
                         <span class="toggle-text">
-                            {{ settings.email.send_to_new_users ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                            {{
+                                settings.email.send_to_new_users
+                                    ? t('souvera_central', 'Aktiv')
+                                    : t('souvera_central', 'Inaktiv')
+                            }}
                         </span>
                     </button>
                     <p class="setting-hint">
@@ -72,7 +79,10 @@
                         >
                             <span class="quota-icon" :class="option.icon"></span>
                             <span class="quota-label">{{ option.label }}</span>
-                            <span v-if="settings.defaults.quota === option.value" class="selected-indicator icon-checkmark"></span>
+                            <span
+                                v-if="settings.defaults.quota === option.value"
+                                class="selected-indicator icon-checkmark"
+                            ></span>
                         </button>
                     </div>
                 </div>

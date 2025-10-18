@@ -1,147 +1,60 @@
 # Souvera Central
 
-**Die modulare Management-Zentrale für Nextcloud.**
+**Modulare Management-Zentrale für Nextcloud**
 
-Souvera Central ist eine erweiterbare Plattform für verschiedene Management-Module:
-- **User Management**: Benutzerverwaltung mit Lizenz-Limits
-- **Gruppen Management**: (coming soon)
-- **Security & Audit**: (coming soon)
+Erweiterte Benutzerverwaltung mit Lizenz-Limits, Gruppenverwaltung und Dashboard.
 
-## Entwicklung
+## Features
 
-### Berechtigungen setzen
+- ✅ Benutzerverwaltung (CRUD, Manager-Zuweisungen, Quota, Aktivieren/Deaktivieren)
+- ✅ Gruppenverwaltung (CRUD, Mitgliederverwaltung)
+- ✅ Dashboard mit Statistiken
+- ✅ Lizenz-Limits & Warnungen
+- ✅ E-Mail Domain-Whitelist
+- ✅ Dynamische Reseller-Kontakt-Links
 
-Falls Dateien im Nextcloud-Verzeichnis nicht bearbeitbar sind (gehören `www-data`), setze ACL-Rechte:
+## Installation
 
 ```bash
-sudo setfacl -R -m u:synistic:rwx /home/synistic/NEXTCLOUD_APP/nextcloud-dev
-```
+# Dependencies installieren
+npm install
 
-Dies erlaubt sowohl `www-data` (Nextcloud) als auch `synistic` (Entwickler) vollen Zugriff.
+# Production Build
+npm run build
+
+# In Nextcloud aktivieren
+sudo -u www-data php occ app:enable souvera_central
+```
 
 ## Konfiguration
 
-### System Config (config.php)
-
-Die App nutzt **Read-Only** Konfigurationswerte aus der Nextcloud `config/config.php`.
-
-Füge folgende Werte in deine `config/config.php` ein:
+Füge in `config/config.php` hinzu:
 
 ```php
-<?php
-$CONFIG = array(
-  // ... bestehende Config ...
-
-  /**
-   * Souvera User Management - Lizenz-Limit
-   *
-   * Maximale Anzahl an Benutzern, die erstellt werden dürfen
-   */
-  'souvera_central.max_licenses' => 10,
-
-  /**
-   * Souvera Central - Erlaubte E-Mail-Domains
-   *
-   * Array von erlaubten E-Mail-Domains für neue Benutzer
-   * Leeres Array = alle Domains erlaubt
-   */
-  'souvera_central.allowed_domains' => [
-    'example.com',
-    'test.de',
-    'company.org',
-  ],
-);
+'souvera_central.cloud_uuid' => 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',  // Für Reseller-API
+'souvera_central.max_licenses' => 10,                                    // Max. Benutzer
+'souvera_central.allowed_domains' => ['example.com', 'company.de'],     // E-Mail Whitelist (optional)
 ```
 
-### Konfigurationswerte
+## Entwicklung
 
-| Parameter | Typ | Beschreibung | Standard |
-|-----------|-----|--------------|----------|
-| `souvera_central.max_licenses` | `int` | Maximale Anzahl erlaubter Benutzer | `10` |
-| `souvera_central.allowed_domains` | `array` | Whitelist erlaubter E-Mail-Domains. Leeres Array = alle Domains erlaubt | `[]` |
-
-### Beispiel-Konfigurationen
-
-**Produktionsumgebung (limitiert):**
-```php
-'souvera_central.max_licenses' => 50,
-'souvera_central.allowed_domains' => ['company.com', 'subsidiary.com'],
-```
-
-**Entwicklungsumgebung (unlimitiert):**
-```php
-'souvera_central.max_licenses' => 999,
-'souvera_central.allowed_domains' => [], // Alle Domains erlaubt
-```
-
-**Streng limitiert:**
-```php
-'souvera_central.max_licenses' => 5,
-'souvera_central.allowed_domains' => ['example.com'],
-```
-
-### Konfiguration abrufen
-
-**Via API:**
 ```bash
-curl http://localhost:8080/apps/souvera_central/api/config
+npm run dev         # Development Build mit Watch
+npm run build       # Production Build
+npm run lint        # Code-Qualität prüfen
+npm run lint:fix    # Auto-Fix Lint-Fehler
 ```
 
-**Response:**
-```json
-{
-  "ocs": {
-    "data": {
-      "max_licenses": 10,
-      "allowed_domains": ["example.com", "test.de"],
-      "current_user_count": 3
-    }
-  }
-}
-```
+## Reseller-Integration
 
-**Im Frontend:**
-```javascript
-const response = await axios.get(generateUrl('/apps/souvera_central/api/config'))
-const config = response.data.ocs.data
+Die App ruft automatisch die Support-URL des Resellers ab:
 
-console.log('Max Lizenzen:', config.max_licenses)
-console.log('Erlaubte Domains:', config.allowed_domains)
-console.log('Aktuelle Benutzer:', config.current_user_count)
-```
+**API:** `POST https://manage.souvera.eu/api/public/workspace/reseller`
 
-### Validierung
+**Fallback-Logik:** `support_url` → `url` → `souvera.eu`
 
-**Lizenz-Check:**
-- Wird bei User-Erstellung geprüft
-- `current_user_count >= max_licenses` → HTTP 403 Forbidden
+Ohne konfigurierte `cloud_uuid` wird `souvera.eu` als Fallback genutzt.
 
-**Domain-Check:**
-- Wird bei User-Erstellung geprüft
-- Wenn `allowed_domains` leer → alle Domains erlaubt
-- Wenn `allowed_domains` gesetzt → nur diese Domains erlaubt
-- Case-insensitive Vergleich
+## Lizenz
 
-**Fehler-Messages:**
-
-Lizenzlimit erreicht:
-```json
-{
-  "error": "Lizenzlimit erreicht. Maximal 10 Benutzer erlaubt."
-}
-```
-
-Domain nicht erlaubt:
-```json
-{
-  "error": "E-Mail-Domain nicht erlaubt. Erlaubte Domains: example.com, test.de"
-}
-```
-
-### Konfiguration ändern
-
-1. `config/config.php` bearbeiten
-2. Werte anpassen
-3. **Kein Reload nötig** - Änderungen sind sofort aktiv
-
-Bei Docker ist die Config typischerweise unter `/var/www/html/config/config.php`
+AGPL-3.0

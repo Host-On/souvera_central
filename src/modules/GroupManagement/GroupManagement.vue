@@ -1,11 +1,7 @@
 <template>
     <div class="group-management-container">
         <!-- Group Editor (Single Page) -->
-        <GroupEditor
-            v-if="showEditor"
-            :group="selectedGroup"
-            @close="closeEditor"
-            @saved="handleGroupSaved" />
+        <GroupEditor v-if="showEditor" :group="selectedGroup" @close="closeEditor" @saved="handleGroupSaved" />
 
         <!-- Haupt-Bereich mit Gruppen-Liste -->
         <div v-else class="groups-list-view">
@@ -52,11 +48,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                v-for="group in groups"
-                                :key="group.id"
-                                class="group-row"
-                                @click="selectGroup(group)">
+                            <tr v-for="group in groups" :key="group.id" class="group-row" @click="selectGroup(group)">
                                 <td class="group-column">
                                     <div class="group-info">
                                         <span class="icon-group"></span>
@@ -393,10 +385,7 @@ export default {
                 message: this.t('souvera_central', 'Möchten Sie die Gruppe "{group}" wirklich löschen?', {
                     group: group.displayName
                 }),
-                details: this.t(
-                    'souvera_central',
-                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden!'
-                ),
+                details: this.t('souvera_central', 'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden!'),
                 type: 'danger',
                 confirmText: this.t('souvera_central', 'Ja, Gruppe löschen'),
                 cancelText: this.t('souvera_central', 'Abbrechen'),
@@ -422,7 +411,10 @@ export default {
                             }
                         }
                     } catch (error) {
-                        const errorMessage = this.getErrorMessage(error, this.t('souvera_central', 'Fehler beim Löschen'))
+                        const errorMessage = this.getErrorMessage(
+                            error,
+                            this.t('souvera_central', 'Fehler beim Löschen')
+                        )
 
                         // Error Modal
                         this.confirmModal = {

@@ -16,7 +16,7 @@
                         }}
                     </p>
                 </div>
-                <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button">
+                <a :href="contactUrl" target="_blank" class="contact-button">
                     <span class="icon-external"></span>
                     {{ t('souvera_central', 'Lizenzen erweitern') }}
                 </a>
@@ -39,7 +39,7 @@
                         }}
                     </p>
                 </div>
-                <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button secondary">
+                <a :href="contactUrl" target="_blank" class="contact-button secondary">
                     <span class="icon-external"></span>
                     {{ t('souvera_central', 'Kontakt') }}
                 </a>
@@ -148,6 +148,8 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import axios from '@nextcloud/axios'
 
 export default {
     name: 'Dashboard',
@@ -175,6 +177,16 @@ export default {
         }
     },
 
+    data() {
+        return {
+            resellerInfo: {
+                support_url: null,
+                url: null,
+                name: null
+            }
+        }
+    },
+
     computed: {
         licensePercentage() {
             if (this.licenseTotal === 0) return 0
@@ -187,11 +199,42 @@ export default {
 
         isLicenseWarning() {
             return !this.isLicenseLimitReached && this.userCount / this.licenseTotal >= 0.8
+        },
+
+        contactUrl() {
+            // Fallback-Logik: support_url → url → www.souvera.eu
+            if (this.resellerInfo.support_url) {
+                return this.resellerInfo.support_url
+            }
+            if (this.resellerInfo.url) {
+                return this.resellerInfo.url
+            }
+            return 'https://www.souvera.eu'
         }
     },
 
+    mounted() {
+        this.loadResellerInfo()
+    },
+
     methods: {
-        t
+        t,
+
+        async loadResellerInfo() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/reseller')
+                const response = await axios.get(url)
+
+                if (response.data?.ocs?.data) {
+                    this.resellerInfo = response.data.ocs.data
+                } else if (response.data) {
+                    this.resellerInfo = response.data
+                }
+            } catch (error) {
+                console.error('Failed to load reseller info:', error)
+                // Fallback ist bereits in contactUrl implementiert
+            }
+        }
     }
 }
 </script>
@@ -367,7 +410,9 @@ export default {
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
     box-shadow: 0 2px 4px var(--color-box-shadow);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
 }
 
 .stat-card:hover {

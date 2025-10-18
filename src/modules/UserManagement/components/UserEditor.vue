@@ -8,7 +8,11 @@
                     {{ t('souvera_central', 'Zurück zur Übersicht') }}
                 </button>
                 <h2>
-                    {{ isEditMode ? t('souvera_central', 'Benutzer bearbeiten') : t('souvera_central', 'Neuer Benutzer') }}
+                    {{
+                        isEditMode
+                            ? t('souvera_central', 'Benutzer bearbeiten')
+                            : t('souvera_central', 'Neuer Benutzer')
+                    }}
                 </h2>
             </div>
         </div>
@@ -105,7 +109,6 @@
                     <p v-else class="help-text">{{ t('souvera_central', 'Mindestens 10 Zeichen') }}</p>
                 </div>
 
-
                 <!-- Speicherplatz Quota -->
                 <div class="form-group">
                     <label for="quota">
@@ -199,8 +202,8 @@
                                 togglingStatus
                                     ? t('souvera_central', 'Speichert...')
                                     : formData.enabled
-                                        ? t('souvera_central', 'Benutzer deaktivieren')
-                                        : t('souvera_central', 'Benutzer aktivieren')
+                                      ? t('souvera_central', 'Benutzer deaktivieren')
+                                      : t('souvera_central', 'Benutzer aktivieren')
                             }}
                         </button>
 
@@ -238,15 +241,15 @@
                             type="button"
                             class="action-button danger"
                             :disabled="deletingUser || isOwnAccount"
-                            :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                            :title="
+                                isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''
+                            "
                             @click="deleteUser"
                         >
                             <span v-if="deletingUser" class="icon-loading-small"></span>
                             <span v-else class="icon-delete"></span>
                             {{
-                                deletingUser
-                                    ? t('souvera_central', 'Löscht...')
-                                    : t('souvera_central', 'Konto löschen')
+                                deletingUser ? t('souvera_central', 'Löscht...') : t('souvera_central', 'Konto löschen')
                             }}
                         </button>
                     </div>
@@ -718,9 +721,9 @@ export default {
                 }),
                 details: this.formData.enabled
                     ? this.t(
-                        'souvera_central',
-                        'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
-                    )
+                          'souvera_central',
+                          'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
+                      )
                     : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
                 type: this.formData.enabled ? 'warning' : 'info',
                 confirmText: this.formData.enabled
@@ -856,11 +859,9 @@ export default {
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Konto löschen?'),
-                message: this.t(
-                    'souvera_central',
-                    'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?',
-                    { user: this.formData.displayName }
-                ),
+                message: this.t('souvera_central', 'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?', {
+                    user: this.formData.displayName
+                }),
                 details: this.t(
                     'souvera_central',
                     'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
@@ -882,11 +883,9 @@ export default {
                             isOpen: true,
                             title: this.t('souvera_central', 'Konto gelöscht!'),
                             message: this.t('souvera_central', 'Das Konto wurde erfolgreich gelöscht.'),
-                            details: this.t(
-                                'souvera_central',
-                                'Der Benutzer "{user}" wurde dauerhaft entfernt.',
-                                { user: this.formData.displayName }
-                            ),
+                            details: this.t('souvera_central', 'Der Benutzer "{user}" wurde dauerhaft entfernt.', {
+                                user: this.formData.displayName
+                            }),
                             type: 'success',
                             confirmText: this.t('souvera_central', 'OK'),
                             cancelText: '',

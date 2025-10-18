@@ -50,7 +50,7 @@
                             }}
                         </p>
                     </div>
-                    <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button">
+                    <a :href="contactUrl" target="_blank" class="contact-button">
                         <span class="icon-external"></span>
                         {{ t('souvera_central', 'Lizenzen erweitern') }}
                     </a>
@@ -73,7 +73,7 @@
                             }}
                         </p>
                     </div>
-                    <a href="https://www.host-on.de/de/kontakt" target="_blank" class="contact-button secondary">
+                    <a :href="contactUrl" target="_blank" class="contact-button secondary">
                         <span class="icon-external"></span>
                         {{ t('souvera_central', 'Kontakt') }}
                     </a>
@@ -123,8 +123,15 @@
                                 <td class="status-column">
                                     <div class="status-indicator">
                                         <span
-                                            :class="['status-icon', user.enabled ? 'icon-checkmark-color' : 'icon-close']"
-                                            :title="user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv')"
+                                            :class="[
+                                                'status-icon',
+                                                user.enabled ? 'icon-checkmark-color' : 'icon-close'
+                                            ]"
+                                            :title="
+                                                user.enabled
+                                                    ? t('souvera_central', 'Aktiv')
+                                                    : t('souvera_central', 'Inaktiv')
+                                            "
                                         ></span>
                                     </div>
                                 </td>
@@ -226,6 +233,11 @@ export default {
             currentPage: 1,
             perPage: 20,
             currentUserId: null, // ID des aktuell angemeldeten Benutzers
+            resellerInfo: {
+                support_url: null,
+                url: null,
+                name: null
+            },
             confirmModal: {
                 isOpen: false,
                 title: '',
@@ -251,12 +263,24 @@ export default {
 
         isLicenseWarning() {
             return !this.isLicenseLimitReached && this.totalUsers / this.licenseTotal >= 0.8
+        },
+
+        contactUrl() {
+            // Fallback-Logik: support_url → url → www.souvera.eu
+            if (this.resellerInfo.support_url) {
+                return this.resellerInfo.support_url
+            }
+            if (this.resellerInfo.url) {
+                return this.resellerInfo.url
+            }
+            return 'https://www.souvera.eu'
         }
     },
 
     mounted() {
         this.loadCurrentUser()
         this.loadUsers()
+        this.loadResellerInfo()
         this.checkInitialAction()
 
         // Event-Listener für URL-Änderungen
@@ -282,6 +306,22 @@ export default {
                 this.currentUserId = data.id
             } catch (error) {
                 // Error handling
+            }
+        },
+
+        async loadResellerInfo() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/reseller')
+                const response = await axios.get(url)
+
+                if (response.data?.ocs?.data) {
+                    this.resellerInfo = response.data.ocs.data
+                } else if (response.data) {
+                    this.resellerInfo = response.data
+                }
+            } catch (error) {
+                console.error('Failed to load reseller info:', error)
+                // Fallback ist bereits in contactUrl implementiert
             }
         },
 
@@ -455,11 +495,9 @@ export default {
                             isOpen: true,
                             title: this.t('souvera_central', 'Benutzer gelöscht!'),
                             message: this.t('souvera_central', 'Der Benutzer wurde erfolgreich gelöscht.'),
-                            details: this.t(
-                                'souvera_central',
-                                '"{user}" wurde dauerhaft entfernt.',
-                                { user: user.displayName }
-                            ),
+                            details: this.t('souvera_central', '"{user}" wurde dauerhaft entfernt.', {
+                                user: user.displayName
+                            }),
                             type: 'success',
                             confirmText: this.t('souvera_central', 'OK'),
                             cancelText: '',

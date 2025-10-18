@@ -7,7 +7,9 @@
                     <span class="icon-history"></span>
                     {{ t('souvera_central', 'Zurück zur Übersicht') }}
                 </button>
-                <h2>{{ isEditMode ? t('souvera_central', 'Gruppe bearbeiten') : t('souvera_central', 'Neue Gruppe') }}</h2>
+                <h2>
+                    {{ isEditMode ? t('souvera_central', 'Gruppe bearbeiten') : t('souvera_central', 'Neue Gruppe') }}
+                </h2>
             </div>
         </div>
 
