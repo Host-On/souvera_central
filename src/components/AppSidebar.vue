@@ -77,9 +77,15 @@ export default {
         t,
 
         navigateTo(route, url) {
+            // Hard navigation: Update URL with pushState
+            window.history.pushState({ route }, '', url)
+
             // Emit navigation event to parent (App.vue)
-            // Parent will handle pushState and route change
+            // Parent will handle route change
             this.$emit('navigate', route)
+
+            // Dispatch custom event for child components to react
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route, url } }))
         }
     }
 }

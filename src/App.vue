@@ -96,11 +96,15 @@ export default {
         this.loadConfig()
         this.loadStats()
         this.initializeRouting()
+
+        // Listen to route-changed events from child components
+        window.addEventListener('route-changed', this.handleRouteChanged)
     },
 
     beforeUnmount() {
         // Cleanup event listener
         window.removeEventListener('popstate', this.handlePopState)
+        window.removeEventListener('route-changed', this.handleRouteChanged)
     },
 
     methods: {
@@ -139,16 +143,16 @@ export default {
 
         handleNavigation(route) {
             this.currentRoute = route
-
-            // Update URL using history.pushState
-            const url = generateUrl('/apps/souvera_central/' + route)
-            window.history.pushState({ route }, '', url)
-
             this.updateCurrentPath()
 
-            // WICHTIG: Dispatch custom event damit Child-Komponenten reagieren können
-            // popstate wird NICHT bei pushState gefeuert!
-            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route, url } }))
+            // URL und custom event werden bereits von AppSidebar.navigateTo() gesetzt
+            // Kein doppeltes pushState nötig
+        },
+
+        handleRouteChanged(event) {
+            // Reagiere auf route-changed Events von Child-Komponenten
+            // Dies wird gefeuert wenn z.B. von /users/edit/123 -> /users navigiert wird
+            this.updateCurrentPath()
         },
 
         updateUserCount(count) {

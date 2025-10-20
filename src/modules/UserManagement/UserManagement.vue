@@ -334,6 +334,26 @@ export default {
             // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
             const path = window.location.pathname
 
+            // Check für /users/new
+            if (path.includes('/users/new')) {
+                if (!this.showEditor || this.selectedUser !== null) {
+                    this.selectedUser = null
+                    this.showEditor = true
+                }
+                return
+            }
+
+            // Check für /users/edit/:id
+            const editMatch = path.match(/\/users\/edit\/([^/]+)/)
+            if (editMatch && editMatch[1]) {
+                const userId = editMatch[1]
+                // Nur neu laden wenn anderer User oder Editor geschlossen
+                if (!this.showEditor || this.selectedUser?.id !== userId) {
+                    this.loadAndEditUser(userId)
+                }
+                return
+            }
+
             // Wenn URL zu /users (ohne /new oder /edit/:id) geht → Editor schließen
             if (path.endsWith('/users') || path === generateUrl('/apps/souvera_central/users')) {
                 if (this.showEditor) {
@@ -441,23 +461,25 @@ export default {
             this.showEditor = true
         },
 
-        closeEditor() {
-            // Navigate zurück zu /users
-            const url = generateUrl('/apps/souvera_central/users')
-            window.history.pushState({}, '', url)
-
-            this.showEditor = false
-            this.selectedUser = null
+        async closeEditor() {
+            // GLEICHER Ablauf wie handleUserSaved
+            await this.handleUserSaved()
         },
 
         async handleUserSaved() {
             // Navigate zurück zu /users
             const url = generateUrl('/apps/souvera_central/users')
-            window.history.pushState({}, '', url)
+            window.history.pushState({ route: 'users' }, '', url)
 
+            // Editor schließen
             this.showEditor = false
             this.selectedUser = null
+
+            // Liste komplett neu laden
             await this.loadUsers()
+
+            // Dispatch event damit andere Komponenten reagieren können
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route: 'users', url } }))
         },
 
         deleteUser(user) {
