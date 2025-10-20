@@ -1121,6 +1121,8 @@ export default {
     cursor: pointer;
     box-sizing: border-box;
     font-weight: 500;
+    position: relative;
+    z-index: 10;
 }
 
 .email-domain-select:focus {
@@ -1216,6 +1218,8 @@ export default {
     backdrop-filter: blur(6px);
     padding: 0;
     overflow: visible;
+    position: relative;
+    z-index: 10;
 }
 
 .collapsible-header {
@@ -1290,6 +1294,8 @@ export default {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 2px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .form-actions button {
@@ -1354,6 +1360,8 @@ button.primary {
     border-radius: 6px;
     background: rgba(227, 56, 80, 0.05);
     backdrop-filter: blur(6px);
+    position: relative;
+    z-index: 1;
 }
 
 .danger-zone h3 {
