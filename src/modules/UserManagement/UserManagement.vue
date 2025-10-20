@@ -993,4 +993,159 @@ export default {
     opacity: 1;
     filter: brightness(0) invert(1);
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .user-management-container {
+        padding: 20px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .page-header button.primary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-management-container {
+        padding: 15px;
+    }
+
+    .page-header h2 {
+        font-size: 24px;
+    }
+
+    .table-container {
+        padding: 12px;
+        overflow-x: auto;
+    }
+
+    .users-table {
+        font-size: 0.85rem;
+        min-width: 600px;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 8px 10px;
+    }
+
+    .user-actions {
+        gap: 6px;
+    }
+
+    .user-actions button {
+        padding: 6px;
+        min-width: 32px;
+        height: 32px;
+    }
+
+    .status-badge {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .warning-banner,
+    .critical-warning {
+        padding: 15px 20px;
+    }
+
+    .warning-banner .warning-content,
+    .critical-warning .warning-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 36px !important;
+        background-size: 36px 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-management-container {
+        padding: 10px;
+    }
+
+    .users-list-view {
+        padding: 0;
+    }
+
+    .page-header {
+        padding: 0;
+        margin-bottom: 15px;
+    }
+
+    .page-header h2 {
+        font-size: 20px;
+    }
+
+    .license-status {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .users-table {
+        font-size: 0.8rem;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 6px 8px;
+    }
+
+    .user-info {
+        gap: 6px;
+    }
+
+    .user-info .icon-user {
+        display: none;
+    }
+
+    .user-actions button {
+        padding: 4px;
+        min-width: 28px;
+        height: 28px;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .status-badge .icon-checkmark,
+    .status-badge .icon-close {
+        display: none;
+    }
+
+    .warning-banner h3,
+    .critical-warning h3 {
+        font-size: 16px;
+    }
+
+    .warning-banner p,
+    .critical-warning p {
+        font-size: 13px;
+    }
+
+    .contact-button,
+    .contact-button.secondary {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
 </style>

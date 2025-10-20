@@ -202,8 +202,8 @@
                                 togglingStatus
                                     ? t('souvera_central', 'Speichert...')
                                     : formData.enabled
-                                      ? t('souvera_central', 'Benutzer deaktivieren')
-                                      : t('souvera_central', 'Benutzer aktivieren')
+                                        ? t('souvera_central', 'Benutzer deaktivieren')
+                                        : t('souvera_central', 'Benutzer aktivieren')
                             }}
                         </button>
 
@@ -721,9 +721,9 @@ export default {
                 }),
                 details: this.formData.enabled
                     ? this.t(
-                          'souvera_central',
-                          'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
-                      )
+                        'souvera_central',
+                        'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
+                    )
                     : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
                 type: this.formData.enabled ? 'warning' : 'info',
                 confirmText: this.formData.enabled
@@ -1449,5 +1449,127 @@ button.primary {
     background: #46a049;
     transform: translateY(-2px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .user-editor-page {
+        padding: 20px;
+    }
+
+    .editor-content {
+        padding: 20px;
+    }
+
+    .user-form {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-editor-page {
+        padding: 15px;
+    }
+
+    .editor-header h2 {
+        font-size: 24px;
+    }
+
+    .editor-content {
+        padding: 15px;
+    }
+
+    .form-group input[type='text'],
+    .form-group input[type='email'],
+    .form-group input[type='password'],
+    .form-group select {
+        height: 52px;
+        padding: 14px 16px;
+        font-size: 15px;
+    }
+
+    .email-local-part,
+    .email-domain-select {
+        height: 52px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .form-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .collapsible-header h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-editor-page {
+        padding: 10px;
+    }
+
+    .back-button {
+        font-size: 13px;
+        padding: 8px 14px;
+    }
+
+    .editor-header h2 {
+        font-size: 20px;
+    }
+
+    .editor-content {
+        padding: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+    }
+
+    .form-group input[type='text'],
+    .form-group input[type='email'],
+    .form-group input[type='password'],
+    .form-group select {
+        height: 48px;
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .email-field {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .email-local-part,
+    .email-domain-select {
+        height: 48px;
+        width: 100%;
+    }
+
+    .form-actions button {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+
+    .danger-zone {
+        padding: 20px;
+    }
+
+    .danger-zone h3 {
+        font-size: 16px;
+    }
+
+    .action-button {
+        padding: 10px 18px;
+        font-size: 13px;
+    }
 }
 </style>

@@ -1,7 +1,11 @@
 <template>
     <div class="group-management-container">
         <!-- Group Editor (Single Page) -->
-        <GroupEditor v-if="showEditor" :group="selectedGroup" @close="closeEditor" @saved="handleGroupSaved" />
+        <GroupEditor
+            v-if="showEditor"
+            :group="selectedGroup"
+            @close="closeEditor"
+            @saved="handleGroupSaved" />
 
         <!-- Haupt-Bereich mit Gruppen-Liste -->
         <div v-else class="groups-list-view">
@@ -48,7 +52,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="group in groups" :key="group.id" class="group-row" @click="selectGroup(group)">
+                            <tr
+                                v-for="group in groups"
+                                :key="group.id"
+                                class="group-row"
+                                @click="selectGroup(group)">
                                 <td class="group-column">
                                     <div class="group-info">
                                         <span class="icon-group"></span>
@@ -757,6 +765,91 @@ export default {
 
     .displayname-column {
         min-width: 200px;
+    }
+
+    .page-header button.primary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .group-management-container {
+        padding: 15px;
+    }
+
+    .page-header {
+        padding: 15px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .page-header h2 {
+        font-size: 24px;
+    }
+
+    .table-container {
+        padding: 12px;
+    }
+
+    .groups-table {
+        font-size: 0.85rem;
+    }
+
+    .groups-table th,
+    .groups-table td {
+        padding: 8px 10px;
+    }
+
+    .group-actions {
+        gap: 6px;
+    }
+
+    .group-actions button {
+        padding: 6px;
+        min-width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .group-management-container {
+        padding: 10px;
+    }
+
+    .page-header {
+        padding: 10px;
+    }
+
+    .page-header h2 {
+        font-size: 20px;
+    }
+
+    .group-count-badge {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .groups-table {
+        font-size: 0.8rem;
+    }
+
+    .groups-table th,
+    .groups-table td {
+        padding: 6px 8px;
+    }
+
+    .group-info .icon-group {
+        display: none;
+    }
+
+    .group-actions button {
+        padding: 4px;
+        min-width: 28px;
+        height: 28px;
+    }
+
+    .protected-badge {
+        display: none;
     }
 }
 </style>

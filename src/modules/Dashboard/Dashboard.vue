@@ -594,4 +594,130 @@ export default {
     font-weight: 600;
     color: var(--color-main-text);
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-container {
+        padding: 20px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 24px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+    }
+
+    .quick-actions {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .warning-banner,
+    .critical-warning {
+        padding: 15px 20px;
+    }
+
+    .warning-banner .warning-content,
+    .critical-warning .warning-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 36px !important;
+        background-size: 36px 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .action-card {
+        padding: 15px;
+    }
+
+    .warning-banner h3,
+    .critical-warning h3 {
+        font-size: 16px;
+    }
+
+    .warning-banner p,
+    .critical-warning p {
+        font-size: 13px;
+    }
+
+    .contact-button,
+    .contact-button.secondary {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
 </style>

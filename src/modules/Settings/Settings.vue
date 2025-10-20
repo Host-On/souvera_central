@@ -589,4 +589,108 @@ export default {
         opacity: 1;
     }
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .settings-container {
+        padding: 20px;
+        max-width: 100%;
+    }
+
+    .quota-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-container {
+        padding: 15px;
+    }
+
+    .page-header h2 {
+        font-size: 24px;
+    }
+
+    .settings-section {
+        padding: 20px;
+    }
+
+    .section-header h3 {
+        font-size: 18px;
+    }
+
+    .quota-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .quota-option {
+        padding: 15px 12px;
+        min-height: 80px;
+    }
+
+    .quota-icon {
+        font-size: 28px;
+    }
+
+    .toggle-button {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .settings-container {
+        padding: 10px;
+    }
+
+    .page-header {
+        padding-bottom: 15px;
+    }
+
+    .page-header h2 {
+        font-size: 20px;
+    }
+
+    .header-subtitle {
+        font-size: 12px;
+    }
+
+    .settings-section {
+        padding: 15px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .section-header h3 {
+        font-size: 16px;
+    }
+
+    .quota-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .quota-option {
+        padding: 12px 10px;
+        min-height: 70px;
+    }
+
+    .toggle-button {
+        padding: 10px 20px;
+        font-size: 14px;
+        min-width: 140px;
+    }
+
+    .save-indicator {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
 </style>

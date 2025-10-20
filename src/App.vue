@@ -235,6 +235,33 @@ export default {
     min-width: 0;
 }
 
+/* Responsive Design */
+@media (max-width: 1024px) {
+    #app-souvera-central {
+        flex-direction: column;
+    }
+
+    .app-main-content {
+        padding: 20px 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-main-content {
+        padding: 15px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    #app-souvera-central {
+        border-radius: 0;
+    }
+
+    .app-main-content {
+        padding: 0;
+    }
+}
+
 /* Nextcloud Button Overrides */
 button.primary {
     background-color: var(--color-primary-element);

@@ -733,13 +733,137 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+    .group-editor-page {
+        padding: 20px;
+    }
+
     .editor-content {
-        padding: 20px 15px;
+        padding: 20px;
     }
 
     .group-form {
         max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .group-editor-page {
+        padding: 15px;
+    }
+
+    .editor-header h2 {
+        font-size: 24px;
+    }
+
+    .editor-content {
+        padding: 15px;
+    }
+
+    .form-group input[type='text'],
+    .form-group select {
+        height: 52px;
+        padding: 14px 16px;
+        font-size: 15px;
+    }
+
+    .search-input {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .members-selector {
+        max-height: 250px;
+    }
+
+    .member-checkbox {
+        padding: 10px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .form-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .group-editor-page {
+        padding: 10px;
+    }
+
+    .back-button {
+        font-size: 13px;
+        padding: 8px 14px;
+    }
+
+    .editor-header h2 {
+        font-size: 20px;
+    }
+
+    .editor-content {
+        padding: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+    }
+
+    .form-group input[type='text'],
+    .form-group select {
+        height: 48px;
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .search-input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .members-selector {
+        max-height: 200px;
+    }
+
+    .member-checkbox {
+        padding: 8px;
+    }
+
+    .member-name {
+        font-size: 14px;
+    }
+
+    .member-email {
+        font-size: 12px;
+    }
+
+    .form-actions button {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+
+    .info-box {
+        padding: 12px 15px;
+    }
+
+    .info-box .icon-password {
+        font-size: 20px;
+    }
+
+    .info-content strong {
+        font-size: 14px;
+    }
+
+    .info-content p {
+        font-size: 13px;
     }
 }
 </style>

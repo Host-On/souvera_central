@@ -302,4 +302,10 @@ export default {
         justify-content: center;
     }
 }
+
+@media (max-width: 480px) {
+    .pagination {
+        padding: 0;
+    }
+}
 </style>

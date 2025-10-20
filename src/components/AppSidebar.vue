@@ -190,4 +190,78 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .app-sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        border-radius: 6px;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding-bottom: 5px;
+    }
+
+    .nav-item {
+        margin-bottom: 0;
+        white-space: nowrap;
+        min-width: auto;
+    }
+
+    .sidebar-header {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-sidebar {
+        padding: 10px;
+    }
+
+    .sidebar-header h1 {
+        font-size: 1rem;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .nav-item {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .nav-item .icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar-nav {
+        gap: 5px;
+    }
+
+    .nav-item {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .nav-label {
+        display: none;
+    }
+
+    .nav-item .icon {
+        margin: 0;
+    }
+}
 </style>
