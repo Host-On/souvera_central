@@ -23,3 +23,15 @@
 .loading-container p {
     color: var(--color-text-lighter);
 }
+
+/* Größeres App-Icon in der Nextcloud Navbar */
+#appmenu li[data-id="souvera_central"] a .app-icon {
+    width: 40px !important;
+    height: 40px !important;
+    background-size: 40px !important;
+}
+
+#appmenu li[data-id="souvera_central"] a img {
+    width: 40px !important;
+    height: 40px !important;
+}
