@@ -262,76 +262,86 @@ export default {
 .selected-groups {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
-    background: var(--color-background-dark);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
-    min-height: 50px;
+    gap: 10px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(6px);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    min-height: 60px;
 }
 
 .group-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px 4px 10px;
-    border-radius: var(--border-radius-large);
-    font-size: 13px;
-    font-weight: 500;
+    gap: 8px;
+    padding: 8px 12px 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
     transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .group-pill.member-pill {
-    background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
+    background: #3074BF;
+    color: #fff;
+    border: 2px solid #3074BF;
 }
 
 .group-pill.admin-pill {
-    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
-    color: white;
+    background: linear-gradient(135deg, #ff9500 0%, #ff8000 100%);
+    color: #fff;
+    border: 2px solid #ff8000;
 }
 
 .pill-icon {
-    opacity: 0.9;
-    font-size: 12px;
-    width: 16px;
-    height: 16px;
+    opacity: 1;
+    font-size: 14px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
+    color: #fff;
+    filter: brightness(0) invert(1);
 }
 
 .pill-label {
-    max-width: 150px;
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: #fff;
+    font-weight: 700;
 }
 
 .pill-remove {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: rgba(0, 0, 0, 0.2);
+    width: 33px;
+    height: 33px;
+    background: rgba(255, 255, 255, 0.25);
     border: none;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
     padding: 0;
-    color: inherit;
+    color: #fff;
 }
 
 .pill-remove:hover {
-    background: rgba(0, 0, 0, 0.3);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
 }
 
 .pill-remove .icon-close {
-    font-size: 12px;
+    font-size: 14px;
+    color: #fff;
+    filter: brightness(0) invert(1);
 }
 
 /* Empty State */
@@ -339,18 +349,21 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 20px;
-    background: var(--color-background-dark);
-    border: 1px dashed var(--color-border);
-    border-radius: var(--border-radius-large);
-    color: var(--color-text-lighter);
-    font-size: 14px;
+    gap: 12px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    color: #000;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .empty-icon {
-    font-size: 20px;
-    opacity: 0.5;
+    font-size: 24px;
+    opacity: 0.6;
+    color: #000;
 }
 
 /* Dropdown Container */
@@ -361,24 +374,32 @@ export default {
 .dropdown-trigger {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
-    border: none;
-    border-radius: var(--border-radius);
-    font-weight: 500;
-    font-size: 14px;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #3074BF;
+    color: #fff;
+    border: 2px solid #3074BF;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(48, 116, 191, 0.3);
 }
 
 .dropdown-trigger:hover {
-    background: rgba(0, 0, 0, 0.1);
-    background-blend-mode: darken;
-    opacity: 0.85;
+    background: #2563a8;
+    border-color: #2563a8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(48, 116, 191, 0.4);
+}
+
+.dropdown-trigger .icon-add {
+    color: #fff;
+    filter: brightness(0) invert(1);
+    font-size: 16px;
 }
 
 /* Dropdown Menu */
@@ -387,12 +408,13 @@ export default {
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 4px 16px var(--color-box-shadow);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
     z-index: 1000;
-    max-height: min(280px, 30vh);
+    max-height: min(350px, 40vh);
     display: flex;
     flex-direction: column;
     animation: dropdownSlide 0.2s ease-out;
@@ -411,30 +433,36 @@ export default {
 
 /* Dropdown Header */
 .dropdown-header {
-    padding: 12px;
-    border-bottom: 1px solid var(--color-border);
+    padding: 14px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .search-input {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    background: var(--color-main-background);
+    padding: 12px 16px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(6px);
+    color: #000;
+    font-weight: 500;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: #3074BF;
+    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
+    background: #fff;
 }
 
 /* Bulk Actions */
 .dropdown-bulk-actions {
     display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--color-border);
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .bulk-action-btn {
@@ -442,36 +470,40 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-size: 13px;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(6px);
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    color: var(--color-text-light);
+    color: #000;
 }
 
 .bulk-action-btn:hover {
-    background: var(--color-background-hover);
-    border-color: var(--color-primary);
+    background: #fff;
+    border-color: #3074BF;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(48, 116, 191, 0.2);
 }
 
 /* Dropdown List */
 .dropdown-list {
     overflow-y: auto;
-    max-height: min(170px, 20vh);
+    max-height: min(220px, 25vh);
 }
 
 .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 14px;
+    padding: 14px 16px;
     cursor: pointer;
-    transition: background 0.2s;
-    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .dropdown-item:last-child {
@@ -480,50 +512,56 @@ export default {
 
 .dropdown-item:hover,
 .dropdown-item.highlighted {
-    background: var(--color-background-hover);
+    background: rgba(48, 116, 191, 0.1);
 }
 
 .dropdown-item.selected {
-    background: var(--color-primary-element-light);
+    background: rgba(30, 214, 122, 0.15);
+    border-left: 4px solid #1ED67A;
 }
 
 .checkbox-icon {
-    font-size: 16px;
-    color: var(--color-primary);
+    font-size: 18px;
+    color: #3074BF;
     flex-shrink: 0;
+    font-weight: 700;
 }
 
 .dropdown-item.selected .checkbox-icon {
-    color: var(--color-success);
+    color: #1ED67A;
+    font-weight: 900;
 }
 
 .group-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     min-width: 0;
 }
 
 .group-name {
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 15px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: #000;
 }
 
 .group-id {
-    font-size: 12px;
-    color: var(--color-text-lighter);
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .group-count {
-    font-size: 12px;
-    color: var(--color-text-lighter);
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
     flex-shrink: 0;
 }
 
@@ -533,19 +571,22 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
-    color: var(--color-text-lighter);
+    padding: 48px 24px;
+    color: #000;
     text-align: center;
 }
 
 .dropdown-empty .icon-search {
-    font-size: 32px;
-    opacity: 0.3;
-    margin-bottom: 10px;
+    font-size: 40px;
+    opacity: 0.4;
+    margin-bottom: 12px;
+    color: #000;
 }
 
 .dropdown-empty p {
     margin: 0;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
 }
 </style>
