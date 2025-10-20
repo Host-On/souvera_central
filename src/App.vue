@@ -149,7 +149,7 @@ export default {
             // Kein doppeltes pushState nötig
         },
 
-        handleRouteChanged(event) {
+        handleRouteChanged() {
             // Reagiere auf route-changed Events von Child-Komponenten
             // Dies wird gefeuert wenn z.B. von /users/edit/123 -> /users navigiert wird
             this.updateCurrentPath()

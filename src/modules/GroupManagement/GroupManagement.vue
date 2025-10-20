@@ -214,6 +214,26 @@ export default {
             // Reagiere auf URL-Änderungen (Browser Back/Forward, Sidebar-Klicks)
             const path = window.location.pathname
 
+            // Check für /groups/new
+            if (path.includes('/groups/new')) {
+                if (!this.showEditor || this.selectedGroup !== null) {
+                    this.selectedGroup = null
+                    this.showEditor = true
+                }
+                return
+            }
+
+            // Check für /groups/edit/:id
+            const editMatch = path.match(/\/groups\/edit\/([^/]+)/)
+            if (editMatch && editMatch[1]) {
+                const groupId = decodeURIComponent(editMatch[1])
+                // Nur neu laden wenn andere Gruppe oder Editor geschlossen
+                if (!this.showEditor || this.selectedGroup?.id !== groupId) {
+                    this.loadAndEditGroup(groupId)
+                }
+                return
+            }
+
             // Wenn URL zu /groups (ohne /new oder /edit/:id) geht → Editor schließen
             if (path.endsWith('/groups') || path === generateUrl('/apps/souvera_central/groups')) {
                 if (this.showEditor) {
@@ -341,23 +361,25 @@ export default {
             this.showEditor = true
         },
 
-        closeEditor() {
-            // Navigate zurück zu /groups
-            const url = generateUrl('/apps/souvera_central/groups')
-            window.history.pushState({}, '', url)
-
-            this.showEditor = false
-            this.selectedGroup = null
+        async closeEditor() {
+            // GLEICHER Ablauf wie handleGroupSaved
+            await this.handleGroupSaved()
         },
 
         async handleGroupSaved() {
             // Navigate zurück zu /groups
             const url = generateUrl('/apps/souvera_central/groups')
-            window.history.pushState({}, '', url)
+            window.history.pushState({ route: 'groups' }, '', url)
 
+            // Editor schließen
             this.showEditor = false
             this.selectedGroup = null
+
+            // Liste komplett neu laden
             await this.loadGroups()
+
+            // Dispatch event damit andere Komponenten reagieren können
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route: 'groups', url } }))
         },
 
         deleteGroup(group) {

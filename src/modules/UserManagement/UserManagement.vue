@@ -60,7 +60,7 @@
             <!-- WARNING: Lizenzlimit bald erreicht (80%+) -->
             <div v-else-if="isLicenseWarning" class="warning-banner">
                 <div class="warning-content">
-                    <span class="icon-alert warning-icon"></span>
+                    <span class="icon-error warning-icon"></span>
                     <div class="warning-text">
                         <h3>{{ t('souvera_central', 'Lizenzlimit bald erreicht') }}</h3>
                         <p>
@@ -911,14 +911,25 @@ export default {
     display: flex;
     align-items: center;
     gap: 20px;
-    color: var(--color-main-text);
+    color: #fff;
 }
 
 .warning-banner .warning-icon {
-    font-size: 36px;
+    font-size: 48px;
     flex-shrink: 0;
-    color: var(--color-main-text);
-    opacity: 0.8;
+    opacity: 1;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+    background-size: 48px 48px;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+}
+
+.warning-banner .warning-icon::before {
+    content: '';
+    display: none;
 }
 
 .warning-banner .warning-text {
@@ -928,21 +939,27 @@ export default {
 .warning-banner h3 {
     margin: 0 0 5px;
     font-size: 18px;
-    font-weight: 600;
-    color: var(--color-main-text);
+    font-weight: 700;
+    color: #fff;
 }
 
 .warning-banner p {
     margin: 0;
     font-size: 14px;
-    color: var(--color-main-text);
+    color: #fff;
+    font-weight: 500;
 }
 
 .contact-button.secondary {
     background: #fff;
-    color: var(--color-main-text);
-    border: 2px solid var(--color-main-text);
+    color: var(--color-warning);
+    border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-button.secondary .icon-external {
+    color: var(--color-warning) !important;
+    opacity: 1;
 }
 
 .contact-button.secondary:hover {
@@ -954,8 +971,15 @@ export default {
 /* License Status Badge Colors */
 .license-status.license-warning {
     background: var(--color-warning);
-    color: var(--color-main-text);
+    color: #fff;
     border: 1px solid var(--color-warning);
+    font-weight: 600;
+}
+
+.license-status.license-warning .icon-quota {
+    color: #fff !important;
+    opacity: 1;
+    filter: brightness(0) invert(1);
 }
 
 .license-status.license-critical {
