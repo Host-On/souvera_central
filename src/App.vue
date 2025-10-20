@@ -215,17 +215,20 @@ export default {
 /* Global App Styles */
 #app-souvera-central {
     display: flex;
+    min-height: 80vh;
     height: 100%;
     width: 100%;
-    overflow: hidden;
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
 }
 
 .app-main-content {
     flex: 1;
+    padding: 30px 50px 30px 50px;
     overflow-y: auto;
     overflow-x: hidden;
-    background: var(--color-main-background);
+    background: transparent;
+    min-width: 0;
 }
 
 /* Nextcloud Button Overrides */

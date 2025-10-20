@@ -87,39 +87,46 @@ export default {
 
 <style scoped>
 .app-sidebar {
-    width: 280px;
-    height: 100%;
-    background: var(--color-main-background);
-    border-right: 1px solid var(--color-border);
+    width: 260px;
+    padding: 20px 15px;
+    height: 100vh;
+    background: transparent;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    margin-right: 10px;
+    box-shadow: 0 8px 20px rgba(6, 11, 20, 0.08);
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
 }
 
 /* Header */
 .sidebar-header {
-    padding: 30px 20px 20px;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-main-background);
+    margin: 0 0 20px 0;
+    background: transparent;
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 .sidebar-header h1 {
-    margin: 0;
-    font-size: 24px;
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--color-main-text);
+    letter-spacing: 0.2px;
+    color: #3074BF !important;
 }
 
 .subtitle {
-    margin: 5px 0 0;
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-main-text-souvera);
     opacity: 0.7;
 }
 
 /* Navigation */
 .sidebar-nav {
     flex: 1;
-    padding: 20px 10px;
+    padding: 0;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -128,44 +135,44 @@ export default {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 15px;
-    margin-bottom: 4px;
+    gap: 10px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
     background: transparent;
     border: none;
-    border-radius: var(--border-radius-large);
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 160ms ease, transform 120ms ease;
     text-align: left;
-    font-size: 15px;
+    font-size: 0.95rem;
     font-weight: 500;
-    color: var(--color-main-text);
+    color: var(--color-primary-text);
     white-space: nowrap;
     text-decoration: none;
     box-sizing: border-box;
 }
 
 .nav-item:hover {
-    background: var(--color-background-hover);
-    color: var(--color-main-text);
+    background: rgba(0, 0, 0, 0.05);
+    transform: translateX(2px);
 }
 
 .nav-item.active {
     background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
+    color: var(--color-primary-text);
     font-weight: 600;
+    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.16);
 }
 
 .nav-item .icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     opacity: 0.7;
     flex-shrink: 0;
 }
 
 .nav-item.active .icon {
     opacity: 1;
-    filter: brightness(0) invert(1);
 }
 
 .nav-item:hover .icon {

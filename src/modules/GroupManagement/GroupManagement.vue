@@ -473,7 +473,7 @@ export default {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: none;
 }
 
 .header-content {
@@ -493,8 +493,8 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
 }
@@ -524,10 +524,10 @@ export default {
 
 /* Table Container */
 .table-container {
-    background: var(--color-main-background);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 18px;
     overflow: hidden;
-    box-shadow: 0 0 3px var(--color-box-shadow);
 }
 
 /* Groups Table */
@@ -538,31 +538,45 @@ export default {
 .groups-table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.95rem;
+    color: #374151;
+    table-layout: auto;
 }
 
 .groups-table thead {
-    background: var(--color-background-dark);
-    border-bottom: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 0;
 }
 
 .groups-table th {
-    padding: 15px 12px;
+    padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    font-size: 13px;
-    color: var(--color-text-lighter);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    color: var(--color-primary-text);
+    border-bottom: 0;
+}
+
+.groups-table th:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.groups-table th:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .groups-table tbody tr {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 0;
     transition: background-color 0.2s;
     cursor: pointer;
+    color: #000;
 }
 
 .groups-table tbody tr:hover {
-    background: var(--color-background-hover);
+    background: #f3f4f6;
 }
 
 .groups-table tbody tr:last-child {
@@ -570,8 +584,12 @@ export default {
 }
 
 .groups-table td {
-    padding: 16px 12px;
+    padding: 10px 12px;
     vertical-align: middle;
+    border-bottom: 0;
+    text-align: left;
+    word-break: break-word;
+    white-space: normal;
 }
 
 /* Columns */

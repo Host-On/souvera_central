@@ -173,14 +173,15 @@ export default {
     justify-content: space-between;
     gap: 20px;
     padding: 20px;
-    background: var(--color-main-background);
-    border-top: 1px solid var(--color-border);
+    background: transparent;
+    border-top: none;
     flex-wrap: wrap;
 }
 
 .pagination-info {
-    color: var(--color-text-lighter);
+    color: #000;
     font-size: 14px;
+    font-weight: 600;
 }
 
 .pagination-controls {
@@ -191,21 +192,23 @@ export default {
 
 .pagination-button {
     padding: 8px 12px;
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    color: var(--color-main-text);
+    color: #000;
 }
 
 .pagination-button:hover:not(:disabled) {
-    background: var(--color-background-hover);
-    border-color: var(--color-primary-element);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--color-secondary-element);
+    transform: translateY(-1px);
 }
 
 .pagination-button:disabled {
-    opacity: 0.3;
+    opacity: 0.25;
     cursor: not-allowed;
 }
 
@@ -217,23 +220,28 @@ export default {
 .page-number {
     min-width: 36px;
     padding: 8px 12px;
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    font-weight: 500;
+    font-weight: 600;
+    color: #000;
 }
 
 .page-number:hover {
-    background: var(--color-background-hover);
-    border-color: var(--color-primary-element);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--color-secondary-element);
+    transform: translateY(-1px);
 }
 
 .page-number.active {
     background: var(--color-primary-element);
-    color: var(--color-primary-element-text);
+    color: #000;
     border-color: var(--color-primary-element);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255, 246, 219, 0.6);
 }
 
 .per-page-selector {
@@ -241,21 +249,26 @@ export default {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: var(--color-text-lighter);
+    color: #000;
+    font-weight: 600;
 }
 
 .per-page-selector select {
     padding: 6px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    background: var(--color-main-background);
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
     cursor: pointer;
     font-size: 14px;
+    font-weight: 600;
+    color: #000;
 }
 
 .per-page-selector select:focus {
     outline: none;
-    border-color: var(--color-primary-element);
+    border-color: var(--color-secondary-element);
+    box-shadow: 0 0 0 2px rgba(48, 116, 191, 0.2);
 }
 
 /* Icons für Nextcloud (Fallback wenn Icons nicht verfügbar) */

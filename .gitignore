@@ -21,3 +21,4 @@ features.md
 .playwright-mcp/
 server.css
 tests/
+style.md

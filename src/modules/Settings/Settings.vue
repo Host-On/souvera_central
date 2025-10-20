@@ -13,11 +13,11 @@
 
         <!-- Settings Content -->
         <div v-else class="settings-content">
-            <!-- 1. E-MAIL SENDEN -->
+            <!-- 1. WILLKOMMENS-EMAIL SENDEN -->
             <div class="settings-section">
                 <div class="section-header">
                     <span class="icon-mail"></span>
-                    <h3>{{ t('souvera_central', 'E-Mail senden') }}</h3>
+                    <h3>{{ t('souvera_central', 'Willkommens-Email senden') }}</h3>
                 </div>
                 <p class="section-description">
                     {{ t('souvera_central', 'Automatisches Versenden von Willkommens-Emails an neue Benutzer') }}
@@ -212,7 +212,7 @@ export default {
 <style scoped>
 .settings-container {
     padding: 30px;
-    max-width: 900px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -220,7 +220,7 @@ export default {
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: none;
 }
 
 .page-header h2 {
@@ -258,15 +258,15 @@ export default {
 
 /* Settings Section */
 .settings-section {
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
     padding: 25px;
     transition: box-shadow 0.2s;
 }
 
 .settings-section:hover {
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
@@ -295,52 +295,65 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 14px 28px;
-    border-radius: var(--border-radius-large);
+    border-radius: 6px;
     font-size: 16px;
     font-weight: 700;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-width: 180px;
     justify-content: center;
 }
 
 .toggle-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .toggle-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px var(--color-box-shadow);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-button.toggle-active {
     background: var(--color-success);
-    color: white;
+    color: #fff;
+    border: 2px solid var(--color-success);
 }
 
 .toggle-button.toggle-active:hover {
-    background: #46a049;
+    background: #0ea855;
+}
+
+.toggle-button.toggle-active .toggle-icon {
+    color: #fff;
+    filter: brightness(0) invert(1);
 }
 
 .toggle-button.toggle-inactive {
     background: var(--color-error);
-    color: white;
+    color: #fff;
+    border: 2px solid var(--color-error);
 }
 
 .toggle-button.toggle-inactive:hover {
-    background: #c9302c;
+    background: #c42d3f;
+}
+
+.toggle-button.toggle-inactive .toggle-icon {
+    color: #fff;
+    filter: brightness(0) invert(1);
 }
 
 .toggle-icon {
-    font-size: 20px;
-    opacity: 0.95;
+    font-size: 22px;
+    opacity: 1;
 }
 
 .toggle-text {
     font-size: 16px;
+    font-weight: 700;
 }
 
 .section-description {
@@ -414,42 +427,44 @@ export default {
     justify-content: center;
     gap: 8px;
     padding: 20px 16px;
-    background: var(--color-background-dark);
-    border: 2px solid var(--color-border);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     min-height: 100px;
 }
 
 .quota-option:hover {
-    background: var(--color-background-hover);
-    border-color: var(--color-primary-element);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--color-secondary-element);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .quota-option.quota-selected {
-    background: var(--color-primary-element-light);
-    border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px var(--color-primary-element-light);
+    background: rgba(255, 246, 219, 0.95);
+    border-color: #3074BF;
+    border-width: 3px;
+    box-shadow: 0 4px 16px rgba(48, 116, 191, 0.3);
 }
 
 .quota-icon {
-    font-size: 32px;
-    opacity: 0.7;
-    color: var(--color-primary-element);
+    font-size: 36px;
+    opacity: 0.8;
+    color: #3074BF;
 }
 
 .quota-option.quota-selected .quota-icon {
     opacity: 1;
-    color: var(--color-primary-element);
+    color: #3074BF;
 }
 
 .quota-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-main-text);
+    font-size: 15px;
+    font-weight: 700;
+    color: #000;
     text-align: center;
 }
 
@@ -457,15 +472,17 @@ export default {
     position: absolute;
     top: 8px;
     right: 8px;
-    font-size: 18px;
-    color: var(--color-success);
-    background: white;
+    font-size: 20px;
+    color: #fff;
+    background: var(--color-success);
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(30, 214, 122, 0.4);
+    font-weight: bold;
 }
 
 /* Custom Quota Input */
@@ -490,14 +507,15 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: var(--color-background-dark);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(6px);
     border: 2px solid var(--color-primary-element);
-    border-radius: var(--border-radius-large);
+    border-radius: 6px;
     transition: all 0.2s;
 }
 
 .custom-quota-field:focus-within {
-    box-shadow: 0 0 0 3px var(--color-primary-element-light);
+    box-shadow: 0 0 0 3px rgba(255, 246, 219, 0.3);
 }
 
 .custom-quota-field .icon-edit {
@@ -537,10 +555,11 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 12px 20px;
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 4px 16px var(--color-box-shadow);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 1000;
     animation: slideIn 0.3s ease-out;
 }

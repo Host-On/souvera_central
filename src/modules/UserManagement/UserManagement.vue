@@ -103,7 +103,6 @@
                             <tr>
                                 <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
                                 <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
-                                <th class="email-column">{{ t('souvera_central', 'E-Mail') }}</th>
                                 <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
                                 <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
                                 <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
@@ -118,21 +117,13 @@
                                     </div>
                                 </td>
                                 <td class="displayname-column">{{ user.displayName }}</td>
-                                <td class="email-column">{{ user.email || '-' }}</td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
                                 <td class="status-column">
-                                    <div class="status-indicator">
-                                        <span
-                                            :class="[
-                                                'status-icon',
-                                                user.enabled ? 'icon-checkmark-color' : 'icon-close'
-                                            ]"
-                                            :title="
-                                                user.enabled
-                                                    ? t('souvera_central', 'Aktiv')
-                                                    : t('souvera_central', 'Inaktiv')
-                                            "
-                                        ></span>
+                                    <div class="status-badge" :class="user.enabled ? 'status-active' : 'status-inactive'">
+                                        <span :class="user.enabled ? 'icon-checkmark' : 'icon-close'"></span>
+                                        <span class="status-text">
+                                            {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="actions-column">
@@ -557,7 +548,7 @@ export default {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: none;
 }
 
 .header-content {
@@ -577,8 +568,8 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
 }
@@ -608,10 +599,10 @@ export default {
 
 /* Table Container */
 .table-container {
-    background: var(--color-main-background);
-    border-radius: var(--border-radius-large);
-    overflow: hidden;
-    box-shadow: 0 0 3px var(--color-box-shadow);
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 18px;
+    margin-bottom: 20px;
 }
 
 /* User Table */
@@ -622,26 +613,45 @@ export default {
 .users-table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.95rem;
+    color: #374151;
+    table-layout: auto;
 }
 
 .users-table thead {
-    background: var(--color-background-dark);
-    border-bottom: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 0;
 }
 
 .users-table th {
-    padding: 15px 12px;
+    padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    font-size: 13px;
-    color: var(--color-text-lighter);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    color: var(--color-primary-text);
+    border-bottom: 0;
+}
+
+.users-table th:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.users-table th:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .users-table tbody tr {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 0;
     transition: background-color 0.2s;
+    color: #000;
+}
+
+.users-table tbody tr:hover {
+    background: #f3f4f6;
+    cursor: pointer;
 }
 
 .users-table tbody tr:last-child {
@@ -649,33 +659,34 @@ export default {
 }
 
 .users-table td {
-    padding: 16px 12px;
+    padding: 10px 12px;
     vertical-align: middle;
+    border-bottom: 0;
+    text-align: left;
+    word-break: break-word;
+    white-space: normal;
 }
 
 /* Columns */
 .user-column {
-    width: 180px;
-}
-
-.displayname-column {
-    width: 200px;
-}
-
-.email-column {
     width: 250px;
 }
 
+.displayname-column {
+    width: 300px;
+}
+
 .quota-column {
-    width: 120px;
+    width: 150px;
 }
 
 .status-column {
-    width: 100px;
+    width: 120px;
+    text-align: left;
 }
 
 .actions-column {
-    width: 100px;
+    width: 120px;
     text-align: right;
 }
 
@@ -690,24 +701,43 @@ export default {
     font-weight: 500;
 }
 
-/* Status Indicator */
-.status-indicator {
-    display: flex;
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
-.status-indicator .status-icon {
-    font-size: 24px;
-    opacity: 1;
+.status-badge span[class^='icon-'] {
+    font-size: 16px;
 }
 
-.status-indicator .icon-checkmark-color {
-    color: var(--color-success);
+.status-badge.status-active {
+    background: rgba(30, 214, 122, 0.25);
+    color: #0a6b35;
+    border: 1.5px solid rgba(30, 214, 122, 0.6);
 }
 
-.status-indicator .icon-close {
-    color: var(--color-error);
+.status-badge.status-active span[class^='icon-'] {
+    color: #0a6b35;
+}
+
+.status-badge.status-inactive {
+    background: rgba(227, 56, 80, 0.25);
+    color: #8f1523;
+    border: 1.5px solid rgba(227, 56, 80, 0.6);
+}
+
+.status-badge.status-inactive span[class^='icon-'] {
+    color: #8f1523;
+}
+
+.status-text {
+    font-weight: 600;
 }
 
 /* Actions */
@@ -775,22 +805,23 @@ export default {
     padding: 25px 30px;
     background: var(--color-error);
     border: 2px solid var(--color-error);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .critical-warning .warning-content {
     display: flex;
     align-items: center;
     gap: 20px;
-    color: var(--color-primary-element-text);
+    color: #fff;
 }
 
 .critical-warning .warning-icon {
-    font-size: 48px;
+    font-size: 64px;
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: var(--color-primary-element-text);
+    color: #fff !important;
+    filter: brightness(0) invert(1);
 }
 
 @keyframes pulse {
@@ -811,15 +842,14 @@ export default {
     margin: 0 0 8px;
     font-size: 20px;
     font-weight: 700;
-    color: var(--color-primary-element-text);
+    color: #fff;
 }
 
 .critical-warning p {
     margin: 0;
     font-size: 15px;
     line-height: 1.5;
-    color: var(--color-primary-element-text);
-    opacity: 0.95;
+    color: #fff;
 }
 
 .contact-button {
@@ -827,22 +857,22 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: var(--color-main-background);
+    background: #fff;
     color: var(--color-error);
-    border: 2px solid var(--color-error);
-    border-radius: var(--border-radius-large);
+    border: 2px solid #fff;
+    border-radius: 6px;
     font-weight: 700;
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
     transition: all 0.2s;
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button:hover {
-    background: var(--color-background-hover);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* WARNING BANNER (80%+) */
@@ -851,8 +881,8 @@ export default {
     padding: 20px 25px;
     background: var(--color-warning);
     border: 2px solid var(--color-warning);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .warning-banner .warning-content {
@@ -887,16 +917,16 @@ export default {
 }
 
 .contact-button.secondary {
-    background: var(--color-main-background);
+    background: #fff;
     color: var(--color-main-text);
     border: 2px solid var(--color-main-text);
-    box-shadow: 0 2px 6px var(--color-box-shadow);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button.secondary:hover {
-    background: var(--color-background-hover);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px var(--color-box-shadow);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* License Status Badge Colors */
@@ -908,7 +938,13 @@ export default {
 
 .license-status.license-critical {
     background: var(--color-error);
-    color: var(--color-primary-element-text);
+    color: #fff;
     border: 1px solid var(--color-error);
+}
+
+.license-status.license-critical .icon-quota {
+    color: #fff;
+    opacity: 1;
+    filter: brightness(0) invert(1);
 }
 </style>

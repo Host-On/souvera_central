@@ -1,5 +1,10 @@
 <template>
     <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h2>{{ t('souvera_central', 'Dashboard') }}</h2>
+            <p class="subtitle">{{ t('souvera_central', 'Übersicht Ihrer Souvera Central Installation') }}</p>
+        </div>
+
         <!-- KRITISCHES WARNING: Lizenzlimit erreicht -->
         <div v-if="isLicenseLimitReached" class="critical-warning">
             <div class="warning-content">
@@ -44,11 +49,6 @@
                     {{ t('souvera_central', 'Kontakt') }}
                 </a>
             </div>
-        </div>
-
-        <div class="dashboard-header">
-            <h2>{{ t('souvera_central', 'Dashboard') }}</h2>
-            <p class="subtitle">{{ t('souvera_central', 'Übersicht Ihrer Souvera Central Installation') }}</p>
         </div>
 
         <!-- Statistik-Karten -->
@@ -252,22 +252,23 @@ export default {
     padding: 25px 30px;
     background: var(--color-error);
     border: 2px solid var(--color-error);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .critical-warning .warning-content {
     display: flex;
     align-items: center;
     gap: 20px;
-    color: var(--color-primary-element-text);
+    color: #fff;
 }
 
 .critical-warning .warning-icon {
-    font-size: 48px;
+    font-size: 64px;
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: var(--color-primary-element-text);
+    color: #fff !important;
+    filter: brightness(0) invert(1);
 }
 
 @keyframes pulse {
@@ -288,15 +289,14 @@ export default {
     margin: 0 0 8px;
     font-size: 20px;
     font-weight: 700;
-    color: var(--color-primary-element-text);
+    color: #fff;
 }
 
 .critical-warning p {
     margin: 0;
     font-size: 15px;
     line-height: 1.5;
-    color: var(--color-primary-element-text);
-    opacity: 0.95;
+    color: #fff;
 }
 
 .contact-button {
@@ -307,13 +307,13 @@ export default {
     background: var(--color-main-background);
     color: var(--color-error);
     border: 2px solid var(--color-error);
-    border-radius: var(--border-radius-large);
+    border-radius: 6px;
     font-weight: 700;
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
     transition: all 0.2s;
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button:hover {
@@ -328,8 +328,8 @@ export default {
     padding: 20px 25px;
     background: var(--color-warning);
     border: 2px solid var(--color-warning);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .warning-banner .warning-content {
@@ -406,10 +406,11 @@ export default {
     align-items: center;
     gap: 20px;
     padding: 25px;
-    background: var(--color-main-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
-    box-shadow: 0 2px 4px var(--color-box-shadow);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition:
         transform 0.2s,
         box-shadow 0.2s;
@@ -417,23 +418,30 @@ export default {
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--color-box-shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.stat-warning {
     border-color: var(--color-warning);
-    background: var(--color-background-dark);
+    background: rgba(255, 246, 219, 0.9);
 }
 
 .stat-card.stat-critical {
     border-color: var(--color-error);
-    background: var(--color-background-dark);
+    border-width: 2px;
+    background: rgba(227, 56, 80, 0.95);
+    color: #fff;
 }
 
 .stat-icon {
     font-size: 40px;
     opacity: 0.7;
     color: var(--color-primary-element);
+}
+
+.stat-card.stat-critical .stat-icon {
+    color: #fff;
+    opacity: 1;
 }
 
 .stat-content {
@@ -448,10 +456,18 @@ export default {
     margin-bottom: 5px;
 }
 
+.stat-card.stat-critical .stat-value {
+    color: #fff;
+}
+
 .stat-label {
     font-size: 14px;
     color: var(--color-text-lighter);
     font-weight: 500;
+}
+
+.stat-card.stat-critical .stat-label {
+    color: #fff;
 }
 
 .stat-warning-text {
@@ -464,7 +480,7 @@ export default {
 .stat-critical-text {
     margin-top: 5px;
     font-size: 12px;
-    color: var(--color-error);
+    color: #fff;
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -491,17 +507,18 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 20px;
-    background: var(--color-background-dark);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     text-align: left;
 }
 
 .action-card:hover:not(:disabled) {
-    background: var(--color-primary-element-light);
-    border-color: var(--color-primary-element);
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--color-secondary-element);
     transform: translateY(-2px);
 }
 
@@ -538,8 +555,10 @@ export default {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
     padding: 20px;
-    background: var(--color-background-dark);
-    border-radius: var(--border-radius-large);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
 }
 
 .info-item {
