@@ -655,7 +655,7 @@ export default {
     display: inline-flex;
     align-items: center;
     padding: 4px 8px;
-    background: var(--color-warning);
+    background: #ff6600;
     border-radius: var(--border-radius);
     font-size: 12px;
     color: var(--color-main-text);

@@ -61,6 +61,12 @@ class UserApiController extends OCSController {
             $allUsersData = [];
             foreach ($allUsers as $user) {
                 $userId = $user->getUID();
+
+                // Admin-User von der Liste ausschließen
+                if ($userId === 'admin') {
+                    continue;
+                }
+
                 $displayName = $user->getDisplayName();
                 $email = $user->getEMailAddress() ?? '';
 
@@ -223,12 +229,12 @@ class UserApiController extends OCSController {
                 );
             }
 
-            // Lizenz-Limit prüfen
+            // Lizenz-Limit prüfen (ohne Admin-User)
             $maxLicenses = $this->configService->getMaxLicenses();
-            $currentUserCount = count($this->userManager->search(''));
+            $currentUserCount = $this->getUserCountForLicensing();
 
             if ($currentUserCount >= $maxLicenses) {
-                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ', Max: ' . $maxLicenses);
+                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ' (ohne Admin), Max: ' . $maxLicenses);
                 return new DataResponse(
                     ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'],
                     Http::STATUS_CONFLICT
@@ -340,18 +346,19 @@ class UserApiController extends OCSController {
             }
 
             // E-Mail aktualisieren
+            // WICHTIG: E-Mail-Adresse kann nach Erstellung NICHT geändert werden
             if ($email !== null) {
                 // USERNAME/EMAIL-SYNC: Email-Änderung blockieren
                 // Grund: Username kann in Nextcloud nicht geändert werden, daher muss Email locked sein
                 $currentEmail = $user->getEMailAddress();
                 if ($email !== $currentEmail) {
                     return new DataResponse(
-                        ['error' => 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden (erforderlich für Mail-Server Integration)'],
+                        ['error' => 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden'],
                         Http::STATUS_BAD_REQUEST
                     );
                 }
-                // Falls Email identisch ist, trotzdem setzen (no-op, aber konsistent)
-                $user->setEMailAddress($email);
+                // Falls Email identisch ist, ignorieren (no-op)
+                // Setzen wird übersprungen um unnötige Operationen zu vermeiden
             }
 
             // Quota aktualisieren
@@ -651,7 +658,7 @@ class UserApiController extends OCSController {
             return new DataResponse([
                 'max_licenses' => $this->configService->getMaxLicenses(),
                 'allowed_domains' => $this->configService->getAllowedDomains(),
-                'current_user_count' => count($this->userManager->search('')),
+                'current_user_count' => $this->getUserCountForLicensing(), // Ohne Admin-User
             ]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -744,5 +751,27 @@ class UserApiController extends OCSController {
                 'displayName' => $group->getDisplayName()
             ];
         }, $groups);
+    }
+
+    /**
+     * Benutzeranzahl ermitteln (ohne Admin-Benutzer)
+     *
+     * Diese Methode zählt alle Benutzer MINUS den Admin-User,
+     * da der Admin-User nicht zur Lizenzberechnung gehört.
+     *
+     * @return int Anzahl der Benutzer ohne Admin
+     */
+    private function getUserCountForLicensing(): int {
+        $allUsers = $this->userManager->search('');
+        $totalUsers = count($allUsers);
+
+        // Admin-User von der Zählung ausschließen
+        // Prüfe ob "admin"-User existiert und subtrahiere 1
+        $adminUser = $this->userManager->get('admin');
+        if ($adminUser !== null) {
+            return $totalUsers - 1;
+        }
+
+        return $totalUsers;
     }
 }

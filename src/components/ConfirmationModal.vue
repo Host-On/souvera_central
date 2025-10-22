@@ -179,8 +179,8 @@ export default {
 }
 
 .modal-icon.icon-warning {
-    background: rgba(255, 165, 0, 0.1);
-    color: #ffa500;
+    background: rgba(255, 102, 0, 0.1);
+    color: #ff6600;
 }
 
 .modal-icon.icon-danger {
@@ -300,11 +300,11 @@ export default {
 }
 
 .button.primary.modal-warning {
-    background: #ffa500;
+    background: #ff6600;
 }
 
 .button.primary.modal-warning:hover {
-    background: #ff8c00;
+    background: #ff5500;
 }
 
 .button.primary.modal-success {

@@ -901,8 +901,8 @@ export default {
 .warning-banner {
     margin-bottom: 30px;
     padding: 20px 25px;
-    background: var(--color-warning);
-    border: 2px solid var(--color-warning);
+    background: #ff6600;
+    border: 2px solid #ff6600;
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -952,13 +952,13 @@ export default {
 
 .contact-button.secondary {
     background: #fff;
-    color: var(--color-warning);
+    color: #ff6600;
     border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button.secondary .icon-external {
-    color: var(--color-warning) !important;
+    color: #ff6600 !important;
     opacity: 1;
 }
 
@@ -970,9 +970,9 @@ export default {
 
 /* License Status Badge Colors */
 .license-status.license-warning {
-    background: var(--color-warning);
+    background: #ff6600;
     color: #fff;
-    border: 1px solid var(--color-warning);
+    border: 1px solid #ff6600;
     font-weight: 600;
 }
 

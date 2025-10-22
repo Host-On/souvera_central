@@ -45,7 +45,7 @@
                     </label>
 
                     <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
-                    <div v-if="allowedDomains.length > 0" class="email-input-group">
+                    <div v-if="allowedDomains.length > 0 && !isEditMode" class="email-input-group">
                         <input
                             id="emailLocalPart"
                             v-model="emailLocalPart"
@@ -78,17 +78,21 @@
                         v-model="formData.email"
                         type="email"
                         :class="{ error: errors.email }"
-                        required
+                        :disabled="isEditMode"
+                        :required="!isEditMode"
                         @input="validateEmail"
                     />
 
                     <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
                     <p
-                        v-else-if="formData.email && !errors.email && allowedDomains.length === 0"
+                        v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
                         class="success-message"
                     >
                         <span class="icon-checkmark"></span>
                         {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
+                    </p>
+                    <p v-if="isEditMode" class="help-text">
+                        {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
                     </p>
                 </div>
 
@@ -550,7 +554,9 @@ export default {
         async saveUser() {
             // Validate all fields
             this.validateDisplayName()
-            this.validateEmail()
+            if (!this.isEditMode) {
+                this.validateEmail()
+            }
             this.validatePassword()
 
             if (!this.isFormValid) {
@@ -563,11 +569,12 @@ export default {
                 if (this.isEditMode) {
                     // Update existing user
                     // Username wird aus user.id genommen (wurde bei Erstellung aus Email generiert)
+                    // E-Mail wird NICHT aktualisiert im Edit-Modus
                     const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.user.id })
 
                     await axios.put(url, {
                         displayName: this.formData.displayName,
-                        email: this.formData.email,
+                        // email: wird bewusst NICHT mitgeschickt
                         groups: this.formData.groups,
                         quota: this.formData.quota,
                         enabled: this.formData.enabled,
@@ -1426,9 +1433,9 @@ button.primary {
 }
 
 .action-button.warning {
-    background: linear-gradient(135deg, #ff9500 0%, #ff8000 100%);
+    background: linear-gradient(135deg, #ff6600 0%, #ff5500 100%);
     color: #fff !important;
-    border: 2px solid #ff8000;
+    border: 2px solid #ff5500;
 }
 
 .action-button.warning * {
@@ -1442,10 +1449,10 @@ button.primary {
 }
 
 .action-button.warning:hover:not(:disabled) {
-    background: linear-gradient(135deg, #ffaa00 0%, #ff9500 100%);
-    border-color: #ff9500;
+    background: linear-gradient(135deg, #ff7700 0%, #ff6600 100%);
+    border-color: #ff6600;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4);
 }
 
 .action-button.success {

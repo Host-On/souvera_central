@@ -648,8 +648,8 @@ export default {
 }
 
 .info-box.warning {
-    background: var(--color-warning);
-    border: 1px solid var(--color-warning);
+    background: #ff6600;
+    border: 1px solid #ff6600;
 }
 
 .info-box .icon-password {
