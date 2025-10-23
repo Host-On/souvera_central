@@ -97,10 +97,26 @@
                                 v-model="selectedMembers"
                                 type="checkbox"
                                 :value="user.id"
+                                :disabled="isAdminUserInAdminGroup(user.id)"
                             />
-                            <label :for="'member-' + user.id">
+                            <label
+                                :for="'member-' + user.id"
+                                :class="{ 'disabled-label': isAdminUserInAdminGroup(user.id) }"
+                            >
                                 <span class="member-name">{{ user.displayName }}</span>
                                 <span class="member-email">{{ user.email }}</span>
+                                <span
+                                    v-if="isAdminUserInAdminGroup(user.id)"
+                                    class="locked-badge"
+                                    :title="
+                                        t(
+                                            'souvera_central',
+                                            'Standard-Administrator kann nicht aus Admin-Gruppe entfernt werden'
+                                        )
+                                    "
+                                >
+                                    <span class="icon-password"></span>
+                                </span>
                             </label>
                         </div>
                         <div v-if="filteredUsers.length === 0" class="no-users-found">
@@ -227,6 +243,11 @@ export default {
     methods: {
         t,
 
+        isAdminUserInAdminGroup(userId) {
+            // Checkbox für "admin" User in "admin" Gruppe deaktivieren
+            return this.formData.groupId === 'admin' && userId === 'admin'
+        },
+
         validateGroupId() {
             this.errors.groupId = null
 
@@ -264,6 +285,11 @@ export default {
                 const members = data.members || []
 
                 this.selectedMembers = members.map((m) => m.id)
+
+                // Stelle sicher, dass "admin" User immer in "admin" Gruppe selektiert ist
+                if (this.formData.groupId === 'admin' && !this.selectedMembers.includes('admin')) {
+                    this.selectedMembers.push('admin')
+                }
             } catch (error) {
                 // Error loading group members
             }
@@ -334,6 +360,9 @@ export default {
                 this.$emit('close')
             } catch (error) {
                 // Zeige Fehlermeldung
+                console.error('GroupEditor: Error beim Speichern:', error)
+                console.log('Error Response:', error.response)
+
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
 
                 if (error.response?.data?.ocs?.data?.error) {
@@ -342,7 +371,26 @@ export default {
                     errorMessage = error.response.data.error
                 }
 
-                alert(errorMessage)
+                console.log('Extracted error message:', errorMessage)
+
+                // Prüfe ob es ein Duplikat-Fehler ist und zeige ihn im GroupId-Feld
+                if (errorMessage.toLowerCase().includes('bereits') || errorMessage.toLowerCase().includes('existiert')) {
+                    console.log('Setting errors.groupId to:', errorMessage)
+                    this.errors.groupId = errorMessage
+
+                    // Zeige Fehler als Alert (da GroupEditor keine ConfirmationModal hat)
+                    alert(errorMessage + '\n\nBitte verwenden Sie eine andere Gruppen-ID.')
+
+                    // Scroll zum Fehler
+                    this.$nextTick(() => {
+                        const groupIdField = document.getElementById('groupId')
+                        groupIdField?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        groupIdField?.focus()
+                    })
+                } else {
+                    // Zeige generischen Fehler als Alert
+                    alert(errorMessage)
+                }
             } finally {
                 this.saving = false
             }
@@ -360,7 +408,12 @@ export default {
 
             // Finde hinzuzufügende und zu entfernende Mitglieder
             const membersToAdd = this.selectedMembers.filter((id) => !currentMembers.includes(id))
-            const membersToRemove = currentMembers.filter((id) => !this.selectedMembers.includes(id))
+            let membersToRemove = currentMembers.filter((id) => !this.selectedMembers.includes(id))
+
+            // Verhindere Entfernung von "admin" User aus "admin" Gruppe
+            if (this.formData.groupId === 'admin') {
+                membersToRemove = membersToRemove.filter((id) => id !== 'admin')
+            }
 
             // Füge neue Mitglieder hinzu
             for (const userId of membersToAdd) {

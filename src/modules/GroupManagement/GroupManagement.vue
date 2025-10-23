@@ -369,9 +369,17 @@ export default {
             this.showEditor = true
         },
 
-        async closeEditor() {
-            // GLEICHER Ablauf wie handleGroupSaved
-            await this.handleGroupSaved()
+        closeEditor() {
+            // Navigate zurück zu /groups
+            const url = generateUrl('/apps/souvera_central/groups')
+            window.history.pushState({ route: 'groups' }, '', url)
+
+            // Editor schließen (OHNE Liste neu zu laden - nur bei Abbruch)
+            this.showEditor = false
+            this.selectedGroup = null
+
+            // Dispatch event damit andere Komponenten reagieren können
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route: 'groups', url } }))
         },
 
         async handleGroupSaved() {
@@ -383,7 +391,7 @@ export default {
             this.showEditor = false
             this.selectedGroup = null
 
-            // Liste komplett neu laden
+            // Liste komplett neu laden (NUR bei erfolgreichem Speichern)
             await this.loadGroups()
 
             // Dispatch event damit andere Komponenten reagieren können

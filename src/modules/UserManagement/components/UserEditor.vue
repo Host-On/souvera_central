@@ -184,6 +184,7 @@
                             <GroupSelector
                                 v-model="formData.adminGroups"
                                 :available-groups="availableGroups"
+                                :is-admin-user="user && user.id === 'admin'"
                                 mode="admin"
                             />
                         </div>
@@ -195,6 +196,7 @@
                     <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
                     <div class="danger-actions">
                         <button
+                            v-if="user.id !== 'admin'"
                             type="button"
                             :class="['action-button', formData.enabled ? 'warning' : 'success']"
                             :disabled="togglingStatus"
@@ -615,6 +617,9 @@ export default {
                 this.$emit('close')
             } catch (error) {
                 // Zeige Fehlermeldung
+                console.error('UserEditor: Error beim Speichern:', error)
+                console.log('Error Response:', error.response)
+
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
 
                 if (error.response?.data?.ocs?.data?.error) {
@@ -623,7 +628,36 @@ export default {
                     errorMessage = error.response.data.error
                 }
 
-                alert(errorMessage)
+                console.log('Extracted error message:', errorMessage)
+
+                // Prüfe ob es ein Duplikat-Fehler ist und zeige ihn im Email-Feld
+                if (errorMessage.toLowerCase().includes('bereits') || errorMessage.toLowerCase().includes('existiert')) {
+                    console.log('Setting errors.email to:', errorMessage)
+                    this.errors.email = errorMessage
+
+                    // Zusätzlich: Zeige Fehler-Modal
+                    this.confirmModal = {
+                        isOpen: true,
+                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        message: errorMessage,
+                        details: this.t('souvera_central', 'Bitte verwenden Sie eine andere E-Mail-Adresse.'),
+                        type: 'danger',
+                        confirmText: this.t('souvera_central', 'OK'),
+                        cancelText: '',
+                        onConfirm: () => {
+                            this.closeConfirmModal()
+                            // Scroll zum Fehler
+                            this.$nextTick(() => {
+                                const emailField = document.getElementById('email') || document.getElementById('emailLocalPart')
+                                emailField?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                emailField?.focus()
+                            })
+                        }
+                    }
+                } else {
+                    // Zeige generischen Fehler als Alert
+                    alert(errorMessage)
+                }
             } finally {
                 this.saving = false
             }

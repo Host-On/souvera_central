@@ -135,7 +135,7 @@
                                             <span class="icon-rename"></span>
                                         </button>
                                         <button
-                                            v-if="user.id !== currentUserId"
+                                            v-if="user.id !== currentUserId && user.id !== 'admin'"
                                             :title="t('souvera_central', 'Löschen')"
                                             @click.stop="deleteUser(user)"
                                         >
@@ -461,9 +461,17 @@ export default {
             this.showEditor = true
         },
 
-        async closeEditor() {
-            // GLEICHER Ablauf wie handleUserSaved
-            await this.handleUserSaved()
+        closeEditor() {
+            // Navigate zurück zu /users
+            const url = generateUrl('/apps/souvera_central/users')
+            window.history.pushState({ route: 'users' }, '', url)
+
+            // Editor schließen (OHNE Liste neu zu laden - nur bei Abbruch)
+            this.showEditor = false
+            this.selectedUser = null
+
+            // Dispatch event damit andere Komponenten reagieren können
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route: 'users', url } }))
         },
 
         async handleUserSaved() {
@@ -475,7 +483,7 @@ export default {
             this.showEditor = false
             this.selectedUser = null
 
-            // Liste komplett neu laden
+            // Liste komplett neu laden (NUR bei erfolgreichem Speichern)
             await this.loadUsers()
 
             // Dispatch event damit andere Komponenten reagieren können
@@ -483,6 +491,21 @@ export default {
         },
 
         deleteUser(user) {
+            // Verhindere Löschen des Standard-Admin-Accounts
+            if (user.id === 'admin') {
+                this.confirmModal = {
+                    isOpen: true,
+                    title: this.t('souvera_central', 'Aktion nicht möglich'),
+                    message: this.t('souvera_central', 'Der Standard-Administrator-Account kann nicht gelöscht werden.'),
+                    type: 'warning',
+                    confirmText: this.t('souvera_central', 'OK'),
+                    onConfirm: () => {
+                        this.confirmModal.isOpen = false
+                    },
+                }
+                return
+            }
+
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Benutzer löschen?'),

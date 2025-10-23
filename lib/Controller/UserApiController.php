@@ -61,12 +61,6 @@ class UserApiController extends OCSController {
             $allUsersData = [];
             foreach ($allUsers as $user) {
                 $userId = $user->getUID();
-
-                // Admin-User von der Liste ausschließen
-                if ($userId === 'admin') {
-                    continue;
-                }
-
                 $displayName = $user->getDisplayName();
                 $email = $user->getEMailAddress() ?? '';
 
@@ -251,14 +245,26 @@ class UserApiController extends OCSController {
                 );
             }
 
-            // Prüfen ob User schon existiert
+            // Prüfen ob User mit diesem Username bereits existiert
             error_log('Prüfe ob User bereits existiert: ' . $username);
             if ($this->userManager->get($username) !== null) {
                 error_log('FEHLER: Benutzername bereits vergeben: ' . $username);
                 return new DataResponse(
-                    ['error' => 'Benutzername bereits vergeben'],
+                    ['error' => 'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.'],
                     Http::STATUS_CONFLICT
                 );
+            }
+
+            // Zusätzliche Prüfung: Suche nach Usern mit dieser Email (falls Username != Email)
+            $existingUsers = $this->userManager->search('');
+            foreach ($existingUsers as $existingUser) {
+                if ($existingUser->getEMailAddress() === $email) {
+                    error_log('FEHLER: E-Mail bereits vergeben: ' . $email);
+                    return new DataResponse(
+                        ['error' => 'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.'],
+                        Http::STATUS_CONFLICT
+                    );
+                }
             }
 
             // User erstellen
@@ -376,6 +382,10 @@ class UserApiController extends OCSController {
                 // Entferne User aus allen aktuellen Gruppen
                 $currentGroups = $this->groupManager->getUserGroups($user);
                 foreach ($currentGroups as $group) {
+                    // Verhindere Entfernung von "admin" User aus "admin" Gruppe
+                    if ($id === 'admin' && $group->getGID() === 'admin') {
+                        continue;
+                    }
                     $group->removeUser($user);
                 }
 
@@ -384,6 +394,14 @@ class UserApiController extends OCSController {
                     $group = $this->groupManager->get($groupId);
                     if ($group !== null) {
                         $group->addUser($user);
+                    }
+                }
+
+                // Stelle sicher, dass "admin" User immer in "admin" Gruppe ist
+                if ($id === 'admin') {
+                    $adminGroup = $this->groupManager->get('admin');
+                    if ($adminGroup !== null && !$adminGroup->inGroup($user)) {
+                        $adminGroup->addUser($user);
                     }
                 }
             }
@@ -422,6 +440,14 @@ class UserApiController extends OCSController {
      */
     public function delete(string $id): DataResponse {
         try {
+            // Prüfe ob versucht wird den Standard-Admin zu löschen
+            if ($id === 'admin') {
+                return new DataResponse(
+                    ['error' => 'Der Standard-Administrator-Account kann nicht gelöscht werden.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             // Prüfe ob User versucht sich selbst zu löschen
             $currentUser = $this->userSession->getUser();
             if ($currentUser !== null && $currentUser->getUID() === $id) {
@@ -492,6 +518,14 @@ class UserApiController extends OCSController {
      */
     public function disable(string $id): DataResponse {
         try {
+            // Prüfe ob versucht wird den Standard-Admin zu deaktivieren
+            if ($id === 'admin') {
+                return new DataResponse(
+                    ['error' => 'Der Standard-Administrator-Account kann nicht deaktiviert werden.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             // Prüfe ob User versucht sich selbst zu deaktivieren
             $currentUser = $this->userSession->getUser();
             if ($currentUser !== null && $currentUser->getUID() === $id) {

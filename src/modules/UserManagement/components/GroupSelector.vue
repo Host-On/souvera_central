@@ -11,9 +11,21 @@
                 <span v-if="mode === 'admin'" class="pill-icon icon-password"></span>
                 <span v-else class="pill-icon icon-group"></span>
                 <span class="pill-label">{{ getGroupDisplayName(groupId) }}</span>
-                <button class="pill-remove" :title="t('souvera_central', 'Entfernen')" @click="removeGroup(groupId)">
+                <button
+                    v-if="!(isAdminUser && mode === 'admin' && groupId === 'admin')"
+                    class="pill-remove"
+                    :title="t('souvera_central', 'Entfernen')"
+                    @click="removeGroup(groupId)"
+                >
                     <span class="icon-close"></span>
                 </button>
+                <span
+                    v-else
+                    class="pill-locked"
+                    :title="t('souvera_central', 'Standard-Administrator kann nicht aus Admin-Gruppe entfernt werden')"
+                >
+                    <span class="icon-password"></span>
+                </span>
             </div>
         </div>
 
@@ -121,6 +133,10 @@ export default {
             type: String,
             default: 'member', // 'member' or 'admin'
             validator: (value) => ['member', 'admin'].includes(value)
+        },
+        isAdminUser: {
+            type: Boolean,
+            default: false
         }
     },
 
@@ -217,6 +233,10 @@ export default {
         },
 
         removeGroup(groupId) {
+            // Verhindere Entfernung von admin aus admin-Gruppe
+            if (this.isAdminUser && this.mode === 'admin' && groupId === 'admin') {
+                return
+            }
             const selected = this.selectedGroups.filter((id) => id !== groupId)
             this.$emit('update:modelValue', selected)
         },

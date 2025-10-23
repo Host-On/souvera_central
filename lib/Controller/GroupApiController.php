@@ -395,6 +395,14 @@ class GroupApiController extends OCSController {
      */
     public function removeMember(string $id, string $userId): DataResponse {
         try {
+            // Verhindere Entfernung von "admin" User aus "admin" Gruppe
+            if ($id === 'admin' && $userId === 'admin') {
+                return new DataResponse(
+                    ['error' => 'Der Standard-Administrator kann nicht aus der Admin-Gruppe entfernt werden.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $group = $this->groupManager->get($id);
             if ($group === null) {
                 return new DataResponse(
