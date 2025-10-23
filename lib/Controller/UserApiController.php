@@ -93,7 +93,8 @@ class UserApiController extends OCSController {
                 $allUsersData[] = $userData;
             }
 
-            $totalCount = count($allUsersData);
+            // Total count OHNE Admin-User (konsistent mit getUserCountForLicensing)
+            $totalCount = $this->getUserCountForLicensing();
 
             // Pagination anwenden
             $paginatedUsers = array_slice($allUsersData, $offset, $limit);
