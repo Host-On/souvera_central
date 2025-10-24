@@ -798,15 +798,6 @@ class UserApiController extends OCSController {
      */
     private function getUserCountForLicensing(): int {
         $allUsers = $this->userManager->search('');
-        $totalUsers = count($allUsers);
-
-        // Admin-User von der Zählung ausschließen
-        // Prüfe ob "admin"-User existiert und subtrahiere 1
-        $adminUser = $this->userManager->get('admin');
-        if ($adminUser !== null) {
-            return $totalUsers - 1;
-        }
-
-        return $totalUsers;
+        return count($allUsers) - 1; // Admin-User von der Zählung ausschließen
     }
 }
