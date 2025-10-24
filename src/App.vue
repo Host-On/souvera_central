@@ -3,8 +3,6 @@
         <!-- Sidebar Navigation -->
         <AppSidebar
             :current-route="currentRoute"
-            :user-count="userCount"
-            :license-total="licenseTotal"
             @navigate="handleNavigation"
         />
 
@@ -13,10 +11,11 @@
             <!-- Dashboard -->
             <Dashboard
                 v-if="currentRoute === 'dashboard'"
-                :user-count="userCount"
+                :total-users="totalUsers"
+                :used-licenses="usedLicenses"
                 :active-user-count="activeUserCount"
                 :group-count="groupCount"
-                :license-total="licenseTotal"
+                :max-licenses="maxLicenses"
                 :allowed-domains="allowedDomains"
                 @navigate="handleNavigation"
             />
@@ -26,8 +25,8 @@
                 v-else-if="currentRoute === 'users'"
                 :key="routeKey"
                 :allowed-domains="allowedDomains"
-                :license-total="licenseTotal"
-                @users-loaded="updateUserCount"
+                :max-licenses="maxLicenses"
+                @users-loaded="updateUserStats"
             />
 
             <!-- Group Management -->
@@ -36,7 +35,7 @@
             <!-- Settings -->
             <Settings
                 v-else-if="currentRoute === 'settings'"
-                :license-total="licenseTotal"
+                :max-licenses="maxLicenses"
                 :allowed-domains="allowedDomains"
             />
         </div>
@@ -69,10 +68,11 @@ export default {
         return {
             currentRoute: 'dashboard',
             currentPath: '', // Vollständiger Pfad für routeKey
-            userCount: 0,
+            totalUsers: 0,
+            usedLicenses: 0,
             activeUserCount: 0,
             groupCount: 0,
-            licenseTotal: 10,
+            maxLicenses: 10,
             allowedDomains: []
         }
     },
@@ -155,8 +155,9 @@ export default {
             this.updateCurrentPath()
         },
 
-        updateUserCount(count) {
-            this.userCount = count
+        updateUserStats(stats) {
+            this.totalUsers = stats.total
+            this.usedLicenses = stats.used
         },
 
         updateGroupCount(count) {
@@ -169,7 +170,9 @@ export default {
                 const response = await axios.get(url)
                 const config = response.data.ocs?.data || response.data.data || response.data
 
-                this.licenseTotal = config.max_licenses || 10
+                this.totalUsers = config.total_users || 0
+                this.usedLicenses = config.used_licenses || 0
+                this.maxLicenses = config.max_licenses || 10
                 this.allowedDomains = config.allowed_domains || []
             } catch (error) {
                 // Error handling
@@ -190,8 +193,9 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 const users = data.users || []
 
-                // Nutze 'total' aus der API Response (korrekte Gesamtzahl)
-                this.userCount = data.total || users.length
+                // Nutze 'total' aus der API Response (tatsächliche Benutzeranzahl)
+                this.totalUsers = data.total || users.length
+                this.usedLicenses = Math.max(0, this.totalUsers - 1)
                 this.activeUserCount = users.filter((user) => user.enabled).length
 
                 // Lade Gruppen-Anzahl

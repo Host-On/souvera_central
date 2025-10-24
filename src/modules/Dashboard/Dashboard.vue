@@ -16,7 +16,7 @@
                             t(
                                 'souvera_central',
                                 'Sie haben {count} von {total} Lizenzen genutzt. Es können keine weiteren Benutzer erstellt werden.',
-                                { count: userCount, total: licenseTotal }
+                                { count: usedLicenses, total: maxLicenses }
                             )
                         }}
                     </p>
@@ -39,7 +39,7 @@
                             t(
                                 'souvera_central',
                                 'Sie haben {count} von {total} Lizenzen genutzt ({percentage}%). Erweitern Sie rechtzeitig Ihre Lizenzen.',
-                                { count: userCount, total: licenseTotal, percentage: licensePercentage }
+                                { count: usedLicenses, total: maxLicenses, percentage: licensePercentage }
                             )
                         }}
                     </p>
@@ -57,7 +57,7 @@
             <div class="stat-card">
                 <div class="stat-icon icon-user"></div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ userCount }}</div>
+                    <div class="stat-value">{{ totalUsers }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Benutzer') }}</div>
                 </div>
             </div>
@@ -78,7 +78,7 @@
             >
                 <div class="stat-icon icon-quota"></div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ userCount }} / {{ licenseTotal }}</div>
+                    <div class="stat-value">{{ usedLicenses }} / {{ maxLicenses }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Lizenzen genutzt') }}</div>
                     <div v-if="isLicenseLimitReached" class="stat-critical-text">
                         {{ t('souvera_central', 'Limit erreicht!') }}
@@ -138,8 +138,8 @@
                     <span class="info-value">{{ allowedDomains.length }} {{ t('souvera_central', 'Domain(s)') }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">{{ t('souvera_central', 'Lizenz-Limit') }}:</span>
-                    <span class="info-value">{{ licenseTotal }} {{ t('souvera_central', 'Lizenzen') }}</span>
+                    <span class="info-label">{{ t('souvera_central', 'Verfügbare Lizenzen') }}:</span>
+                    <span class="info-value">{{ maxLicenses }} {{ t('souvera_central', 'Lizenzen') }}</span>
                 </div>
             </div>
         </div>
@@ -155,7 +155,11 @@ export default {
     name: 'Dashboard',
 
     props: {
-        userCount: {
+        totalUsers: {
+            type: Number,
+            default: 0
+        },
+        usedLicenses: {
             type: Number,
             default: 0
         },
@@ -167,7 +171,7 @@ export default {
             type: Number,
             default: 0
         },
-        licenseTotal: {
+        maxLicenses: {
             type: Number,
             default: 10
         },
@@ -189,16 +193,16 @@ export default {
 
     computed: {
         licensePercentage() {
-            if (this.licenseTotal === 0) return 0
-            return Math.round((this.userCount / this.licenseTotal) * 100)
+            if (this.maxLicenses === 0) return 0
+            return Math.round((this.usedLicenses / this.maxLicenses) * 100)
         },
 
         isLicenseLimitReached() {
-            return this.userCount >= this.licenseTotal
+            return this.usedLicenses >= this.maxLicenses
         },
 
         isLicenseWarning() {
-            return !this.isLicenseLimitReached && this.userCount / this.licenseTotal >= 0.8
+            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= 0.8
         },
 
         contactUrl() {

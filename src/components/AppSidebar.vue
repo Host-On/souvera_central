@@ -31,14 +31,6 @@ export default {
         currentRoute: {
             type: String,
             required: true
-        },
-        userCount: {
-            type: Number,
-            default: 0
-        },
-        licenseTotal: {
-            type: Number,
-            default: 10
         }
     },
 

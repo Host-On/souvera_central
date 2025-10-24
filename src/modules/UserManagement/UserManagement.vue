@@ -20,7 +20,7 @@
                         :class="{ 'license-warning': isLicenseWarning, 'license-critical': isLicenseLimitReached }"
                     >
                         <span class="icon-quota"></span>
-                        <span class="license-info">{{ totalUsers }} von {{ licenseTotal }} Lizenzen genutzt</span>
+                        <span class="license-info">{{ usedLicenses }} von {{ maxLicenses }} Lizenzen genutzt</span>
                     </div>
                 </div>
                 <button
@@ -45,7 +45,7 @@
                                 t(
                                     'souvera_central',
                                     'Sie haben {count} von {total} Lizenzen genutzt. Es können keine weiteren Benutzer erstellt werden.',
-                                    { count: totalUsers, total: licenseTotal }
+                                    { count: usedLicenses, total: maxLicenses }
                                 )
                             }}
                         </p>
@@ -68,7 +68,7 @@
                                 t(
                                     'souvera_central',
                                     'Sie haben {count} von {total} Lizenzen genutzt ({percentage}%). Erweitern Sie rechtzeitig Ihre Lizenzen.',
-                                    { count: totalUsers, total: licenseTotal, percentage: licensePercentage }
+                                    { count: usedLicenses, total: maxLicenses, percentage: licensePercentage }
                                 )
                             }}
                         </p>
@@ -207,7 +207,7 @@ export default {
             type: Array,
             default: () => []
         },
-        licenseTotal: {
+        maxLicenses: {
             type: Number,
             default: 10
         }
@@ -217,6 +217,7 @@ export default {
         return {
             users: [],
             totalUsers: 0,
+            usedLicenses: 0,
             loading: true,
             selectedUser: null,
             showEditor: false,
@@ -244,16 +245,16 @@ export default {
 
     computed: {
         isLicenseLimitReached() {
-            return this.totalUsers >= this.licenseTotal
+            return this.usedLicenses >= this.maxLicenses
         },
 
         licensePercentage() {
-            if (this.licenseTotal === 0) return 0
-            return Math.round((this.totalUsers / this.licenseTotal) * 100)
+            if (this.maxLicenses === 0) return 0
+            return Math.round((this.usedLicenses / this.maxLicenses) * 100)
         },
 
         isLicenseWarning() {
-            return !this.isLicenseLimitReached && this.totalUsers / this.licenseTotal >= 0.8
+            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= 0.8
         },
 
         contactUrl() {
@@ -400,6 +401,7 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 const users = data.users || []
                 this.totalUsers = data.total || 0
+                this.usedLicenses = Math.max(0, this.totalUsers - 1)
 
                 // Fix groups: Convert object to array
                 this.users = users.map((user) => ({
@@ -407,8 +409,11 @@ export default {
                     groups: Array.isArray(user.groups) ? user.groups : Object.values(user.groups || {})
                 }))
 
-                // Emit total user count to parent (für Dashboard)
-                this.$emit('users-loaded', this.totalUsers)
+                // Emit user stats to parent (für Dashboard)
+                this.$emit('users-loaded', {
+                    total: this.totalUsers,
+                    used: this.usedLicenses
+                })
             } catch (error) {
                 // Error handling
             } finally {

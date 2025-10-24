@@ -93,8 +93,8 @@ class UserApiController extends OCSController {
                 $allUsersData[] = $userData;
             }
 
-            // Total count OHNE Admin-User (konsistent mit getUserCountForLicensing)
-            $totalCount = $this->getUserCountForLicensing();
+            // Total count ALLER Benutzer (tatsächliche Anzahl)
+            $totalCount = $this->getTotalUserCount();
 
             // Pagination anwenden
             $paginatedUsers = array_slice($allUsersData, $offset, $limit);
@@ -224,12 +224,14 @@ class UserApiController extends OCSController {
                 );
             }
 
-            // Lizenz-Limit prüfen (ohne Admin-User)
+            // Lizenz-Limit prüfen
+            // Geschäftslogik: max_licenses + 1 Gratis-Lizenz = Maximale Benutzeranzahl
             $maxLicenses = $this->configService->getMaxLicenses();
-            $currentUserCount = $this->getUserCountForLicensing();
+            $currentUserCount = $this->getTotalUserCount();
+            $maxAllowedUsers = $maxLicenses + 1;
 
-            if ($currentUserCount >= $maxLicenses) {
-                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ' (ohne Admin), Max: ' . $maxLicenses);
+            if ($currentUserCount >= $maxAllowedUsers) {
+                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ', Max allowed: ' . $maxAllowedUsers . ' (' . $maxLicenses . ' + 1 Gratis)');
                 return new DataResponse(
                     ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'],
                     Http::STATUS_CONFLICT
@@ -691,9 +693,10 @@ class UserApiController extends OCSController {
     public function getConfig(): DataResponse {
         try {
             return new DataResponse([
+                'total_users' => $this->getTotalUserCount(),
+                'used_licenses' => $this->getUsedLicenseCount(),
                 'max_licenses' => $this->configService->getMaxLicenses(),
                 'allowed_domains' => $this->configService->getAllowedDomains(),
-                'current_user_count' => $this->getUserCountForLicensing(), // Ohne Admin-User
             ]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -789,24 +792,24 @@ class UserApiController extends OCSController {
     }
 
     /**
-     * Benutzeranzahl ermitteln (ohne Admin-Benutzer)
+     * Tatsächliche Benutzeranzahl ermitteln (alle Benutzer inkl. Admin)
      *
-     * Diese Methode zählt alle Benutzer MINUS den Admin-User,
-     * da der Admin-User nicht zur Lizenzberechnung gehört.
-     *
-     * @return int Anzahl der Benutzer ohne Admin
+     * @return int Anzahl aller Benutzer
      */
-    private function getUserCountForLicensing(): int {
+    private function getTotalUserCount(): int {
         $allUsers = $this->userManager->search('');
-        $totalUsers = count($allUsers);
+        return count($allUsers);
+    }
 
-        // Admin-User von der Zählung ausschließen
-        // Prüfe ob "admin"-User existiert und subtrahiere 1
-        $adminUser = $this->userManager->get('admin');
-        if ($adminUser !== null) {
-            return $totalUsers - 1;
-        }
-
-        return $totalUsers;
+    /**
+     * Genutzte Lizenzen ermitteln
+     *
+     * Geschäftslogik: 1 Lizenz ist immer kostenlos inkludiert (für Admin).
+     * Genutzte Lizenzen = Gesamtanzahl Benutzer - 1
+     *
+     * @return int Anzahl der genutzten Lizenzen
+     */
+    private function getUsedLicenseCount(): int {
+        return max(0, $this->getTotalUserCount() - 1);
     }
 }
