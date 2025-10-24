@@ -55,8 +55,7 @@
                             <tr
                                 v-for="group in groups"
                                 :key="group.id"
-                                class="group-row"
-                                @click="selectGroup(group)">
+                                class="group-row">
                                 <td class="group-column">
                                     <div class="group-info">
                                         <span class="icon-group"></span>
@@ -81,7 +80,7 @@
                                     <div class="group-actions">
                                         <button
                                             :title="t('souvera_central', 'Bearbeiten')"
-                                            @click.stop="editGroup(group)"
+                                            @click="editGroup(group)"
                                         >
                                             <span class="icon-rename"></span>
                                         </button>
@@ -92,7 +91,7 @@
                                                     : t('souvera_central', 'Löschen')
                                             "
                                             :disabled="group.isProtected"
-                                            @click.stop="deleteGroup(group)"
+                                            @click="deleteGroup(group)"
                                         >
                                             <span class="icon-delete"></span>
                                         </button>
@@ -340,15 +339,6 @@ export default {
             this.perPage = perPage
             this.currentPage = 1 // Zurück zur ersten Seite
             this.loadGroups()
-        },
-
-        selectGroup(group) {
-            // Navigate to /groups/edit/:id
-            const url = generateUrl('/apps/souvera_central/groups/edit/{id}', { id: group.id })
-            window.history.pushState({}, '', url)
-
-            this.selectedGroup = group
-            this.showEditor = true
         },
 
         createNewGroup() {
@@ -609,7 +599,6 @@ export default {
 .groups-table tbody tr {
     border-bottom: 0;
     transition: background-color 0.2s;
-    cursor: pointer;
     color: #000;
 }
 

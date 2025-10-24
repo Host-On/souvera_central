@@ -96,9 +96,9 @@
                     </p>
                 </div>
 
-                <!-- Passwort (nur bei neuem User) -->
-                <div v-if="!isEditMode" class="form-group">
-                    <label for="password" class="required">
+                <!-- Passwort -->
+                <div class="form-group">
+                    <label for="password" :class="{ required: !isEditMode }">
                         {{ t('souvera_central', 'Passwort') }}
                     </label>
                     <input
@@ -106,11 +106,17 @@
                         v-model="formData.password"
                         type="password"
                         :class="{ error: errors.password }"
-                        required
+                        :required="!isEditMode"
                         @input="validatePassword"
                     />
                     <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
-                    <p v-else class="help-text">{{ t('souvera_central', 'Mindestens 10 Zeichen') }}</p>
+                    <p v-else class="help-text">
+                        {{
+                            isEditMode
+                                ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
+                                : t('souvera_central', 'Mindestens 10 Zeichen')
+                        }}
+                    </p>
                 </div>
 
                 <!-- Speicherplatz Quota -->
@@ -574,14 +580,21 @@ export default {
                     // E-Mail wird NICHT aktualisiert im Edit-Modus
                     const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: this.user.id })
 
-                    await axios.put(url, {
+                    const payload = {
                         displayName: this.formData.displayName,
                         // email: wird bewusst NICHT mitgeschickt
                         groups: this.formData.groups,
                         quota: this.formData.quota,
                         enabled: this.formData.enabled,
                         manager: this.formData.manager
-                    })
+                    }
+
+                    // Passwort nur mitschicken wenn es gesetzt ist (nicht leer)
+                    if (this.formData.password && this.formData.password.trim() !== '') {
+                        payload.password = this.formData.password
+                    }
+
+                    await axios.put(url, payload)
                 } else {
                     // Create new user
                     // Username wird vom Backend automatisch aus Email generiert

@@ -338,7 +338,7 @@ class UserApiController extends OCSController {
     /**
      * Benutzer aktualisieren
      */
-    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null): DataResponse {
+    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null, ?string $password = null): DataResponse {
         try {
             $user = $this->userManager->get($id);
 
@@ -416,6 +416,21 @@ class UserApiController extends OCSController {
                 } else {
                     $this->config->setUserValue($id, 'souvera_central', 'manager', $manager);
                 }
+            }
+
+            // Passwort aktualisieren (optional)
+            if ($password !== null && !empty($password)) {
+                // Passwort-Validierung: Mindestens 10 Zeichen
+                if (strlen($password) < 10) {
+                    return new DataResponse(
+                        ['error' => 'Passwort muss mindestens 10 Zeichen lang sein'],
+                        Http::STATUS_BAD_REQUEST
+                    );
+                }
+
+                // Passwort setzen
+                $user->setPassword($password);
+                error_log('Passwort für Benutzer ' . $id . ' wurde erfolgreich aktualisiert');
             }
 
             return new DataResponse([
