@@ -453,6 +453,21 @@ export default {
     methods: {
         t,
 
+        /**
+         * Prüft OCS-Response auf Fehler und wirft Error falls vorhanden
+         * OCSController gibt oft HTTP 200 OK mit Fehler in ocs.meta zurück
+         */
+        checkOCSError(response) {
+            const statusCode = response.data?.ocs?.meta?.statuscode
+            // Message zuerst in data.error suchen (dort ist sie meist), dann in meta.message
+            const message = response.data?.ocs?.data?.error ||
+                           response.data?.ocs?.meta?.message
+
+            if (statusCode && statusCode >= 400) {
+                throw new Error(message || 'Fehler bei der Anfrage')
+            }
+        },
+
         async loadCurrentUser() {
             try {
                 const url = generateUrl('/apps/souvera_central/api/users/current')
@@ -594,7 +609,8 @@ export default {
                         payload.password = this.formData.password
                     }
 
-                    await axios.put(url, payload)
+                    const updateResponse = await axios.put(url, payload)
+                    this.checkOCSError(updateResponse)
                 } else {
                     // Create new user
                     // Username wird vom Backend automatisch aus Email generiert
@@ -610,7 +626,8 @@ export default {
                         manager: this.formData.manager
                     }
 
-                    await axios.post(url, payload)
+                    const createResponse = await axios.post(url, payload)
+                    this.checkOCSError(createResponse)
 
                     // Auto-Email senden wenn aktiviert
                     if (this.settings.email.send_to_new_users) {
@@ -635,7 +652,10 @@ export default {
 
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
 
-                if (error.response?.data?.ocs?.data?.error) {
+                // Prüfe Error.message (von checkOCSError() oder anderen Error-Quellen)
+                if (error.message && !error.message.includes('Network Error')) {
+                    errorMessage = error.message
+                } else if (error.response?.data?.ocs?.data?.error) {
                     errorMessage = error.response.data.ocs.data.error
                 } else if (error.response?.data?.error) {
                     errorMessage = error.response.data.error
@@ -668,8 +688,13 @@ export default {
                         }
                     }
                 } else {
-                    // Zeige generischen Fehler als Alert
-                    alert(errorMessage)
+                    // Zeige generischen Fehler als Toast-Notification
+                    if (window.OC?.Notification) {
+                        window.OC.Notification.showTemporary(errorMessage, { timeout: 7 })
+                    } else {
+                        // Fallback wenn OC.Notification nicht verfügbar
+                        alert(errorMessage)
+                    }
                 }
             } finally {
                 this.saving = false

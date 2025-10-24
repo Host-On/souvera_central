@@ -160,6 +160,19 @@
                 </div>
             </form>
         </div>
+
+        <!-- Confirmation Modal -->
+        <ConfirmationModal
+            :is-open="confirmModal.isOpen"
+            :title="confirmModal.title"
+            :message="confirmModal.message"
+            :details="confirmModal.details"
+            :type="confirmModal.type"
+            :confirm-text="confirmModal.confirmText"
+            :cancel-text="confirmModal.cancelText"
+            @confirm="confirmModal.onConfirm"
+            @close="closeConfirmModal"
+        />
     </div>
 </template>
 
@@ -167,9 +180,14 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import ConfirmationModal from '../../../components/ConfirmationModal.vue'
 
 export default {
     name: 'GroupEditor',
+
+    components: {
+        ConfirmationModal
+    },
 
     props: {
         group: {
@@ -195,7 +213,17 @@ export default {
             memberSearchQuery: '',
             loadingUsers: false,
             saving: false,
-            isProtected: false
+            isProtected: false,
+            confirmModal: {
+                isOpen: false,
+                title: '',
+                message: '',
+                details: '',
+                type: 'info',
+                confirmText: 'Bestätigen',
+                cancelText: 'Abbrechen',
+                onConfirm: () => {}
+            }
         }
     },
 
@@ -242,6 +270,21 @@ export default {
 
     methods: {
         t,
+
+        /**
+         * Prüft OCS-Response auf Fehler und wirft Error falls vorhanden
+         * OCSController gibt oft HTTP 200 OK mit Fehler in ocs.meta zurück
+         */
+        checkOCSError(response) {
+            const statusCode = response.data?.ocs?.meta?.statuscode
+            // Message zuerst in data.error suchen (dort ist sie meist), dann in meta.message
+            const message = response.data?.ocs?.data?.error ||
+                           response.data?.ocs?.meta?.message
+
+            if (statusCode && statusCode >= 400) {
+                throw new Error(message || 'Fehler bei der Anfrage')
+            }
+        },
 
         isAdminUserInAdminGroup(userId) {
             // Checkbox für "admin" User in "admin" Gruppe deaktivieren
@@ -339,9 +382,10 @@ export default {
                         id: this.formData.groupId
                     })
 
-                    await axios.put(url, {
+                    const updateResponse = await axios.put(url, {
                         displayName: this.formData.displayName
                     })
+                    this.checkOCSError(updateResponse)
 
                     // Update group members
                     await this.updateGroupMembers()
@@ -353,7 +397,8 @@ export default {
                         displayName: this.formData.displayName
                     }
 
-                    await axios.post(url, payload)
+                    const createResponse = await axios.post(url, payload)
+                    this.checkOCSError(createResponse)
                 }
 
                 this.$emit('saved')
@@ -365,7 +410,10 @@ export default {
 
                 let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
 
-                if (error.response?.data?.ocs?.data?.error) {
+                // Prüfe Error.message (von checkOCSError() oder anderen Error-Quellen)
+                if (error.message && !error.message.includes('Network Error')) {
+                    errorMessage = error.message
+                } else if (error.response?.data?.ocs?.data?.error) {
                     errorMessage = error.response.data.ocs.data.error
                 } else if (error.response?.data?.error) {
                     errorMessage = error.response.data.error
@@ -378,18 +426,39 @@ export default {
                     console.log('Setting errors.groupId to:', errorMessage)
                     this.errors.groupId = errorMessage
 
-                    // Zeige Fehler als Alert (da GroupEditor keine ConfirmationModal hat)
-                    alert(errorMessage + '\n\nBitte verwenden Sie eine andere Gruppen-ID.')
-
-                    // Scroll zum Fehler
-                    this.$nextTick(() => {
-                        const groupIdField = document.getElementById('groupId')
-                        groupIdField?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                        groupIdField?.focus()
-                    })
+                    // Zeige Fehler-Modal
+                    this.confirmModal = {
+                        isOpen: true,
+                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        message: errorMessage,
+                        details: this.t('souvera_central', 'Bitte verwenden Sie eine andere Gruppen-ID.'),
+                        type: 'danger',
+                        confirmText: this.t('souvera_central', 'OK'),
+                        cancelText: '',
+                        onConfirm: () => {
+                            this.closeConfirmModal()
+                            // Scroll zum Fehler
+                            this.$nextTick(() => {
+                                const groupIdField = document.getElementById('groupId')
+                                groupIdField?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                groupIdField?.focus()
+                            })
+                        }
+                    }
                 } else {
-                    // Zeige generischen Fehler als Alert
-                    alert(errorMessage)
+                    // Zeige generischen Fehler-Modal
+                    this.confirmModal = {
+                        isOpen: true,
+                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        message: errorMessage,
+                        details: '',
+                        type: 'danger',
+                        confirmText: this.t('souvera_central', 'OK'),
+                        cancelText: '',
+                        onConfirm: () => {
+                            this.closeConfirmModal()
+                        }
+                    }
                 }
             } finally {
                 this.saving = false
@@ -439,6 +508,10 @@ export default {
                     // Error removing user from group
                 }
             }
+        },
+
+        closeConfirmModal() {
+            this.confirmModal.isOpen = false
         }
     }
 }
