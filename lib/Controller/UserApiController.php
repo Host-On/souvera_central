@@ -186,24 +186,18 @@ class UserApiController extends OCSController {
      * Neuen Benutzer erstellen
      */
     public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = ''): DataResponse {
-        error_log('=== UserApiController::create() START ===');
-        error_log('Empfangene Parameter: username=' . $username . ', displayName=' . $displayName . ', email=' . $email . ', groups=' . json_encode($groups));
-
         try {
             // Debug: Alle POST-Daten loggen
             $postData = file_get_contents('php://input');
-            error_log('POST body: ' . $postData);
 
             // USERNAME/EMAIL-SYNC: Username automatisch aus Email setzen
             // Grund: Stalwart Mail-Server benötigt Username = Email für IMAP-Login
             if (!empty($email)) {
                 $username = $email;
-                error_log('Username/Email-Sync: Username automatisch auf Email gesetzt: ' . $username);
             }
 
             // Validierung
             if (empty($username) || empty($displayName) || empty($email) || empty($password)) {
-                error_log('FEHLER: Pflichtfelder fehlen - username empty: ' . (empty($username) ? 'YES' : 'NO'));
                 return new DataResponse(
                     ['error' => 'Pflichtfelder fehlen', 'debug' => [
                         'username_empty' => empty($username),
@@ -217,7 +211,6 @@ class UserApiController extends OCSController {
 
             // Validierung: Username muss Email entsprechen (doppelte Absicherung)
             if ($username !== $email) {
-                error_log('FEHLER: Username und Email müssen identisch sein');
                 return new DataResponse(
                     ['error' => 'Username und Email müssen identisch sein (erforderlich für Mail-Server Integration)'],
                     Http::STATUS_BAD_REQUEST
@@ -231,7 +224,6 @@ class UserApiController extends OCSController {
             $maxAllowedUsers = $maxLicenses + 1;
 
             if ($currentUserCount >= $maxAllowedUsers) {
-                error_log('FEHLER: Lizenzlimit erreicht - Current: ' . $currentUserCount . ', Max allowed: ' . $maxAllowedUsers . ' (' . $maxLicenses . ' + 1 Gratis)');
                 return new DataResponse(
                     ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'],
                     Http::STATUS_CONFLICT
@@ -241,7 +233,6 @@ class UserApiController extends OCSController {
             // E-Mail-Domain validieren
             if (!$this->configService->isEmailDomainAllowed($email)) {
                 $allowedDomains = $this->configService->getAllowedDomains();
-                error_log('FEHLER: E-Mail-Domain nicht erlaubt: ' . $email . ' - Erlaubte Domains: ' . implode(', ', $allowedDomains));
                 return new DataResponse(
                     ['error' => 'E-Mail-Domain nicht erlaubt. Erlaubte Domains: ' . implode(', ', $allowedDomains)],
                     Http::STATUS_BAD_REQUEST
@@ -249,9 +240,7 @@ class UserApiController extends OCSController {
             }
 
             // Prüfen ob User mit diesem Username bereits existiert
-            error_log('Prüfe ob User bereits existiert: ' . $username);
             if ($this->userManager->get($username) !== null) {
-                error_log('FEHLER: Benutzername bereits vergeben: ' . $username);
                 return new DataResponse(
                     ['error' => 'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.'],
                     Http::STATUS_CONFLICT
@@ -262,7 +251,6 @@ class UserApiController extends OCSController {
             $existingUsers = $this->userManager->search('');
             foreach ($existingUsers as $existingUser) {
                 if ($existingUser->getEMailAddress() === $email) {
-                    error_log('FEHLER: E-Mail bereits vergeben: ' . $email);
                     return new DataResponse(
                         ['error' => 'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.'],
                         Http::STATUS_CONFLICT
@@ -271,18 +259,14 @@ class UserApiController extends OCSController {
             }
 
             // User erstellen
-            error_log('Erstelle Benutzer mit UserManager: ' . $username);
             $user = $this->userManager->createUser($username, $password);
 
             if ($user === false || $user === null) {
-                error_log('FEHLER: UserManager::createUser() returned false/null');
                 return new DataResponse(
                     ['error' => 'Benutzer konnte nicht erstellt werden - UserManager failed'],
                     Http::STATUS_INTERNAL_SERVER_ERROR
                 );
             }
-
-            error_log('User erfolgreich erstellt, UID: ' . $user->getUID());
 
             // Anzeigename setzen
             $user->setDisplayName($displayName);
@@ -309,8 +293,6 @@ class UserApiController extends OCSController {
                 $this->config->setUserValue($username, 'souvera_central', 'manager', $manager);
             }
 
-            error_log('=== UserApiController::create() SUCCESS ===');
-
             return new DataResponse([
                 'success' => true,
                 'user' => [
@@ -324,10 +306,6 @@ class UserApiController extends OCSController {
             ], Http::STATUS_CREATED);
 
         } catch (\Exception $e) {
-            error_log('=== UserApiController::create() EXCEPTION ===');
-            error_log('Exception: ' . $e->getMessage());
-            error_log('Stack trace: ' . $e->getTraceAsString());
-
             return new DataResponse(
                 ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -430,7 +408,6 @@ class UserApiController extends OCSController {
 
                 // Passwort setzen
                 $user->setPassword($password);
-                error_log('Passwort für Benutzer ' . $id . ' wurde erfolgreich aktualisiert');
             }
 
             return new DataResponse([
@@ -725,8 +702,6 @@ class UserApiController extends OCSController {
      * Debug-Endpoint für Troubleshooting
      */
     public function debug(): DataResponse {
-        error_log('=== DEBUG ENDPOINT CALLED ===');
-
         $debugInfo = [
             'endpoint_reached' => true,
             'php_version' => phpversion(),
@@ -742,8 +717,6 @@ class UserApiController extends OCSController {
                 'allowed_domains' => $this->configService->getAllowedDomains(),
             ],
         ];
-
-        error_log('Debug info: ' . json_encode($debugInfo));
 
         return new DataResponse($debugInfo);
     }
