@@ -363,8 +363,8 @@ class UserApiController extends OCSController {
                 // Entferne User aus allen aktuellen Gruppen
                 $currentGroups = $this->groupManager->getUserGroups($user);
                 foreach ($currentGroups as $group) {
-                    // Verhindere Entfernung von "admin" User aus "admin" Gruppe
-                    if ($id === 'admin' && $group->getGID() === 'admin') {
+                    // Verhindere Entfernung von Admin-User aus "admin" Gruppe
+                    if ($this->configService->isAdminUser($id) && $group->getGID() === 'admin') {
                         continue;
                     }
                     $group->removeUser($user);
@@ -378,8 +378,8 @@ class UserApiController extends OCSController {
                     }
                 }
 
-                // Stelle sicher, dass "admin" User immer in "admin" Gruppe ist
-                if ($id === 'admin') {
+                // Stelle sicher, dass Admin-User immer in "admin" Gruppe ist
+                if ($this->configService->isAdminUser($id)) {
                     $adminGroup = $this->groupManager->get('admin');
                     if ($adminGroup !== null && !$adminGroup->inGroup($user)) {
                         $adminGroup->addUser($user);
@@ -435,10 +435,10 @@ class UserApiController extends OCSController {
      */
     public function delete(string $id): DataResponse {
         try {
-            // Prüfe ob versucht wird den Standard-Admin zu löschen
-            if ($id === 'admin') {
+            // Prüfe ob versucht wird den Admin-User zu löschen
+            if ($this->configService->isAdminUser($id)) {
                 return new DataResponse(
-                    ['error' => 'Der Standard-Administrator-Account kann nicht gelöscht werden.'],
+                    ['error' => 'Der Administrator-Account kann nicht gelöscht werden.'],
                     Http::STATUS_FORBIDDEN
                 );
             }
@@ -513,10 +513,10 @@ class UserApiController extends OCSController {
      */
     public function disable(string $id): DataResponse {
         try {
-            // Prüfe ob versucht wird den Standard-Admin zu deaktivieren
-            if ($id === 'admin') {
+            // Prüfe ob versucht wird den Admin-User zu deaktivieren
+            if ($this->configService->isAdminUser($id)) {
                 return new DataResponse(
-                    ['error' => 'Der Standard-Administrator-Account kann nicht deaktiviert werden.'],
+                    ['error' => 'Der Administrator-Account kann nicht deaktiviert werden.'],
                     Http::STATUS_FORBIDDEN
                 );
             }

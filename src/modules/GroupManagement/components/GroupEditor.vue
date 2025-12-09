@@ -287,8 +287,8 @@ export default {
         },
 
         isAdminUserInAdminGroup(userId) {
-            // Checkbox für "admin" User in "admin" Gruppe deaktivieren
-            return this.formData.groupId === 'admin' && userId === 'admin'
+            // Checkbox für Admin-User in "admin" Gruppe deaktivieren
+            return this.formData.groupId === 'admin' && (userId === 'admin' || userId.startsWith('admin@'))
         },
 
         validateGroupId() {
@@ -329,9 +329,16 @@ export default {
 
                 this.selectedMembers = members.map((m) => m.id)
 
-                // Stelle sicher, dass "admin" User immer in "admin" Gruppe selektiert ist
-                if (this.formData.groupId === 'admin' && !this.selectedMembers.includes('admin')) {
-                    this.selectedMembers.push('admin')
+                // Stelle sicher, dass Admin-User immer in "admin" Gruppe selektiert ist
+                if (this.formData.groupId === 'admin') {
+                    const adminUser = this.selectedMembers.find(id => id === 'admin' || id.startsWith('admin@'))
+                    if (!adminUser) {
+                        // Falls admin oder admin@... User in allen verfügbaren Usern existiert, hinzufügen
+                        const adminInAllUsers = this.allUsers.find(u => u.id === 'admin' || u.id.startsWith('admin@'))
+                        if (adminInAllUsers && !this.selectedMembers.includes(adminInAllUsers.id)) {
+                            this.selectedMembers.push(adminInAllUsers.id)
+                        }
+                    }
                 }
             } catch (error) {
                 // Error loading group members
@@ -479,9 +486,9 @@ export default {
             const membersToAdd = this.selectedMembers.filter((id) => !currentMembers.includes(id))
             let membersToRemove = currentMembers.filter((id) => !this.selectedMembers.includes(id))
 
-            // Verhindere Entfernung von "admin" User aus "admin" Gruppe
+            // Verhindere Entfernung von Admin-User aus "admin" Gruppe
             if (this.formData.groupId === 'admin') {
-                membersToRemove = membersToRemove.filter((id) => id !== 'admin')
+                membersToRemove = membersToRemove.filter((id) => id !== 'admin' && !id.startsWith('admin@'))
             }
 
             // Füge neue Mitglieder hinzu

@@ -198,7 +198,7 @@
                             <GroupSelector
                                 v-model="formData.adminGroups"
                                 :available-groups="availableGroups"
-                                :is-admin-user="user && user.id === 'admin'"
+                                :is-admin-user="user && (user.id === 'admin' || user.id.startsWith('admin@'))"
                                 mode="admin"
                             />
                         </div>
@@ -210,7 +210,7 @@
                     <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
                     <div class="danger-actions">
                         <button
-                            v-if="user.id !== 'admin'"
+                            v-if="user.id !== 'admin' && !user.id.startsWith('admin@')"
                             type="button"
                             :class="['action-button', formData.enabled ? 'warning' : 'success']"
                             :disabled="togglingStatus"

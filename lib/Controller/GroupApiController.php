@@ -14,11 +14,13 @@ use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
+use OCA\SouveraCentral\Service\ConfigService;
 
 class GroupApiController extends OCSController {
     private $userManager;
     private $groupManager;
     private $logger;
+    private $configService;
 
     /** @var array Geschützte Systemgruppen, die nicht gelöscht werden dürfen */
     private const PROTECTED_GROUPS = ['admin', 'users'];
@@ -28,12 +30,14 @@ class GroupApiController extends OCSController {
         IRequest $request,
         IUserManager $userManager,
         IGroupManager $groupManager,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ConfigService $configService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
         $this->groupManager = $groupManager;
         $this->logger = $logger;
+        $this->configService = $configService;
     }
 
     /**
@@ -395,10 +399,10 @@ class GroupApiController extends OCSController {
      */
     public function removeMember(string $id, string $userId): DataResponse {
         try {
-            // Verhindere Entfernung von "admin" User aus "admin" Gruppe
-            if ($id === 'admin' && $userId === 'admin') {
+            // Verhindere Entfernung von Admin-User aus "admin" Gruppe
+            if ($id === 'admin' && $this->configService->isAdminUser($userId)) {
                 return new DataResponse(
-                    ['error' => 'Der Standard-Administrator kann nicht aus der Admin-Gruppe entfernt werden.'],
+                    ['error' => 'Der Administrator kann nicht aus der Admin-Gruppe entfernt werden.'],
                     Http::STATUS_FORBIDDEN
                 );
             }

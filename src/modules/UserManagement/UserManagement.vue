@@ -135,7 +135,7 @@
                                             <span class="icon-rename"></span>
                                         </button>
                                         <button
-                                            v-if="user.id !== currentUserId && user.id !== 'admin'"
+                                            v-if="user.id !== currentUserId && user.id !== 'admin' && !user.id.startsWith('admin@')"
                                             :title="t('souvera_central', 'Löschen')"
                                             @click.stop="deleteUser(user)"
                                         >
@@ -496,12 +496,12 @@ export default {
         },
 
         deleteUser(user) {
-            // Verhindere Löschen des Standard-Admin-Accounts
-            if (user.id === 'admin') {
+            // Verhindere Löschen des Admin-Accounts
+            if (user.id === 'admin' || user.id.startsWith('admin@')) {
                 this.confirmModal = {
                     isOpen: true,
                     title: this.t('souvera_central', 'Aktion nicht möglich'),
-                    message: this.t('souvera_central', 'Der Standard-Administrator-Account kann nicht gelöscht werden.'),
+                    message: this.t('souvera_central', 'Der Administrator-Account kann nicht gelöscht werden.'),
                     type: 'warning',
                     confirmText: this.t('souvera_central', 'OK'),
                     onConfirm: () => {

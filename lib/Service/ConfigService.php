@@ -160,6 +160,24 @@ class ConfigService {
     }
 
     // ============================================================================
+    // Admin-User Erkennung
+    // ============================================================================
+
+    /**
+     * Prüft ob ein Benutzer der Admin-User ist
+     *
+     * In Souvera ist der Admin-User immer admin@<mail-domain>.
+     * Für Kompatibilität mit Dev-Umgebungen wird auch "admin" akzeptiert.
+     *
+     * @param string $userId - Die Benutzer-ID (z.B. "admin@company.com" oder "admin")
+     * @return bool
+     */
+    public function isAdminUser(string $userId): bool {
+        $lowerUserId = strtolower($userId);
+        return $lowerUserId === 'admin' || str_starts_with($lowerUserId, 'admin@');
+    }
+
+    // ============================================================================
     // App-Einstellungen (App Config - in Nextcloud DB gespeichert)
     // ============================================================================
 
