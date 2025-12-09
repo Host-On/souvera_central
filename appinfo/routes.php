@@ -16,6 +16,7 @@ return [
         ['name' => 'page#users_new', 'url' => '/users/new', 'verb' => 'GET'],
         ['name' => 'page#users_edit', 'url' => '/users/edit/{id}', 'verb' => 'GET'],
         ['name' => 'page#groups', 'url' => '/groups', 'verb' => 'GET'],
+        ['name' => 'page#sharedMailboxes', 'url' => '/shared-mailboxes', 'verb' => 'GET'],
         ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
 
         // User API-Routen
@@ -63,5 +64,15 @@ return [
         ['name' => 'alias_api#add', 'url' => '/api/users/{userId}/aliases', 'verb' => 'POST'],
         ['name' => 'alias_api#remove', 'url' => '/api/users/{userId}/aliases/{alias}', 'verb' => 'DELETE'],
         ['name' => 'alias_api#checkAvailability', 'url' => '/api/aliases/check', 'verb' => 'GET'],
+
+        // Shared Mailbox API-Routen
+        ['name' => 'shared_mailbox_api#list', 'url' => '/api/shared-mailboxes', 'verb' => 'GET'],
+        ['name' => 'shared_mailbox_api#create', 'url' => '/api/shared-mailboxes', 'verb' => 'POST'],
+        ['name' => 'shared_mailbox_api#get', 'url' => '/api/shared-mailboxes/{id}', 'verb' => 'GET'],
+        ['name' => 'shared_mailbox_api#update', 'url' => '/api/shared-mailboxes/{id}', 'verb' => 'PUT'],
+        ['name' => 'shared_mailbox_api#delete', 'url' => '/api/shared-mailboxes/{id}', 'verb' => 'DELETE'],
+        ['name' => 'shared_mailbox_api#getMembers', 'url' => '/api/shared-mailboxes/{id}/members', 'verb' => 'GET'],
+        ['name' => 'shared_mailbox_api#addMember', 'url' => '/api/shared-mailboxes/{id}/members', 'verb' => 'POST'],
+        ['name' => 'shared_mailbox_api#removeMember', 'url' => '/api/shared-mailboxes/{id}/members/{userId}', 'verb' => 'DELETE'],
     ]
 ];

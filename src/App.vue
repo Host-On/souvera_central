@@ -32,6 +32,9 @@
             <!-- Group Management -->
             <GroupManagement v-else-if="currentRoute === 'groups'" :key="routeKey" @groups-loaded="updateGroupCount" />
 
+            <!-- Shared Mailboxes -->
+            <SharedMailboxesView v-else-if="currentRoute === 'shared-mailboxes'" :key="routeKey" />
+
             <!-- Settings -->
             <Settings
                 v-else-if="currentRoute === 'settings'"
@@ -51,6 +54,7 @@ import AppSidebar from './components/AppSidebar.vue'
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
 import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
+import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.vue'
 import Settings from './modules/Settings/Settings.vue'
 
 export default {
@@ -61,6 +65,7 @@ export default {
         Dashboard,
         UserManagement,
         GroupManagement,
+        SharedMailboxesView,
         Settings
     },
 
@@ -130,7 +135,7 @@ export default {
         handlePopState() {
             // Extract route from URL path
             const path = window.location.pathname
-            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|settings)/)
+            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings)/)
 
             if (match && match[1]) {
                 this.currentRoute = match[1]

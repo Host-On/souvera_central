@@ -81,13 +81,15 @@ class AliasApiController extends OCSController {
             // Aliase abrufen
             $aliases = $this->stalwartService->getAliases($userId);
             $allEmails = $this->stalwartService->getEmails($userId);
+            $maxAliases = $this->configService->getMaxAliasesPerUser();
 
             return new DataResponse([
                 'userId' => $userId,
                 'primaryEmail' => $userId,
                 'aliases' => $aliases,
                 'allEmails' => $allEmails,
-                'total' => count($aliases)
+                'total' => count($aliases),
+                'maxAliases' => $maxAliases
             ]);
 
         } catch (\Exception $e) {
@@ -150,6 +152,16 @@ class AliasApiController extends OCSController {
                 return new DataResponse(
                     ['error' => 'Stalwart Mail-Server nicht erreichbar'],
                     Http::STATUS_SERVICE_UNAVAILABLE
+                );
+            }
+
+            // Alias-Limit prüfen
+            $currentAliases = $this->stalwartService->getAliases($userId);
+            $maxAliases = $this->configService->getMaxAliasesPerUser();
+            if (count($currentAliases) >= $maxAliases) {
+                return new DataResponse(
+                    ['error' => 'Maximale Anzahl an Aliasen erreicht (' . $maxAliases . ')'],
+                    Http::STATUS_BAD_REQUEST
                 );
             }
 

@@ -150,6 +150,15 @@ class ConfigService {
         ];
     }
 
+    /**
+     * Maximale Anzahl an Email-Aliasen pro Benutzer
+     *
+     * @return int
+     */
+    public function getMaxAliasesPerUser(): int {
+        return (int) $this->config->getSystemValue('souvera_central.max_aliases_per_user', 10);
+    }
+
     // ============================================================================
     // App-Einstellungen (App Config - in Nextcloud DB gespeichert)
     // ============================================================================

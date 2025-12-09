@@ -3,7 +3,9 @@
         <!-- Header -->
         <div class="alias-header">
             <h4>{{ t('souvera_central', 'Email-Aliase') }}</h4>
-            <span class="alias-count">{{ aliases.length }} {{ t('souvera_central', 'Alias(e)') }}</span>
+            <span class="alias-count" :class="{ 'limit-reached': isLimitReached }">
+                {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Alias(e)') }}
+            </span>
         </div>
 
         <!-- Stalwart Status Warning -->
@@ -122,6 +124,7 @@ export default {
             loading: true,
             stalwartAvailable: false,
             aliases: [],
+            maxAliases: 10,
             newAliasLocalPart: '',
             newAliasDomain: '',
             addingAlias: false,
@@ -133,7 +136,11 @@ export default {
 
     computed: {
         canAddAlias() {
-            return this.newAliasLocalPart.trim().length > 0 && this.newAliasDomain
+            return this.newAliasLocalPart.trim().length > 0 && this.newAliasDomain && !this.isLimitReached
+        },
+
+        isLimitReached() {
+            return this.aliases.length >= this.maxAliases
         },
 
         newAliasEmail() {
@@ -186,6 +193,7 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
 
                 this.aliases = data.aliases || []
+                this.maxAliases = data.maxAliases || 10
 
             } catch (error) {
                 console.error('AliasManager: Fehler beim Laden', error)
@@ -346,6 +354,12 @@ export default {
     background: rgba(0, 0, 0, 0.08);
     padding: 4px 10px;
     border-radius: 12px;
+}
+
+.alias-count.limit-reached {
+    background: rgba(227, 56, 80, 0.15);
+    color: var(--color-error);
+    font-weight: 600;
 }
 
 .stalwart-warning {

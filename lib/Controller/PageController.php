@@ -75,6 +75,15 @@ class PageController extends Controller {
     }
 
     /**
+     * Rendert die Shared Mailboxes Verwaltung
+     *
+     * @NoCSRFRequired
+     */
+    public function sharedMailboxes(): TemplateResponse {
+        return $this->renderPage('shared-mailboxes');
+    }
+
+    /**
      * Rendert die Einstellungen
      *
      * @NoCSRFRequired

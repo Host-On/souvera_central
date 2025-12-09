@@ -56,6 +56,12 @@ export default {
                     url: generateUrl('/apps/souvera_central/groups')
                 },
                 {
+                    id: 'shared-mailboxes',
+                    label: this.t('souvera_central', 'Geteilte Postfächer'),
+                    icon: 'icon-shared',
+                    url: generateUrl('/apps/souvera_central/shared-mailboxes')
+                },
+                {
                     id: 'settings',
                     label: this.t('souvera_central', 'Einstellungen'),
                     icon: 'icon-settings',
