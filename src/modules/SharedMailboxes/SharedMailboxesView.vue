@@ -4,9 +4,9 @@
         <div class="view-header">
             <div class="header-left">
                 <h2>{{ t('souvera_central', 'Geteilte Postfächer') }}</h2>
-                <span class="mailbox-count">{{ mailboxes.length }} {{ t('souvera_central', 'Postfach/Postfächer') }}</span>
+                <span class="mailbox-count">{{ mailboxes.length }} {{ mailboxes.length === 1 ? t('souvera_central', 'Postfach') : t('souvera_central', 'Postfächer') }}</span>
             </div>
-            <button class="primary-button" @click="showCreateModal = true">
+            <button class="primary" @click="showCreateModal = true">
                 <span class="icon-add"></span>
                 {{ t('souvera_central', 'Neues Postfach') }}
             </button>
@@ -31,7 +31,7 @@
             </div>
             <h3>{{ t('souvera_central', 'Keine geteilten Postfächer') }}</h3>
             <p>{{ t('souvera_central', 'Erstellen Sie ein geteiltes Postfach für Ihr Team.') }}</p>
-            <button class="primary-button" @click="showCreateModal = true">
+            <button class="primary" @click="showCreateModal = true">
                 <span class="icon-add"></span>
                 {{ t('souvera_central', 'Erstes Postfach erstellen') }}
             </button>
@@ -255,8 +255,8 @@ export default {
 
 <style scoped>
 .shared-mailboxes-view {
-    padding: 20px 30px;
-    max-width: 1200px;
+    padding: 30px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -264,54 +264,31 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding-bottom: 20px;
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 .view-header h2 {
     margin: 0;
-    font-size: 24px;
-    font-weight: 700;
-    color: #000;
+    font-size: 28px;
+    font-weight: 600;
 }
 
 .mailbox-count {
-    font-size: 14px;
-    color: #666;
-    background: rgba(0, 0, 0, 0.08);
-    padding: 5px 12px;
-    border-radius: 15px;
-}
-
-.primary-button {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 20px;
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 6px;
     font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.primary-button:hover {
-    background: var(--color-primary-element-light);
-    transform: translateY(-1px);
-}
-
-.primary-button [class^='icon-'] {
-    filter: invert(1) brightness(100);
+    font-weight: 500;
 }
 
 .stalwart-warning {
@@ -428,8 +405,27 @@ export default {
         gap: 15px;
     }
 
+    .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .view-header h2 {
+        font-size: 24px;
+    }
+
+    .mailbox-count {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
     .mailbox-list {
         grid-template-columns: 1fr;
+    }
+
+    .view-header button.primary {
+        width: 100%;
     }
 }
 </style>
