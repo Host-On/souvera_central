@@ -56,5 +56,12 @@ return [
 
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],
+
+        // Stalwart / Alias API-Routen
+        ['name' => 'alias_api#getStatus', 'url' => '/api/stalwart/status', 'verb' => 'GET'],
+        ['name' => 'alias_api#list', 'url' => '/api/users/{userId}/aliases', 'verb' => 'GET'],
+        ['name' => 'alias_api#add', 'url' => '/api/users/{userId}/aliases', 'verb' => 'POST'],
+        ['name' => 'alias_api#remove', 'url' => '/api/users/{userId}/aliases/{alias}', 'verb' => 'DELETE'],
+        ['name' => 'alias_api#checkAvailability', 'url' => '/api/aliases/check', 'verb' => 'GET'],
     ]
 ];

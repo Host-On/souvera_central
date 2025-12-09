@@ -94,6 +94,63 @@ class ConfigService {
     }
 
     // ============================================================================
+    // Stalwart Mail-Server Konfiguration (System Config - Read-Only)
+    // ============================================================================
+
+    /**
+     * Stalwart API URL
+     * Lokal: http://stalwart:443 (Docker-intern)
+     * Produktion: Kubernetes-interne URL
+     *
+     * @return string|null
+     */
+    public function getStalwartApiUrl(): ?string {
+        return $this->config->getSystemValue('souvera_central.stalwart_api_url', null);
+    }
+
+    /**
+     * Stalwart Admin Benutzername
+     *
+     * @return string|null
+     */
+    public function getStalwartAdminUser(): ?string {
+        return $this->config->getSystemValue('souvera_central.stalwart_admin_user', null);
+    }
+
+    /**
+     * Stalwart Admin Passwort
+     *
+     * @return string|null
+     */
+    public function getStalwartAdminPassword(): ?string {
+        return $this->config->getSystemValue('souvera_central.stalwart_admin_password', null);
+    }
+
+    /**
+     * Prüft ob Stalwart-Integration konfiguriert ist
+     *
+     * @return bool
+     */
+    public function isStalwartConfigured(): bool {
+        return !empty($this->getStalwartApiUrl())
+            && !empty($this->getStalwartAdminUser())
+            && !empty($this->getStalwartAdminPassword());
+    }
+
+    /**
+     * Gibt alle Stalwart-Konfigurationswerte zurück (für Service-Initialisierung)
+     *
+     * @return array{url: string|null, user: string|null, password: string|null}
+     */
+    public function getStalwartConfig(): array {
+        return [
+            'url' => $this->getStalwartApiUrl(),
+            'user' => $this->getStalwartAdminUser(),
+            'password' => $this->getStalwartAdminPassword(),
+        ];
+    }
+
+    // ============================================================================
     // App-Einstellungen (App Config - in Nextcloud DB gespeichert)
     // ============================================================================
 

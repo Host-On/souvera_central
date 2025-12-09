@@ -96,6 +96,14 @@
                     </p>
                 </div>
 
+                <!-- Email-Aliase (nur im Edit-Mode) -->
+                <AliasManager
+                    v-if="isEditMode"
+                    :user-id="user.id"
+                    :primary-email="user.email"
+                    :allowed-domains="allowedDomains"
+                />
+
                 <!-- Passwort -->
                 <div class="form-group">
                     <label for="password" :class="{ required: !isEditMode }">
@@ -311,6 +319,7 @@ import { generateUrl } from '@nextcloud/router'
 import ManagerSelector from './ManagerSelector.vue'
 import GroupSelector from './GroupSelector.vue'
 import ConfirmationModal from '../../../components/ConfirmationModal.vue'
+import AliasManager from './AliasManager.vue'
 
 export default {
     name: 'UserEditor',
@@ -318,7 +327,8 @@ export default {
     components: {
         ManagerSelector,
         GroupSelector,
-        ConfirmationModal
+        ConfirmationModal,
+        AliasManager
     },
 
     props: {

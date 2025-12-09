@@ -9,6 +9,7 @@ vendor/
 .vscode/
 claude.md
 features.md
+chat.md
 
 # Playwright
 /test-results/
