@@ -279,7 +279,7 @@ export default {
             const statusCode = response.data?.ocs?.meta?.statuscode
             // Message zuerst in data.error suchen (dort ist sie meist), dann in meta.message
             const message = response.data?.ocs?.data?.error ||
-                           response.data?.ocs?.meta?.message
+                response.data?.ocs?.meta?.message
 
             if (statusCode && statusCode >= 400) {
                 throw new Error(message || 'Fehler bei der Anfrage')
@@ -331,10 +331,10 @@ export default {
 
                 // Stelle sicher, dass Admin-User immer in "admin" Gruppe selektiert ist
                 if (this.formData.groupId === 'admin') {
-                    const adminUser = this.selectedMembers.find(id => id === 'admin' || id.startsWith('admin@'))
+                    const adminUser = this.selectedMembers.find((id) => id === 'admin' || id.startsWith('admin@'))
                     if (!adminUser) {
                         // Falls admin oder admin@... User in allen verfügbaren Usern existiert, hinzufügen
-                        const adminInAllUsers = this.allUsers.find(u => u.id === 'admin' || u.id.startsWith('admin@'))
+                        const adminInAllUsers = this.allUsers.find((u) => u.id === 'admin' || u.id.startsWith('admin@'))
                         if (adminInAllUsers && !this.selectedMembers.includes(adminInAllUsers.id)) {
                             this.selectedMembers.push(adminInAllUsers.id)
                         }

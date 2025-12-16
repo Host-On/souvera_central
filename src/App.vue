@@ -15,7 +15,11 @@
                 :used-licenses="usedLicenses"
                 :active-user-count="activeUserCount"
                 :group-count="groupCount"
+                :shared-mailbox-count="sharedMailboxCount"
                 :max-licenses="maxLicenses"
+                :max-groups="maxGroups"
+                :max-shared-mailboxes="maxSharedMailboxes"
+                :warning-threshold="warningThreshold"
                 :allowed-domains="allowedDomains"
                 @navigate="handleNavigation"
             />
@@ -26,6 +30,7 @@
                 :key="routeKey"
                 :allowed-domains="allowedDomains"
                 :max-licenses="maxLicenses"
+                :warning-threshold="warningThreshold"
                 @users-loaded="updateUserStats"
             />
 
@@ -77,7 +82,11 @@ export default {
             usedLicenses: 0,
             activeUserCount: 0,
             groupCount: 0,
+            sharedMailboxCount: 0,
             maxLicenses: 10,
+            maxGroups: 20,
+            maxSharedMailboxes: 10,
+            warningThreshold: 0.8,
             allowedDomains: []
         }
     },
@@ -178,6 +187,9 @@ export default {
                 this.totalUsers = config.total_users || 0
                 this.usedLicenses = config.used_licenses || 0
                 this.maxLicenses = config.max_licenses || 10
+                this.maxGroups = config.max_groups || 20
+                this.maxSharedMailboxes = config.max_shared_mailboxes || 10
+                this.warningThreshold = config.warning_threshold || 0.8
                 this.allowedDomains = config.allowed_domains || []
             } catch (error) {
                 // Error handling
@@ -203,8 +215,9 @@ export default {
                 this.usedLicenses = Math.max(0, this.totalUsers - 1)
                 this.activeUserCount = users.filter((user) => user.enabled).length
 
-                // Lade Gruppen-Anzahl
+                // Lade Gruppen-Anzahl und Shared Mailbox Anzahl
                 await this.loadGroupCount()
+                await this.loadSharedMailboxCount()
             } catch (error) {
                 // Error handling
             }
@@ -218,6 +231,17 @@ export default {
                 this.groupCount = data.total || (data.groups || []).length
             } catch (error) {
                 this.groupCount = 0
+            }
+        },
+
+        async loadSharedMailboxCount() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/shared-mailboxes')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data
+                this.sharedMailboxCount = data.total || (data.mailboxes || []).length
+            } catch (error) {
+                this.sharedMailboxCount = 0
             }
         }
     }

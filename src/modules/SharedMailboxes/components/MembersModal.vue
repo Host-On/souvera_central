@@ -170,7 +170,7 @@ export default {
                     const data = response.data.ocs?.data || response.data.data || response.data
                     // Filter out already members
                     this.searchResults = (data.users || []).filter(
-                        user => !this.members.includes(user.id)
+                        (user) => !this.members.includes(user.id)
                     )
                 } catch (error) {
                     console.error('MembersModal: Fehler bei der Suche', error)
@@ -236,7 +236,7 @@ export default {
                 })
                 await axios.delete(url)
 
-                this.members = this.members.filter(m => m !== member)
+                this.members = this.members.filter((m) => m !== member)
                 this.$emit('updated')
 
             } catch (error) {

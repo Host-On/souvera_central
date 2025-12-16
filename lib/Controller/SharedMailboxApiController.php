@@ -59,7 +59,9 @@ class SharedMailboxApiController extends OCSController {
 
             return new DataResponse([
                 'mailboxes' => $mailboxes,
-                'total' => count($mailboxes)
+                'total' => count($mailboxes),
+                'maxMailboxes' => $this->configService->getMaxSharedMailboxes(),
+                'warningThreshold' => $this->configService->getWarningThreshold()
             ]);
 
         } catch (\Exception $e) {
@@ -111,6 +113,17 @@ class SharedMailboxApiController extends OCSController {
                 return new DataResponse(
                     ['error' => 'Email-Domain nicht erlaubt. Erlaubte Domains: ' . implode(', ', $allowedDomains)],
                     Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Limit prüfen
+            $currentMailboxes = $this->sharedMailboxService->list();
+            $currentCount = is_array($currentMailboxes) ? count($currentMailboxes) : 0;
+            $maxMailboxes = $this->configService->getMaxSharedMailboxes();
+            if ($currentCount >= $maxMailboxes) {
+                return new DataResponse(
+                    ['error' => 'Limit für geteilte Postfächer erreicht (' . $maxMailboxes . ')'],
+                    Http::STATUS_CONFLICT
                 );
             }
 

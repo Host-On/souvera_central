@@ -4,12 +4,69 @@
         <div class="view-header">
             <div class="header-left">
                 <h2>{{ t('souvera_central', 'Geteilte Postfächer') }}</h2>
-                <span class="mailbox-count">{{ mailboxes.length }} {{ mailboxes.length === 1 ? t('souvera_central', 'Postfach') : t('souvera_central', 'Postfächer') }}</span>
+                <div
+                    class="license-status"
+                    :class="{ 'license-warning': isMailboxWarning, 'license-critical': isMailboxLimitReached }"
+                >
+                    <span class="icon-shared"></span>
+                    <span class="license-info">{{ mailboxes.length }} von {{ maxMailboxes }} Postfächer</span>
+                </div>
             </div>
-            <button class="primary" @click="showCreateModal = true">
+            <button
+                class="primary"
+                :disabled="isMailboxLimitReached"
+                :title="isMailboxLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
+                @click="showCreateModal = true"
+            >
                 <span class="icon-add"></span>
                 {{ t('souvera_central', 'Neues Postfach') }}
             </button>
+        </div>
+
+        <!-- KRITISCHES WARNING: Limit erreicht -->
+        <div v-if="isMailboxLimitReached" class="critical-warning">
+            <div class="warning-content">
+                <span class="icon-error warning-icon"></span>
+                <div class="warning-text">
+                    <h3>{{ t('souvera_central', 'Limit erreicht!') }}</h3>
+                    <p>
+                        {{
+                            t(
+                                'souvera_central',
+                                'Sie haben {count} von {total} geteilten Postfächern erstellt. Es können keine weiteren Postfächer erstellt werden.',
+                                { count: mailboxes.length, total: maxMailboxes }
+                            )
+                        }}
+                    </p>
+                </div>
+                <a :href="contactUrl" target="_blank" class="contact-button">
+                    <span class="icon-external"></span>
+                    {{ t('souvera_central', 'Limit erweitern') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- WARNING: Limit bald erreicht -->
+        <div v-else-if="isMailboxWarning" class="warning-banner">
+            <div class="warning-content">
+                <span class="icon-error warning-icon"></span>
+                <div class="warning-text">
+                    <h3>{{ t('souvera_central', 'Limit bald erreicht') }}</h3>
+                    <p>
+                        {{
+                            t(
+                                'souvera_central',
+                                'Sie haben {count} von {total} geteilten Postfächern erstellt ({percentage}%).',
+                                { count: mailboxes.length, total: maxMailboxes, percentage: mailboxPercentage }
+                            )
+                        }}
+                    </p>
+                </div>
+                <a :href="contactUrl" target="_blank" class="contact-button secondary">
+                    <span class="icon-external"></span>
+                    {{ t('souvera_central', 'Kontakt') }}
+                </a>
+            </div>
         </div>
 
         <!-- Stalwart Status Warning -->
@@ -111,6 +168,8 @@ export default {
             stalwartAvailable: false,
             mailboxes: [],
             allowedDomains: [],
+            maxMailboxes: 10,
+            warningThreshold: 0.8,
             selectedMailbox: null,
             showCreateModal: false,
             showEditModal: false,
@@ -120,17 +179,66 @@ export default {
                 show: false,
                 message: '',
                 type: 'success'
+            },
+            resellerInfo: {
+                support_url: null,
+                url: null,
+                name: null
             }
+        }
+    },
+
+    computed: {
+        mailboxPercentage() {
+            if (this.maxMailboxes === 0) return 0
+            return Math.round((this.mailboxes.length / this.maxMailboxes) * 100)
+        },
+
+        isMailboxLimitReached() {
+            return this.mailboxes.length >= this.maxMailboxes
+        },
+
+        isMailboxWarning() {
+            return !this.isMailboxLimitReached &&
+                this.mailboxes.length / this.maxMailboxes >= this.warningThreshold
+        },
+
+        contactUrl() {
+            // Fallback-Logik: support_url → url → www.souvera.eu
+            if (this.resellerInfo.support_url) {
+                return this.resellerInfo.support_url
+            }
+            if (this.resellerInfo.url) {
+                return this.resellerInfo.url
+            }
+            return 'https://www.souvera.eu'
         }
     },
 
     mounted() {
         this.loadConfig()
+        this.loadResellerInfo()
         this.checkStalwartStatus()
     },
 
     methods: {
         t,
+
+        async loadResellerInfo() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/reseller')
+                const response = await axios.get(url)
+
+                if (response.data?.ocs?.data) {
+                    this.resellerInfo = response.data.ocs.data
+                } else if (response.data) {
+                    this.resellerInfo = response.data
+                }
+            } catch (error) {
+                console.error('Failed to load reseller info:', error)
+                // Fallback ist bereits in contactUrl implementiert
+            }
+        },
 
         async loadConfig() {
             try {
@@ -167,6 +275,13 @@ export default {
                 const response = await axios.get(url)
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.mailboxes = data.mailboxes || []
+                // Limits aus API-Response übernehmen
+                if (data.maxMailboxes !== undefined) {
+                    this.maxMailboxes = data.maxMailboxes
+                }
+                if (data.warningThreshold !== undefined) {
+                    this.warningThreshold = data.warningThreshold
+                }
             } catch (error) {
                 console.error('SharedMailboxesView: Fehler beim Laden der Postfächer', error)
                 this.showToast(this.t('souvera_central', 'Fehler beim Laden der Postfächer'), 'error')
@@ -280,7 +395,7 @@ export default {
     font-weight: 600;
 }
 
-.mailbox-count {
+.license-status {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -289,6 +404,183 @@ export default {
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
+}
+
+.license-status .icon-shared {
+    opacity: 0.7;
+}
+
+.license-status.license-warning {
+    background: #ff6600;
+    color: #fff;
+    border: 1px solid #ff6600;
+    font-weight: 600;
+}
+
+.license-status.license-warning .icon-shared {
+    color: #fff !important;
+    opacity: 1;
+    filter: brightness(0) invert(1);
+}
+
+.license-status.license-critical {
+    background: var(--color-error);
+    color: #fff;
+    border: 1px solid var(--color-error);
+}
+
+.license-status.license-critical .icon-shared {
+    color: #fff;
+    opacity: 1;
+    filter: brightness(0) invert(1);
+}
+
+/* KRITISCHES WARNING BANNER */
+.critical-warning {
+    margin-bottom: 30px;
+    padding: 25px 30px;
+    background: var(--color-error);
+    border: 2px solid var(--color-error);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.critical-warning .warning-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+}
+
+.critical-warning .warning-icon {
+    font-size: 64px;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+    color: #fff !important;
+    filter: brightness(0) invert(1);
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.critical-warning .warning-text {
+    flex: 1;
+}
+
+.critical-warning h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.critical-warning p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #fff;
+}
+
+/* WARNING BANNER (80%+) */
+.warning-banner {
+    margin-bottom: 30px;
+    padding: 20px 25px;
+    background: #ff6600;
+    border: 2px solid #ff6600;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warning-banner .warning-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+}
+
+.warning-banner .warning-icon {
+    font-size: 48px;
+    flex-shrink: 0;
+    opacity: 1;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+    background-size: 48px 48px;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+}
+
+.warning-banner .warning-icon::before {
+    content: '';
+    display: none;
+}
+
+.warning-banner .warning-text {
+    flex: 1;
+}
+
+.warning-banner h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.warning-banner p {
+    margin: 0;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Contact Button */
+.contact-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #fff;
+    color: var(--color-error);
+    border: 2px solid #fff;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contact-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.contact-button.secondary {
+    background: #fff;
+    color: #ff6600;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-button.secondary .icon-external {
+    color: #ff6600 !important;
+    opacity: 1;
+}
+
+.contact-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .stalwart-warning {

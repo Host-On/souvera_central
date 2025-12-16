@@ -159,6 +159,34 @@ class ConfigService {
         return (int) $this->config->getSystemValue('souvera_central.max_aliases_per_user', 10);
     }
 
+    /**
+     * Maximale Anzahl an Shared Mailboxes
+     *
+     * @return int
+     */
+    public function getMaxSharedMailboxes(): int {
+        return (int) $this->config->getSystemValue('souvera_central.max_shared_mailboxes', 10);
+    }
+
+    /**
+     * Maximale Anzahl an Gruppen
+     *
+     * @return int
+     */
+    public function getMaxGroups(): int {
+        return (int) $this->config->getSystemValue('souvera_central.max_groups', 20);
+    }
+
+    /**
+     * Schwellenwert für Warnungen (0.0 - 1.0)
+     * Bei 0.8 (80%) wird eine Warnung angezeigt
+     *
+     * @return float
+     */
+    public function getWarningThreshold(): float {
+        return (float) $this->config->getSystemValue('souvera_central.warning_threshold', 0.8);
+    }
+
     // ============================================================================
     // Admin-User Erkennung
     // ============================================================================

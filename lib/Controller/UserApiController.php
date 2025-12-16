@@ -689,6 +689,11 @@ class UserApiController extends OCSController {
                 'used_licenses' => $this->getUsedLicenseCount(),
                 'max_licenses' => $this->configService->getMaxLicenses(),
                 'allowed_domains' => $this->configService->getAllowedDomains(),
+                // Neue Limit-Felder
+                'max_shared_mailboxes' => $this->configService->getMaxSharedMailboxes(),
+                'max_groups' => $this->configService->getMaxGroups(),
+                'max_aliases_per_user' => $this->configService->getMaxAliasesPerUser(),
+                'warning_threshold' => $this->configService->getWarningThreshold(),
             ]);
         } catch (\Exception $e) {
             return new DataResponse(

@@ -92,7 +92,9 @@ class GroupApiController extends OCSController {
                 'total' => $totalCount,
                 'limit' => $limit,
                 'offset' => $offset,
-                'hasMore' => ($offset + $limit) < $totalCount
+                'hasMore' => ($offset + $limit) < $totalCount,
+                'maxGroups' => $this->configService->getMaxGroups(),
+                'warningThreshold' => $this->configService->getWarningThreshold()
             ]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -157,6 +159,17 @@ class GroupApiController extends OCSController {
             if ($this->groupManager->get($groupId) !== null) {
                 return new DataResponse(
                     ['error' => 'Gruppe existiert bereits'],
+                    Http::STATUS_CONFLICT
+                );
+            }
+
+            // Gruppen-Limit prüfen
+            $allGroups = $this->groupManager->search('');
+            $currentCount = count($allGroups);
+            $maxGroups = $this->configService->getMaxGroups();
+            if ($currentCount >= $maxGroups) {
+                return new DataResponse(
+                    ['error' => 'Limit für Gruppen erreicht (' . $maxGroups . ')'],
                     Http::STATUS_CONFLICT
                 );
             }

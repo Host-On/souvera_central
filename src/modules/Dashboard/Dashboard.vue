@@ -63,11 +63,38 @@
             </div>
 
             <!-- Gruppen -->
-            <div class="stat-card">
+            <div
+                class="stat-card"
+                :class="{ 'stat-warning': isGroupWarning, 'stat-critical': isGroupLimitReached }"
+            >
                 <div class="stat-icon icon-group"></div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ groupCount }}</div>
+                    <div class="stat-value">{{ groupCount }} / {{ maxGroups }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Gruppen') }}</div>
+                    <div v-if="isGroupLimitReached" class="stat-critical-text">
+                        {{ t('souvera_central', 'Limit erreicht!') }}
+                    </div>
+                    <div v-else-if="isGroupWarning" class="stat-warning-text">
+                        {{ t('souvera_central', 'Bald erreicht ({percentage}%)', { percentage: groupPercentage }) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Geteilte Postfächer -->
+            <div
+                class="stat-card"
+                :class="{ 'stat-warning': isMailboxWarning, 'stat-critical': isMailboxLimitReached }"
+            >
+                <div class="stat-icon icon-shared"></div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ sharedMailboxCount }} / {{ maxSharedMailboxes }}</div>
+                    <div class="stat-label">{{ t('souvera_central', 'Geteilte Postfächer') }}</div>
+                    <div v-if="isMailboxLimitReached" class="stat-critical-text">
+                        {{ t('souvera_central', 'Limit erreicht!') }}
+                    </div>
+                    <div v-else-if="isMailboxWarning" class="stat-warning-text">
+                        {{ t('souvera_central', 'Bald erreicht ({percentage}%)', { percentage: mailboxPercentage }) }}
+                    </div>
                 </div>
             </div>
 
@@ -171,9 +198,25 @@ export default {
             type: Number,
             default: 0
         },
+        sharedMailboxCount: {
+            type: Number,
+            default: 0
+        },
         maxLicenses: {
             type: Number,
             default: 10
+        },
+        maxGroups: {
+            type: Number,
+            default: 20
+        },
+        maxSharedMailboxes: {
+            type: Number,
+            default: 10
+        },
+        warningThreshold: {
+            type: Number,
+            default: 0.8
         },
         allowedDomains: {
             type: Array,
@@ -202,7 +245,35 @@ export default {
         },
 
         isLicenseWarning() {
-            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= 0.8
+            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= this.warningThreshold
+        },
+
+        // Gruppen-Warnings
+        groupPercentage() {
+            if (this.maxGroups === 0) return 0
+            return Math.round((this.groupCount / this.maxGroups) * 100)
+        },
+
+        isGroupLimitReached() {
+            return this.groupCount >= this.maxGroups
+        },
+
+        isGroupWarning() {
+            return !this.isGroupLimitReached && this.groupCount / this.maxGroups >= this.warningThreshold
+        },
+
+        // Shared Mailbox Warnings
+        mailboxPercentage() {
+            if (this.maxSharedMailboxes === 0) return 0
+            return Math.round((this.sharedMailboxCount / this.maxSharedMailboxes) * 100)
+        },
+
+        isMailboxLimitReached() {
+            return this.sharedMailboxCount >= this.maxSharedMailboxes
+        },
+
+        isMailboxWarning() {
+            return !this.isMailboxLimitReached && this.sharedMailboxCount / this.maxSharedMailboxes >= this.warningThreshold
         },
 
         contactUrl() {

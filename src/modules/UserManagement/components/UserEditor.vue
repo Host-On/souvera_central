@@ -471,7 +471,7 @@ export default {
             const statusCode = response.data?.ocs?.meta?.statuscode
             // Message zuerst in data.error suchen (dort ist sie meist), dann in meta.message
             const message = response.data?.ocs?.data?.error ||
-                           response.data?.ocs?.meta?.message
+                response.data?.ocs?.meta?.message
 
             if (statusCode && statusCode >= 400) {
                 throw new Error(message || 'Fehler bei der Anfrage')

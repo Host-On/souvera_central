@@ -3,8 +3,35 @@
         <!-- Header -->
         <div class="alias-header">
             <h4>{{ t('souvera_central', 'Email-Aliase') }}</h4>
-            <span class="alias-count" :class="{ 'limit-reached': isLimitReached }">
+            <span class="alias-count" :class="{ 'warning': isAliasWarning, 'limit-reached': isLimitReached }">
                 {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Alias(e)') }}
+            </span>
+        </div>
+
+        <!-- KRITISCHES WARNING: Limit erreicht -->
+        <div v-if="isLimitReached && stalwartAvailable && !loading" class="alias-critical-warning">
+            <span class="icon-error"></span>
+            <span>
+                {{
+                    t(
+                        'souvera_central',
+                        'Alias-Limit erreicht! Es können keine weiteren Aliase hinzugefügt werden.'
+                    )
+                }}
+            </span>
+        </div>
+
+        <!-- WARNING: Limit bald erreicht (80%+) -->
+        <div v-else-if="isAliasWarning && stalwartAvailable && !loading" class="alias-warning-banner">
+            <span class="icon-error"></span>
+            <span>
+                {{
+                    t(
+                        'souvera_central',
+                        'Alias-Limit bald erreicht ({percentage}%).',
+                        { percentage: aliasPercentage }
+                    )
+                }}
             </span>
         </div>
 
@@ -125,6 +152,7 @@ export default {
             stalwartAvailable: false,
             aliases: [],
             maxAliases: 10,
+            warningThreshold: 0.8,
             newAliasLocalPart: '',
             newAliasDomain: '',
             addingAlias: false,
@@ -139,8 +167,18 @@ export default {
             return this.newAliasLocalPart.trim().length > 0 && this.newAliasDomain && !this.isLimitReached
         },
 
+        aliasPercentage() {
+            if (this.maxAliases === 0) return 0
+            return Math.round((this.aliases.length / this.maxAliases) * 100)
+        },
+
         isLimitReached() {
             return this.aliases.length >= this.maxAliases
+        },
+
+        isAliasWarning() {
+            return !this.isLimitReached &&
+                this.aliases.length / this.maxAliases >= this.warningThreshold
         },
 
         newAliasEmail() {
@@ -354,12 +392,80 @@ export default {
     background: rgba(0, 0, 0, 0.08);
     padding: 4px 10px;
     border-radius: 12px;
+    font-weight: 500;
+}
+
+.alias-count.warning {
+    background: #ff6600;
+    color: #fff;
+    border: 1px solid #ff6600;
+    font-weight: 600;
 }
 
 .alias-count.limit-reached {
-    background: rgba(227, 56, 80, 0.15);
-    color: var(--color-error);
+    background: var(--color-error);
+    color: #fff;
+    border: 1px solid var(--color-error);
     font-weight: 600;
+}
+
+/* Alias Critical Warning */
+.alias-critical-warning {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background: var(--color-error);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 0;
+}
+
+.alias-critical-warning .icon-error {
+    flex-shrink: 0;
+    font-size: 24px;
+    filter: brightness(0) invert(1);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Alias Warning Banner */
+.alias-warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background: #ff6600;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 0;
+}
+
+.alias-warning-banner .icon-error {
+    flex-shrink: 0;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+    background-size: 24px 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
+.alias-warning-banner .icon-error::before {
+    content: '';
+    display: none;
 }
 
 .stalwart-warning {
@@ -512,14 +618,15 @@ export default {
 }
 
 .add-alias-domain {
-    min-width: 150px;
-    padding: 12px 14px;
+    min-width: 280px;
+    padding: 0 12px;
     border: 2px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
     font-size: 14px;
     background: rgba(255, 255, 255, 0.9);
     color: #000;
     cursor: pointer;
+    height: 44px;
 }
 
 .add-alias-domain:focus {

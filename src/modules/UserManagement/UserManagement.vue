@@ -210,6 +210,10 @@ export default {
         maxLicenses: {
             type: Number,
             default: 10
+        },
+        warningThreshold: {
+            type: Number,
+            default: 0.8
         }
     },
 
@@ -254,7 +258,7 @@ export default {
         },
 
         isLicenseWarning() {
-            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= 0.8
+            return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= this.warningThreshold
         },
 
         contactUrl() {
@@ -506,7 +510,7 @@ export default {
                     confirmText: this.t('souvera_central', 'OK'),
                     onConfirm: () => {
                         this.confirmModal.isOpen = false
-                    },
+                    }
                 }
                 return
             }

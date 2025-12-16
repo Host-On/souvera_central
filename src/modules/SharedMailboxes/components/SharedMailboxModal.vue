@@ -291,7 +291,9 @@ export default {
 }
 
 .email-input-group select {
-    min-width: 150px;
+    min-width: 280px;
+    padding: 0 12px;
+    height: 44px;
 }
 
 .email-separator {

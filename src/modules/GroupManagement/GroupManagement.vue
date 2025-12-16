@@ -13,15 +13,69 @@
             <div class="page-header">
                 <div class="header-content">
                     <h2>{{ t('souvera_central', 'Gruppenverwaltung') }}</h2>
-                    <div class="group-count-badge">
+                    <div
+                        class="license-status"
+                        :class="{ 'license-warning': isGroupWarning, 'license-critical': isGroupLimitReached }"
+                    >
                         <span class="icon-group"></span>
-                        <span class="group-count">{{ totalGroups }} {{ t('souvera_central', 'Gruppen') }}</span>
+                        <span class="license-info">{{ totalGroups }} von {{ maxGroups }} Gruppen</span>
                     </div>
                 </div>
-                <button class="primary" @click="createNewGroup">
+                <button
+                    class="primary"
+                    :disabled="isGroupLimitReached"
+                    :title="isGroupLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
+                    @click="createNewGroup"
+                >
                     <span class="icon-add"></span>
                     {{ t('souvera_central', 'Neue Gruppe') }}
                 </button>
+            </div>
+
+            <!-- KRITISCHES WARNING: Limit erreicht -->
+            <div v-if="isGroupLimitReached" class="critical-warning">
+                <div class="warning-content">
+                    <span class="icon-error warning-icon"></span>
+                    <div class="warning-text">
+                        <h3>{{ t('souvera_central', 'Gruppenlimit erreicht!') }}</h3>
+                        <p>
+                            {{
+                                t(
+                                    'souvera_central',
+                                    'Sie haben {count} von {total} Gruppen erstellt. Es können keine weiteren Gruppen erstellt werden.',
+                                    { count: totalGroups, total: maxGroups }
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <a :href="contactUrl" target="_blank" class="contact-button">
+                        <span class="icon-external"></span>
+                        {{ t('souvera_central', 'Limit erweitern') }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- WARNING: Limit bald erreicht -->
+            <div v-else-if="isGroupWarning" class="warning-banner">
+                <div class="warning-content">
+                    <span class="icon-error warning-icon"></span>
+                    <div class="warning-text">
+                        <h3>{{ t('souvera_central', 'Gruppenlimit bald erreicht') }}</h3>
+                        <p>
+                            {{
+                                t(
+                                    'souvera_central',
+                                    'Sie haben {count} von {total} Gruppen erstellt ({percentage}%).',
+                                    { count: totalGroups, total: maxGroups, percentage: groupPercentage }
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <a :href="contactUrl" target="_blank" class="contact-button secondary">
+                        <span class="icon-external"></span>
+                        {{ t('souvera_central', 'Kontakt') }}
+                    </a>
+                </div>
             </div>
 
             <!-- Suchfeld -->
@@ -160,6 +214,8 @@ export default {
         return {
             groups: [],
             totalGroups: 0,
+            maxGroups: 20,
+            warningThreshold: 0.8,
             loading: true,
             selectedGroup: null,
             showEditor: false,
@@ -180,13 +236,46 @@ export default {
                 confirmText: 'Bestätigen',
                 cancelText: 'Abbrechen',
                 onConfirm: () => {}
+            },
+            resellerInfo: {
+                support_url: null,
+                url: null,
+                name: null
             }
+        }
+    },
+
+    computed: {
+        groupPercentage() {
+            if (this.maxGroups === 0) return 0
+            return Math.round((this.totalGroups / this.maxGroups) * 100)
+        },
+
+        isGroupLimitReached() {
+            return this.totalGroups >= this.maxGroups
+        },
+
+        isGroupWarning() {
+            return !this.isGroupLimitReached &&
+                this.totalGroups / this.maxGroups >= this.warningThreshold
+        },
+
+        contactUrl() {
+            // Fallback-Logik: support_url → url → www.souvera.eu
+            if (this.resellerInfo.support_url) {
+                return this.resellerInfo.support_url
+            }
+            if (this.resellerInfo.url) {
+                return this.resellerInfo.url
+            }
+            return 'https://www.souvera.eu'
         }
     },
 
     mounted() {
         this.loadSettings()
         this.loadGroups()
+        this.loadResellerInfo()
         this.checkInitialAction()
 
         // Event-Listener für URL-Änderungen
@@ -202,6 +291,22 @@ export default {
 
     methods: {
         t,
+
+        async loadResellerInfo() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/reseller')
+                const response = await axios.get(url)
+
+                if (response.data?.ocs?.data) {
+                    this.resellerInfo = response.data.ocs.data
+                } else if (response.data) {
+                    this.resellerInfo = response.data
+                }
+            } catch (error) {
+                console.error('Failed to load reseller info:', error)
+                // Fallback ist bereits in contactUrl implementiert
+            }
+        },
 
         checkInitialAction() {
             // Prüfe ob wir von /groups/new oder /groups/edit/:id kommen
@@ -299,6 +404,14 @@ export default {
 
                 this.groups = groups
                 this.totalGroups = data.total || 0
+
+                // Limits aus API-Response übernehmen
+                if (data.maxGroups !== undefined) {
+                    this.maxGroups = data.maxGroups
+                }
+                if (data.warningThreshold !== undefined) {
+                    this.warningThreshold = data.warningThreshold
+                }
 
                 // Emit total group count to parent (für Dashboard)
                 this.$emit('groups-loaded', this.totalGroups)
@@ -516,7 +629,7 @@ export default {
     font-weight: 600;
 }
 
-.group-count-badge {
+.license-status {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -527,8 +640,181 @@ export default {
     font-weight: 500;
 }
 
-.group-count-badge .icon-group {
+.license-status .icon-group {
     opacity: 0.7;
+}
+
+.license-status.license-warning {
+    background: #ff6600;
+    color: #fff;
+    border: 1px solid #ff6600;
+    font-weight: 600;
+}
+
+.license-status.license-warning .icon-group {
+    color: #fff !important;
+    opacity: 1;
+    filter: brightness(0) invert(1);
+}
+
+.license-status.license-critical {
+    background: var(--color-error);
+    color: #fff;
+    border: 1px solid var(--color-error);
+}
+
+.license-status.license-critical .icon-group {
+    color: #fff;
+    opacity: 1;
+    filter: brightness(0) invert(1);
+}
+
+/* KRITISCHES WARNING BANNER */
+.critical-warning {
+    margin-bottom: 30px;
+    padding: 25px 30px;
+    background: var(--color-error);
+    border: 2px solid var(--color-error);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.critical-warning .warning-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+}
+
+.critical-warning .warning-icon {
+    font-size: 64px;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+    color: #fff !important;
+    filter: brightness(0) invert(1);
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.critical-warning .warning-text {
+    flex: 1;
+}
+
+.critical-warning h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.critical-warning p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #fff;
+}
+
+/* WARNING BANNER (80%+) */
+.warning-banner {
+    margin-bottom: 30px;
+    padding: 20px 25px;
+    background: #ff6600;
+    border: 2px solid #ff6600;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.warning-banner .warning-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+}
+
+.warning-banner .warning-icon {
+    font-size: 48px;
+    flex-shrink: 0;
+    opacity: 1;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+    background-size: 48px 48px;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+}
+
+.warning-banner .warning-icon::before {
+    content: '';
+    display: none;
+}
+
+.warning-banner .warning-text {
+    flex: 1;
+}
+
+.warning-banner h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.warning-banner p {
+    margin: 0;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Contact Button */
+.contact-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #fff;
+    color: var(--color-error);
+    border: 2px solid #fff;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contact-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.contact-button.secondary {
+    background: #fff;
+    color: #ff6600;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-button.secondary .icon-external {
+    color: #ff6600 !important;
+    opacity: 1;
+}
+
+.contact-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* Search Bar */
