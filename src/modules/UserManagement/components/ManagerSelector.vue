@@ -221,7 +221,7 @@ export default {
 
 .manager-input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
 }
 
 .input-icon {

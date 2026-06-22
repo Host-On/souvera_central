@@ -17,7 +17,7 @@
                         class="license-status"
                         :class="{ 'license-warning': isGroupWarning, 'license-critical': isGroupLimitReached }"
                     >
-                        <span class="icon-group"></span>
+                        <AccountGroup :size="18" />
                         <span class="license-info">{{ totalGroups }} von {{ maxGroups }} Gruppen</span>
                     </div>
                 </div>
@@ -27,7 +27,7 @@
                     :title="isGroupLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
                     @click="createNewGroup"
                 >
-                    <span class="icon-add"></span>
+                    <Plus :size="20" />
                     {{ t('souvera_central', 'Neue Gruppe') }}
                 </button>
             </div>
@@ -35,7 +35,7 @@
             <!-- KRITISCHES WARNING: Limit erreicht -->
             <div v-if="isGroupLimitReached" class="critical-warning">
                 <div class="warning-content">
-                    <span class="icon-error warning-icon"></span>
+                    <AlertOctagon class="warning-icon" :size="48" />
                     <div class="warning-text">
                         <h3>{{ t('souvera_central', 'Gruppenlimit erreicht!') }}</h3>
                         <p>
@@ -49,7 +49,7 @@
                         </p>
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button">
-                        <span class="icon-external"></span>
+                        <OpenInNew :size="18" />
                         {{ t('souvera_central', 'Limit erweitern') }}
                     </a>
                 </div>
@@ -58,7 +58,7 @@
             <!-- WARNING: Limit bald erreicht -->
             <div v-else-if="isGroupWarning" class="warning-banner">
                 <div class="warning-content">
-                    <span class="icon-error warning-icon"></span>
+                    <AlertCircle class="warning-icon" :size="40" />
                     <div class="warning-text">
                         <h3>{{ t('souvera_central', 'Gruppenlimit bald erreicht') }}</h3>
                         <p>
@@ -72,7 +72,7 @@
                         </p>
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button secondary">
-                        <span class="icon-external"></span>
+                        <OpenInNew :size="18" />
                         {{ t('souvera_central', 'Kontakt') }}
                     </a>
                 </div>
@@ -89,7 +89,7 @@
 
             <!-- Loading State -->
             <div v-if="loading" class="loading-state">
-                <div class="icon-loading"></div>
+                <NcLoadingIcon :size="32" />
                 <p>{{ t('souvera_central', 'Lade Gruppen...') }}</p>
             </div>
 
@@ -112,33 +112,35 @@
                                 class="group-row">
                                 <td class="group-column">
                                     <div class="group-info">
-                                        <span class="icon-group"></span>
+                                        <AccountGroup class="row-group-icon" :size="20" />
                                         <span class="groupname">{{ group.id }}</span>
                                         <span
                                             v-if="group.isProtected"
                                             class="protected-badge"
                                             :title="t('souvera_central', 'Systemgruppe')"
                                         >
-                                            <span class="icon-password"></span>
+                                            <ShieldLock :size="14" />
                                         </span>
                                     </div>
                                 </td>
                                 <td class="displayname-column">{{ group.displayName }}</td>
                                 <td class="members-column">
                                     <div class="members-count">
-                                        <span class="icon-user"></span>
+                                        <Account :size="18" />
                                         <span>{{ group.userCount }}</span>
                                     </div>
                                 </td>
                                 <td class="actions-column">
                                     <div class="group-actions">
                                         <button
+                                            class="action-edit"
                                             :title="t('souvera_central', 'Bearbeiten')"
                                             @click="editGroup(group)"
                                         >
-                                            <span class="icon-rename"></span>
+                                            <Pencil :size="18" />
                                         </button>
                                         <button
+                                            class="action-delete"
                                             :title="
                                                 group.isProtected
                                                     ? t('souvera_central', 'Systemgruppe kann nicht gelöscht werden')
@@ -147,7 +149,7 @@
                                             :disabled="group.isProtected"
                                             @click="deleteGroup(group)"
                                         >
-                                            <span class="icon-delete"></span>
+                                            <Delete :size="18" />
                                         </button>
                                     </div>
                                 </td>
@@ -168,7 +170,7 @@
 
             <!-- Empty State -->
             <div v-else class="empty-state">
-                <div class="icon-group icon-large"></div>
+                <AccountGroup class="empty-icon" :size="64" />
                 <h3 v-if="searchQuery">{{ t('souvera_central', 'Keine Gruppen gefunden') }}</h3>
                 <h3 v-else>{{ t('souvera_central', 'Noch keine Gruppen') }}</h3>
                 <p v-if="searchQuery">{{ t('souvera_central', 'Versuchen Sie einen anderen Suchbegriff.') }}</p>
@@ -200,6 +202,17 @@ import SearchField from '../../components/SearchField.vue'
 import Pagination from '../../components/Pagination.vue'
 import ConfirmationModal from '../../components/ConfirmationModal.vue'
 
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import Account from 'vue-material-design-icons/Account.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import ShieldLock from 'vue-material-design-icons/ShieldLock.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
+
 export default {
     name: 'GroupManagement',
 
@@ -207,7 +220,17 @@ export default {
         GroupEditor,
         SearchField,
         Pagination,
-        ConfirmationModal
+        ConfirmationModal,
+        NcLoadingIcon,
+        Account,
+        AccountGroup,
+        ShieldLock,
+        Pencil,
+        Delete,
+        Plus,
+        OpenInNew,
+        AlertCircle,
+        AlertOctagon
     },
 
     data() {
@@ -634,20 +657,22 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 6px;
+    background: var(--color-background-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
     font-size: 14px;
     font-weight: 500;
+    color: var(--color-main-text);
 }
 
-.license-status .icon-group {
-    opacity: 0.7;
+.license-status .material-design-icon {
+    color: var(--color-text-maxcontrast);
 }
 
 .license-status.license-warning {
-    background: #ff6600;
+    background: var(--color-warning);
     color: #fff;
-    border: 1px solid #ff6600;
+    border: 1px solid var(--color-warning);
     font-weight: 600;
 }
 
@@ -726,8 +751,8 @@ export default {
 .warning-banner {
     margin-bottom: 30px;
     padding: 20px 25px;
-    background: #ff6600;
-    border: 2px solid #ff6600;
+    background: var(--color-warning);
+    border: 2px solid var(--color-warning);
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -794,25 +819,25 @@ export default {
 }
 
 .contact-button:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .contact-button.secondary {
     background: #fff;
-    color: #ff6600;
+    color: var(--color-warning);
     border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button.secondary .icon-external {
-    color: #ff6600 !important;
+    color: var(--color-warning) !important;
     opacity: 1;
 }
 
 .contact-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
@@ -838,10 +863,11 @@ export default {
 
 /* Table Container */
 .table-container {
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 6px;
-    padding: 18px;
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 /* Groups Table */
@@ -852,44 +878,30 @@ export default {
 .groups-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 14px;
     font-size: 0.95rem;
-    color: #374151;
+    color: var(--color-main-text);
     table-layout: auto;
 }
 
-.groups-table thead {
-    background: rgba(255, 255, 255, 0.3);
-    border-bottom: 0;
-}
-
-.groups-table th {
-    padding: 10px 12px;
+.groups-table thead th {
+    padding: 12px 16px;
     text-align: left;
     font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--color-primary-text);
-    border-bottom: 0;
-}
-
-.groups-table th:first-child {
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
-}
-
-.groups-table th:last-child {
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-dark);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .groups-table tbody tr {
-    border-bottom: 0;
-    transition: background-color 0.2s;
-    color: #000;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.15s ease;
 }
 
 .groups-table tbody tr:hover {
-    background: #f3f4f6;
+    background: var(--color-background-hover);
 }
 
 .groups-table tbody tr:last-child {
@@ -897,9 +909,8 @@ export default {
 }
 
 .groups-table td {
-    padding: 10px 12px;
+    padding: 12px 16px;
     vertical-align: middle;
-    border-bottom: 0;
     text-align: left;
     word-break: break-word;
     white-space: normal;
@@ -930,6 +941,10 @@ export default {
     gap: 10px;
 }
 
+.row-group-icon {
+    color: var(--color-text-maxcontrast);
+}
+
 .groupname {
     font-weight: 500;
 }
@@ -937,11 +952,11 @@ export default {
 .protected-badge {
     display: inline-flex;
     align-items: center;
-    padding: 4px 8px;
-    background: #ff6600;
+    padding: 3px 7px;
+    background: rgba(var(--color-warning-rgb), 0.15);
+    color: var(--color-warning-text);
     border-radius: var(--border-radius);
     font-size: 12px;
-    color: var(--color-main-text);
 }
 
 /* Members Count */
@@ -949,11 +964,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--color-text-lighter);
-}
-
-.members-count .icon-user {
-    opacity: 0.6;
+    color: var(--color-text-maxcontrast);
 }
 
 /* Actions */
@@ -969,30 +980,29 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-background-dark);
+    background: transparent;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
     cursor: pointer;
     padding: 0;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     color: var(--color-main-text);
-    opacity: 1;
 }
 
 .group-actions button:hover:not(:disabled) {
     background: var(--color-primary-element-light);
     border-color: var(--color-primary-element);
-    transform: scale(1.1);
+    color: var(--color-primary-element-light-text);
 }
 
-.group-actions button.icon-delete:hover:not(:disabled) {
+.group-actions button.action-delete:hover:not(:disabled) {
     background: var(--color-error);
     border-color: var(--color-error);
-    color: white;
+    color: #fff;
 }
 
 .group-actions button:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 

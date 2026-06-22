@@ -175,22 +175,22 @@ export default {
 
 .modal-icon.icon-info {
     background: rgba(0, 130, 201, 0.1);
-    color: #0082c9;
+    color: var(--color-primary-element);
 }
 
 .modal-icon.icon-warning {
     background: rgba(255, 102, 0, 0.1);
-    color: #ff6600;
+    color: var(--color-warning);
 }
 
 .modal-icon.icon-danger {
     background: rgba(232, 17, 35, 0.1);
-    color: #e81123;
+    color: var(--color-error);
 }
 
 .modal-icon.icon-success {
     background: rgba(70, 160, 73, 0.1);
-    color: #46a049;
+    color: var(--color-success);
 }
 
 .modal-header h2 {
@@ -280,7 +280,7 @@ export default {
 }
 
 .button.primary {
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     color: white;
 }
 
@@ -296,15 +296,15 @@ export default {
 }
 
 .button.primary.modal-danger:hover {
-    background: #c9302c;
+    background: var(--color-error);
 }
 
 .button.primary.modal-warning {
-    background: #ff6600;
+    background: var(--color-warning);
 }
 
 .button.primary.modal-warning:hover {
-    background: #ff5500;
+    background: var(--color-warning);
 }
 
 .button.primary.modal-success {
@@ -312,6 +312,6 @@ export default {
 }
 
 .button.primary.modal-success:hover {
-    background: #46a049;
+    background: var(--color-success);
 }
 </style>

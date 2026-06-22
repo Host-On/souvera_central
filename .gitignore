@@ -1,6 +1,8 @@
 node_modules/
 js/
 vendor/
+preview/preview.js
+preview/*.chunk.js
 .DS_Store
 *.swp
 *.swo

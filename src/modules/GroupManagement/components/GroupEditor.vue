@@ -552,9 +552,8 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 1.5px solid var(--color-border);
     color: #000;
     cursor: pointer;
     font-size: 14px;
@@ -566,7 +565,7 @@ export default {
 }
 
 .back-button:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     border-color: var(--color-secondary-element);
     transform: translateX(-2px);
 }
@@ -590,7 +589,7 @@ export default {
     flex: 1;
     overflow-y: auto;
     padding: 0;
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--color-main-background);
     border-radius: 6px;
     padding: 30px;
 }
@@ -627,15 +626,14 @@ export default {
 .form-group select {
     width: 100%;
     padding: 16px 18px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 16px;
     line-height: 1.5;
     height: 60px;
     box-sizing: border-box;
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     color: #000;
     font-weight: 500;
 }
@@ -684,18 +682,17 @@ export default {
 .search-input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 15px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     color: #000;
     font-weight: 500;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #3074BF;
+    border-color: var(--color-primary-element);
     box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
     background: #fff;
 }
@@ -713,13 +710,12 @@ export default {
 }
 
 .members-selector {
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     padding: 12px;
     max-height: 300px;
     overflow-y: auto;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
 }
 
 .member-checkbox {
@@ -781,8 +777,8 @@ export default {
 }
 
 .info-box.warning {
-    background: #ff6600;
-    border: 1px solid #ff6600;
+    background: var(--color-warning);
+    border: 1px solid var(--color-warning);
 }
 
 .info-box .icon-password {
@@ -814,7 +810,7 @@ export default {
     justify-content: flex-end;
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid var(--color-border);
 }
 
 .form-actions button {
@@ -852,16 +848,15 @@ export default {
 }
 
 .form-actions button.secondary {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(6px);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     color: #000;
     font-weight: 600;
 }
 
 .form-actions button.secondary:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: #3074BF;
+    background: var(--color-main-background);
+    border-color: var(--color-primary-element);
     transform: translateY(-1px);
 }
 

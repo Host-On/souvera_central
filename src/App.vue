@@ -1,61 +1,83 @@
 <template>
-    <div id="app-souvera-central">
-        <!-- Sidebar Navigation -->
-        <AppSidebar
-            :current-route="currentRoute"
-            @navigate="handleNavigation"
-        />
+    <NcContent app-name="souvera_central">
+        <NcAppNavigation data-testid="souvera-navigation" :aria-label="t('souvera_central', 'Souvera Central Navigation')">
+            <template #list>
+                <NcAppNavigationItem
+                    v-for="item in navigationItems"
+                    :key="item.id"
+                    :name="item.label"
+                    :active="currentRoute === item.id"
+                    :data-testid="`nav-${item.id}`"
+                    @click="handleNavigation(item.id, item.url)">
+                    <template #icon>
+                        <component :is="item.icon" :size="20" />
+                    </template>
+                </NcAppNavigationItem>
+            </template>
+        </NcAppNavigation>
 
-        <!-- Main Content Area -->
-        <div class="app-main-content">
-            <!-- Dashboard -->
-            <Dashboard
-                v-if="currentRoute === 'dashboard'"
-                :total-users="totalUsers"
-                :used-licenses="usedLicenses"
-                :active-user-count="activeUserCount"
-                :group-count="groupCount"
-                :shared-mailbox-count="sharedMailboxCount"
-                :max-licenses="maxLicenses"
-                :max-groups="maxGroups"
-                :max-shared-mailboxes="maxSharedMailboxes"
-                :warning-threshold="warningThreshold"
-                :allowed-domains="allowedDomains"
-                @navigate="handleNavigation"
-            />
+        <NcAppContent>
+            <div class="souvera-content" data-testid="souvera-content">
+                <!-- Dashboard -->
+                <Dashboard
+                    v-if="currentRoute === 'dashboard'"
+                    :total-users="totalUsers"
+                    :used-licenses="usedLicenses"
+                    :active-user-count="activeUserCount"
+                    :group-count="groupCount"
+                    :shared-mailbox-count="sharedMailboxCount"
+                    :max-licenses="maxLicenses"
+                    :max-groups="maxGroups"
+                    :max-shared-mailboxes="maxSharedMailboxes"
+                    :warning-threshold="warningThreshold"
+                    :allowed-domains="allowedDomains"
+                    @navigate="handleNavigation" />
 
-            <!-- User Management -->
-            <UserManagement
-                v-else-if="currentRoute === 'users'"
-                :key="routeKey"
-                :allowed-domains="allowedDomains"
-                :max-licenses="maxLicenses"
-                :warning-threshold="warningThreshold"
-                @users-loaded="updateUserStats"
-            />
+                <!-- User Management -->
+                <UserManagement
+                    v-else-if="currentRoute === 'users'"
+                    :key="routeKey"
+                    :allowed-domains="allowedDomains"
+                    :max-licenses="maxLicenses"
+                    :warning-threshold="warningThreshold"
+                    @users-loaded="updateUserStats" />
 
-            <!-- Group Management -->
-            <GroupManagement v-else-if="currentRoute === 'groups'" :key="routeKey" @groups-loaded="updateGroupCount" />
+                <!-- Group Management -->
+                <GroupManagement
+                    v-else-if="currentRoute === 'groups'"
+                    :key="routeKey"
+                    @groups-loaded="updateGroupCount" />
 
-            <!-- Shared Mailboxes -->
-            <SharedMailboxesView v-else-if="currentRoute === 'shared-mailboxes'" :key="routeKey" />
+                <!-- Shared Mailboxes -->
+                <SharedMailboxesView v-else-if="currentRoute === 'shared-mailboxes'" :key="routeKey" />
 
-            <!-- Settings -->
-            <Settings
-                v-else-if="currentRoute === 'settings'"
-                :max-licenses="maxLicenses"
-                :allowed-domains="allowedDomains"
-            />
-        </div>
-    </div>
+                <!-- Settings -->
+                <Settings
+                    v-else-if="currentRoute === 'settings'"
+                    :max-licenses="maxLicenses"
+                    :allowed-domains="allowedDomains" />
+            </div>
+        </NcAppContent>
+    </NcContent>
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
-import AppSidebar from './components/AppSidebar.vue'
+import NcContent from '@nextcloud/vue/components/NcContent'
+import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
+import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
+import NcAppContent from '@nextcloud/vue/components/NcAppContent'
+
+import ViewDashboard from 'vue-material-design-icons/ViewDashboard.vue'
+import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
+import Cog from 'vue-material-design-icons/Cog.vue'
+
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
 import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
@@ -66,7 +88,10 @@ export default {
     name: 'App',
 
     components: {
-        AppSidebar,
+        NcContent,
+        NcAppNavigation,
+        NcAppNavigationItem,
+        NcAppContent,
         Dashboard,
         UserManagement,
         GroupManagement,
@@ -77,7 +102,7 @@ export default {
     data() {
         return {
             currentRoute: 'dashboard',
-            currentPath: '', // Vollständiger Pfad für routeKey
+            currentPath: '',
             totalUsers: 0,
             usedLicenses: 0,
             activeUserCount: 0,
@@ -87,21 +112,50 @@ export default {
             maxGroups: 20,
             maxSharedMailboxes: 10,
             warningThreshold: 0.8,
-            allowedDomains: []
+            allowedDomains: [],
+            navigationItems: [
+                {
+                    id: 'dashboard',
+                    label: t('souvera_central', 'Dashboard'),
+                    icon: markRaw(ViewDashboard),
+                    url: generateUrl('/apps/souvera_central/dashboard')
+                },
+                {
+                    id: 'users',
+                    label: t('souvera_central', 'Benutzerverwaltung'),
+                    icon: markRaw(AccountMultiple),
+                    url: generateUrl('/apps/souvera_central/users')
+                },
+                {
+                    id: 'groups',
+                    label: t('souvera_central', 'Gruppenverwaltung'),
+                    icon: markRaw(AccountGroup),
+                    url: generateUrl('/apps/souvera_central/groups')
+                },
+                {
+                    id: 'shared-mailboxes',
+                    label: t('souvera_central', 'Geteilte Postfächer'),
+                    icon: markRaw(EmailMultiple),
+                    url: generateUrl('/apps/souvera_central/shared-mailboxes')
+                },
+                {
+                    id: 'settings',
+                    label: t('souvera_central', 'Einstellungen'),
+                    icon: markRaw(Cog),
+                    url: generateUrl('/apps/souvera_central/settings')
+                }
+            ]
         }
     },
 
     computed: {
         routeKey() {
-            // Key basiert auf vollständigem Pfad, nicht nur Route
-            // So wird Component auch bei /users -> /users/new neu gemountet
             return this.currentPath
         }
     },
 
     watch: {
         currentRoute() {
-            // Update currentPath wenn Route sich ändert
             this.updateCurrentPath()
         }
     },
@@ -111,12 +165,10 @@ export default {
         this.loadStats()
         this.initializeRouting()
 
-        // Listen to route-changed events from child components
         window.addEventListener('route-changed', this.handleRouteChanged)
     },
 
     beforeUnmount() {
-        // Cleanup event listener
         window.removeEventListener('popstate', this.handlePopState)
         window.removeEventListener('route-changed', this.handleRouteChanged)
     },
@@ -125,47 +177,38 @@ export default {
         t,
 
         initializeRouting() {
-            // Lese initialRoute aus data-Attribut vom Backend
             const appElement = document.getElementById('app-souvera-user-management')
             const initialRoute = appElement?.getAttribute('data-initial-route') || 'dashboard'
 
             this.currentRoute = initialRoute
             this.updateCurrentPath()
 
-            // Listen for browser back/forward
             window.addEventListener('popstate', this.handlePopState)
         },
 
         updateCurrentPath() {
-            // Speichere vollständigen Pfad für routeKey
             this.currentPath = window.location.pathname
         },
 
         handlePopState() {
-            // Extract route from URL path
             const path = window.location.pathname
             const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings)/)
 
-            if (match && match[1]) {
-                this.currentRoute = match[1]
-            } else {
-                this.currentRoute = 'dashboard'
-            }
-
+            this.currentRoute = match && match[1] ? match[1] : 'dashboard'
             this.updateCurrentPath()
         },
 
-        handleNavigation(route) {
+        handleNavigation(route, url) {
             this.currentRoute = route
             this.updateCurrentPath()
 
-            // URL und custom event werden bereits von AppSidebar.navigateTo() gesetzt
-            // Kein doppeltes pushState nötig
+            // Update browser URL when navigating via the sidebar
+            const targetUrl = url || generateUrl('/apps/souvera_central/' + route)
+            window.history.pushState({ route }, '', targetUrl)
+            window.dispatchEvent(new CustomEvent('route-changed', { detail: { route, url: targetUrl } }))
         },
 
         handleRouteChanged() {
-            // Reagiere auf route-changed Events von Child-Komponenten
-            // Dies wird gefeuert wenn z.B. von /users/edit/123 -> /users navigiert wird
             this.updateCurrentPath()
         },
 
@@ -198,11 +241,10 @@ export default {
 
         async loadStats() {
             try {
-                // Hole alle Benutzer (ohne Limit) für Stats
                 const url = generateUrl('/apps/souvera_central/api/users')
                 const response = await axios.get(url, {
                     params: {
-                        limit: 999999, // Alle Benutzer
+                        limit: 999999,
                         offset: 0
                     }
                 })
@@ -210,12 +252,10 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 const users = data.users || []
 
-                // Nutze 'total' aus der API Response (tatsächliche Benutzeranzahl)
                 this.totalUsers = data.total || users.length
                 this.usedLicenses = Math.max(0, this.totalUsers - 1)
                 this.activeUserCount = users.filter((user) => user.enabled).length
 
-                // Lade Gruppen-Anzahl und Shared Mailbox Anzahl
                 await this.loadGroupCount()
                 await this.loadSharedMailboxCount()
             } catch (error) {
@@ -248,98 +288,17 @@ export default {
 }
 </script>
 
-<style>
-/* Global App Styles */
-#app-souvera-central {
-    display: flex;
-    min-height: 80vh;
-    height: 100%;
+<style scoped>
+.souvera-content {
     width: 100%;
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 6px;
+    min-height: 100%;
+    box-sizing: border-box;
 }
 
-.app-main-content {
-    flex: 1;
-    padding: 30px 50px 30px 50px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    background: transparent;
-    min-width: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    #app-souvera-central {
-        flex-direction: column;
-    }
-
-    .app-main-content {
-        padding: 20px 30px;
-    }
-}
-
-@media (max-width: 768px) {
-    .app-main-content {
-        padding: 15px 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    #app-souvera-central {
-        border-radius: 0;
-    }
-
-    .app-main-content {
-        padding: 0;
-    }
-}
-
-/* Nextcloud Button Overrides */
-button.primary {
-    background-color: var(--color-primary-element);
-    border: none;
-    color: var(--color-primary-element-text);
-    padding: 10px 20px;
-    border-radius: var(--border-radius-large);
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-button.primary:hover:not(:disabled) {
-    background-color: var(--color-primary-element-hover);
-}
-
-button.primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-button.primary [class^='icon-'],
-button.primary [class*=' icon-'] {
-    color: inherit;
-    filter: none;
-}
-
-/* Scrollbar Styling */
-.app-main-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.app-main-content::-webkit-scrollbar-track {
-    background: var(--color-main-background);
-}
-
-.app-main-content::-webkit-scrollbar-thumb {
-    background: var(--color-border-dark);
-    border-radius: 4px;
-}
-
-.app-main-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-lighter);
+/* Native nav items should never be underlined */
+:deep(.app-navigation-entry-link),
+:deep(.app-navigation-entry__title),
+:deep(.app-navigation a) {
+    text-decoration: none;
 }
 </style>

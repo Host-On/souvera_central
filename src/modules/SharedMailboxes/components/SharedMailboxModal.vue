@@ -200,7 +200,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     padding: 20px 25px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
@@ -248,7 +248,7 @@ export default {
 .form-group textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
     background: #fff;
@@ -265,7 +265,7 @@ export default {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
     box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.15);
 }
 
@@ -324,7 +324,7 @@ export default {
     justify-content: flex-end;
     gap: 12px;
     padding-top: 10px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--color-border);
     margin-top: 20px;
 }
 
@@ -340,7 +340,7 @@ export default {
 
 .cancel-button {
     background: transparent;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     color: #333;
 }
 
@@ -353,7 +353,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     border: none;
     color: #fff;
 }

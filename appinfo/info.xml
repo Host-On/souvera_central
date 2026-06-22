@@ -27,7 +27,7 @@
     <bugs>https://github.com/souvera/souvera_central/issues</bugs>
 
     <dependencies>
-        <nextcloud min-version="25" max-version="32"/>
+        <nextcloud min-version="30" max-version="34"/>
     </dependencies>
 
     <navigations>
@@ -40,5 +40,6 @@
 
     <commands>
         <command>OCA\SouveraCentral\Command\SeedTestUsers</command>
+        <command>OCA\SouveraCentral\Command\SyncMailboxes</command>
     </commands>
 </info>

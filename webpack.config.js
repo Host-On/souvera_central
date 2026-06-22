@@ -1,64 +1,96 @@
 /**
  * Webpack Configuration für Souvera Central
+ *
+ * Erweitert um @nextcloud/vue v9 (Nextcloud 34): SCSS, Asset-Handling und
+ * .mjs-Auflösung für die nativen Nextcloud-Komponenten.
  */
 
 const path = require('path')
 const { VueLoaderPlugin } = require('vue-loader')
 
 module.exports = (env, argv) => {
-  const isProduction = argv.mode === 'production'
+    const isProduction = argv.mode === 'production'
 
-  return {
-  entry: {
-    main: path.join(__dirname, 'src', 'main.js')
-  },
-  output: {
-    path: path.resolve(__dirname, 'js'),
-    filename: 'souvera_central-[name].js',
-    chunkFilename: 'souvera_central-[name].js'
-  },
-  // Source Maps: nur in Development (Production = keine Source Maps, keine Kommentare)
-  devtool: isProduction ? false : 'source-map',
-  module: {
-    rules: [
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          compilerOptions: {
-            // HTML-Kommentare in Production entfernen
-            comments: !isProduction
-          }
-        }
-      },
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
-      },
-      {
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              // Keine CSS Source Maps in Production
-              sourceMap: !isProduction
+    return {
+        entry: {
+            main: path.join(__dirname, 'src', 'main.js')
+        },
+        output: {
+            path: path.resolve(__dirname, 'js'),
+            filename: 'souvera_central-[name].js',
+            chunkFilename: 'souvera_central-[name].js?v=[contenthash]',
+            clean: false
+        },
+        devtool: isProduction ? false : 'source-map',
+        module: {
+            rules: [
+                {
+                    test: /\.vue$/,
+                    loader: 'vue-loader',
+                    options: {
+                        compilerOptions: {
+                            comments: !isProduction
+                        }
+                    }
+                },
+                {
+                    // @nextcloud/vue ships fully-specified .mjs; allow webpack to resolve them
+                    test: /\.m?js$/,
+                    resolve: {
+                        fullySpecified: false
+                    }
+                },
+                {
+                    test: /\.js$/,
+                    loader: 'babel-loader',
+                    exclude: /node_modules/
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        'style-loader',
+                        {
+                            loader: 'css-loader',
+                            options: {
+                                sourceMap: !isProduction,
+                                url: false
+                            }
+                        }
+                    ]
+                },
+                {
+                    test: /\.scss$/,
+                    use: [
+                        'style-loader',
+                        {
+                            loader: 'css-loader',
+                            options: {
+                                sourceMap: !isProduction,
+                                url: false
+                            }
+                        },
+                        {
+                            loader: 'sass-loader',
+                            options: {
+                                sourceMap: !isProduction
+                            }
+                        }
+                    ]
+                },
+                {
+                    test: /\.(png|jpe?g|gif|svg|woff2?|eot|ttf)$/,
+                    type: 'asset/inline'
+                }
+            ]
+        },
+        plugins: [
+            new VueLoaderPlugin()
+        ],
+        resolve: {
+            extensions: ['.js', '.mjs', '.vue'],
+            alias: {
+                '@': path.resolve(__dirname, 'src')
             }
-          }
-        ]
-      }
-    ]
-  },
-  plugins: [
-    new VueLoaderPlugin()
-  ],
-  resolve: {
-    extensions: ['.js', '.vue'],
-    alias: {
-      '@': path.resolve(__dirname, 'src')
+        }
     }
-  }
-  }
 }

@@ -283,7 +283,7 @@ export default {
     flex-wrap: wrap;
     gap: 10px;
     padding: 20px 25px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
@@ -351,14 +351,14 @@ export default {
 .search-container input {
     width: 100%;
     padding: 12px 14px;
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
 }
 
 .search-container input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
 }
 
 .search-results {
@@ -367,7 +367,7 @@ export default {
     left: 0;
     right: 0;
     background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 100;
@@ -381,7 +381,7 @@ export default {
     padding: 12px 14px;
     cursor: pointer;
     transition: all 0.2s;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .search-result-item:last-child {
@@ -389,7 +389,7 @@ export default {
 }
 
 .search-result-item:hover {
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     color: #fff;
 }
 
@@ -414,7 +414,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -437,7 +437,7 @@ export default {
 .selected-user {
     margin: 10px 0 0;
     font-size: 13px;
-    color: var(--color-primary);
+    color: var(--color-primary-element);
 }
 
 .hint-text {
@@ -468,7 +468,7 @@ export default {
 }
 
 .members-list {
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     overflow: hidden;
 }
@@ -478,7 +478,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     padding: 12px 15px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .member-item:last-child {
@@ -521,14 +521,14 @@ export default {
 
 .modal-footer {
     padding: 15px 25px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: flex-end;
 }
 
 .done-button {
     padding: 12px 24px;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     border: none;
     border-radius: 6px;
     color: #fff;

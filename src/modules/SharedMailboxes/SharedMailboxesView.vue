@@ -400,7 +400,7 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--color-main-background);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
@@ -411,9 +411,9 @@ export default {
 }
 
 .license-status.license-warning {
-    background: #ff6600;
+    background: var(--color-warning);
     color: #fff;
-    border: 1px solid #ff6600;
+    border: 1px solid var(--color-warning);
     font-weight: 600;
 }
 
@@ -492,8 +492,8 @@ export default {
 .warning-banner {
     margin-bottom: 30px;
     padding: 20px 25px;
-    background: #ff6600;
-    border: 2px solid #ff6600;
+    background: var(--color-warning);
+    border: 2px solid var(--color-warning);
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -560,25 +560,25 @@ export default {
 }
 
 .contact-button:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .contact-button.secondary {
     background: #fff;
-    color: #ff6600;
+    color: var(--color-warning);
     border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .contact-button.secondary .icon-external {
-    color: #ff6600 !important;
+    color: var(--color-warning) !important;
     opacity: 1;
 }
 
 .contact-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
@@ -613,7 +613,7 @@ export default {
     justify-content: center;
     padding: 60px 20px;
     text-align: center;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--color-main-background);
     border: 2px dashed rgba(0, 0, 0, 0.15);
     border-radius: 12px;
 }

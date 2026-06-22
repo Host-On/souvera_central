@@ -80,15 +80,15 @@ export default {
 
 <style scoped>
 .mailbox-card {
-    background: rgba(255, 255, 255, 0.7);
-    border: 2px solid rgba(0, 0, 0, 0.12);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.2s;
 }
 
 .mailbox-card:hover {
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -98,7 +98,7 @@ export default {
     gap: 15px;
     padding: 20px;
     background: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .mailbox-icon {
@@ -107,7 +107,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     border-radius: 10px;
 }
 
@@ -183,7 +183,7 @@ export default {
     display: flex;
     gap: 8px;
     padding: 15px 20px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--color-border);
     background: rgba(0, 0, 0, 0.02);
 }
 
@@ -192,7 +192,7 @@ export default {
     align-items: center;
     gap: 6px;
     padding: 8px 12px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--color-border);
     background: #fff;
     border-radius: 6px;
     font-size: 13px;

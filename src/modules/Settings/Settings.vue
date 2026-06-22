@@ -258,8 +258,8 @@ export default {
 
 /* Settings Section */
 .settings-section {
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 25px;
     transition: box-shadow 0.2s;
@@ -278,7 +278,7 @@ export default {
 
 .section-header span[class^='icon-'] {
     font-size: 24px;
-    color: var(--color-primary);
+    color: var(--color-primary-element);
 }
 
 .section-header h3 {
@@ -427,9 +427,8 @@ export default {
     justify-content: center;
     gap: 8px;
     padding: 20px 16px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(6px);
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -437,7 +436,7 @@ export default {
 }
 
 .quota-option:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     border-color: var(--color-secondary-element);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -445,7 +444,7 @@ export default {
 
 .quota-option.quota-selected {
     background: rgba(255, 246, 219, 0.95);
-    border-color: #3074BF;
+    border-color: var(--color-primary-element);
     border-width: 3px;
     box-shadow: 0 4px 16px rgba(48, 116, 191, 0.3);
 }
@@ -453,12 +452,12 @@ export default {
 .quota-icon {
     font-size: 36px;
     opacity: 0.8;
-    color: #3074BF;
+    color: var(--color-primary-element);
 }
 
 .quota-option.quota-selected .quota-icon {
     opacity: 1;
-    color: #3074BF;
+    color: var(--color-primary-element);
 }
 
 .quota-label {
@@ -507,8 +506,7 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     border: 2px solid var(--color-primary-element);
     border-radius: 6px;
     transition: all 0.2s;
@@ -555,9 +553,8 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 1000;

@@ -128,7 +128,7 @@ export default {
 
 .cancel-button {
     background: transparent;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     color: #333;
 }
 
@@ -138,7 +138,7 @@ export default {
 }
 
 .confirm-button {
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     border: none;
     color: #fff;
 }

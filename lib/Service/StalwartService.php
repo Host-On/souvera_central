@@ -191,6 +191,139 @@ class StalwartService {
     }
 
     // ============================================================================
+    // Provisionierung (Postfach anlegen / Passwort spiegeln / löschen)
+    // ============================================================================
+
+    /**
+     * Postfach (individual) anlegen. Idempotent: existiert es bereits,
+     * wird nur das Passwort gesetzt.
+     *
+     * @param string $uid - NC-User-ID = Stalwart Principal-Name
+     * @param string $password - Klartext-Passwort (Stalwart bildet eigenen Hash)
+     * @param string $email - Haupt-Mailadresse
+     * @param string|null $displayName - Anzeigename (description)
+     * @param int $quota - optionales Quota in Bytes (0 = kein Limit)
+     * @return bool - Erfolg
+     */
+    public function createPrincipal(
+        string $uid,
+        string $password,
+        string $email,
+        ?string $displayName = null,
+        int $quota = 0
+    ): bool {
+        if ($this->principalExists($uid)) {
+            return $this->setPassword($uid, $password);
+        }
+
+        $body = [
+            'type' => 'individual',
+            'name' => $uid,
+            'secrets' => [$password],
+            'emails' => [strtolower($email)],
+            'description' => $displayName ?: $uid,
+        ];
+        if ($quota > 0) {
+            $body['quota'] = $quota;
+        }
+
+        $response = $this->apiRequest('POST', '/api/principal', $body);
+
+        if ($response === null) {
+            return false;
+        }
+
+        $this->logger->info('StalwartService: Postfach angelegt', [
+            'uid' => $uid,
+            'email' => strtolower($email),
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Passwort in Stalwart setzen (Spiegelung einer NC-Passwortänderung).
+     *
+     * @param string $uid - NC-User-ID = Stalwart Principal-Name
+     * @param string $password - Klartext-Passwort
+     * @return bool - Erfolg
+     */
+    public function setPassword(string $uid, string $password): bool {
+        $payload = [
+            [
+                'action' => 'set',
+                'field' => 'secrets',
+                'value' => [$password],
+            ],
+        ];
+
+        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($uid), $payload);
+
+        if ($response === null) {
+            return false;
+        }
+
+        $this->logger->info('StalwartService: Passwort gespiegelt', [
+            'uid' => $uid,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Postfach löschen. 404 (bereits weg) wird als Erfolg gewertet (idempotent).
+     *
+     * @param string $uid - NC-User-ID = Stalwart Principal-Name
+     * @return bool
+     */
+    public function deletePrincipal(string $uid): bool {
+        // apiRequest() liefert bei 404 null - das ist hier OK (bereits gelöscht).
+        $this->apiRequest('DELETE', '/api/principal/' . urlencode($uid));
+
+        $this->logger->info('StalwartService: Postfach gelöscht (oder bereits entfernt)', [
+            'uid' => $uid,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Prüft, ob ein Principal in Stalwart existiert.
+     *
+     * @param string $uid - NC-User-ID = Stalwart Principal-Name
+     * @return bool
+     */
+    public function principalExists(string $uid): bool {
+        return $this->getPrincipal($uid) !== null;
+    }
+
+    /**
+     * Leitet aus einem NC-User die zu verwendende Mailadresse ab.
+     * Berücksichtigt die Domain-Whitelist.
+     *
+     * @param \OCP\IUser $user
+     * @return string|null - Mailadresse oder null, wenn keine ermittelbar ist
+     */
+    public function mailFor(\OCP\IUser $user): ?string {
+        $email = $user->getEMailAddress();
+        if ($email && $this->configService->isEmailDomainAllowed($email)) {
+            return strtolower($email);
+        }
+
+        $uid = $user->getUID();
+        if (filter_var($uid, FILTER_VALIDATE_EMAIL)) {
+            return strtolower($uid);
+        }
+
+        $domains = $this->configService->getAllowedDomains();
+        if (empty($domains)) {
+            return null;
+        }
+
+        return strtolower($uid) . '@' . $domains[0];
+    }
+
+    // ============================================================================
     // API-Kommunikation
     // ============================================================================
 

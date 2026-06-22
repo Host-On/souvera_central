@@ -1046,9 +1046,8 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 1.5px solid var(--color-border);
     color: #000;
     cursor: pointer;
     font-size: 14px;
@@ -1060,7 +1059,7 @@ export default {
 }
 
 .back-button:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     border-color: var(--color-secondary-element);
     transform: translateX(-2px);
 }
@@ -1084,7 +1083,7 @@ export default {
     flex: 1;
     overflow-y: auto;
     padding: 0;
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--color-main-background);
     border-radius: 6px;
     padding: 30px;
 }
@@ -1117,15 +1116,14 @@ export default {
 .form-group select {
     width: 100%;
     padding: 16px 18px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 16px;
     line-height: 1.5;
     height: 60px;
     box-sizing: border-box;
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     color: #000;
     font-weight: 500;
 }
@@ -1199,10 +1197,9 @@ export default {
     flex: 1;
     min-width: 0;
     padding: 16px 18px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     color: #000;
     font-size: 16px;
     line-height: 1.5;
@@ -1301,10 +1298,9 @@ export default {
 /* Groups Zone (Collapsible) */
 .groups-zone.collapsible {
     margin-top: 30px;
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     padding: 0;
     overflow: visible;
     position: relative;
@@ -1344,7 +1340,7 @@ export default {
 .optional-badge {
     padding: 4px 12px;
     background: var(--color-primary-element-light);
-    color: var(--color-primary);
+    color: var(--color-primary-element);
     border-radius: var(--border-radius-large);
     font-size: 12px;
     font-weight: 600;
@@ -1382,7 +1378,7 @@ export default {
     justify-content: flex-end;
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid var(--color-border);
     position: relative;
     z-index: 1;
 }
@@ -1422,16 +1418,15 @@ export default {
 }
 
 .form-actions button.secondary {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(6px);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     color: #000;
     font-weight: 600;
 }
 
 .form-actions button.secondary:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: #3074BF;
+    background: var(--color-main-background);
+    border-color: var(--color-primary-element);
     transform: translateY(-1px);
 }
 
@@ -1448,7 +1443,6 @@ button.primary {
     border: 2px solid rgba(227, 56, 80, 0.3);
     border-radius: 6px;
     background: rgba(227, 56, 80, 0.05);
-    backdrop-filter: blur(6px);
     position: relative;
     z-index: 1;
 }
@@ -1493,7 +1487,7 @@ button.primary {
 }
 
 .action-button.secondary {
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     color: white;
 }
 
@@ -1509,15 +1503,15 @@ button.primary {
 }
 
 .action-button.danger:hover:not(:disabled) {
-    background: #c9302c;
+    background: var(--color-error);
     transform: translateY(-2px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .action-button.warning {
-    background: linear-gradient(135deg, #ff6600 0%, #ff5500 100%);
+    background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning) 100%);
     color: #fff !important;
-    border: 2px solid #ff5500;
+    border: 2px solid var(--color-warning);
 }
 
 .action-button.warning * {
@@ -1531,8 +1525,8 @@ button.primary {
 }
 
 .action-button.warning:hover:not(:disabled) {
-    background: linear-gradient(135deg, #ff7700 0%, #ff6600 100%);
-    border-color: #ff6600;
+    background: linear-gradient(135deg, #ff7700 0%, var(--color-warning) 100%);
+    border-color: var(--color-warning);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4);
 }
@@ -1543,7 +1537,7 @@ button.primary {
 }
 
 .action-button.success:hover:not(:disabled) {
-    background: #46a049;
+    background: var(--color-success);
     transform: translateY(-2px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
 }

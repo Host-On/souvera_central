@@ -192,9 +192,8 @@ export default {
 
 .pagination-button {
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 1.5px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -202,7 +201,7 @@ export default {
 }
 
 .pagination-button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     border-color: var(--color-secondary-element);
     transform: translateY(-1px);
 }
@@ -220,9 +219,8 @@ export default {
 .page-number {
     min-width: 36px;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 1.5px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -231,7 +229,7 @@ export default {
 }
 
 .page-number:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     border-color: var(--color-secondary-element);
     transform: translateY(-1px);
 }
@@ -255,10 +253,9 @@ export default {
 
 .per-page-selector select {
     padding: 6px 10px;
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border: 1.5px solid var(--color-border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;

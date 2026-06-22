@@ -363,10 +363,9 @@ export default {
 <style scoped>
 .alias-manager {
     margin-top: 25px;
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     overflow: hidden;
 }
 
@@ -376,7 +375,7 @@ export default {
     justify-content: space-between;
     padding: 15px 20px;
     background: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .alias-header h4 {
@@ -396,9 +395,9 @@ export default {
 }
 
 .alias-count.warning {
-    background: #ff6600;
+    background: var(--color-warning);
     color: #fff;
-    border: 1px solid #ff6600;
+    border: 1px solid var(--color-warning);
     font-weight: 600;
 }
 
@@ -445,7 +444,7 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 15px 20px;
-    background: #ff6600;
+    background: var(--color-warning);
     color: #fff;
     font-size: 14px;
     font-weight: 500;
@@ -500,8 +499,8 @@ export default {
     align-items: center;
     justify-content: space-between;
     padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     margin-bottom: 10px;
 }
@@ -532,7 +531,7 @@ export default {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     color: #fff;
     padding: 3px 8px;
     border-radius: 10px;
@@ -576,7 +575,7 @@ export default {
 .add-alias-form {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--color-border);
 }
 
 .add-alias-input-group {
@@ -589,16 +588,16 @@ export default {
     flex: 1;
     min-width: 0;
     padding: 12px 14px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     color: #000;
 }
 
 .add-alias-input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
     box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
 }
 
@@ -620,10 +619,10 @@ export default {
 .add-alias-domain {
     min-width: 280px;
     padding: 0 12px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-main-background);
     color: #000;
     cursor: pointer;
     height: 44px;
@@ -631,7 +630,7 @@ export default {
 
 .add-alias-domain:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-element);
 }
 
 .add-alias-domain:disabled {
@@ -644,7 +643,7 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 12px 18px;
-    background: var(--color-primary);
+    background: var(--color-primary-element);
     color: #fff;
     border: none;
     border-radius: 6px;

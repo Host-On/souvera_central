@@ -284,9 +284,8 @@ export default {
     flex-wrap: wrap;
     gap: 10px;
     padding: 16px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     min-height: 60px;
 }
@@ -304,9 +303,9 @@ export default {
 }
 
 .group-pill.member-pill {
-    background: #3074BF;
+    background: var(--color-primary-element);
     color: #fff;
-    border: 2px solid #3074BF;
+    border: 2px solid var(--color-primary-element);
 }
 
 .group-pill.admin-pill {
@@ -323,7 +322,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--color-main-background);
     border-radius: 50%;
     color: #fff;
     filter: brightness(0) invert(1);
@@ -344,7 +343,7 @@ export default {
     justify-content: center;
     width: 33px;
     height: 33px;
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--color-main-background);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -354,7 +353,7 @@ export default {
 }
 
 .pill-remove:hover {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--color-main-background);
     transform: scale(1.15);
 }
 
@@ -371,8 +370,7 @@ export default {
     justify-content: center;
     gap: 12px;
     padding: 24px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     border: 2px dashed rgba(0, 0, 0, 0.2);
     border-radius: 6px;
     color: #000;
@@ -396,9 +394,9 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 14px 20px;
-    background: #3074BF;
+    background: var(--color-primary-element);
     color: #fff;
-    border: 2px solid #3074BF;
+    border: 2px solid var(--color-primary-element);
     border-radius: 6px;
     font-weight: 700;
     font-size: 15px;
@@ -428,9 +426,8 @@ export default {
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
     z-index: 1000;
@@ -454,24 +451,23 @@ export default {
 /* Dropdown Header */
 .dropdown-header {
     padding: 14px;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 2px solid var(--color-border);
 }
 
 .search-input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 15px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
+    background: var(--color-main-background);
     color: #000;
     font-weight: 500;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #3074BF;
+    border-color: var(--color-primary-element);
     box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
     background: #fff;
 }
@@ -481,8 +477,8 @@ export default {
     display: flex;
     gap: 10px;
     padding: 10px 14px;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid var(--color-border);
+    background: var(--color-main-background);
 }
 
 .bulk-action-btn {
@@ -492,9 +488,8 @@ export default {
     justify-content: center;
     gap: 8px;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(6px);
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
@@ -505,7 +500,7 @@ export default {
 
 .bulk-action-btn:hover {
     background: #fff;
-    border-color: #3074BF;
+    border-color: var(--color-primary-element);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(48, 116, 191, 0.2);
 }
@@ -523,7 +518,7 @@ export default {
     padding: 14px 16px;
     cursor: pointer;
     transition: all 0.2s;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .dropdown-item:last-child {
@@ -542,7 +537,7 @@ export default {
 
 .checkbox-icon {
     font-size: 18px;
-    color: #3074BF;
+    color: var(--color-primary-element);
     flex-shrink: 0;
     font-weight: 700;
 }

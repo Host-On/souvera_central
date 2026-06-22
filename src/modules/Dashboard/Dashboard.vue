@@ -6,9 +6,9 @@
         </div>
 
         <!-- KRITISCHES WARNING: Lizenzlimit erreicht -->
-        <div v-if="isLicenseLimitReached" class="critical-warning">
+        <div v-if="isLicenseLimitReached" class="critical-warning" data-testid="license-critical-banner">
             <div class="warning-content">
-                <span class="icon-error warning-icon"></span>
+                <AlertOctagon class="warning-icon" :size="52" />
                 <div class="warning-text">
                     <h3>{{ t('souvera_central', 'Lizenzlimit erreicht!') }}</h3>
                     <p>
@@ -22,16 +22,16 @@
                     </p>
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button">
-                    <span class="icon-external"></span>
+                    <OpenInNew :size="18" />
                     {{ t('souvera_central', 'Lizenzen erweitern') }}
                 </a>
             </div>
         </div>
 
         <!-- WARNING: Lizenzlimit bald erreicht (80%+) -->
-        <div v-else-if="isLicenseWarning" class="warning-banner">
+        <div v-else-if="isLicenseWarning" class="warning-banner" data-testid="license-warning-banner">
             <div class="warning-content">
-                <span class="icon-error warning-icon"></span>
+                <AlertCircle class="warning-icon" :size="40" />
                 <div class="warning-text">
                     <h3>{{ t('souvera_central', 'Lizenzlimit bald erreicht') }}</h3>
                     <p>
@@ -45,7 +45,7 @@
                     </p>
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button secondary">
-                    <span class="icon-external"></span>
+                    <OpenInNew :size="18" />
                     {{ t('souvera_central', 'Kontakt') }}
                 </a>
             </div>
@@ -54,8 +54,8 @@
         <!-- Statistik-Karten -->
         <div class="stats-grid">
             <!-- Benutzer -->
-            <div class="stat-card">
-                <div class="stat-icon icon-user"></div>
+            <div class="stat-card" data-testid="stat-users">
+                <div class="stat-icon"><AccountMultiple :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ totalUsers }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Benutzer') }}</div>
@@ -66,8 +66,8 @@
             <div
                 class="stat-card"
                 :class="{ 'stat-warning': isGroupWarning, 'stat-critical': isGroupLimitReached }"
-            >
-                <div class="stat-icon icon-group"></div>
+                data-testid="stat-groups">
+                <div class="stat-icon"><AccountGroup :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ groupCount }} / {{ maxGroups }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Gruppen') }}</div>
@@ -84,8 +84,8 @@
             <div
                 class="stat-card"
                 :class="{ 'stat-warning': isMailboxWarning, 'stat-critical': isMailboxLimitReached }"
-            >
-                <div class="stat-icon icon-shared"></div>
+                data-testid="stat-mailboxes">
+                <div class="stat-icon"><EmailMultiple :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ sharedMailboxCount }} / {{ maxSharedMailboxes }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Geteilte Postfächer') }}</div>
@@ -102,8 +102,8 @@
             <div
                 class="stat-card"
                 :class="{ 'stat-warning': isLicenseWarning, 'stat-critical': isLicenseLimitReached }"
-            >
-                <div class="stat-icon icon-quota"></div>
+                data-testid="stat-licenses">
+                <div class="stat-icon"><KeyVariant :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ usedLicenses }} / {{ maxLicenses }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Lizenzen genutzt') }}</div>
@@ -117,8 +117,8 @@
             </div>
 
             <!-- Aktive Benutzer -->
-            <div class="stat-card">
-                <div class="stat-icon icon-checkmark"></div>
+            <div class="stat-card" data-testid="stat-active-users">
+                <div class="stat-icon"><AccountCheck :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ activeUserCount }}</div>
                     <div class="stat-label">{{ t('souvera_central', 'Aktive Benutzer') }}</div>
@@ -130,23 +130,27 @@
         <div class="quick-actions">
             <h3>{{ t('souvera_central', 'Schnellaktionen') }}</h3>
             <div class="actions-grid">
-                <button class="action-card" :disabled="isLicenseLimitReached" @click="$emit('navigate', 'users')">
-                    <span class="icon-add"></span>
+                <button
+                    class="action-card"
+                    :disabled="isLicenseLimitReached"
+                    data-testid="action-create-user"
+                    @click="$emit('navigate', 'users')">
+                    <Plus :size="22" />
                     <span class="action-label">{{ t('souvera_central', 'Benutzer erstellen') }}</span>
                 </button>
 
-                <button class="action-card" @click="$emit('navigate', 'groups')">
-                    <span class="icon-add"></span>
+                <button class="action-card" data-testid="action-create-group" @click="$emit('navigate', 'groups')">
+                    <Plus :size="22" />
                     <span class="action-label">{{ t('souvera_central', 'Gruppe erstellen') }}</span>
                 </button>
 
-                <button class="action-card" @click="$emit('navigate', 'users')">
-                    <span class="icon-user"></span>
+                <button class="action-card" data-testid="action-manage-users" @click="$emit('navigate', 'users')">
+                    <AccountMultiple :size="22" />
                     <span class="action-label">{{ t('souvera_central', 'Benutzer verwalten') }}</span>
                 </button>
 
-                <button class="action-card" @click="$emit('navigate', 'settings')">
-                    <span class="icon-settings"></span>
+                <button class="action-card" data-testid="action-settings" @click="$emit('navigate', 'settings')">
+                    <Cog :size="22" />
                     <span class="action-label">{{ t('souvera_central', 'Einstellungen') }}</span>
                 </button>
             </div>
@@ -158,7 +162,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.5.0</span>
+                    <span class="info-value">0.7.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -178,8 +182,32 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
+import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
+import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
+import AccountCheck from 'vue-material-design-icons/AccountCheck.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Cog from 'vue-material-design-icons/Cog.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
+
 export default {
     name: 'Dashboard',
+
+    components: {
+        AccountMultiple,
+        AccountGroup,
+        EmailMultiple,
+        KeyVariant,
+        AccountCheck,
+        Plus,
+        Cog,
+        OpenInNew,
+        AlertCircle,
+        AlertOctagon
+    },
 
     props: {
         totalUsers: {
@@ -224,6 +252,8 @@ export default {
         }
     },
 
+    emits: ['navigate'],
+
     data() {
         return {
             resellerInfo: {
@@ -248,7 +278,6 @@ export default {
             return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= this.warningThreshold
         },
 
-        // Gruppen-Warnings
         groupPercentage() {
             if (this.maxGroups === 0) return 0
             return Math.round((this.groupCount / this.maxGroups) * 100)
@@ -262,7 +291,6 @@ export default {
             return !this.isGroupLimitReached && this.groupCount / this.maxGroups >= this.warningThreshold
         },
 
-        // Shared Mailbox Warnings
         mailboxPercentage() {
             if (this.maxSharedMailboxes === 0) return 0
             return Math.round((this.sharedMailboxCount / this.maxSharedMailboxes) * 100)
@@ -277,7 +305,6 @@ export default {
         },
 
         contactUrl() {
-            // Fallback-Logik: support_url → url → www.souvera.eu
             if (this.resellerInfo.support_url) {
                 return this.resellerInfo.support_url
             }
@@ -306,7 +333,6 @@ export default {
                     this.resellerInfo = response.data
                 }
             } catch (error) {
-                console.error('Failed to load reseller info:', error)
                 // Fallback ist bereits in contactUrl implementiert
             }
         }
@@ -327,8 +353,8 @@ export default {
     padding: 25px 30px;
     background: var(--color-error);
     border: 2px solid var(--color-error);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: var(--border-radius-large);
+    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .critical-warning .warning-content {
@@ -339,11 +365,9 @@ export default {
 }
 
 .critical-warning .warning-icon {
-    font-size: 64px;
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: #fff !important;
-    filter: brightness(0) invert(1);
+    color: #fff;
 }
 
 @keyframes pulse {
@@ -382,13 +406,12 @@ export default {
     background: var(--color-main-background);
     color: var(--color-error);
     border: 2px solid var(--color-error);
-    border-radius: 6px;
+    border-radius: var(--border-radius-element);
     font-weight: 700;
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .contact-button:hover {
@@ -401,10 +424,10 @@ export default {
 .warning-banner {
     margin-bottom: 30px;
     padding: 20px 25px;
-    background: #ff6600;
-    border: 2px solid #ff6600;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: var(--color-warning);
+    border: 2px solid var(--color-warning);
+    border-radius: var(--border-radius-large);
+    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .warning-banner .warning-content {
@@ -415,21 +438,8 @@ export default {
 }
 
 .warning-banner .warning-icon {
-    font-size: 48px;
     flex-shrink: 0;
-    opacity: 1;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-    background-size: 48px 48px;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 48px;
-    height: 48px;
-    display: inline-block;
-}
-
-.warning-banner .warning-icon::before {
-    content: '';
-    display: none;
+    color: #fff;
 }
 
 .warning-banner .warning-text {
@@ -451,21 +461,16 @@ export default {
 }
 
 .contact-button.secondary {
-    background: #fff;
-    color: #ff6600;
+    background: var(--color-main-background);
+    color: var(--color-warning-text);
     border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.contact-button.secondary .icon-external {
-    color: #ff6600 !important;
-    opacity: 1;
+    box-shadow: 0 2px 6px var(--color-box-shadow);
 }
 
 .contact-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-background-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px var(--color-box-shadow);
 }
 
 /* Header */
@@ -482,7 +487,7 @@ export default {
 .subtitle {
     margin: 0;
     font-size: 14px;
-    color: var(--color-text-lighter);
+    color: var(--color-text-maxcontrast);
 }
 
 /* Stats Grid */
@@ -498,42 +503,42 @@ export default {
     align-items: center;
     gap: 20px;
     padding: 25px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
     transition:
-        transform 0.2s,
-        box-shadow 0.2s;
+        border-color 0.2s,
+        box-shadow 0.2s,
+        transform 0.2s;
 }
 
 .stat-card:hover {
+    border-color: var(--color-border-maxcontrast);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
 }
 
 .stat-card.stat-warning {
-    border-color: #ff6600;
-    background: rgba(255, 246, 219, 0.9);
+    border-color: var(--color-warning);
+    background: rgba(var(--color-warning-rgb), 0.08);
 }
 
 .stat-card.stat-critical {
     border-color: var(--color-error);
     border-width: 2px;
-    background: rgba(227, 56, 80, 0.95);
+    background: var(--color-error);
     color: #fff;
 }
 
 .stat-icon {
-    font-size: 40px;
-    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-primary-element);
 }
 
 .stat-card.stat-critical .stat-icon {
     color: #fff;
-    opacity: 1;
 }
 
 .stat-content {
@@ -554,7 +559,7 @@ export default {
 
 .stat-label {
     font-size: 14px;
-    color: var(--color-text-lighter);
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 
@@ -565,7 +570,7 @@ export default {
 .stat-warning-text {
     margin-top: 5px;
     font-size: 12px;
-    color: #ff6600;
+    color: var(--color-warning-text);
     font-weight: 600;
 }
 
@@ -599,18 +604,18 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
     text-align: left;
+    color: var(--color-main-text);
 }
 
 .action-card:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: var(--color-secondary-element);
+    background: var(--color-background-hover);
+    border-color: var(--color-primary-element);
     transform: translateY(-2px);
 }
 
@@ -619,14 +624,12 @@ export default {
     cursor: not-allowed;
 }
 
-.action-card span.icon-add,
-.action-card span.icon-user,
-.action-card span.icon-settings {
-    font-size: 24px;
-    opacity: 0.7;
+.action-card .material-design-icon {
+    color: var(--color-primary-element);
+    opacity: 0.85;
 }
 
-.action-card:hover:not(:disabled) span {
+.action-card:hover:not(:disabled) .material-design-icon {
     opacity: 1;
 }
 
@@ -647,10 +650,9 @@ export default {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
 }
 
 .info-item {
@@ -662,7 +664,7 @@ export default {
 
 .info-label {
     font-weight: 500;
-    color: var(--color-text-lighter);
+    color: var(--color-text-maxcontrast);
 }
 
 .info-value {
@@ -704,12 +706,6 @@ export default {
         padding: 20px;
     }
 
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-    }
-
     .stat-value {
         font-size: 28px;
     }
@@ -735,13 +731,6 @@ export default {
         gap: 15px;
         text-align: center;
     }
-
-    .warning-icon {
-        font-size: 36px !important;
-        background-size: 36px 36px !important;
-        width: 36px !important;
-        height: 36px !important;
-    }
 }
 
 @media (max-width: 480px) {
@@ -759,12 +748,6 @@ export default {
 
     .stat-card {
         padding: 15px;
-    }
-
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
     }
 
     .stat-value {
