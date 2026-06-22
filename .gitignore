@@ -25,3 +25,10 @@ chat.md
 server.css
 tests/
 style.md
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
