@@ -220,7 +220,7 @@
                         {{
                             t(
                                 'souvera_central',
-                                'Benutzer mit Postfach werden automatisch dieser Gruppe zugeordnet. Beschränken Sie die Mail-App (smail) in den Nextcloud-App-Einstellungen auf diese Gruppe, damit Benutzer ohne Postfach sie nicht sehen.'
+                                'Benutzer mit Postfach werden automatisch dieser Gruppe zugeordnet. Beschränken Sie die Mail-App (smail) in den App-Einstellungen auf diese Gruppe, damit Benutzer ohne Postfach sie nicht sehen.'
                             )
                         }}
                     </p>

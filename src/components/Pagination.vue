@@ -18,7 +18,7 @@
                 :title="t('souvera_central', 'Erste Seite')"
                 @click="goToPage(1)"
             >
-                <span class="icon-double-left"></span>
+                <ChevronDoubleLeft :size="18" />
             </button>
 
             <!-- Vorherige Seite -->
@@ -28,7 +28,7 @@
                 :title="t('souvera_central', 'Vorherige Seite')"
                 @click="goToPage(currentPage - 1)"
             >
-                <span class="icon-previous"></span>
+                <ChevronLeft :size="18" />
             </button>
 
             <!-- Seiten-Nummern -->
@@ -50,7 +50,7 @@
                 :title="t('souvera_central', 'Nächste Seite')"
                 @click="goToPage(currentPage + 1)"
             >
-                <span class="icon-next"></span>
+                <ChevronRight :size="18" />
             </button>
 
             <!-- Letzte Seite -->
@@ -60,7 +60,7 @@
                 :title="t('souvera_central', 'Letzte Seite')"
                 @click="goToPage(totalPages)"
             >
-                <span class="icon-double-right"></span>
+                <ChevronDoubleRight :size="18" />
             </button>
         </div>
 
@@ -80,9 +80,20 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import ChevronDoubleLeft from 'vue-material-design-icons/ChevronDoubleLeft.vue'
+import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue'
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
+import ChevronDoubleRight from 'vue-material-design-icons/ChevronDoubleRight.vue'
 
 export default {
     name: 'Pagination',
+
+    components: {
+        ChevronDoubleLeft,
+        ChevronLeft,
+        ChevronRight,
+        ChevronDoubleRight
+    },
 
     props: {
         currentPage: {
@@ -179,7 +190,7 @@ export default {
 }
 
 .pagination-info {
-    color: #000;
+    color: var(--color-main-text);
     font-size: 14px;
     font-weight: 600;
 }
@@ -197,7 +208,7 @@ export default {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .pagination-button:hover:not(:disabled) {
@@ -225,7 +236,7 @@ export default {
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .page-number:hover {
@@ -236,10 +247,10 @@ export default {
 
 .page-number.active {
     background: var(--color-primary-element);
-    color: #000;
+    color: var(--color-primary-element-text);
     border-color: var(--color-primary-element);
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(255, 246, 219, 0.6);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.35);
 }
 
 .per-page-selector {
@@ -247,7 +258,7 @@ export default {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 600;
 }
 
@@ -259,27 +270,13 @@ export default {
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .per-page-selector select:focus {
     outline: none;
     border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 2px rgba(48, 116, 191, 0.2);
-}
-
-/* Icons für Nextcloud (Fallback wenn Icons nicht verfügbar) */
-.icon-double-left::before {
-    content: '«';
-}
-.icon-previous::before {
-    content: '‹';
-}
-.icon-next::before {
-    content: '›';
-}
-.icon-double-right::before {
-    content: '»';
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-element-rgb), 0.2);
 }
 
 @media (max-width: 768px) {

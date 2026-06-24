@@ -2,7 +2,8 @@
     <div class="modal-overlay" @click.self="$emit('cancel')">
         <div class="confirm-dialog" :class="{ danger }">
             <div class="dialog-icon">
-                <span :class="danger ? 'icon-error' : 'icon-info'"></span>
+                <AlertCircle v-if="danger" :size="28" />
+                <InformationOutline v-else :size="28" />
             </div>
             <h3>{{ title }}</h3>
             <p>{{ message }}</p>
@@ -19,8 +20,16 @@
 </template>
 
 <script>
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+
 export default {
     name: 'ConfirmDialog',
+
+    components: {
+        AlertCircle,
+        InformationOutline
+    },
 
     props: {
         title: {
@@ -64,13 +73,13 @@ export default {
 }
 
 .confirm-dialog {
-    background: #fff;
+    background: var(--color-main-background);
     border-radius: 12px;
     padding: 30px;
     width: 100%;
     max-width: 400px;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px var(--color-box-shadow);
 }
 
 .dialog-icon {
@@ -80,19 +89,16 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     border-radius: 50%;
+    color: var(--color-primary-element);
 }
 
 .confirm-dialog.danger .dialog-icon {
-    background: rgba(227, 56, 80, 0.1);
+    background: rgba(var(--color-error-rgb), 0.1);
 }
 
-.dialog-icon [class^='icon-'] {
-    font-size: 28px;
-}
-
-.confirm-dialog.danger .dialog-icon [class^='icon-'] {
+.confirm-dialog.danger .dialog-icon {
     color: var(--color-error);
 }
 
@@ -100,13 +106,13 @@ export default {
     margin: 0 0 12px;
     font-size: 18px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .confirm-dialog p {
     margin: 0 0 25px;
     font-size: 14px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     line-height: 1.5;
 }
 
@@ -123,28 +129,28 @@ export default {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .cancel-button {
     background: transparent;
     border: 2px solid var(--color-border);
-    color: #333;
+    color: var(--color-main-text);
 }
 
 .cancel-button:hover {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.3);
+    background: var(--color-background-hover);
+    border-color: var(--color-border-maxcontrast);
 }
 
 .confirm-button {
     background: var(--color-primary-element);
     border: none;
-    color: #fff;
+    color: var(--color-primary-element-text);
 }
 
 .confirm-button:hover {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
 }
 
 .confirm-button.danger {
@@ -152,6 +158,6 @@ export default {
 }
 
 .confirm-button.danger:hover {
-    background: #c0392b;
+    background: var(--color-error-hover);
 }
 </style>

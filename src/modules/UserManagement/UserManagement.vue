@@ -962,11 +962,9 @@ export default {
 }
 
 .critical-warning .warning-icon {
-    font-size: 64px;
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: #fff !important;
-    filter: brightness(0) invert(1);
+    color: #fff;
 }
 
 @keyframes pulse {
@@ -1010,14 +1008,14 @@ export default {
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .contact-button:hover {
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
 }
 
 /* WARNING BANNER (80%+) */
@@ -1038,21 +1036,8 @@ export default {
 }
 
 .warning-banner .warning-icon {
-    font-size: 48px;
     flex-shrink: 0;
-    opacity: 1;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-    background-size: 48px 48px;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 48px;
-    height: 48px;
-    display: inline-block;
-}
-
-.warning-banner .warning-icon::before {
-    content: '';
-    display: none;
+    color: #fff;
 }
 
 .warning-banner .warning-text {
@@ -1077,18 +1062,13 @@ export default {
     background: #fff;
     color: var(--color-warning);
     border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.contact-button.secondary .icon-external {
-    color: var(--color-warning) !important;
-    opacity: 1;
+    box-shadow: 0 2px 6px var(--color-box-shadow);
 }
 
 .contact-button.secondary:hover {
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px var(--color-box-shadow);
 }
 
 /* License Status Badge Colors */
@@ -1099,22 +1079,15 @@ export default {
     font-weight: 600;
 }
 
-.license-status.license-warning .icon-quota {
-    color: #fff !important;
-    opacity: 1;
-    filter: brightness(0) invert(1);
+.license-status.license-warning .material-design-icon,
+.license-status.license-critical .material-design-icon {
+    color: #fff;
 }
 
 .license-status.license-critical {
     background: var(--color-error);
     color: #fff;
     border: 1px solid var(--color-error);
-}
-
-.license-status.license-critical .icon-quota {
-    color: #fff;
-    opacity: 1;
-    filter: brightness(0) invert(1);
 }
 
 /* Responsive Design */

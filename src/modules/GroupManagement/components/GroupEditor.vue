@@ -4,7 +4,7 @@
         <div class="editor-header">
             <div class="header-left">
                 <button class="back-button" @click="$emit('close')">
-                    <span class="icon-history"></span>
+                    <ArrowLeft :size="18" />
                     {{ t('souvera_central', 'Zurück zur Übersicht') }}
                 </button>
                 <h2>
@@ -85,7 +85,7 @@
 
                     <!-- Loading State -->
                     <div v-if="loadingUsers" class="members-loading">
-                        <span class="icon-loading-small"></span>
+                        <NcLoadingIcon :size="16" />
                         {{ t('souvera_central', 'Lade Benutzer...') }}
                     </div>
 
@@ -115,7 +115,7 @@
                                         )
                                     "
                                 >
-                                    <span class="icon-password"></span>
+                                    <Lock :size="14" />
                                 </span>
                             </label>
                         </div>
@@ -127,7 +127,7 @@
 
                 <!-- Info-Box für geschützte Gruppen -->
                 <div v-if="isProtected" class="info-box warning">
-                    <span class="icon-password"></span>
+                    <Lock :size="20" />
                     <div class="info-content">
                         <strong>{{ t('souvera_central', 'Systemgruppe') }}</strong>
                         <p>
@@ -147,7 +147,7 @@
                         {{ t('souvera_central', 'Abbrechen') }}
                     </button>
                     <button type="submit" class="primary" :disabled="!isFormValid || saving">
-                        <span v-if="saving" class="icon-loading-small"></span>
+                        <NcLoadingIcon v-if="saving" :size="16" />
                         <template v-if="isEditMode">
                             {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
                         </template>
@@ -181,12 +181,18 @@ import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import ConfirmationModal from '../../../components/ConfirmationModal.vue'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import Lock from 'vue-material-design-icons/Lock.vue'
 
 export default {
     name: 'GroupEditor',
 
     components: {
-        ConfirmationModal
+        ConfirmationModal,
+        NcLoadingIcon,
+        ArrowLeft,
+        Lock
     },
 
     props: {
@@ -554,7 +560,7 @@ export default {
     gap: 8px;
     background: var(--color-main-background);
     border: 1.5px solid var(--color-border);
-    color: #000;
+    color: var(--color-main-text);
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
@@ -570,18 +576,16 @@ export default {
     transform: translateX(-2px);
 }
 
-.back-button [class^='icon-'],
-.back-button [class*=' icon-'] {
-    font-size: 16px;
-    color: #000 !important;
-    opacity: 1 !important;
+.back-button .material-design-icon {
+    color: var(--color-main-text);
+    opacity: 1;
 }
 
 .editor-header h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 /* Content */
@@ -608,7 +612,7 @@ export default {
     display: block;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .form-group label.required::after {
@@ -618,7 +622,7 @@ export default {
 
 .member-count {
     font-weight: normal;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-size: 14px;
 }
 
@@ -634,7 +638,7 @@ export default {
     box-sizing: border-box;
     transition: all 0.2s;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 500;
 }
 
@@ -642,8 +646,8 @@ export default {
 .form-group select:focus {
     outline: none;
     border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.3);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.3);
+    background: var(--color-main-background);
 }
 
 .form-group input.error {
@@ -651,7 +655,7 @@ export default {
 }
 
 .form-group input:disabled {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -660,7 +664,7 @@ export default {
 .help-text {
     margin: 6px 0 0;
     font-size: 14px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 
@@ -686,22 +690,22 @@ export default {
     border-radius: 6px;
     font-size: 15px;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 500;
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.2);
+    background: var(--color-main-background);
 }
 
 /* Members Selector */
 .members-loading {
     padding: 20px;
     text-align: center;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -727,7 +731,7 @@ export default {
 }
 
 .member-checkbox:hover {
-    background: rgba(48, 116, 191, 0.1);
+    background: rgba(var(--color-primary-element-rgb), 0.1);
 }
 
 .member-checkbox input[type='checkbox'] {
@@ -751,19 +755,19 @@ export default {
 .member-name {
     font-weight: 700;
     font-size: 15px;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .member-email {
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 
 .no-users-found {
     padding: 20px;
     text-align: center;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 600;
 }
 
@@ -781,8 +785,7 @@ export default {
     border: 1px solid var(--color-warning);
 }
 
-.info-box .icon-password {
-    font-size: 24px;
+.info-box .material-design-icon {
     flex-shrink: 0;
     opacity: 0.8;
 }
@@ -826,15 +829,15 @@ export default {
 }
 
 .form-actions button.primary {
-    background: #28a745;
+    background: var(--color-success);
     color: #fff;
-    border: 2px solid #28a745;
+    border: 2px solid var(--color-success);
     box-shadow: 0 4px 16px rgba(40, 167, 69, 0.4);
 }
 
 .form-actions button.primary:hover:not(:disabled) {
-    background: #34d058;
-    border-color: #34d058;
+    background: var(--color-success-hover);
+    border-color: var(--color-success-hover);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
 }
@@ -842,7 +845,7 @@ export default {
 .form-actions button.primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    background: #ccc;
+    background: var(--color-background-dark);
     border-color: #ccc;
     box-shadow: none;
 }
@@ -850,7 +853,7 @@ export default {
 .form-actions button.secondary {
     background: var(--color-main-background);
     border: 2px solid var(--color-border);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 600;
 }
 
@@ -982,8 +985,8 @@ export default {
         padding: 12px 15px;
     }
 
-    .info-box .icon-password {
-        font-size: 20px;
+    .info-box .material-design-icon {
+        opacity: 0.8;
     }
 
     .info-content strong {

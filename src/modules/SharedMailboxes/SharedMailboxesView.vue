@@ -8,7 +8,7 @@
                     class="license-status"
                     :class="{ 'license-warning': isMailboxWarning, 'license-critical': isMailboxLimitReached }"
                 >
-                    <span class="icon-shared"></span>
+                    <EmailMultiple :size="16" />
                     <span class="license-info">{{ mailboxes.length }} von {{ maxMailboxes }} Postfächer</span>
                 </div>
             </div>
@@ -18,7 +18,7 @@
                 :title="isMailboxLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
                 @click="showCreateModal = true"
             >
-                <span class="icon-add"></span>
+                <Plus :size="18" />
                 {{ t('souvera_central', 'Neues Postfach') }}
             </button>
         </div>
@@ -26,7 +26,7 @@
         <!-- KRITISCHES WARNING: Limit erreicht -->
         <div v-if="isMailboxLimitReached" class="critical-warning">
             <div class="warning-content">
-                <span class="icon-error warning-icon"></span>
+                <AlertCircle :size="36" class="warning-icon" />
                 <div class="warning-text">
                     <h3>{{ t('souvera_central', 'Limit erreicht!') }}</h3>
                     <p>
@@ -40,7 +40,7 @@
                     </p>
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button">
-                    <span class="icon-external"></span>
+                    <OpenInNew :size="16" />
                     {{ t('souvera_central', 'Limit erweitern') }}
                 </a>
             </div>
@@ -49,7 +49,7 @@
         <!-- WARNING: Limit bald erreicht -->
         <div v-else-if="isMailboxWarning" class="warning-banner">
             <div class="warning-content">
-                <span class="icon-error warning-icon"></span>
+                <AlertCircle :size="36" class="warning-icon" />
                 <div class="warning-text">
                     <h3>{{ t('souvera_central', 'Limit bald erreicht') }}</h3>
                     <p>
@@ -63,7 +63,7 @@
                     </p>
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button secondary">
-                    <span class="icon-external"></span>
+                    <OpenInNew :size="16" />
                     {{ t('souvera_central', 'Kontakt') }}
                 </a>
             </div>
@@ -71,25 +71,25 @@
 
         <!-- Stalwart Status Warning -->
         <div v-if="!stalwartAvailable && !loading" class="stalwart-warning">
-            <span class="icon-error"></span>
+            <AlertCircle :size="18" />
             <span>{{ t('souvera_central', 'Mail-Server nicht erreichbar. Shared Mailbox Verwaltung nicht verfügbar.') }}</span>
         </div>
 
         <!-- Loading -->
         <div v-if="loading" class="loading-container">
-            <span class="icon-loading"></span>
+            <NcLoadingIcon :size="32" />
             <span>{{ t('souvera_central', 'Lade Postfächer...') }}</span>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="stalwartAvailable && mailboxes.length === 0" class="empty-state">
             <div class="empty-icon">
-                <span class="icon-shared"></span>
+                <EmailMultiple :size="48" />
             </div>
             <h3>{{ t('souvera_central', 'Keine geteilten Postfächer') }}</h3>
             <p>{{ t('souvera_central', 'Erstellen Sie ein geteiltes Postfach für Ihr Team.') }}</p>
             <button class="primary" @click="showCreateModal = true">
-                <span class="icon-add"></span>
+                <Plus :size="18" />
                 {{ t('souvera_central', 'Erstes Postfach erstellen') }}
             </button>
         </div>
@@ -151,6 +151,11 @@ import SharedMailboxCard from './components/SharedMailboxCard.vue'
 import SharedMailboxModal from './components/SharedMailboxModal.vue'
 import MembersModal from './components/MembersModal.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
 export default {
     name: 'SharedMailboxesView',
@@ -159,7 +164,12 @@ export default {
         SharedMailboxCard,
         SharedMailboxModal,
         MembersModal,
-        ConfirmDialog
+        ConfirmDialog,
+        NcLoadingIcon,
+        EmailMultiple,
+        Plus,
+        AlertCircle,
+        OpenInNew
     },
 
     data() {
@@ -401,13 +411,14 @@ export default {
     gap: 8px;
     padding: 8px 16px;
     background: var(--color-main-background);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
 }
 
-.license-status .icon-shared {
-    opacity: 0.7;
+.license-status .material-design-icon {
+    opacity: 0.8;
 }
 
 .license-status.license-warning {
@@ -417,22 +428,15 @@ export default {
     font-weight: 600;
 }
 
-.license-status.license-warning .icon-shared {
-    color: #fff !important;
+.license-status.license-warning .material-design-icon,
+.license-status.license-critical .material-design-icon {
     opacity: 1;
-    filter: brightness(0) invert(1);
 }
 
 .license-status.license-critical {
     background: var(--color-error);
     color: #fff;
     border: 1px solid var(--color-error);
-}
-
-.license-status.license-critical .icon-shared {
-    color: #fff;
-    opacity: 1;
-    filter: brightness(0) invert(1);
 }
 
 /* KRITISCHES WARNING BANNER */
@@ -442,7 +446,7 @@ export default {
     background: var(--color-error);
     border: 2px solid var(--color-error);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
 }
 
 .critical-warning .warning-content {
@@ -453,11 +457,8 @@ export default {
 }
 
 .critical-warning .warning-icon {
-    font-size: 64px;
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: #fff !important;
-    filter: brightness(0) invert(1);
 }
 
 @keyframes pulse {
@@ -495,7 +496,7 @@ export default {
     background: var(--color-warning);
     border: 2px solid var(--color-warning);
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .warning-banner .warning-content {
@@ -506,21 +507,7 @@ export default {
 }
 
 .warning-banner .warning-icon {
-    font-size: 48px;
     flex-shrink: 0;
-    opacity: 1;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-    background-size: 48px 48px;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 48px;
-    height: 48px;
-    display: inline-block;
-}
-
-.warning-banner .warning-icon::before {
-    content: '';
-    display: none;
 }
 
 .warning-banner .warning-text {
@@ -547,7 +534,7 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: #fff;
+    background: var(--color-main-background);
     color: var(--color-error);
     border: 2px solid #fff;
     border-radius: 6px;
@@ -560,27 +547,22 @@ export default {
 }
 
 .contact-button:hover {
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
 }
 
 .contact-button.secondary {
-    background: #fff;
+    background: var(--color-main-background);
     color: var(--color-warning);
     border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.contact-button.secondary .icon-external {
-    color: var(--color-warning) !important;
-    opacity: 1;
+    box-shadow: 0 2px 6px var(--color-box-shadow);
 }
 
 .contact-button.secondary:hover {
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px var(--color-box-shadow);
 }
 
 .stalwart-warning {
@@ -588,8 +570,8 @@ export default {
     align-items: center;
     gap: 12px;
     padding: 15px 20px;
-    background: rgba(227, 56, 80, 0.1);
-    border: 1px solid rgba(227, 56, 80, 0.3);
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
     border-radius: 8px;
     color: var(--color-error);
     font-size: 14px;
@@ -602,7 +584,7 @@ export default {
     justify-content: center;
     gap: 12px;
     padding: 60px 20px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-size: 16px;
 }
 
@@ -614,7 +596,7 @@ export default {
     padding: 60px 20px;
     text-align: center;
     background: var(--color-main-background);
-    border: 2px dashed rgba(0, 0, 0, 0.15);
+    border: 2px dashed var(--color-border);
     border-radius: 12px;
 }
 
@@ -624,26 +606,26 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     border-radius: 50%;
     margin-bottom: 20px;
+    color: var(--color-text-maxcontrast);
 }
 
-.empty-icon [class^='icon-'] {
-    font-size: 36px;
-    opacity: 0.5;
+.empty-icon .material-design-icon {
+    opacity: 0.6;
 }
 
 .empty-state h3 {
     margin: 0 0 10px;
     font-size: 18px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .empty-state p {
     margin: 0 0 20px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-size: 14px;
 }
 

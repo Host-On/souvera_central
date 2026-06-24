@@ -4,7 +4,7 @@
         <div class="editor-header">
             <div class="header-left">
                 <button class="back-button" @click="$emit('close')">
-                    <span class="icon-history"></span>
+                    <ArrowLeft :size="18" />
                     {{ t('souvera_central', 'Zurück zur Übersicht') }}
                 </button>
                 <h2>
@@ -88,7 +88,7 @@
                         v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
                         class="success-message"
                     >
-                        <span class="icon-checkmark"></span>
+                        <Check :size="16" />
                         {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
                     </p>
                     <p v-if="isEditMode" class="help-text">
@@ -157,7 +157,8 @@
                 <div v-if="isEditMode" class="form-group">
                     <label>{{ t('souvera_central', 'Status') }}</label>
                     <div class="status-display">
-                        <span :class="['status-icon', formData.enabled ? 'icon-checkmark-color' : 'icon-close']"></span>
+                        <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
+                        <CloseCircle v-else :size="20" class="status-icon status-inactive" />
                         <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
                             {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
                         </span>
@@ -170,7 +171,8 @@
                 <!-- Gruppen Zone (Collapsible) -->
                 <div class="groups-zone collapsible">
                     <button type="button" class="collapsible-header" @click="groupsExpanded = !groupsExpanded">
-                        <span :class="groupsExpanded ? 'icon-triangle-s' : 'icon-triangle-e'"></span>
+                        <ChevronDown v-if="groupsExpanded" :size="20" />
+                        <ChevronRight v-else :size="20" />
                         <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
                         <span class="optional-badge">{{ t('souvera_central', 'Optional') }}</span>
                     </button>
@@ -216,8 +218,9 @@
                             :disabled="togglingStatus"
                             @click="toggleUserStatus"
                         >
-                            <span v-if="togglingStatus" class="icon-loading-small"></span>
-                            <span v-else :class="formData.enabled ? 'icon-close' : 'icon-checkmark'"></span>
+                            <NcLoadingIcon v-if="togglingStatus" :size="16" />
+                            <Close v-else-if="formData.enabled" :size="16" />
+                            <Check v-else :size="16" />
                             {{
                                 togglingStatus
                                     ? t('souvera_central', 'Speichert...')
@@ -233,8 +236,8 @@
                             :disabled="resendingEmail"
                             @click="resendWelcomeEmail"
                         >
-                            <span v-if="resendingEmail" class="icon-loading-small"></span>
-                            <span v-else class="icon-mail"></span>
+                            <NcLoadingIcon v-if="resendingEmail" :size="16" />
+                            <Email v-else :size="16" />
                             {{
                                 resendingEmail
                                     ? t('souvera_central', 'Sendet...')
@@ -248,8 +251,8 @@
                             :disabled="wipingDevices"
                             @click="wipeDevices"
                         >
-                            <span v-if="wipingDevices" class="icon-loading-small"></span>
-                            <span v-else class="icon-delete"></span>
+                            <NcLoadingIcon v-if="wipingDevices" :size="16" />
+                            <Delete v-else :size="16" />
                             {{
                                 wipingDevices
                                     ? t('souvera_central', 'Trennt...')
@@ -266,8 +269,8 @@
                             "
                             @click="deleteUser"
                         >
-                            <span v-if="deletingUser" class="icon-loading-small"></span>
-                            <span v-else class="icon-delete"></span>
+                            <NcLoadingIcon v-if="deletingUser" :size="16" />
+                            <Delete v-else :size="16" />
                             {{
                                 deletingUser ? t('souvera_central', 'Löscht...') : t('souvera_central', 'Konto löschen')
                             }}
@@ -281,7 +284,7 @@
                         {{ t('souvera_central', 'Abbrechen') }}
                     </button>
                     <button type="submit" class="primary" :disabled="!isFormValid || saving">
-                        <span v-if="saving" class="icon-loading-small"></span>
+                        <NcLoadingIcon v-if="saving" :size="16" />
                         <template v-if="isEditMode">
                             {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
                         </template>
@@ -320,6 +323,16 @@ import ManagerSelector from './ManagerSelector.vue'
 import GroupSelector from './GroupSelector.vue'
 import ConfirmationModal from '../../../components/ConfirmationModal.vue'
 import AliasManager from './AliasManager.vue'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import Check from 'vue-material-design-icons/Check.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import Close from 'vue-material-design-icons/Close.vue'
+import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
+import Email from 'vue-material-design-icons/Email.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
     name: 'UserEditor',
@@ -328,7 +341,17 @@ export default {
         ManagerSelector,
         GroupSelector,
         ConfirmationModal,
-        AliasManager
+        AliasManager,
+        NcLoadingIcon,
+        ArrowLeft,
+        Check,
+        CheckCircle,
+        CloseCircle,
+        Close,
+        ChevronDown,
+        ChevronRight,
+        Email,
+        Delete
     },
 
     props: {
@@ -1048,7 +1071,7 @@ export default {
     gap: 8px;
     background: var(--color-main-background);
     border: 1.5px solid var(--color-border);
-    color: #000;
+    color: var(--color-main-text);
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
@@ -1064,18 +1087,16 @@ export default {
     transform: translateX(-2px);
 }
 
-.back-button [class^='icon-'],
-.back-button [class*=' icon-'] {
-    font-size: 16px;
-    color: #000 !important;
-    opacity: 1 !important;
+.back-button .material-design-icon {
+    color: var(--color-main-text);
+    opacity: 1;
 }
 
 .editor-header h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 /* Content */
@@ -1102,7 +1123,7 @@ export default {
     display: block;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .form-group label.required::after {
@@ -1124,7 +1145,7 @@ export default {
     box-sizing: border-box;
     transition: all 0.2s;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 500;
 }
 
@@ -1132,8 +1153,8 @@ export default {
 .form-group select:focus {
     outline: none;
     border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.3);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.3);
+    background: var(--color-main-background);
 }
 
 .form-group input.error {
@@ -1145,7 +1166,7 @@ export default {
 }
 
 .form-group input:disabled {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -1189,7 +1210,7 @@ export default {
 
 .email-separator {
     font-weight: 700;
-    color: #000;
+    color: var(--color-main-text);
     font-size: 18px;
 }
 
@@ -1200,7 +1221,7 @@ export default {
     border: 2px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     font-size: 16px;
     line-height: 1.5;
     height: 60px;
@@ -1214,8 +1235,8 @@ export default {
 .email-domain-select:focus {
     outline: none;
     border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.3);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.3);
+    background: var(--color-main-background);
 }
 
 .email-domain-select.error {
@@ -1226,7 +1247,7 @@ export default {
 .help-text {
     margin: 6px 0 0;
     font-size: 14px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 
@@ -1270,15 +1291,11 @@ export default {
     border: 1px solid var(--color-border);
 }
 
-.status-display .status-icon {
-    font-size: 24px;
-}
-
-.status-display .icon-checkmark-color {
+.status-display .status-icon.status-active {
     color: var(--color-success);
 }
 
-.status-display .icon-close {
+.status-display .status-icon.status-inactive {
     color: var(--color-error);
 }
 
@@ -1396,15 +1413,15 @@ export default {
 }
 
 .form-actions button.primary {
-    background: #28a745;
+    background: var(--color-success);
     color: #fff;
-    border: 2px solid #28a745;
+    border: 2px solid var(--color-success);
     box-shadow: 0 4px 16px rgba(40, 167, 69, 0.4);
 }
 
 .form-actions button.primary:hover:not(:disabled) {
-    background: #34d058;
-    border-color: #34d058;
+    background: var(--color-success-hover);
+    border-color: var(--color-success-hover);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
 }
@@ -1412,7 +1429,7 @@ export default {
 .form-actions button.primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    background: #ccc;
+    background: var(--color-background-dark);
     border-color: #ccc;
     box-shadow: none;
 }
@@ -1420,7 +1437,7 @@ export default {
 .form-actions button.secondary {
     background: var(--color-main-background);
     border: 2px solid var(--color-border);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 600;
 }
 
@@ -1431,8 +1448,8 @@ export default {
 }
 
 button.primary {
-    background-color: #28a745;
-    border: 2px solid #28a745;
+    background-color: var(--color-success);
+    border: 2px solid var(--color-success);
     color: #fff;
 }
 
@@ -1440,9 +1457,9 @@ button.primary {
 .danger-zone {
     margin-top: 40px;
     padding: 25px;
-    border: 2px solid rgba(227, 56, 80, 0.3);
+    border: 2px solid rgba(var(--color-error-rgb), 0.3);
     border-radius: 6px;
-    background: rgba(227, 56, 80, 0.05);
+    background: rgba(var(--color-error-rgb), 0.05);
     position: relative;
     z-index: 1;
 }
@@ -1479,20 +1496,13 @@ button.primary {
     cursor: not-allowed;
 }
 
-.action-button [class^='icon-'],
-.action-button [class*=' icon-'] {
-    color: white !important;
-    filter: invert(1) brightness(100) !important;
-    opacity: 1 !important;
-}
-
 .action-button.secondary {
     background: var(--color-primary-element);
     color: white;
 }
 
 .action-button.secondary:hover:not(:disabled) {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
     transform: translateY(-2px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
 }
@@ -1516,12 +1526,6 @@ button.primary {
 
 .action-button.warning * {
     color: #fff !important;
-}
-
-.action-button.warning [class^='icon-'],
-.action-button.warning [class*=' icon-'] {
-    color: #fff !important;
-    filter: brightness(0) invert(1) !important;
 }
 
 .action-button.warning:hover:not(:disabled) {

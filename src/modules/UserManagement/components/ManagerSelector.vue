@@ -15,7 +15,7 @@
                 @keydown.enter.prevent="selectHighlighted"
                 @keydown.esc="closeDropdown"
             />
-            <span v-if="searching" class="icon-loading-small input-icon"></span>
+            <NcLoadingIcon v-if="searching" :size="18" class="input-icon" />
 
             <!-- Dropdown mit Suchergebnissen -->
             <div v-if="showDropdown && (filteredUsers.length > 0 || searchQuery.length >= 2)" class="dropdown">
@@ -27,7 +27,7 @@
                     @mouseenter="highlightedIndex = index"
                 >
                     <div class="user-info">
-                        <span class="icon-user"></span>
+                        <Account :size="20" />
                         <div class="user-details">
                             <div class="user-name">{{ user.displayName }}</div>
                             <div class="user-id">{{ user.id }}</div>
@@ -39,7 +39,7 @@
                     v-if="filteredUsers.length === 0 && searchQuery.length >= 2 && !searching"
                     class="dropdown-item empty"
                 >
-                    <span class="icon-info"></span>
+                    <InformationOutline :size="16" />
                     {{ t('souvera_central', 'Keine Benutzer gefunden') }}
                 </div>
             </div>
@@ -48,13 +48,13 @@
         <!-- Anzeige des ausgewählten Managers -->
         <div v-if="selectedUser" class="selected-manager">
             <div class="manager-card">
-                <span class="icon-user"></span>
+                <Account :size="24" />
                 <div class="manager-details">
                     <div class="manager-name">{{ selectedUser.displayName }}</div>
                     <div class="manager-id">{{ selectedUser.id }}</div>
                 </div>
                 <button type="button" class="remove-button" @click="clearSelection">
-                    <span class="icon-close"></span>
+                    <Close :size="16" />
                 </button>
             </div>
         </div>
@@ -65,9 +65,20 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import Account from 'vue-material-design-icons/Account.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 export default {
     name: 'ManagerSelector',
+
+    components: {
+        NcLoadingIcon,
+        Account,
+        InformationOutline,
+        Close
+    },
 
     props: {
         modelValue: {
@@ -281,9 +292,9 @@ export default {
     gap: 12px;
 }
 
-.user-info .icon-user {
-    font-size: 20px;
+.user-info .material-design-icon {
     opacity: 0.7;
+    color: var(--color-text-maxcontrast);
 }
 
 .user-details {
@@ -317,9 +328,9 @@ export default {
     border-radius: var(--border-radius);
 }
 
-.manager-card .icon-user {
-    font-size: 24px;
+.manager-card .material-design-icon {
     opacity: 0.7;
+    color: var(--color-text-maxcontrast);
 }
 
 .manager-details {

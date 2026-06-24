@@ -5,7 +5,7 @@
                 <h3>{{ t('souvera_central', 'Mitglieder verwalten') }}</h3>
                 <span class="mailbox-name">{{ mailbox.description || mailbox.name }}</span>
                 <button class="close-button" @click="$emit('close')">
-                    <span class="icon-close"></span>
+                    <Close :size="20" />
                 </button>
             </div>
 
@@ -40,8 +40,8 @@
                             :disabled="!selectedUser || adding"
                             @click="addMember"
                         >
-                            <span v-if="adding" class="icon-loading-small"></span>
-                            <span v-else class="icon-add"></span>
+                            <NcLoadingIcon v-if="adding" :size="18" />
+                            <Plus v-else :size="18" />
                         </button>
                     </div>
                     <p v-if="searchQuery.length >= 2 && searchResults.length === 0 && !adding" class="hint-text">
@@ -58,7 +58,7 @@
                     <label>{{ t('souvera_central', 'Aktuelle Mitglieder') }} ({{ members.length }})</label>
 
                     <div v-if="loading" class="loading">
-                        <span class="icon-loading-small"></span>
+                        <NcLoadingIcon :size="24" />
                     </div>
 
                     <div v-else-if="members.length === 0" class="no-members">
@@ -68,7 +68,7 @@
                     <div v-else class="members-list">
                         <div v-for="member in members" :key="member" class="member-item">
                             <div class="member-info">
-                                <span class="icon-user"></span>
+                                <Account :size="18" />
                                 <span class="member-email">{{ member }}</span>
                             </div>
                             <button
@@ -77,8 +77,8 @@
                                 :title="t('souvera_central', 'Entfernen')"
                                 @click="removeMember(member)"
                             >
-                                <span v-if="removingMember === member" class="icon-loading-small"></span>
-                                <span v-else class="icon-delete"></span>
+                                <NcLoadingIcon v-if="removingMember === member" :size="16" />
+                                <Delete v-else :size="16" />
                             </button>
                         </div>
                     </div>
@@ -98,9 +98,22 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import Close from 'vue-material-design-icons/Close.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Account from 'vue-material-design-icons/Account.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
     name: 'MembersModal',
+
+    components: {
+        NcLoadingIcon,
+        Close,
+        Plus,
+        Account,
+        Delete
+    },
 
     props: {
         mailbox: {
@@ -267,14 +280,14 @@ export default {
 }
 
 .modal-content {
-    background: #fff;
+    background: var(--color-main-background);
     border-radius: 12px;
     width: 100%;
     max-width: 500px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px var(--color-box-shadow);
 }
 
 .modal-header {
@@ -290,13 +303,13 @@ export default {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .mailbox-name {
     font-size: 13px;
-    color: #666;
-    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-dark);
     padding: 4px 10px;
     border-radius: 10px;
 }
@@ -316,7 +329,7 @@ export default {
 }
 
 .close-button:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--color-background-dark);
 }
 
 .modal-body {
@@ -335,7 +348,7 @@ export default {
     margin-bottom: 10px;
     font-size: 14px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .add-member-form {
@@ -366,10 +379,10 @@ export default {
     top: 100%;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--color-main-background);
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--color-box-shadow);
     z-index: 100;
     max-height: 200px;
     overflow-y: auto;
@@ -400,12 +413,12 @@ export default {
 .search-result-item .user-name {
     font-size: 14px;
     font-weight: 500;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .search-result-item .user-email {
     font-size: 12px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
 }
 
 .add-button {
@@ -422,16 +435,12 @@ export default {
 }
 
 .add-button:hover:not(:disabled) {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
 }
 
 .add-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.add-button [class^='icon-'] {
-    filter: invert(1) brightness(100);
 }
 
 .selected-user {
@@ -443,7 +452,7 @@ export default {
 .hint-text {
     margin: 8px 0 0;
     font-size: 12px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-style: italic;
 }
 
@@ -462,8 +471,8 @@ export default {
 .no-members {
     padding: 20px;
     text-align: center;
-    color: #666;
-    background: rgba(0, 0, 0, 0.03);
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-hover);
     border-radius: 6px;
 }
 
@@ -493,7 +502,7 @@ export default {
 
 .member-email {
     font-size: 14px;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .remove-button {
@@ -511,7 +520,7 @@ export default {
 }
 
 .remove-button:hover:not(:disabled) {
-    background: rgba(227, 56, 80, 0.1);
+    background: rgba(var(--color-error-rgb), 0.1);
 }
 
 .remove-button:disabled {
@@ -539,6 +548,6 @@ export default {
 }
 
 .done-button:hover {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
 }
 </style>

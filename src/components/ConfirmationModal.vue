@@ -3,14 +3,14 @@
         <div class="modal-container" :class="typeClass">
             <div class="modal-header">
                 <div class="modal-icon" :class="`icon-${type}`">
-                    <span v-if="type === 'warning'" class="icon-error"></span>
-                    <span v-else-if="type === 'danger'" class="icon-close"></span>
-                    <span v-else-if="type === 'info'" class="icon-info"></span>
-                    <span v-else class="icon-checkmark"></span>
+                    <AlertCircle v-if="type === 'warning'" :size="24" />
+                    <AlertOctagon v-else-if="type === 'danger'" :size="24" />
+                    <InformationOutline v-else-if="type === 'info'" :size="24" />
+                    <CheckCircle v-else :size="24" />
                 </div>
                 <h2>{{ title }}</h2>
                 <button class="close-button" @click="close">
-                    <span class="icon-close"></span>
+                    <Close :size="20" />
                 </button>
             </div>
 
@@ -32,8 +32,22 @@
 </template>
 
 <script>
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import Close from 'vue-material-design-icons/Close.vue'
+
 export default {
     name: 'ConfirmationModal',
+
+    components: {
+        AlertCircle,
+        AlertOctagon,
+        InformationOutline,
+        CheckCircle,
+        Close
+    },
 
     props: {
         isOpen: {
@@ -285,7 +299,7 @@ export default {
 }
 
 .button.primary:hover {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
 }

@@ -10,7 +10,7 @@
 
         <!-- KRITISCHES WARNING: Limit erreicht -->
         <div v-if="isLimitReached && stalwartAvailable && !loading" class="alias-critical-warning">
-            <span class="icon-error"></span>
+            <AlertCircle :size="16" />
             <span>
                 {{
                     t(
@@ -23,7 +23,7 @@
 
         <!-- WARNING: Limit bald erreicht (80%+) -->
         <div v-else-if="isAliasWarning && stalwartAvailable && !loading" class="alias-warning-banner">
-            <span class="icon-error"></span>
+            <AlertCircle :size="16" />
             <span>
                 {{
                     t(
@@ -37,13 +37,13 @@
 
         <!-- Stalwart Status Warning -->
         <div v-if="!stalwartAvailable && !loading" class="stalwart-warning">
-            <span class="icon-error"></span>
+            <AlertCircle :size="16" />
             <span>{{ t('souvera_central', 'Mail-Server nicht erreichbar. Alias-Verwaltung nicht verfügbar.') }}</span>
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="alias-loading">
-            <span class="icon-loading-small"></span>
+            <NcLoadingIcon :size="20" />
             <span>{{ t('souvera_central', 'Lade Aliase...') }}</span>
         </div>
 
@@ -52,7 +52,7 @@
             <!-- Primary Email (nicht löschbar) -->
             <div class="alias-item primary">
                 <div class="alias-info">
-                    <span class="icon-mail"></span>
+                    <Email :size="16" />
                     <span class="alias-email">{{ primaryEmail }}</span>
                     <span class="primary-badge">{{ t('souvera_central', 'Primär') }}</span>
                 </div>
@@ -82,7 +82,7 @@
                         data-testid="mailbox-quota-save"
                         @click="saveQuota"
                     >
-                        <span v-if="quotaSaving" class="icon-loading-small"></span>
+                        <NcLoadingIcon v-if="quotaSaving" :size="16" />
                         {{ quotaSaving ? t('souvera_central', 'Speichert…') : t('souvera_central', 'Limit setzen') }}
                     </button>
                 </div>
@@ -93,7 +93,7 @@
             <!-- Alias Liste -->
             <div v-for="alias in aliases" :key="alias" class="alias-item">
                 <div class="alias-info">
-                    <span class="icon-mail"></span>
+                    <Email :size="16" />
                     <span class="alias-email">{{ alias }}</span>
                 </div>
                 <button
@@ -103,14 +103,14 @@
                     :title="t('souvera_central', 'Alias entfernen')"
                     @click="removeAlias(alias)"
                 >
-                    <span v-if="removingAlias === alias" class="icon-loading-small"></span>
-                    <span v-else class="icon-delete"></span>
+                    <NcLoadingIcon v-if="removingAlias === alias" :size="16" />
+                    <Delete v-else :size="16" />
                 </button>
             </div>
 
             <!-- Kein Alias Hinweis -->
             <div v-if="aliases.length === 0" class="no-aliases">
-                <span class="icon-info"></span>
+                <InformationOutline :size="16" />
                 <span>{{ t('souvera_central', 'Keine zusätzlichen Aliase konfiguriert.') }}</span>
             </div>
 
@@ -143,8 +143,8 @@
                         :disabled="!canAddAlias || addingAlias"
                         @click="addAlias"
                     >
-                        <span v-if="addingAlias" class="icon-loading-small"></span>
-                        <span v-else class="icon-add"></span>
+                        <NcLoadingIcon v-if="addingAlias" :size="16" />
+                        <Plus v-else :size="16" />
                         {{ t('souvera_central', 'Hinzufügen') }}
                     </button>
                 </div>
@@ -159,9 +159,24 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import Email from 'vue-material-design-icons/Email.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 
 export default {
     name: 'AliasManager',
+
+    components: {
+        NcLoadingIcon,
+        AlertCircle,
+        Email,
+        InformationOutline,
+        Delete,
+        Plus
+    },
 
     props: {
         userId: {
@@ -498,7 +513,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     padding: 15px 20px;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--color-background-hover);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -506,13 +521,13 @@ export default {
     margin: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .alias-count {
     font-size: 13px;
-    color: #666;
-    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-dark);
     padding: 4px 10px;
     border-radius: 12px;
     font-weight: 500;
@@ -545,10 +560,8 @@ export default {
     border-radius: 0;
 }
 
-.alias-critical-warning .icon-error {
+.alias-critical-warning .material-design-icon {
     flex-shrink: 0;
-    font-size: 24px;
-    filter: brightness(0) invert(1);
     animation: pulse 2s infinite;
 }
 
@@ -575,20 +588,8 @@ export default {
     border-radius: 0;
 }
 
-.alias-warning-banner .icon-error {
+.alias-warning-banner .material-design-icon {
     flex-shrink: 0;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-    background-size: 24px 24px;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 24px;
-    height: 24px;
-    display: inline-block;
-}
-
-.alias-warning-banner .icon-error::before {
-    content: '';
-    display: none;
 }
 
 .stalwart-warning {
@@ -596,12 +597,12 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 15px 20px;
-    background: rgba(227, 56, 80, 0.1);
+    background: rgba(var(--color-error-rgb), 0.1);
     color: var(--color-error);
     font-size: 14px;
 }
 
-.stalwart-warning .icon-error {
+.stalwart-warning .material-design-icon {
     flex-shrink: 0;
 }
 
@@ -610,7 +611,7 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 20px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-size: 14px;
 }
 
@@ -630,8 +631,8 @@ export default {
 }
 
 .alias-item.primary {
-    background: rgba(48, 116, 191, 0.1);
-    border-color: rgba(48, 116, 191, 0.3);
+    background: rgba(var(--color-primary-element-rgb), 0.1);
+    border-color: rgba(var(--color-primary-element-rgb), 0.3);
 }
 
 /* Postfach-Speicherlimit (Quota) */
@@ -726,15 +727,14 @@ export default {
     gap: 10px;
 }
 
-.alias-info .icon-mail {
-    color: #666;
-    font-size: 16px;
+.alias-info .material-design-icon {
+    color: var(--color-text-maxcontrast);
 }
 
 .alias-email {
     font-size: 14px;
     font-weight: 500;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .primary-badge {
@@ -762,7 +762,7 @@ export default {
 }
 
 .alias-remove:hover:not(:disabled) {
-    background: rgba(227, 56, 80, 0.1);
+    background: rgba(var(--color-error-rgb), 0.1);
 }
 
 .alias-remove:disabled {
@@ -775,9 +775,9 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 15px;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--color-background-hover);
     border-radius: 6px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-size: 14px;
     margin-bottom: 15px;
 }
@@ -802,13 +802,13 @@ export default {
     border-radius: 6px;
     font-size: 14px;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .add-alias-input:focus {
     outline: none;
     border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.2);
 }
 
 .add-alias-input.error {
@@ -816,13 +816,13 @@ export default {
 }
 
 .add-alias-input:disabled {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     cursor: not-allowed;
 }
 
 .email-separator {
     font-weight: 700;
-    color: #000;
+    color: var(--color-main-text);
     font-size: 16px;
 }
 
@@ -833,7 +833,7 @@ export default {
     border-radius: 6px;
     font-size: 14px;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     cursor: pointer;
     height: 44px;
 }
@@ -844,7 +844,7 @@ export default {
 }
 
 .add-alias-domain:disabled {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     cursor: not-allowed;
 }
 
@@ -865,17 +865,13 @@ export default {
 }
 
 .add-alias-button:hover:not(:disabled) {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
     transform: translateY(-1px);
 }
 
 .add-alias-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.add-alias-button [class^='icon-'] {
-    filter: invert(1) brightness(100);
 }
 
 .error-message {

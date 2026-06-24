@@ -7,7 +7,7 @@
 
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
-            <div class="icon-loading"></div>
+            <NcLoadingIcon :size="32" />
             <p>{{ t('souvera_central', 'Lade Einstellungen...') }}</p>
         </div>
 
@@ -16,7 +16,7 @@
             <!-- 1. WILLKOMMENS-EMAIL SENDEN -->
             <div class="settings-section">
                 <div class="section-header">
-                    <span class="icon-mail"></span>
+                    <Email :size="22" />
                     <h3>{{ t('souvera_central', 'Willkommens-Email senden') }}</h3>
                 </div>
                 <p class="section-description">
@@ -29,10 +29,8 @@
                         :class="settings.email.send_to_new_users ? 'toggle-active' : 'toggle-inactive'"
                         @click="toggleEmailSending"
                     >
-                        <span
-                            class="toggle-icon"
-                            :class="settings.email.send_to_new_users ? 'icon-checkmark' : 'icon-close'"
-                        ></span>
+                        <Check v-if="settings.email.send_to_new_users" :size="18" class="toggle-icon" />
+                        <Close v-else :size="18" class="toggle-icon" />
                         <span class="toggle-text">
                             {{
                                 settings.email.send_to_new_users
@@ -55,7 +53,7 @@
             <!-- 2. STANDARDEINSTELLUNGEN -->
             <div class="settings-section">
                 <div class="section-header">
-                    <span class="icon-quota"></span>
+                    <Database :size="22" />
                     <h3>{{ t('souvera_central', 'Standardeinstellungen') }}</h3>
                 </div>
                 <p class="section-description">
@@ -64,7 +62,7 @@
 
                 <div class="settings-group">
                     <label class="field-label">
-                        <span class="icon-quota"></span>
+                        <Database :size="16" />
                         {{ t('souvera_central', 'Standard Speicherkontingent') }}
                     </label>
 
@@ -77,12 +75,13 @@
                             :class="{ 'quota-selected': settings.defaults.quota === option.value }"
                             @click="selectQuota(option.value)"
                         >
-                            <span class="quota-icon" :class="option.icon"></span>
+                            <component :is="option.value === 'none' ? 'InfinityIcon' : 'Database'" :size="32" class="quota-icon" />
                             <span class="quota-label">{{ option.label }}</span>
-                            <span
+                            <Check
                                 v-if="settings.defaults.quota === option.value"
-                                class="selected-indicator icon-checkmark"
-                            ></span>
+                                :size="16"
+                                class="selected-indicator"
+                            />
                         </button>
                     </div>
                 </div>
@@ -90,12 +89,12 @@
 
             <!-- Save Indicator -->
             <div v-if="saving" class="save-indicator">
-                <div class="icon-loading-small"></div>
+                <NcLoadingIcon :size="16" />
                 <span>{{ t('souvera_central', 'Speichere...') }}</span>
             </div>
 
             <div v-if="saveSuccess" class="save-indicator success">
-                <span class="icon-checkmark"></span>
+                <Check :size="16" />
                 <span>{{ t('souvera_central', 'Gespeichert') }}</span>
             </div>
         </div>
@@ -106,9 +105,24 @@
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import Email from 'vue-material-design-icons/Email.vue'
+import Check from 'vue-material-design-icons/Check.vue'
+import Close from 'vue-material-design-icons/Close.vue'
+import Database from 'vue-material-design-icons/Database.vue'
+import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 
 export default {
     name: 'Settings',
+
+    components: {
+        NcLoadingIcon,
+        Email,
+        Check,
+        Close,
+        Database,
+        InfinityIcon
+    },
 
     data() {
         return {
@@ -276,8 +290,7 @@ export default {
     margin-bottom: 10px;
 }
 
-.section-header span[class^='icon-'] {
-    font-size: 24px;
+.section-header .material-design-icon {
     color: var(--color-primary-element);
 }
 
@@ -323,12 +336,11 @@ export default {
 }
 
 .toggle-button.toggle-active:hover {
-    background: #0ea855;
+    background: var(--color-success-hover);
 }
 
 .toggle-button.toggle-active .toggle-icon {
     color: #fff;
-    filter: brightness(0) invert(1);
 }
 
 .toggle-button.toggle-inactive {
@@ -338,16 +350,14 @@ export default {
 }
 
 .toggle-button.toggle-inactive:hover {
-    background: #c42d3f;
+    background: var(--color-error-hover);
 }
 
 .toggle-button.toggle-inactive .toggle-icon {
     color: #fff;
-    filter: brightness(0) invert(1);
 }
 
 .toggle-icon {
-    font-size: 22px;
     opacity: 1;
 }
 
@@ -406,8 +416,7 @@ export default {
     font-size: 15px;
 }
 
-.field-label .icon-quota {
-    font-size: 18px;
+.field-label .material-design-icon {
     opacity: 0.8;
 }
 
@@ -443,14 +452,13 @@ export default {
 }
 
 .quota-option.quota-selected {
-    background: rgba(255, 246, 219, 0.95);
+    background: var(--color-primary-element-light);
     border-color: var(--color-primary-element);
     border-width: 3px;
-    box-shadow: 0 4px 16px rgba(48, 116, 191, 0.3);
+    box-shadow: 0 4px 16px rgba(var(--color-primary-element-rgb), 0.3);
 }
 
 .quota-icon {
-    font-size: 36px;
     opacity: 0.8;
     color: var(--color-primary-element);
 }
@@ -463,7 +471,7 @@ export default {
 .quota-label {
     font-size: 15px;
     font-weight: 700;
-    color: #000;
+    color: var(--color-main-text);
     text-align: center;
 }
 

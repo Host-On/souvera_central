@@ -8,8 +8,8 @@
                 class="group-pill"
                 :class="mode === 'admin' ? 'admin-pill' : 'member-pill'"
             >
-                <span v-if="mode === 'admin'" class="pill-icon icon-password"></span>
-                <span v-else class="pill-icon icon-group"></span>
+                <ShieldAccount v-if="mode === 'admin'" :size="14" class="pill-icon" />
+                <AccountGroup v-else :size="14" class="pill-icon" />
                 <span class="pill-label">{{ getGroupDisplayName(groupId) }}</span>
                 <button
                     v-if="!(isAdminUser && mode === 'admin' && groupId === 'admin')"
@@ -17,21 +17,21 @@
                     :title="t('souvera_central', 'Entfernen')"
                     @click="removeGroup(groupId)"
                 >
-                    <span class="icon-close"></span>
+                    <Close :size="14" />
                 </button>
                 <span
                     v-else
                     class="pill-locked"
                     :title="t('souvera_central', 'Standard-Administrator kann nicht aus Admin-Gruppe entfernt werden')"
                 >
-                    <span class="icon-password"></span>
+                    <Lock :size="14" />
                 </span>
             </div>
         </div>
 
         <!-- Empty State -->
         <div v-else class="empty-state">
-            <span class="empty-icon icon-group"></span>
+            <AccountGroup :size="20" class="empty-icon" />
             <span class="empty-text">
                 {{
                     mode === 'admin'
@@ -44,7 +44,7 @@
         <!-- Dropdown Trigger -->
         <div class="dropdown-container">
             <button type="button" class="dropdown-trigger" @click="toggleDropdown">
-                <span class="icon-add"></span>
+                <Plus :size="16" />
                 {{
                     mode === 'admin'
                         ? t('souvera_central', 'Admin-Gruppe hinzufügen')
@@ -72,11 +72,11 @@
                 <!-- Bulk Actions -->
                 <div class="dropdown-bulk-actions">
                     <button type="button" class="bulk-action-btn" @click="selectAll">
-                        <span class="icon-checkmark"></span>
+                        <Check :size="16" />
                         {{ t('souvera_central', 'Alle auswählen') }}
                     </button>
                     <button type="button" class="bulk-action-btn" @click="deselectAll">
-                        <span class="icon-close"></span>
+                        <Close :size="16" />
                         {{ t('souvera_central', 'Alle abwählen') }}
                     </button>
                 </div>
@@ -91,10 +91,8 @@
                         @click="toggleGroup(group.id)"
                         @mouseenter="highlightedIndex = index"
                     >
-                        <span
-                            class="checkbox-icon"
-                            :class="isSelected(group.id) ? 'icon-checkmark' : 'icon-add'"
-                        ></span>
+                        <Check v-if="isSelected(group.id)" :size="18" class="checkbox-icon" />
+                        <Plus v-else :size="18" class="checkbox-icon" />
                         <div class="group-info">
                             <span class="group-name">{{ group.displayName }}</span>
                             <span class="group-id">{{ group.id }}</span>
@@ -105,7 +103,7 @@
                     </div>
 
                     <div v-if="filteredGroups.length === 0" class="dropdown-empty">
-                        <span class="icon-search"></span>
+                        <Magnify :size="20" />
                         <p>{{ t('souvera_central', 'Keine Gruppen gefunden') }}</p>
                     </div>
                 </div>
@@ -116,9 +114,26 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import ShieldAccount from 'vue-material-design-icons/ShieldAccount.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import Close from 'vue-material-design-icons/Close.vue'
+import Lock from 'vue-material-design-icons/Lock.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Check from 'vue-material-design-icons/Check.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
 
 export default {
     name: 'GroupSelector',
+
+    components: {
+        ShieldAccount,
+        AccountGroup,
+        Close,
+        Lock,
+        Plus,
+        Check,
+        Magnify
+    },
 
     props: {
         modelValue: {
@@ -316,16 +331,15 @@ export default {
 
 .pill-icon {
     opacity: 1;
-    font-size: 14px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-main-background);
+    background: rgba(255, 255, 255, 0.22);
     border-radius: 50%;
     color: #fff;
-    filter: brightness(0) invert(1);
+    flex-shrink: 0;
 }
 
 .pill-label {
@@ -341,26 +355,30 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 33px;
-    height: 33px;
-    background: var(--color-main-background);
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.18);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, transform 0.2s;
     padding: 0;
     color: #fff;
 }
 
 .pill-remove:hover {
-    background: var(--color-main-background);
-    transform: scale(1.15);
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.1);
 }
 
-.pill-remove .icon-close {
-    font-size: 14px;
+.pill-locked {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     color: #fff;
-    filter: brightness(0) invert(1);
+    opacity: 0.85;
 }
 
 /* Empty State */
@@ -371,17 +389,16 @@ export default {
     gap: 12px;
     padding: 24px;
     background: var(--color-main-background);
-    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border: 2px dashed var(--color-border);
     border-radius: 6px;
-    color: #000;
+    color: var(--color-main-text);
     font-size: 15px;
     font-weight: 600;
 }
 
 .empty-icon {
-    font-size: 24px;
     opacity: 0.6;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 /* Dropdown Container */
@@ -404,20 +421,14 @@ export default {
     transition: all 0.2s;
     width: 100%;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(48, 116, 191, 0.3);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.3);
 }
 
 .dropdown-trigger:hover {
-    background: #2563a8;
-    border-color: #2563a8;
+    background: var(--color-primary-element-hover);
+    border-color: var(--color-primary-element-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(48, 116, 191, 0.4);
-}
-
-.dropdown-trigger .icon-add {
-    color: #fff;
-    filter: brightness(0) invert(1);
-    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(var(--color-primary-element-rgb), 0.4);
 }
 
 /* Dropdown Menu */
@@ -461,15 +472,15 @@ export default {
     border-radius: 6px;
     font-size: 15px;
     background: var(--color-main-background);
-    color: #000;
+    color: var(--color-main-text);
     font-weight: 500;
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.2);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.2);
+    background: var(--color-main-background);
 }
 
 /* Bulk Actions */
@@ -495,14 +506,14 @@ export default {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .bulk-action-btn:hover {
-    background: #fff;
+    background: var(--color-main-background);
     border-color: var(--color-primary-element);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(48, 116, 191, 0.2);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.2);
 }
 
 /* Dropdown List */
@@ -527,24 +538,21 @@ export default {
 
 .dropdown-item:hover,
 .dropdown-item.highlighted {
-    background: rgba(48, 116, 191, 0.1);
+    background: rgba(var(--color-primary-element-rgb), 0.1);
 }
 
 .dropdown-item.selected {
-    background: rgba(30, 214, 122, 0.15);
-    border-left: 4px solid #1ED67A;
+    background: rgba(var(--color-success-rgb), 0.15);
+    border-left: 4px solid var(--color-success);
 }
 
 .checkbox-icon {
-    font-size: 18px;
     color: var(--color-primary-element);
     flex-shrink: 0;
-    font-weight: 700;
 }
 
 .dropdown-item.selected .checkbox-icon {
-    color: #1ED67A;
-    font-weight: 900;
+    color: var(--color-success);
 }
 
 .group-info {
@@ -561,12 +569,12 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .group-id {
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -575,7 +583,7 @@ export default {
 
 .group-count {
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -587,21 +595,20 @@ export default {
     align-items: center;
     justify-content: center;
     padding: 48px 24px;
-    color: #000;
+    color: var(--color-main-text);
     text-align: center;
 }
 
-.dropdown-empty .icon-search {
-    font-size: 40px;
+.dropdown-empty .material-design-icon {
     opacity: 0.4;
     margin-bottom: 12px;
-    color: #000;
+    color: var(--color-text-maxcontrast);
 }
 
 .dropdown-empty p {
     margin: 0;
     font-size: 15px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 </style>

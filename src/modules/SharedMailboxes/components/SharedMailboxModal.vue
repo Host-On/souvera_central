@@ -4,7 +4,7 @@
             <div class="modal-header">
                 <h3>{{ isEdit ? t('souvera_central', 'Postfach bearbeiten') : t('souvera_central', 'Neues Postfach erstellen') }}</h3>
                 <button class="close-button" @click="$emit('close')">
-                    <span class="icon-close"></span>
+                    <Close :size="20" />
                 </button>
             </div>
 
@@ -67,7 +67,7 @@
                         {{ t('souvera_central', 'Abbrechen') }}
                     </button>
                     <button type="submit" class="save-button" :disabled="!canSave || saving">
-                        <span v-if="saving" class="icon-loading-small"></span>
+                        <NcLoadingIcon v-if="saving" :size="18" />
                         {{ isEdit ? t('souvera_central', 'Speichern') : t('souvera_central', 'Erstellen') }}
                     </button>
                 </div>
@@ -78,9 +78,16 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import Close from 'vue-material-design-icons/Close.vue'
 
 export default {
     name: 'SharedMailboxModal',
+
+    components: {
+        NcLoadingIcon,
+        Close
+    },
 
     props: {
         mailbox: {
@@ -186,13 +193,13 @@ export default {
 }
 
 .modal-content {
-    background: #fff;
+    background: var(--color-main-background);
     border-radius: 12px;
     width: 100%;
     max-width: 500px;
     max-height: 90vh;
     overflow: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px var(--color-box-shadow);
 }
 
 .modal-header {
@@ -207,7 +214,7 @@ export default {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .close-button {
@@ -224,7 +231,7 @@ export default {
 }
 
 .close-button:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--color-background-dark);
 }
 
 .modal-body {
@@ -240,7 +247,7 @@ export default {
     margin-bottom: 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-main-text);
 }
 
 .form-group input,
@@ -251,8 +258,8 @@ export default {
     border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
-    background: #fff;
-    color: #000;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
     transition: all 0.2s;
     box-sizing: border-box;
 }
@@ -266,12 +273,12 @@ export default {
 .form-group textarea:focus {
     outline: none;
     border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px rgba(48, 116, 191, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.15);
 }
 
 .form-group input:disabled,
 .form-group select:disabled {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-background-dark);
     cursor: not-allowed;
 }
 
@@ -298,22 +305,22 @@ export default {
 
 .email-separator {
     font-weight: 700;
-    color: #000;
+    color: var(--color-main-text);
     font-size: 16px;
 }
 
 .hint {
     margin: 8px 0 0;
     font-size: 12px;
-    color: #666;
+    color: var(--color-text-maxcontrast);
     font-style: italic;
 }
 
 .error-message {
     margin: 0 0 15px;
     padding: 12px 15px;
-    background: rgba(227, 56, 80, 0.1);
-    border: 1px solid rgba(227, 56, 80, 0.3);
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
     border-radius: 6px;
     color: var(--color-error);
     font-size: 13px;
@@ -341,12 +348,12 @@ export default {
 .cancel-button {
     background: transparent;
     border: 2px solid var(--color-border);
-    color: #333;
+    color: var(--color-main-text);
 }
 
 .cancel-button:hover {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.3);
+    background: var(--color-background-dark);
+    border-color: var(--color-border-maxcontrast);
 }
 
 .save-button {
@@ -359,15 +366,11 @@ export default {
 }
 
 .save-button:hover:not(:disabled) {
-    background: var(--color-primary-element-light);
+    background: var(--color-primary-element-hover);
 }
 
 .save-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.save-button [class^='icon-'] {
-    filter: invert(1) brightness(100);
 }
 </style>

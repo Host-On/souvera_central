@@ -83,6 +83,58 @@
             --animation-slow: 300ms;
         }
 
+        /* ===== Nextcloud 34 – Dark Theme Tokens (body.theme-dark) ===== */
+        body.theme-dark {
+            --color-main-background: #171717;
+            --color-main-background-rgb: 23, 23, 23;
+            --color-main-background-translucent: rgba(23, 23, 23, 0.97);
+            --color-main-background-blur: rgba(23, 23, 23, 0.8);
+
+            --color-background-hover: #2e2e2e;
+            --color-background-dark: #383838;
+            --color-background-darker: #4d4d4d;
+
+            --color-main-text: #ededed;
+            --color-text-maxcontrast: #949494;
+            --color-text-maxcontrast-background-blur: #a5a5a5;
+            --color-text-light: #ededed;
+            --color-text-lighter: #b3b3b3;
+
+            --color-primary-element: #4595c6;
+            --color-primary-element-rgb: 69, 149, 198;
+            --color-primary-element-hover: #5ba3cf;
+            --color-primary-element-text: #ffffff;
+            --color-primary-element-light: #2b3b45;
+            --color-primary-element-light-hover: #36495a;
+            --color-primary-element-light-text: #9bc3dd;
+
+            --color-error: #db4b4b;
+            --color-error-rgb: 219, 75, 75;
+            --color-error-hover: #e26e6e;
+            --color-error-text: #e57373;
+            --color-warning: #eca700;
+            --color-warning-rgb: 236, 167, 0;
+            --color-warning-hover: #efb320;
+            --color-warning-text: #d9a441;
+            --color-success: #4cb04f;
+            --color-success-rgb: 76, 176, 79;
+            --color-success-hover: #5cbd5f;
+            --color-success-text: #6fbf73;
+
+            --color-border: #2e2e2e;
+            --color-border-dark: #383838;
+            --color-border-maxcontrast: #6b6b6b;
+
+            --color-box-shadow-rgb: 0, 0, 0;
+            --color-box-shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        body.theme-dark {
+            background-color: #0a0a0a;
+            background-image: linear-gradient(160deg, #0d2230 0%, #08161f 100%);
+        }
+        body.theme-dark #nc-header { background-color: #1a1a1a; }
+
         * { box-sizing: border-box; }
 
         html, body {
@@ -170,6 +222,9 @@
 
     <script>
         window._oc_webroot = ''
+        if (location.search.indexOf('dark') !== -1) {
+            document.body.classList.add('theme-dark')
+        }
         window.OC = window.OC || {
             requestToken: '', config: {}, coreApps: [], appswebroots: {},
             getLanguage: function () { return 'de' }, getLocale: function () { return 'de_DE' },

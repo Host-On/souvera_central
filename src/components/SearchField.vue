@@ -1,6 +1,6 @@
 <template>
     <div class="search-field">
-        <span class="icon-search search-icon"></span>
+        <Magnify :size="18" class="search-icon" />
         <input
             v-model="searchQuery"
             type="text"
@@ -13,16 +13,23 @@
             :title="t('souvera_central', 'Suche löschen')"
             @click="clearSearch"
         >
-            <span class="icon-close"></span>
+            <Close :size="16" />
         </button>
     </div>
 </template>
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 export default {
     name: 'SearchField',
+
+    components: {
+        Magnify,
+        Close
+    },
 
     props: {
         modelValue: {
@@ -85,9 +92,10 @@ export default {
 .search-icon {
     position: absolute;
     left: 12px;
-    font-size: 16px;
     opacity: 0.5;
     pointer-events: none;
+    color: var(--color-main-text);
+    z-index: 1;
 }
 
 .search-input {
@@ -96,8 +104,9 @@ export default {
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
     background: var(--color-main-background);
+    color: var(--color-main-text);
     font-size: 14px;
-    transition: all 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input:focus {
@@ -121,9 +130,5 @@ export default {
 .clear-button:hover {
     opacity: 1;
     background: var(--color-background-hover);
-}
-
-.clear-button .icon-close {
-    font-size: 14px;
 }
 </style>
