@@ -156,13 +156,64 @@
             </div>
         </div>
 
+        <!-- Stalwart Mailserver (Admin) -->
+        <div class="stalwart-section" data-testid="stalwart-section">
+            <h3>{{ t('souvera_central', 'Stalwart Mailserver') }}</h3>
+            <div class="stalwart-card">
+                <div class="stalwart-status">
+                    <ServerNetwork :size="32" class="stalwart-server-icon" />
+                    <div class="stalwart-info">
+                        <div class="stalwart-state">
+                            <span class="status-dot" :class="stalwartDotClass"></span>
+                            <span data-testid="stalwart-state-label">{{ stalwartStateLabel }}</span>
+                        </div>
+                        <div v-if="stalwartStatus.url" class="stalwart-url">{{ stalwartStatus.url }}</div>
+                        <div v-else class="stalwart-url muted">
+                            {{ t('souvera_central', 'Keine Verbindungsdaten in config.php hinterlegt') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="stalwart-actions">
+                    <button
+                        class="sync-button"
+                        :disabled="syncing || !stalwartStatus.available"
+                        data-testid="stalwart-sync-button"
+                        @click="syncMailboxes">
+                        <Sync :size="18" :class="{ spinning: syncing }" />
+                        {{ syncing ? t('souvera_central', 'Synchronisiere…') : t('souvera_central', 'Postfächer synchronisieren') }}
+                    </button>
+                </div>
+            </div>
+            <div
+                v-if="syncResult"
+                class="sync-result"
+                :class="{ 'has-errors': syncResult.errors > 0 }"
+                data-testid="stalwart-sync-result">
+                <CheckCircle v-if="syncResult.errors === 0" :size="18" />
+                <AlertCircle v-else :size="18" />
+                <span>
+                    {{
+                        t(
+                            'souvera_central',
+                            '{created} angelegt · {skipped} übersprungen · {noMail} ohne Mail · {errors} Fehler',
+                            syncResult
+                        )
+                    }}
+                </span>
+            </div>
+            <div v-if="syncError" class="sync-result has-errors" data-testid="stalwart-sync-error">
+                <AlertCircle :size="18" />
+                <span>{{ syncError }}</span>
+            </div>
+        </div>
+
         <!-- System Info -->
         <div class="system-info">
             <h3>{{ t('souvera_central', 'System-Information') }}</h3>
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.7.0</span>
+                    <span class="info-value">0.8.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -192,6 +243,9 @@ import Cog from 'vue-material-design-icons/Cog.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
+import ServerNetwork from 'vue-material-design-icons/ServerNetwork.vue'
+import Sync from 'vue-material-design-icons/Sync.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 
 export default {
     name: 'Dashboard',
@@ -206,61 +260,34 @@ export default {
         Cog,
         OpenInNew,
         AlertCircle,
-        AlertOctagon
+        AlertOctagon,
+        ServerNetwork,
+        Sync,
+        CheckCircle
     },
 
     props: {
-        totalUsers: {
-            type: Number,
-            default: 0
-        },
-        usedLicenses: {
-            type: Number,
-            default: 0
-        },
-        activeUserCount: {
-            type: Number,
-            default: 0
-        },
-        groupCount: {
-            type: Number,
-            default: 0
-        },
-        sharedMailboxCount: {
-            type: Number,
-            default: 0
-        },
-        maxLicenses: {
-            type: Number,
-            default: 10
-        },
-        maxGroups: {
-            type: Number,
-            default: 20
-        },
-        maxSharedMailboxes: {
-            type: Number,
-            default: 10
-        },
-        warningThreshold: {
-            type: Number,
-            default: 0.8
-        },
-        allowedDomains: {
-            type: Array,
-            default: () => []
-        }
+        totalUsers: { type: Number, default: 0 },
+        usedLicenses: { type: Number, default: 0 },
+        activeUserCount: { type: Number, default: 0 },
+        groupCount: { type: Number, default: 0 },
+        sharedMailboxCount: { type: Number, default: 0 },
+        maxLicenses: { type: Number, default: 10 },
+        maxGroups: { type: Number, default: 20 },
+        maxSharedMailboxes: { type: Number, default: 10 },
+        warningThreshold: { type: Number, default: 0.8 },
+        allowedDomains: { type: Array, default: () => [] }
     },
 
     emits: ['navigate'],
 
     data() {
         return {
-            resellerInfo: {
-                support_url: null,
-                url: null,
-                name: null
-            }
+            resellerInfo: { support_url: null, url: null, name: null },
+            stalwartStatus: { configured: false, available: false, url: null },
+            syncing: false,
+            syncResult: null,
+            syncError: null
         }
     },
 
@@ -269,54 +296,52 @@ export default {
             if (this.maxLicenses === 0) return 0
             return Math.round((this.usedLicenses / this.maxLicenses) * 100)
         },
-
         isLicenseLimitReached() {
             return this.usedLicenses >= this.maxLicenses
         },
-
         isLicenseWarning() {
             return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= this.warningThreshold
         },
-
         groupPercentage() {
             if (this.maxGroups === 0) return 0
             return Math.round((this.groupCount / this.maxGroups) * 100)
         },
-
         isGroupLimitReached() {
             return this.groupCount >= this.maxGroups
         },
-
         isGroupWarning() {
             return !this.isGroupLimitReached && this.groupCount / this.maxGroups >= this.warningThreshold
         },
-
         mailboxPercentage() {
             if (this.maxSharedMailboxes === 0) return 0
             return Math.round((this.sharedMailboxCount / this.maxSharedMailboxes) * 100)
         },
-
         isMailboxLimitReached() {
             return this.sharedMailboxCount >= this.maxSharedMailboxes
         },
-
         isMailboxWarning() {
             return !this.isMailboxLimitReached && this.sharedMailboxCount / this.maxSharedMailboxes >= this.warningThreshold
         },
-
         contactUrl() {
-            if (this.resellerInfo.support_url) {
-                return this.resellerInfo.support_url
-            }
-            if (this.resellerInfo.url) {
-                return this.resellerInfo.url
-            }
+            if (this.resellerInfo.support_url) return this.resellerInfo.support_url
+            if (this.resellerInfo.url) return this.resellerInfo.url
             return 'https://www.souvera.eu'
+        },
+        stalwartDotClass() {
+            if (!this.stalwartStatus.configured) return 'dot-muted'
+            return this.stalwartStatus.available ? 'dot-ok' : 'dot-error'
+        },
+        stalwartStateLabel() {
+            if (!this.stalwartStatus.configured) return t('souvera_central', 'Nicht konfiguriert')
+            return this.stalwartStatus.available
+                ? t('souvera_central', 'Verbunden')
+                : t('souvera_central', 'Nicht erreichbar')
         }
     },
 
     mounted() {
         this.loadResellerInfo()
+        this.loadStalwartStatus()
     },
 
     methods: {
@@ -326,14 +351,51 @@ export default {
             try {
                 const url = generateUrl('/apps/souvera_central/api/reseller')
                 const response = await axios.get(url)
-
                 if (response.data?.ocs?.data) {
                     this.resellerInfo = response.data.ocs.data
                 } else if (response.data) {
                     this.resellerInfo = response.data
                 }
             } catch (error) {
-                // Fallback ist bereits in contactUrl implementiert
+                // Fallback ist in contactUrl implementiert
+            }
+        },
+
+        async loadStalwartStatus() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/stalwart/status')
+                const response = await axios.get(url)
+                const data = response.data?.ocs?.data || response.data?.data || response.data || {}
+                this.stalwartStatus = {
+                    configured: !!data.configured,
+                    available: !!data.available,
+                    url: data.url || null
+                }
+            } catch (error) {
+                this.stalwartStatus = { configured: false, available: false, url: null }
+            }
+        },
+
+        async syncMailboxes() {
+            this.syncing = true
+            this.syncResult = null
+            this.syncError = null
+            try {
+                const url = generateUrl('/apps/souvera_central/api/stalwart/sync-mailboxes')
+                const response = await axios.post(url)
+                const data = response.data?.ocs?.data || response.data?.data || response.data || {}
+                this.syncResult = {
+                    created: data.created || 0,
+                    skipped: data.skipped || 0,
+                    noMail: data.noMail || 0,
+                    errors: data.errors || 0
+                }
+            } catch (error) {
+                this.syncError =
+                    error.response?.data?.error ||
+                    t('souvera_central', 'Synchronisierung fehlgeschlagen. Ist Stalwart erreichbar?')
+            } finally {
+                this.syncing = false
             }
         }
     }
@@ -638,6 +700,141 @@ export default {
     font-weight: 500;
 }
 
+/* Stalwart Mailserver */
+.stalwart-section {
+    margin-bottom: 40px;
+}
+
+.stalwart-section h3 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.stalwart-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px 24px;
+    background: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+}
+
+.stalwart-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.stalwart-server-icon {
+    color: var(--color-primary-element);
+    flex-shrink: 0;
+}
+
+.stalwart-info {
+    min-width: 0;
+}
+
+.stalwart-state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot.dot-ok {
+    background: var(--color-success);
+    box-shadow: 0 0 0 3px rgba(var(--color-success-rgb), 0.2);
+}
+
+.status-dot.dot-error {
+    background: var(--color-error);
+    box-shadow: 0 0 0 3px rgba(var(--color-error-rgb), 0.2);
+}
+
+.status-dot.dot-muted {
+    background: var(--color-text-maxcontrast);
+}
+
+.stalwart-url {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    word-break: break-all;
+}
+
+.stalwart-url.muted {
+    font-style: italic;
+}
+
+.sync-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--color-primary-element);
+    color: var(--color-primary-element-text);
+    border: none;
+    border-radius: var(--border-radius-element);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+}
+
+.sync-button:hover:not(:disabled) {
+    background: var(--color-primary-element-hover);
+}
+
+.sync-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sync-button .spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.sync-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: var(--border-radius-element);
+    font-size: 14px;
+    font-weight: 500;
+    background: rgba(var(--color-success-rgb), 0.12);
+    color: var(--color-success-text);
+}
+
+.sync-result.has-errors {
+    background: rgba(var(--color-error-rgb), 0.12);
+    color: var(--color-error-text);
+}
+
 /* System Info */
 .system-info h3 {
     margin: 0 0 20px;
@@ -713,6 +910,11 @@ export default {
     .quick-actions {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .stalwart-card {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .info-grid {

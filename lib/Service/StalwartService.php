@@ -480,4 +480,68 @@ class StalwartService {
                 null
         ];
     }
+
+    // ============================================================================
+    // Postfach-Übersicht (Admin)
+    // ============================================================================
+
+    /**
+     * Listet die Namen aller individuellen Postfächer (Principals) in Stalwart.
+     *
+     * @return string[] - Principal-Namen (= NC-UIDs), die ein Postfach besitzen
+     */
+    public function listPrincipalNames(): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return [];
+        }
+
+        $response = $this->apiRequest('GET', '/api/principal?type=individual&page=1&limit=2000');
+        if ($response === null) {
+            return [];
+        }
+
+        // Stalwart liefert üblicherweise {"data": {"items": [...], "total": N}}
+        $items = $response['data']['items']
+            ?? $response['items']
+            ?? (isset($response['data']) && is_array($response['data']) ? $response['data'] : []);
+
+        $names = [];
+        foreach ($items as $item) {
+            if (is_array($item) && isset($item['name'])) {
+                $names[] = $item['name'];
+            } elseif (is_string($item)) {
+                $names[] = $item;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Postfach-Status für einen einzelnen Benutzer.
+     *
+     * @param string $uid
+     * @return array{exists: bool, email: ?string, aliases: array, configured: bool}
+     */
+    public function getMailboxStatus(string $uid): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'configured' => false];
+        }
+
+        $principal = $this->getPrincipal($uid);
+        if ($principal === null) {
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'configured' => true];
+        }
+
+        $emails = $principal['emails'] ?? [];
+        $primary = $emails[0] ?? null;
+        $aliases = array_values(array_filter($emails, static fn ($e) => $e !== $primary));
+
+        return [
+            'exists' => true,
+            'email' => $primary,
+            'aliases' => $aliases,
+            'configured' => true,
+        ];
+    }
 }

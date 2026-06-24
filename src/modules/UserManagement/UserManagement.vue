@@ -114,6 +114,18 @@
                                     <div class="user-info">
                                         <Account class="row-user-icon" :size="20" />
                                         <span class="username">{{ user.id }}</span>
+                                        <EmailCheck
+                                            v-if="stalwartConfigured && hasMailbox(user)"
+                                            class="mailbox-indicator has-mailbox"
+                                            :size="16"
+                                            :title="t('souvera_central', 'Stalwart-Postfach vorhanden')"
+                                        />
+                                        <EmailRemoveOutline
+                                            v-else-if="stalwartConfigured"
+                                            class="mailbox-indicator no-mailbox"
+                                            :size="16"
+                                            :title="t('souvera_central', 'Kein Stalwart-Postfach')"
+                                        />
                                     </div>
                                 </td>
                                 <td class="displayname-column">{{ user.displayName }}</td>
@@ -129,6 +141,15 @@
                                 </td>
                                 <td class="actions-column">
                                     <div class="user-actions">
+                                        <button
+                                            v-if="stalwartConfigured && !hasMailbox(user)"
+                                            class="action-mailbox"
+                                            :title="t('souvera_central', 'Stalwart-Postfach anlegen')"
+                                            :disabled="creatingMailbox === user.id"
+                                            @click.stop="createMailbox(user)"
+                                        >
+                                            <EmailPlusOutline :size="18" />
+                                        </button>
                                         <button
                                             class="action-edit"
                                             :title="t('souvera_central', 'Bearbeiten')"
@@ -206,6 +227,9 @@ import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
+import EmailCheck from 'vue-material-design-icons/EmailCheck.vue'
+import EmailRemoveOutline from 'vue-material-design-icons/EmailRemoveOutline.vue'
+import EmailPlusOutline from 'vue-material-design-icons/EmailPlusOutline.vue'
 
 export default {
     name: 'UserManagement',
@@ -225,7 +249,10 @@ export default {
         KeyVariant,
         OpenInNew,
         AlertCircle,
-        AlertOctagon
+        AlertOctagon,
+        EmailCheck,
+        EmailRemoveOutline,
+        EmailPlusOutline
     },
 
     props: {
@@ -255,6 +282,9 @@ export default {
             currentPage: 1,
             perPage: 20,
             currentUserId: null, // ID des aktuell angemeldeten Benutzers
+            mailboxes: [], // Stalwart Principal-Namen (UIDs) mit Postfach
+            stalwartConfigured: false,
+            creatingMailbox: null, // UID, während ein Postfach angelegt wird
             resellerInfo: {
                 support_url: null,
                 url: null,
@@ -302,6 +332,7 @@ export default {
     mounted() {
         this.loadCurrentUser()
         this.loadUsers()
+        this.loadMailboxes()
         this.loadResellerInfo()
         this.checkInitialAction()
 
@@ -448,6 +479,40 @@ export default {
                 // Error handling
             } finally {
                 this.loading = false
+            }
+        },
+
+        async loadMailboxes() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/stalwart/mailboxes')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.stalwartConfigured = !!data.configured
+                this.mailboxes = data.mailboxes || []
+            } catch (error) {
+                this.stalwartConfigured = false
+                this.mailboxes = []
+            }
+        },
+
+        hasMailbox(user) {
+            return this.mailboxes.includes(user.id)
+        },
+
+        async createMailbox(user) {
+            this.creatingMailbox = user.id
+            try {
+                const url = generateUrl(
+                    '/apps/souvera_central/api/users/' + encodeURIComponent(user.id) + '/mailbox'
+                )
+                await axios.post(url)
+                if (!this.mailboxes.includes(user.id)) {
+                    this.mailboxes.push(user.id)
+                }
+            } catch (error) {
+                // Fehler still behandeln – der Indikator bleibt auf "fehlt"
+            } finally {
+                this.creatingMailbox = null
             }
         },
 
@@ -772,6 +837,25 @@ export default {
 
 .username {
     font-weight: 500;
+}
+
+.mailbox-indicator {
+    flex-shrink: 0;
+}
+
+.mailbox-indicator.has-mailbox {
+    color: var(--color-success);
+}
+
+.mailbox-indicator.no-mailbox {
+    color: var(--color-text-maxcontrast);
+    opacity: 0.6;
+}
+
+.user-actions button.action-mailbox:hover:not(:disabled) {
+    background: rgba(var(--color-success-rgb), 0.12);
+    border-color: var(--color-success);
+    color: var(--color-success-text);
 }
 
 /* Status Badge */

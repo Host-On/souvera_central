@@ -32,6 +32,18 @@ function respond(url) {
     if (url.includes('/api/config')) {
         return { data: { total_users: 8, used_licenses: 7, max_licenses: 25, max_groups: 20, max_shared_mailboxes: 10, warning_threshold: 0.8, allowed_domains: ['souvera.eu'] } }
     }
+    if (url.includes('/api/stalwart/status')) {
+        return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
+    }
+    if (url.includes('/api/stalwart/sync-mailboxes')) {
+        return { data: { success: true, created: 2, skipped: 6, noMail: 0, errors: 0 } }
+    }
+    if (url.includes('/api/stalwart/mailboxes')) {
+        return { data: { configured: true, available: true, mailboxes: mailboxNames, total: mailboxNames.length } }
+    }
+    if (url.includes('/mailbox')) {
+        return { data: { success: true, created: true } }
+    }
     if (url.includes('/api/users/current')) {
         return { data: { id: 'admin@souvera.eu', displayName: 'Administrator', isAdmin: true } }
     }
@@ -53,11 +65,18 @@ function respond(url) {
     if (url.includes('/api/settings')) {
         return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' } } }
     }
-    if (url.includes('/api/stalwart/status')) {
-        return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
-    }
     return { data: {} }
 }
+
+// Postfächer: 6 von 8 Benutzern haben ein Stalwart-Postfach (david + greta fehlen)
+const mailboxNames = [
+    'anna.klein@souvera.eu',
+    'ben.schulz@souvera.eu',
+    'clara.weber@souvera.eu',
+    'eva.fischer@souvera.eu',
+    'felix.wagner@souvera.eu',
+    'admin@souvera.eu'
+]
 
 const mock = {
     get: (url) => Promise.resolve(respond(url)),

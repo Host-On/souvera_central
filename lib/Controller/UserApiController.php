@@ -575,7 +575,7 @@ class UserApiController extends OCSController {
             } catch (\Exception $e) {
                 // Fallback: Versuche direkt über DB alle Sessions zu löschen
                 try {
-                    $connection = \OC::$server->getDatabaseConnection();
+                    $connection = \OC::$server->get(\OCP\IDBConnection::class);
                     $qb = $connection->getQueryBuilder();
                     $qb->delete('authtoken')
                         ->where($qb->expr()->eq('uid', $qb->createNamedParameter($user->getUID())))
@@ -620,8 +620,8 @@ class UserApiController extends OCSController {
             }
 
             // Mailer und Defaults-Service laden
-            $mailer = \OC::$server->getMailer();
-            $defaults = \OC::$server->query(\OCP\Defaults::class);
+            $mailer = \OC::$server->get(\OCP\Mail\IMailer::class);
+            $defaults = \OC::$server->get(\OCP\Defaults::class);
 
             // E-Mail-Template erstellen
             $message = $mailer->createMessage();

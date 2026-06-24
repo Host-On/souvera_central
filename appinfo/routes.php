@@ -65,6 +65,12 @@ return [
         ['name' => 'alias_api#remove', 'url' => '/api/users/{userId}/aliases/{alias}', 'verb' => 'DELETE'],
         ['name' => 'alias_api#checkAvailability', 'url' => '/api/aliases/check', 'verb' => 'GET'],
 
+        // Stalwart Postfach-Verwaltung (Admin)
+        ['name' => 'alias_api#listMailboxes', 'url' => '/api/stalwart/mailboxes', 'verb' => 'GET'],
+        ['name' => 'alias_api#syncMailboxes', 'url' => '/api/stalwart/sync-mailboxes', 'verb' => 'POST'],
+        ['name' => 'alias_api#getMailbox', 'url' => '/api/users/{userId}/mailbox', 'verb' => 'GET'],
+        ['name' => 'alias_api#createMailbox', 'url' => '/api/users/{userId}/mailbox', 'verb' => 'POST'],
+
         // Shared Mailbox API-Routen
         ['name' => 'shared_mailbox_api#list', 'url' => '/api/shared-mailboxes', 'verb' => 'GET'],
         ['name' => 'shared_mailbox_api#create', 'url' => '/api/shared-mailboxes', 'verb' => 'POST'],

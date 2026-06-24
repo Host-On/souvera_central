@@ -8,6 +8,8 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -36,11 +38,10 @@ class ResellerApiController extends OCSController {
     /**
      * Reseller-Informationen abrufen
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @return DataResponse
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function getResellerInfo(): DataResponse {
         try {
             // Cloud UUID aus Config lesen

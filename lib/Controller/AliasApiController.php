@@ -314,4 +314,157 @@ class AliasApiController extends OCSController {
             );
         }
     }
+
+    // ========================================================================
+    // Postfach-Verwaltung (Admin-only: Controller verlangt standardmäßig Admin)
+    // ========================================================================
+
+    /**
+     * Liste aller bestehenden Stalwart-Postfächer (Principal-Namen) für
+     * Tabellen-Badges in der Benutzerverwaltung.
+     */
+    public function listMailboxes(): DataResponse {
+        try {
+            if (!$this->configService->isStalwartConfigured()) {
+                return new DataResponse(['configured' => false, 'available' => false, 'mailboxes' => [], 'total' => 0]);
+            }
+
+            $names = $this->stalwartService->listPrincipalNames();
+            return new DataResponse([
+                'configured' => true,
+                'available' => $this->stalwartService->isAvailable(),
+                'mailboxes' => $names,
+                'total' => count($names),
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Postfach-Status eines einzelnen Benutzers abrufen.
+     */
+    public function getMailbox(string $userId): DataResponse {
+        try {
+            $user = $this->userManager->get($userId);
+            if ($user === null) {
+                return new DataResponse(['error' => 'Benutzer nicht gefunden'], Http::STATUS_NOT_FOUND);
+            }
+            return new DataResponse($this->stalwartService->getMailboxStatus($userId));
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Postfach für einen Benutzer anlegen/sicherstellen.
+     * Nutzt ein Zufalls-Secret; der Nutzer setzt sein Mail-Passwort danach per
+     * NC-Passwortänderung neu (PasswordSyncListener spiegelt es nach Stalwart).
+     */
+    public function createMailbox(string $userId): DataResponse {
+        try {
+            $user = $this->userManager->get($userId);
+            if ($user === null) {
+                return new DataResponse(['error' => 'Benutzer nicht gefunden'], Http::STATUS_NOT_FOUND);
+            }
+            if (!$this->stalwartService->isAvailable()) {
+                return new DataResponse(
+                    ['error' => 'Stalwart Mail-Server nicht erreichbar', 'configured' => $this->configService->isStalwartConfigured()],
+                    Http::STATUS_SERVICE_UNAVAILABLE
+                );
+            }
+            if ($this->stalwartService->principalExists($userId)) {
+                return new DataResponse([
+                    'success' => true,
+                    'created' => false,
+                    'message' => 'Postfach existiert bereits',
+                    'status' => $this->stalwartService->getMailboxStatus($userId),
+                ]);
+            }
+
+            $mail = $this->stalwartService->mailFor($user);
+            if ($mail === null) {
+                return new DataResponse(
+                    ['error' => 'Keine gültige Mail-Adresse/Domain für diesen Benutzer'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $ok = $this->stalwartService->createPrincipal($userId, bin2hex(random_bytes(24)), $mail, $user->getDisplayName());
+            if (!$ok) {
+                return new DataResponse(['error' => 'Postfach konnte nicht angelegt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
+            }
+
+            return new DataResponse([
+                'success' => true,
+                'created' => true,
+                'email' => $mail,
+                'status' => $this->stalwartService->getMailboxStatus($userId),
+            ], Http::STATUS_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error('AliasApiController: createMailbox fehlgeschlagen', ['userId' => $userId, 'error' => $e->getMessage()]);
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Backfill: legt fehlende Postfächer für alle Nextcloud-Benutzer an.
+     */
+    public function syncMailboxes(): DataResponse {
+        try {
+            if (!$this->configService->isStalwartConfigured()) {
+                return new DataResponse(['error' => 'Stalwart nicht konfiguriert', 'configured' => false], Http::STATUS_BAD_REQUEST);
+            }
+            if (!$this->stalwartService->isAvailable()) {
+                return new DataResponse(['error' => 'Stalwart Mail-Server nicht erreichbar', 'configured' => true], Http::STATUS_SERVICE_UNAVAILABLE);
+            }
+
+            $existing = array_flip($this->stalwartService->listPrincipalNames());
+            $created = 0;
+            $skipped = 0;
+            $noMail = 0;
+            $errors = 0;
+
+            // Alle Benutzer paginiert durchlaufen (NC34-konform, kein callForAllUsers)
+            $limit = 500;
+            $offset = 0;
+            do {
+                $users = $this->userManager->search('', $limit, $offset);
+                foreach ($users as $user) {
+                    $uid = $user->getUID();
+                    if ($this->configService->isAdminUser($uid)) {
+                        $skipped++;
+                        continue;
+                    }
+                    if (isset($existing[$uid]) || $this->stalwartService->principalExists($uid)) {
+                        $skipped++;
+                        continue;
+                    }
+                    $mail = $this->stalwartService->mailFor($user);
+                    if ($mail === null) {
+                        $noMail++;
+                        continue;
+                    }
+                    try {
+                        $ok = $this->stalwartService->createPrincipal($uid, bin2hex(random_bytes(24)), $mail, $user->getDisplayName());
+                        $ok ? $created++ : $errors++;
+                    } catch (\Throwable $e) {
+                        $errors++;
+                    }
+                }
+                $offset += $limit;
+            } while (count($users) === $limit);
+
+            return new DataResponse([
+                'success' => true,
+                'created' => $created,
+                'skipped' => $skipped,
+                'noMail' => $noMail,
+                'errors' => $errors,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('AliasApiController: syncMailboxes fehlgeschlagen', ['error' => $e->getMessage()]);
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

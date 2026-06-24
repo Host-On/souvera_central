@@ -60,7 +60,7 @@ class SyncMailboxes extends Base {
         $noMail = 0;
         $errors = 0;
 
-        $this->userManager->callForAllUsers(function (IUser $user) use (&$created, &$skipped, &$noMail, &$errors, $dryRun, $output) {
+        $process = function (IUser $user) use (&$created, &$skipped, &$noMail, &$errors, $dryRun, $output) {
             $uid = $user->getUID();
 
             // Admin-User wird von der Provisionierung ausgenommen
@@ -106,7 +106,18 @@ class SyncMailboxes extends Base {
                 $errors++;
                 $output->writeln("  <error>✗ $uid: " . $e->getMessage() . '</error>');
             }
-        });
+        };
+
+        // Alle Benutzer paginiert durchlaufen (NC34-konform, kein callForAllUsers)
+        $limit = 500;
+        $offset = 0;
+        do {
+            $users = $this->userManager->search('', $limit, $offset);
+            foreach ($users as $user) {
+                $process($user);
+            }
+            $offset += $limit;
+        } while (count($users) === $limit);
 
         $output->writeln('');
         $output->writeln(sprintf(
