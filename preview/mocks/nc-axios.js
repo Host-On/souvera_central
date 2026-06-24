@@ -36,13 +36,22 @@ function respond(url) {
         return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
     }
     if (url.includes('/api/stalwart/sync-mailboxes')) {
-        return { data: { success: true, created: 2, skipped: 6, noMail: 0, errors: 0 } }
+        return { data: { success: true, created: 2, skipped: 6, noMail: 0, errors: 0, grouped: 6, mailGroup: { id: 'mail-users', exists: true, members: 6, enabled: true } } }
+    }
+    if (url.includes('/api/stalwart/mailgroup')) {
+        return { data: { id: 'mail-users', exists: true, members: 6, enabled: true } }
     }
     if (url.includes('/api/stalwart/mailboxes')) {
         return { data: { configured: true, available: true, mailboxes: mailboxNames, total: mailboxNames.length } }
     }
+    if (url.includes('/aliases')) {
+        return { data: { aliases: ['team@souvera.eu', 'kontakt@souvera.eu'], maxAliases: 10 } }
+    }
+    if (url.includes('/mailbox/quota')) {
+        return { data: { success: true, quota: 5368709120 } }
+    }
     if (url.includes('/mailbox')) {
-        return { data: { success: true, created: true } }
+        return { data: { success: true, created: true, exists: true, email: 'anna.klein@souvera.eu', aliases: [], quota: 5368709120 } }
     }
     if (url.includes('/api/users/current')) {
         return { data: { id: 'admin@souvera.eu', displayName: 'Administrator', isAdmin: true } }

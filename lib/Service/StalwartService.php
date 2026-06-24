@@ -271,6 +271,36 @@ class StalwartService {
     }
 
     /**
+     * Postfach-Quota (Speicherlimit) in Stalwart setzen.
+     *
+     * @param string $uid - NC-User-ID = Stalwart Principal-Name
+     * @param int $quotaBytes - Limit in Bytes (0 = unbegrenzt)
+     * @return bool - Erfolg
+     */
+    public function setMailboxQuota(string $uid, int $quotaBytes): bool {
+        $payload = [
+            [
+                'action' => 'set',
+                'field' => 'quota',
+                'value' => max(0, $quotaBytes),
+            ],
+        ];
+
+        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($uid), $payload);
+
+        if ($response === null) {
+            return false;
+        }
+
+        $this->logger->info('StalwartService: Postfach-Quota gesetzt', [
+            'uid' => $uid,
+            'quota' => max(0, $quotaBytes),
+        ]);
+
+        return true;
+    }
+
+    /**
      * Postfach löschen. 404 (bereits weg) wird als Erfolg gewertet (idempotent).
      *
      * @param string $uid - NC-User-ID = Stalwart Principal-Name
@@ -525,12 +555,12 @@ class StalwartService {
      */
     public function getMailboxStatus(string $uid): array {
         if (!$this->configService->isStalwartConfigured()) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'configured' => false];
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => false];
         }
 
         $principal = $this->getPrincipal($uid);
         if ($principal === null) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'configured' => true];
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => true];
         }
 
         $emails = $principal['emails'] ?? [];
@@ -541,6 +571,7 @@ class StalwartService {
             'exists' => true,
             'email' => $primary,
             'aliases' => $aliases,
+            'quota' => (int) ($principal['quota'] ?? 0),
             'configured' => true,
         ];
     }

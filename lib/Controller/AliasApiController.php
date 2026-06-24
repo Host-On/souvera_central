@@ -15,11 +15,13 @@ use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\StalwartService;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\MailGroupService;
 
 class AliasApiController extends OCSController {
     private IUserManager $userManager;
     private StalwartService $stalwartService;
     private ConfigService $configService;
+    private MailGroupService $mailGroupService;
     private LoggerInterface $logger;
 
     public function __construct(
@@ -28,12 +30,14 @@ class AliasApiController extends OCSController {
         IUserManager $userManager,
         StalwartService $stalwartService,
         ConfigService $configService,
+        MailGroupService $mailGroupService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
         $this->stalwartService = $stalwartService;
         $this->configService = $configService;
+        $this->mailGroupService = $mailGroupService;
         $this->logger = $logger;
     }
 
@@ -374,6 +378,8 @@ class AliasApiController extends OCSController {
                 );
             }
             if ($this->stalwartService->principalExists($userId)) {
+                // Bestehendes Postfach: Mail-Gruppen-Mitgliedschaft sicherstellen
+                $this->mailGroupService->addUser($user);
                 return new DataResponse([
                     'success' => true,
                     'created' => false,
@@ -394,6 +400,9 @@ class AliasApiController extends OCSController {
             if (!$ok) {
                 return new DataResponse(['error' => 'Postfach konnte nicht angelegt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
             }
+
+            // Benutzer mit Postfach in die Mail-Gruppe aufnehmen (smail-Sichtbarkeit)
+            $this->mailGroupService->addUser($user);
 
             return new DataResponse([
                 'success' => true,
@@ -424,6 +433,10 @@ class AliasApiController extends OCSController {
             $skipped = 0;
             $noMail = 0;
             $errors = 0;
+            $grouped = 0;
+
+            // Mail-Gruppe sicherstellen (für smail-Sichtbarkeit)
+            $this->mailGroupService->ensureGroup();
 
             // Alle Benutzer paginiert durchlaufen (NC34-konform, kein callForAllUsers)
             $limit = 500;
@@ -437,6 +450,10 @@ class AliasApiController extends OCSController {
                         continue;
                     }
                     if (isset($existing[$uid]) || $this->stalwartService->principalExists($uid)) {
+                        // Bestandspostfach: Mail-Gruppen-Mitgliedschaft nachziehen
+                        if ($this->mailGroupService->addUser($user)) {
+                            $grouped++;
+                        }
                         $skipped++;
                         continue;
                     }
@@ -447,7 +464,14 @@ class AliasApiController extends OCSController {
                     }
                     try {
                         $ok = $this->stalwartService->createPrincipal($uid, bin2hex(random_bytes(24)), $mail, $user->getDisplayName());
-                        $ok ? $created++ : $errors++;
+                        if ($ok) {
+                            $created++;
+                            if ($this->mailGroupService->addUser($user)) {
+                                $grouped++;
+                            }
+                        } else {
+                            $errors++;
+                        }
                     } catch (\Throwable $e) {
                         $errors++;
                     }
@@ -461,9 +485,61 @@ class AliasApiController extends OCSController {
                 'skipped' => $skipped,
                 'noMail' => $noMail,
                 'errors' => $errors,
+                'grouped' => $grouped,
+                'mailGroup' => $this->mailGroupService->getInfo(),
             ]);
         } catch (\Exception $e) {
             $this->logger->error('AliasApiController: syncMailboxes fehlgeschlagen', ['error' => $e->getMessage()]);
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Info zur Mail-Gruppe (Name, Mitgliederzahl, Status) für das Dashboard.
+     */
+    public function getMailGroup(): DataResponse {
+        try {
+            return new DataResponse($this->mailGroupService->getInfo());
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Postfach-Quota (Speicherlimit) eines Benutzers setzen.
+     *
+     * @param string $userId
+     * @param int $quota - Limit in Bytes (0 = unbegrenzt)
+     */
+    public function setMailboxQuota(string $userId, int $quota = 0): DataResponse {
+        try {
+            $user = $this->userManager->get($userId);
+            if ($user === null) {
+                return new DataResponse(['error' => 'Benutzer nicht gefunden'], Http::STATUS_NOT_FOUND);
+            }
+            if (!$this->stalwartService->isAvailable()) {
+                return new DataResponse(
+                    ['error' => 'Stalwart Mail-Server nicht erreichbar', 'configured' => $this->configService->isStalwartConfigured()],
+                    Http::STATUS_SERVICE_UNAVAILABLE
+                );
+            }
+            if (!$this->stalwartService->principalExists($userId)) {
+                return new DataResponse(['error' => 'Kein Postfach für diesen Benutzer vorhanden'], Http::STATUS_BAD_REQUEST);
+            }
+
+            $quota = max(0, (int) $quota);
+            $ok = $this->stalwartService->setMailboxQuota($userId, $quota);
+            if (!$ok) {
+                return new DataResponse(['error' => 'Quota konnte nicht gesetzt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
+            }
+
+            return new DataResponse([
+                'success' => true,
+                'quota' => $quota,
+                'status' => $this->stalwartService->getMailboxStatus($userId),
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('AliasApiController: setMailboxQuota fehlgeschlagen', ['userId' => $userId, 'error' => $e->getMessage()]);
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
     }

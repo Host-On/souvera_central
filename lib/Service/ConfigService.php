@@ -261,4 +261,32 @@ class ConfigService {
     public function getDefaultQuota(): string {
         return $this->config->getAppValue('souvera_central', 'settings.defaults.quota', 'default');
     }
+
+    // ============================================================================
+    // Mail-Gruppe (Sichtbarkeit der Mail-App / smail steuern)
+    // ============================================================================
+
+    /**
+     * ID der Nextcloud-Gruppe, in die alle Benutzer mit Stalwart-Postfach
+     * automatisch aufgenommen werden. Über diese Gruppe lässt sich die
+     * smail-App in den Nextcloud-App-Einstellungen beschränken, sodass
+     * Benutzer ohne Postfach die App nicht sehen.
+     *
+     * @return string
+     */
+    public function getMailGroupId(): string {
+        $gid = (string) $this->config->getSystemValue('souvera_central.mail_group', 'mail-users');
+        $gid = trim($gid);
+        return $gid !== '' ? $gid : 'mail-users';
+    }
+
+    /**
+     * Steuert, ob die automatische Pflege der Mail-Gruppe aktiv ist.
+     * Standard: aktiviert.
+     *
+     * @return bool
+     */
+    public function isMailGroupSyncEnabled(): bool {
+        return (bool) $this->config->getSystemValue('souvera_central.mail_group_sync', true);
+    }
 }

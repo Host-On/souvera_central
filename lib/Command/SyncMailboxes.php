@@ -16,6 +16,7 @@ namespace OCA\SouveraCentral\Command;
 
 use OC\Core\Command\Base;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\MailGroupService;
 use OCA\SouveraCentral\Service\StalwartService;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -28,6 +29,7 @@ class SyncMailboxes extends Base {
         private IUserManager $userManager,
         private StalwartService $stalwart,
         private ConfigService $config,
+        private MailGroupService $mailGroup,
     ) {
         parent::__construct();
     }
@@ -59,8 +61,14 @@ class SyncMailboxes extends Base {
         $skipped = 0;
         $noMail = 0;
         $errors = 0;
+        $grouped = 0;
 
-        $process = function (IUser $user) use (&$created, &$skipped, &$noMail, &$errors, $dryRun, $output) {
+        // Mail-Gruppe sicherstellen (für smail-Sichtbarkeit), sofern nicht Dry-Run
+        if (!$dryRun) {
+            $this->mailGroup->ensureGroup();
+        }
+
+        $process = function (IUser $user) use (&$created, &$skipped, &$noMail, &$errors, &$grouped, $dryRun, $output) {
             $uid = $user->getUID();
 
             // Admin-User wird von der Provisionierung ausgenommen
@@ -71,6 +79,10 @@ class SyncMailboxes extends Base {
 
             try {
                 if ($this->stalwart->principalExists($uid)) {
+                    // Bestandspostfach: Mail-Gruppen-Mitgliedschaft nachziehen
+                    if (!$dryRun && $this->mailGroup->addUser($user)) {
+                        $grouped++;
+                    }
                     $skipped++;
                     return;
                 }
@@ -97,6 +109,9 @@ class SyncMailboxes extends Base {
 
                 if ($ok) {
                     $created++;
+                    if ($this->mailGroup->addUser($user)) {
+                        $grouped++;
+                    }
                     $output->writeln("  <info>✓ angelegt: $uid → $mail</info>");
                 } else {
                     $errors++;
@@ -121,12 +136,21 @@ class SyncMailboxes extends Base {
 
         $output->writeln('');
         $output->writeln(sprintf(
-            '<info>Fertig.</info> Angelegt: %d, Übersprungen: %d, Ohne Mail: %d, Fehler: %d',
+            '<info>Fertig.</info> Angelegt: %d, Übersprungen: %d, Ohne Mail: %d, Fehler: %d, Mail-Gruppe (+): %d',
             $created,
             $skipped,
             $noMail,
-            $errors
+            $errors,
+            $grouped
         ));
+        if (!$dryRun) {
+            $info = $this->mailGroup->getInfo();
+            $output->writeln(sprintf(
+                '<info>Mail-Gruppe</info> "%s": %d Mitglied(er). smail-App in den NC-App-Einstellungen auf diese Gruppe beschränken.',
+                $info['id'],
+                $info['members']
+            ));
+        }
 
         return $errors > 0 ? 1 : 0;
     }

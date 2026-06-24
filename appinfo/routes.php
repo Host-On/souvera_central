@@ -68,8 +68,10 @@ return [
         // Stalwart Postfach-Verwaltung (Admin)
         ['name' => 'alias_api#listMailboxes', 'url' => '/api/stalwart/mailboxes', 'verb' => 'GET'],
         ['name' => 'alias_api#syncMailboxes', 'url' => '/api/stalwart/sync-mailboxes', 'verb' => 'POST'],
+        ['name' => 'alias_api#getMailGroup', 'url' => '/api/stalwart/mailgroup', 'verb' => 'GET'],
         ['name' => 'alias_api#getMailbox', 'url' => '/api/users/{userId}/mailbox', 'verb' => 'GET'],
         ['name' => 'alias_api#createMailbox', 'url' => '/api/users/{userId}/mailbox', 'verb' => 'POST'],
+        ['name' => 'alias_api#setMailboxQuota', 'url' => '/api/users/{userId}/mailbox/quota', 'verb' => 'POST'],
 
         // Shared Mailbox API-Routen
         ['name' => 'shared_mailbox_api#list', 'url' => '/api/shared-mailboxes', 'verb' => 'GET'],

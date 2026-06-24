@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Listener;
 
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\MailGroupService;
 use OCA\SouveraCentral\Service\StalwartService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -27,6 +28,7 @@ class PasswordSyncListener implements IEventListener {
     public function __construct(
         private StalwartService $stalwart,
         private ConfigService $config,
+        private MailGroupService $mailGroup,
         private LoggerInterface $logger,
     ) {
     }
@@ -52,9 +54,13 @@ class PasswordSyncListener implements IEventListener {
                 $mail = $this->stalwart->mailFor($user);
                 if ($mail !== null) {
                     $this->stalwart->createPrincipal($uid, $password, $mail, $user->getDisplayName());
+                    // Erstanlage -> Mail-Gruppe pflegen (smail-Sichtbarkeit)
+                    $this->mailGroup->addUser($user);
                 }
             } else {
                 $this->stalwart->setPassword($uid, $password);
+                // Sicherstellen, dass Bestandspostfächer in der Mail-Gruppe sind
+                $this->mailGroup->addUser($user);
             }
         } catch (\Throwable $e) {
             $this->logger->error('SouveraCentral PW-Sync fehlgeschlagen', [

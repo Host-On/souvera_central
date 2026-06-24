@@ -58,6 +58,38 @@
                 </div>
             </div>
 
+            <!-- Postfach-Speicherlimit (Quota) -->
+            <div class="mailbox-quota" data-testid="mailbox-quota-section">
+                <div class="quota-label-row">
+                    <span class="quota-label">{{ t('souvera_central', 'Postfach-Speicherlimit') }}</span>
+                    <span class="quota-current">{{ quotaDisplay }}</span>
+                </div>
+                <div class="quota-control-row">
+                    <select
+                        v-model.number="selectedQuotaBytes"
+                        class="quota-select"
+                        :disabled="quotaSaving"
+                        data-testid="mailbox-quota-select"
+                    >
+                        <option v-for="opt in quotaOptions" :key="opt.bytes" :value="opt.bytes">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+                    <button
+                        type="button"
+                        class="quota-save-button"
+                        :disabled="quotaSaving || selectedQuotaBytes === currentQuotaBytes"
+                        data-testid="mailbox-quota-save"
+                        @click="saveQuota"
+                    >
+                        <span v-if="quotaSaving" class="icon-loading-small"></span>
+                        {{ quotaSaving ? t('souvera_central', 'Speichert…') : t('souvera_central', 'Limit setzen') }}
+                    </button>
+                </div>
+                <p v-if="quotaSuccess" class="success-message" data-testid="mailbox-quota-success">{{ quotaSuccess }}</p>
+                <p v-if="quotaError" class="error-message" data-testid="mailbox-quota-error">{{ quotaError }}</p>
+            </div>
+
             <!-- Alias Liste -->
             <div v-for="alias in aliases" :key="alias" class="alias-item">
                 <div class="alias-info">
@@ -158,13 +190,34 @@ export default {
             addingAlias: false,
             removingAlias: null,
             aliasError: null,
-            aliasSuccess: null
+            aliasSuccess: null,
+            currentQuotaBytes: 0,
+            selectedQuotaBytes: 0,
+            quotaSaving: false,
+            quotaSuccess: null,
+            quotaError: null
         }
     },
 
     computed: {
         canAddAlias() {
             return this.newAliasLocalPart.trim().length > 0 && this.newAliasDomain && !this.isLimitReached
+        },
+
+        quotaOptions() {
+            const GB = 1024 * 1024 * 1024
+            return [
+                { bytes: 0, label: this.t('souvera_central', 'Unbegrenzt') },
+                { bytes: 1 * GB, label: '1 GB' },
+                { bytes: 5 * GB, label: '5 GB' },
+                { bytes: 10 * GB, label: '10 GB' },
+                { bytes: 25 * GB, label: '25 GB' },
+                { bytes: 50 * GB, label: '50 GB' }
+            ]
+        },
+
+        quotaDisplay() {
+            return this.formatBytes(this.currentQuotaBytes)
         },
 
         aliasPercentage() {
@@ -233,11 +286,82 @@ export default {
                 this.aliases = data.aliases || []
                 this.maxAliases = data.maxAliases || 10
 
+                // Postfach-Status (inkl. Quota) laden
+                await this.loadMailboxQuota()
+
             } catch (error) {
                 console.error('AliasManager: Fehler beim Laden', error)
                 this.stalwartAvailable = false
             } finally {
                 this.loading = false
+            }
+        },
+
+        async loadMailboxQuota() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/users/{userId}/mailbox', {
+                    userId: this.userId
+                })
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.currentQuotaBytes = data.quota || 0
+                this.selectedQuotaBytes = this.currentQuotaBytes
+            } catch (error) {
+                this.currentQuotaBytes = 0
+                this.selectedQuotaBytes = 0
+            }
+        },
+
+        formatBytes(bytes) {
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unbegrenzt')
+            }
+            const GB = 1024 * 1024 * 1024
+            const MB = 1024 * 1024
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
+        },
+
+        async saveQuota() {
+            if (this.quotaSaving || this.selectedQuotaBytes === this.currentQuotaBytes) {
+                return
+            }
+            this.quotaSaving = true
+            this.quotaError = null
+            this.quotaSuccess = null
+
+            try {
+                const url = generateUrl('/apps/souvera_central/api/users/{userId}/mailbox/quota', {
+                    userId: this.userId
+                })
+                const response = await axios.post(url, { quota: this.selectedQuotaBytes })
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+
+                const statusCode = response.data?.ocs?.meta?.statuscode
+                if (statusCode && statusCode >= 400) {
+                    throw new Error(data.error || 'Fehler beim Setzen des Limits')
+                }
+
+                if (data.success) {
+                    this.currentQuotaBytes = data.quota ?? this.selectedQuotaBytes
+                    this.selectedQuotaBytes = this.currentQuotaBytes
+                    this.quotaSuccess = this.t('souvera_central', 'Speicherlimit aktualisiert')
+                    setTimeout(() => {
+                        this.quotaSuccess = null
+                    }, 3000)
+                } else {
+                    throw new Error(data.error || 'Unbekannter Fehler')
+                }
+            } catch (error) {
+                this.quotaError =
+                    error.response?.data?.ocs?.data?.error ||
+                    error.response?.data?.error ||
+                    error.message ||
+                    this.t('souvera_central', 'Fehler beim Setzen des Limits')
+            } finally {
+                this.quotaSaving = false
             }
         },
 
@@ -508,6 +632,92 @@ export default {
 .alias-item.primary {
     background: rgba(48, 116, 191, 0.1);
     border-color: rgba(48, 116, 191, 0.3);
+}
+
+/* Postfach-Speicherlimit (Quota) */
+.mailbox-quota {
+    padding: 14px 15px;
+    margin-bottom: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-background-dark);
+}
+
+.quota-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.quota-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.quota-current {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: var(--color-primary-element-light);
+    color: var(--color-primary-element-light-text);
+}
+
+.quota-control-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quota-select {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    cursor: pointer;
+}
+
+.quota-select:focus {
+    outline: none;
+    border-color: var(--color-primary-element);
+}
+
+.quota-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quota-save-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 18px;
+    height: 44px;
+    background: var(--color-primary-element);
+    color: var(--color-primary-element-text);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+}
+
+.quota-save-button:hover:not(:disabled) {
+    background: var(--color-primary-element-hover);
+}
+
+.quota-save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .alias-info {

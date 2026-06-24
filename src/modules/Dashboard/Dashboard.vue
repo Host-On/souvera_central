@@ -205,6 +205,27 @@
                 <AlertCircle :size="18" />
                 <span>{{ syncError }}</span>
             </div>
+
+            <!-- Mail-Gruppe: steuert die Sichtbarkeit der smail-App -->
+            <div v-if="mailGroup.enabled" class="mailgroup-info" data-testid="stalwart-mailgroup">
+                <AccountGroup :size="20" class="mailgroup-icon" />
+                <div class="mailgroup-text">
+                    <div class="mailgroup-headline">
+                        <span class="mailgroup-name" data-testid="stalwart-mailgroup-name">{{ mailGroup.id }}</span>
+                        <span class="mailgroup-badge" :class="{ 'badge-warn': !mailGroup.exists }">
+                            {{ mailGroup.members }} {{ t('souvera_central', 'Mitglied(er)') }}
+                        </span>
+                    </div>
+                    <p class="mailgroup-hint">
+                        {{
+                            t(
+                                'souvera_central',
+                                'Benutzer mit Postfach werden automatisch dieser Gruppe zugeordnet. Beschränken Sie die Mail-App (smail) in den Nextcloud-App-Einstellungen auf diese Gruppe, damit Benutzer ohne Postfach sie nicht sehen.'
+                            )
+                        }}
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- System Info -->
@@ -213,7 +234,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.8.0</span>
+                    <span class="info-value">0.9.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -285,6 +306,7 @@ export default {
         return {
             resellerInfo: { support_url: null, url: null, name: null },
             stalwartStatus: { configured: false, available: false, url: null },
+            mailGroup: { id: 'mail-users', exists: false, members: 0, enabled: true },
             syncing: false,
             syncResult: null,
             syncError: null
@@ -342,6 +364,7 @@ export default {
     mounted() {
         this.loadResellerInfo()
         this.loadStalwartStatus()
+        this.loadMailGroup()
     },
 
     methods: {
@@ -358,6 +381,22 @@ export default {
                 }
             } catch (error) {
                 // Fallback ist in contactUrl implementiert
+            }
+        },
+
+        async loadMailGroup() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/stalwart/mailgroup')
+                const response = await axios.get(url)
+                const data = response.data?.ocs?.data || response.data?.data || response.data || {}
+                this.mailGroup = {
+                    id: data.id || 'mail-users',
+                    exists: !!data.exists,
+                    members: data.members || 0,
+                    enabled: data.enabled !== false
+                }
+            } catch (error) {
+                this.mailGroup = { id: 'mail-users', exists: false, members: 0, enabled: true }
             }
         },
 
@@ -389,6 +428,16 @@ export default {
                     skipped: data.skipped || 0,
                     noMail: data.noMail || 0,
                     errors: data.errors || 0
+                }
+                if (data.mailGroup) {
+                    this.mailGroup = {
+                        id: data.mailGroup.id || this.mailGroup.id,
+                        exists: !!data.mailGroup.exists,
+                        members: data.mailGroup.members || 0,
+                        enabled: data.mailGroup.enabled !== false
+                    }
+                } else {
+                    this.loadMailGroup()
                 }
             } catch (error) {
                 this.syncError =
@@ -833,6 +882,62 @@ export default {
 .sync-result.has-errors {
     background: rgba(var(--color-error-rgb), 0.12);
     color: var(--color-error-text);
+}
+
+/* Mail-Gruppe Info */
+.mailgroup-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-element);
+    background: var(--color-background-dark);
+}
+
+.mailgroup-icon {
+    color: var(--color-primary-element);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.mailgroup-text {
+    min-width: 0;
+}
+
+.mailgroup-headline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mailgroup-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--color-main-text);
+}
+
+.mailgroup-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: var(--border-radius-pill);
+    background: rgba(var(--color-success-rgb), 0.15);
+    color: var(--color-success-text);
+}
+
+.mailgroup-badge.badge-warn {
+    background: rgba(var(--color-warning-rgb), 0.15);
+    color: var(--color-warning-text);
+}
+
+.mailgroup-hint {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-text-maxcontrast);
 }
 
 /* System Info */

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Listener;
 
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\MailGroupService;
 use OCA\SouveraCentral\Service\StalwartService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -25,6 +26,7 @@ class UserProvisionListener implements IEventListener {
     public function __construct(
         private StalwartService $stalwart,
         private ConfigService $config,
+        private MailGroupService $mailGroup,
         private LoggerInterface $logger,
     ) {
     }
@@ -47,6 +49,8 @@ class UserProvisionListener implements IEventListener {
 
         try {
             $this->stalwart->createPrincipal($uid, $password, $mail, $user->getDisplayName());
+            // Benutzer mit Postfach kommt in die Mail-Gruppe (smail-Sichtbarkeit)
+            $this->mailGroup->addUser($user);
         } catch (\Throwable $e) {
             $this->logger->error('SouveraCentral Mailbox-Anlage fehlgeschlagen', [
                 'uid' => $uid,
