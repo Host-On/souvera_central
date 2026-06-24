@@ -2,7 +2,8 @@
 /**
  * Souvera Central - Alias API Controller
  *
- * API-Endpunkte für Email-Alias-Verwaltung via Stalwart
+ * API-Endpunkte für Email-Alias- und Postfach-Verwaltung via Stalwart (JMAP).
+ * Identität eines Postfachs ist die Mailadresse (in Souvera gilt UID == E-Mail).
  */
 
 namespace OCA\SouveraCentral\Controller;
@@ -43,8 +44,6 @@ class AliasApiController extends OCSController {
 
     /**
      * Stalwart-Status abrufen
-     *
-     * @return DataResponse
      */
     public function getStatus(): DataResponse {
         try {
@@ -59,13 +58,9 @@ class AliasApiController extends OCSController {
 
     /**
      * Alle Aliase eines Benutzers abrufen
-     *
-     * @param string $userId - Benutzer-ID (= Email)
-     * @return DataResponse
      */
     public function list(string $userId): DataResponse {
         try {
-            // Prüfe ob User existiert
             $user = $this->userManager->get($userId);
             if ($user === null) {
                 return new DataResponse(
@@ -74,7 +69,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Prüfe Stalwart-Verbindung
             if (!$this->stalwartService->isAvailable()) {
                 return new DataResponse(
                     ['error' => 'Stalwart Mail-Server nicht erreichbar', 'configured' => $this->configService->isStalwartConfigured()],
@@ -82,14 +76,14 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Aliase abrufen
-            $aliases = $this->stalwartService->getAliases($userId);
-            $allEmails = $this->stalwartService->getEmails($userId);
+            $mail = $this->stalwartService->mailFor($user) ?? $userId;
+            $aliases = $this->stalwartService->getAliases($mail);
+            $allEmails = $this->stalwartService->getEmails($mail);
             $maxAliases = $this->configService->getMaxAliasesPerUser();
 
             return new DataResponse([
                 'userId' => $userId,
-                'primaryEmail' => $userId,
+                'primaryEmail' => $mail,
                 'aliases' => $aliases,
                 'allEmails' => $allEmails,
                 'total' => count($aliases),
@@ -110,14 +104,9 @@ class AliasApiController extends OCSController {
 
     /**
      * Neuen Alias hinzufügen
-     *
-     * @param string $userId - Benutzer-ID (= Email)
-     * @param string $alias - Neue Email-Adresse
-     * @return DataResponse
      */
     public function add(string $userId, string $alias = ''): DataResponse {
         try {
-            // Validierung: Alias-Parameter
             if (empty($alias)) {
                 return new DataResponse(
                     ['error' => 'Alias-Adresse ist erforderlich'],
@@ -125,7 +114,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Prüfe ob User existiert
             $user = $this->userManager->get($userId);
             if ($user === null) {
                 return new DataResponse(
@@ -134,7 +122,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Email-Format validieren
             if (!filter_var($alias, FILTER_VALIDATE_EMAIL)) {
                 return new DataResponse(
                     ['error' => 'Ungültiges Email-Format'],
@@ -142,7 +129,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Domain validieren
             if (!$this->configService->isEmailDomainAllowed($alias)) {
                 $allowedDomains = $this->configService->getAllowedDomains();
                 return new DataResponse(
@@ -151,7 +137,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Prüfe Stalwart-Verbindung
             if (!$this->stalwartService->isAvailable()) {
                 return new DataResponse(
                     ['error' => 'Stalwart Mail-Server nicht erreichbar'],
@@ -159,8 +144,10 @@ class AliasApiController extends OCSController {
                 );
             }
 
+            $mail = $this->stalwartService->mailFor($user) ?? $userId;
+
             // Alias-Limit prüfen
-            $currentAliases = $this->stalwartService->getAliases($userId);
+            $currentAliases = $this->stalwartService->getAliases($mail);
             $maxAliases = $this->configService->getMaxAliasesPerUser();
             if (count($currentAliases) >= $maxAliases) {
                 return new DataResponse(
@@ -177,8 +164,7 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Alias hinzufügen
-            $success = $this->stalwartService->addAlias($userId, $alias);
+            $success = $this->stalwartService->addAlias($mail, $alias);
 
             if (!$success) {
                 return new DataResponse(
@@ -187,8 +173,7 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Aktuelle Aliase zurückgeben
-            $aliases = $this->stalwartService->getAliases($userId);
+            $aliases = $this->stalwartService->getAliases($mail);
 
             return new DataResponse([
                 'success' => true,
@@ -213,14 +198,9 @@ class AliasApiController extends OCSController {
 
     /**
      * Alias entfernen
-     *
-     * @param string $userId - Benutzer-ID (= Email)
-     * @param string $alias - Zu entfernende Email-Adresse
-     * @return DataResponse
      */
     public function remove(string $userId, string $alias): DataResponse {
         try {
-            // Prüfe ob User existiert
             $user = $this->userManager->get($userId);
             if ($user === null) {
                 return new DataResponse(
@@ -229,15 +209,16 @@ class AliasApiController extends OCSController {
                 );
             }
 
+            $mail = $this->stalwartService->mailFor($user) ?? $userId;
+
             // Verhindere Entfernung der Haupt-Email
-            if ($alias === $userId) {
+            if (strtolower($alias) === strtolower($mail)) {
                 return new DataResponse(
                     ['error' => 'Die Haupt-Email-Adresse kann nicht entfernt werden'],
                     Http::STATUS_BAD_REQUEST
                 );
             }
 
-            // Prüfe Stalwart-Verbindung
             if (!$this->stalwartService->isAvailable()) {
                 return new DataResponse(
                     ['error' => 'Stalwart Mail-Server nicht erreichbar'],
@@ -245,8 +226,7 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Alias entfernen
-            $success = $this->stalwartService->removeAlias($userId, $alias);
+            $success = $this->stalwartService->removeAlias($mail, $alias);
 
             if (!$success) {
                 return new DataResponse(
@@ -255,8 +235,7 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Aktuelle Aliase zurückgeben
-            $aliases = $this->stalwartService->getAliases($userId);
+            $aliases = $this->stalwartService->getAliases($mail);
 
             return new DataResponse([
                 'success' => true,
@@ -280,9 +259,6 @@ class AliasApiController extends OCSController {
 
     /**
      * Prüfen ob Email-Adresse verfügbar ist
-     *
-     * @param string $email - Zu prüfende Email-Adresse
-     * @return DataResponse
      */
     public function checkAvailability(string $email = ''): DataResponse {
         try {
@@ -293,7 +269,6 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            // Prüfe Stalwart-Verbindung
             if (!$this->stalwartService->isAvailable()) {
                 return new DataResponse(
                     ['error' => 'Stalwart Mail-Server nicht erreichbar'],
@@ -320,11 +295,11 @@ class AliasApiController extends OCSController {
     }
 
     // ========================================================================
-    // Postfach-Verwaltung (Admin-only: Controller verlangt standardmäßig Admin)
+    // Postfach-Verwaltung (Admin-only)
     // ========================================================================
 
     /**
-     * Liste aller bestehenden Stalwart-Postfächer (Principal-Namen) für
+     * Liste aller bestehenden Stalwart-Postfächer (Mailadressen) für
      * Tabellen-Badges in der Benutzerverwaltung.
      */
     public function listMailboxes(): DataResponse {
@@ -354,7 +329,8 @@ class AliasApiController extends OCSController {
             if ($user === null) {
                 return new DataResponse(['error' => 'Benutzer nicht gefunden'], Http::STATUS_NOT_FOUND);
             }
-            return new DataResponse($this->stalwartService->getMailboxStatus($userId));
+            $mail = $this->stalwartService->mailFor($user) ?? $userId;
+            return new DataResponse($this->stalwartService->getMailboxStatus($mail));
         } catch (\Exception $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
@@ -362,8 +338,6 @@ class AliasApiController extends OCSController {
 
     /**
      * Postfach für einen Benutzer anlegen/sicherstellen.
-     * Nutzt ein Zufalls-Secret; der Nutzer setzt sein Mail-Passwort danach per
-     * NC-Passwortänderung neu (PasswordSyncListener spiegelt es nach Stalwart).
      */
     public function createMailbox(string $userId): DataResponse {
         try {
@@ -377,16 +351,6 @@ class AliasApiController extends OCSController {
                     Http::STATUS_SERVICE_UNAVAILABLE
                 );
             }
-            if ($this->stalwartService->principalExists($userId)) {
-                // Bestehendes Postfach: Mail-Gruppen-Mitgliedschaft sicherstellen
-                $this->mailGroupService->addUser($user);
-                return new DataResponse([
-                    'success' => true,
-                    'created' => false,
-                    'message' => 'Postfach existiert bereits',
-                    'status' => $this->stalwartService->getMailboxStatus($userId),
-                ]);
-            }
 
             $mail = $this->stalwartService->mailFor($user);
             if ($mail === null) {
@@ -396,7 +360,18 @@ class AliasApiController extends OCSController {
                 );
             }
 
-            $ok = $this->stalwartService->createPrincipal($userId, bin2hex(random_bytes(24)), $mail, $user->getDisplayName());
+            if ($this->stalwartService->principalExists($mail)) {
+                // Bestehendes Postfach: Mail-Gruppen-Mitgliedschaft sicherstellen
+                $this->mailGroupService->addUser($user);
+                return new DataResponse([
+                    'success' => true,
+                    'created' => false,
+                    'message' => 'Postfach existiert bereits',
+                    'status' => $this->stalwartService->getMailboxStatus($mail),
+                ]);
+            }
+
+            $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName());
             if (!$ok) {
                 return new DataResponse(['error' => 'Postfach konnte nicht angelegt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
             }
@@ -408,7 +383,7 @@ class AliasApiController extends OCSController {
                 'success' => true,
                 'created' => true,
                 'email' => $mail,
-                'status' => $this->stalwartService->getMailboxStatus($userId),
+                'status' => $this->stalwartService->getMailboxStatus($mail),
             ], Http::STATUS_CREATED);
         } catch (\Exception $e) {
             $this->logger->error('AliasApiController: createMailbox fehlgeschlagen', ['userId' => $userId, 'error' => $e->getMessage()]);
@@ -449,7 +424,12 @@ class AliasApiController extends OCSController {
                         $skipped++;
                         continue;
                     }
-                    if (isset($existing[$uid]) || $this->stalwartService->principalExists($uid)) {
+                    $mail = $this->stalwartService->mailFor($user);
+                    if ($mail === null) {
+                        $noMail++;
+                        continue;
+                    }
+                    if (isset($existing[$mail]) || $this->stalwartService->principalExists($mail)) {
                         // Bestandspostfach: Mail-Gruppen-Mitgliedschaft nachziehen
                         if ($this->mailGroupService->addUser($user)) {
                             $grouped++;
@@ -457,13 +437,8 @@ class AliasApiController extends OCSController {
                         $skipped++;
                         continue;
                     }
-                    $mail = $this->stalwartService->mailFor($user);
-                    if ($mail === null) {
-                        $noMail++;
-                        continue;
-                    }
                     try {
-                        $ok = $this->stalwartService->createPrincipal($uid, bin2hex(random_bytes(24)), $mail, $user->getDisplayName());
+                        $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName());
                         if ($ok) {
                             $created++;
                             if ($this->mailGroupService->addUser($user)) {
@@ -507,9 +482,6 @@ class AliasApiController extends OCSController {
 
     /**
      * Postfach-Quota (Speicherlimit) eines Benutzers setzen.
-     *
-     * @param string $userId
-     * @param int $quota - Limit in Bytes (0 = unbegrenzt)
      */
     public function setMailboxQuota(string $userId, int $quota = 0): DataResponse {
         try {
@@ -523,12 +495,14 @@ class AliasApiController extends OCSController {
                     Http::STATUS_SERVICE_UNAVAILABLE
                 );
             }
-            if (!$this->stalwartService->principalExists($userId)) {
+
+            $mail = $this->stalwartService->mailFor($user) ?? $userId;
+            if (!$this->stalwartService->principalExists($mail)) {
                 return new DataResponse(['error' => 'Kein Postfach für diesen Benutzer vorhanden'], Http::STATUS_BAD_REQUEST);
             }
 
             $quota = max(0, (int) $quota);
-            $ok = $this->stalwartService->setMailboxQuota($userId, $quota);
+            $ok = $this->stalwartService->setMailboxQuota($mail, $quota);
             if (!$ok) {
                 return new DataResponse(['error' => 'Quota konnte nicht gesetzt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
             }
@@ -536,7 +510,7 @@ class AliasApiController extends OCSController {
             return new DataResponse([
                 'success' => true,
                 'quota' => $quota,
-                'status' => $this->stalwartService->getMailboxStatus($userId),
+                'status' => $this->stalwartService->getMailboxStatus($mail),
             ]);
         } catch (\Exception $e) {
             $this->logger->error('AliasApiController: setMailboxQuota fehlgeschlagen', ['userId' => $userId, 'error' => $e->getMessage()]);

@@ -1,11 +1,20 @@
 <?php
 /**
- * Souvera Central - Stalwart Mail-Server Service
+ * Souvera Central - Stalwart Mail-Server Service (Stalwart v0.16 / JMAP)
  *
- * Kommunikation mit der Stalwart REST API für:
- * - Email-Aliase verwalten
- * - Shared Mailboxes (zukünftig)
- * - Principal-Management
+ * Ab Stalwart 0.16 wurde die alte REST-Management-API (/api/principal ...)
+ * vollständig entfernt und durch die JMAP-Management-API ersetzt. Dieser
+ * Service spricht ausschließlich JMAP:
+ *
+ *   - Session-Discovery : GET  {base}/jmap/session   (liefert Management-accountId)
+ *   - Methoden-Aufrufe  : POST {base}/jmap            (using: urn:stalwart:jmap)
+ *   - Objekttypen       : x:Account (User/Group), x:Domain
+ *   - Methoden          : x:Account/{get,set,query}, x:Domain/{get,query}
+ *
+ * Identitätsmodell v0.16: Ein Konto hat name=Localpart + domainId; die
+ * E-Mail-Adresse (name@domain) ist der fachliche Schlüssel. In Souvera gilt
+ * NC-UID == E-Mail-Adresse, daher arbeiten alle öffentlichen Methoden auf der
+ * E-Mail-Adresse.
  */
 
 namespace OCA\SouveraCentral\Service;
@@ -13,8 +22,19 @@ namespace OCA\SouveraCentral\Service;
 use Psr\Log\LoggerInterface;
 
 class StalwartService {
+    /** JMAP-Capability für die Stalwart-Management-Objekte (x:*). */
+    private const CAP_CORE = 'urn:ietf:params:jmap:core';
+    private const CAP_STALWART = 'urn:stalwart:jmap';
+
     private ConfigService $configService;
     private LoggerInterface $logger;
+
+    /** Session-Cache (pro Request): ['accountId' => string, 'apiUrl' => string] oder false. */
+    private array|false|null $sessionCache = null;
+    /** @var array<string,?string> domainName => domainId */
+    private array $domainIdCache = [];
+    /** @var array<string,string>|null domainId => domainName */
+    private ?array $domainNameMapCache = null;
 
     public function __construct(
         ConfigService $configService,
@@ -25,314 +45,372 @@ class StalwartService {
     }
 
     // ============================================================================
-    // Principal-Verwaltung (Benutzer im Stalwart)
+    // Öffentliche, E-Mail-zentrische Postfach-API
     // ============================================================================
 
     /**
-     * Principal (Benutzer) aus Stalwart abrufen
-     *
-     * @param string $principalId - Username/Email des Benutzers
-     * @return array|null - Principal-Daten oder null bei Fehler
-     */
-    public function getPrincipal(string $principalId): ?array {
-        $response = $this->apiRequest('GET', '/api/principal/' . urlencode($principalId));
-
-        if ($response === null) {
-            return null;
-        }
-
-        // Stalwart API gibt {"data": {...}} zurück
-        return $response['data'] ?? $response;
-    }
-
-    /**
-     * Alle Email-Adressen eines Benutzers abrufen
-     *
-     * @param string $principalId - Username/Email des Benutzers
-     * @return array - Liste der Email-Adressen (Haupt-Email + Aliase)
-     */
-    public function getEmails(string $principalId): array {
-        $principal = $this->getPrincipal($principalId);
-
-        if ($principal === null) {
-            return [];
-        }
-
-        return $principal['emails'] ?? [$principalId];
-    }
-
-    /**
-     * Email-Alias hinzufügen
-     *
-     * @param string $principalId - Username/Email des Benutzers
-     * @param string $alias - Neue Email-Adresse
-     * @return bool - Erfolg
-     */
-    public function addAlias(string $principalId, string $alias): bool {
-        // Validierung: Email-Format prüfen
-        if (!filter_var($alias, FILTER_VALIDATE_EMAIL)) {
-            $this->logger->warning('StalwartService: Ungültiges Email-Format für Alias', [
-                'principalId' => $principalId,
-                'alias' => $alias
-            ]);
-            return false;
-        }
-
-        // Domain-Validierung
-        if (!$this->configService->isEmailDomainAllowed($alias)) {
-            $this->logger->warning('StalwartService: Domain nicht erlaubt für Alias', [
-                'principalId' => $principalId,
-                'alias' => $alias
-            ]);
-            return false;
-        }
-
-        // PATCH-Request mit addItem Operation
-        $payload = [
-            [
-                'action' => 'addItem',
-                'field' => 'emails',
-                'value' => $alias
-            ]
-        ];
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($principalId), $payload);
-
-        if ($response === null) {
-            return false;
-        }
-
-        $this->logger->info('StalwartService: Alias hinzugefügt', [
-            'principalId' => $principalId,
-            'alias' => $alias
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Email-Alias entfernen
-     *
-     * @param string $principalId - Username/Email des Benutzers
-     * @param string $alias - Zu entfernende Email-Adresse
-     * @return bool - Erfolg
-     */
-    public function removeAlias(string $principalId, string $alias): bool {
-        // Verhindere Entfernung der Haupt-Email
-        if ($alias === $principalId) {
-            $this->logger->warning('StalwartService: Haupt-Email kann nicht entfernt werden', [
-                'principalId' => $principalId,
-                'alias' => $alias
-            ]);
-            return false;
-        }
-
-        // PATCH-Request mit removeItem Operation
-        $payload = [
-            [
-                'action' => 'removeItem',
-                'field' => 'emails',
-                'value' => $alias
-            ]
-        ];
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($principalId), $payload);
-
-        if ($response === null) {
-            return false;
-        }
-
-        $this->logger->info('StalwartService: Alias entfernt', [
-            'principalId' => $principalId,
-            'alias' => $alias
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Alle Aliase eines Benutzers abrufen (ohne Haupt-Email)
-     *
-     * @param string $principalId - Username/Email des Benutzers
-     * @return array - Liste der Aliase
-     */
-    public function getAliases(string $principalId): array {
-        $emails = $this->getEmails($principalId);
-
-        // Filtere die Haupt-Email heraus
-        return array_values(array_filter($emails, function($email) use ($principalId) {
-            return $email !== $principalId;
-        }));
-    }
-
-    /**
-     * Prüft ob ein Email-Alias bereits existiert (global)
-     *
-     * @param string $email - Zu prüfende Email-Adresse
-     * @return bool - true wenn bereits vergeben
-     */
-    public function isEmailTaken(string $email): bool {
-        // Suche nach Principal mit dieser Email
-        $response = $this->apiRequest('GET', '/api/principal?filter=' . urlencode($email));
-
-        if ($response === null) {
-            return false; // Im Zweifel erlauben
-        }
-
-        // Prüfe ob Email in einem der Ergebnisse vorkommt
-        foreach ($response as $principal) {
-            $emails = $principal['emails'] ?? [];
-            if (in_array($email, $emails)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // ============================================================================
-    // Provisionierung (Postfach anlegen / Passwort spiegeln / löschen)
-    // ============================================================================
-
-    /**
-     * Postfach (individual) anlegen. Idempotent: existiert es bereits,
+     * Postfach (User-Account) anlegen. Idempotent: existiert es bereits,
      * wird nur das Passwort gesetzt.
      *
-     * @param string $uid - NC-User-ID = Stalwart Principal-Name
-     * @param string $password - Klartext-Passwort (Stalwart bildet eigenen Hash)
-     * @param string $email - Haupt-Mailadresse
-     * @param string|null $displayName - Anzeigename (description)
-     * @param int $quota - optionales Quota in Bytes (0 = kein Limit)
-     * @return bool - Erfolg
+     * @param string $email       Haupt-Mailadresse (= Identität, local@domain)
+     * @param string $password    Klartext-Passwort (Stalwart hasht serverseitig)
+     * @param string|null $displayName Anzeigename (description)
+     * @param int $quota           optionales Disk-Quota in Bytes (0 = unbegrenzt)
      */
     public function createPrincipal(
-        string $uid,
-        string $password,
         string $email,
+        string $password,
         ?string $displayName = null,
         int $quota = 0
     ): bool {
-        if ($this->principalExists($uid)) {
-            return $this->setPassword($uid, $password);
+        $email = strtolower(trim($email));
+        $parts = $this->splitEmail($email);
+        if ($parts === null) {
+            $this->logger->warning('StalwartService: Ungültige Mailadresse für Postfach', ['email' => $email]);
+            return false;
         }
 
-        $body = [
-            'type' => 'individual',
-            'name' => $uid,
-            'secrets' => [$password],
-            'emails' => [strtolower($email)],
-            'description' => $displayName ?: $uid,
+        if ($this->principalExists($email)) {
+            return $this->setPassword($email, $password);
+        }
+
+        $domainId = $this->resolveDomainId($parts['domain']);
+        if ($domainId === null) {
+            $this->logger->error('StalwartService: Domain in Stalwart nicht vorhanden', [
+                'email' => $email,
+                'domain' => $parts['domain'],
+            ]);
+            return false;
+        }
+
+        $object = [
+            '@type' => 'User',
+            'name' => $parts['local'],
+            'domainId' => $domainId,
+            'credentials' => ['0' => ['@type' => 'Password', 'secret' => $password]],
+            'description' => $displayName ?: $parts['local'],
         ];
         if ($quota > 0) {
-            $body['quota'] = $quota;
+            $object['quotas'] = ['maxDiskQuota' => $quota];
         }
 
-        $response = $this->apiRequest('POST', '/api/principal', $body);
-
-        if ($response === null) {
+        $resp = $this->jmapSingle('x:Account/set', ['create' => ['nc0' => $object]]);
+        if ($resp === null || !array_key_exists('nc0', $resp['created'] ?? [])) {
+            $this->logger->warning('StalwartService: Postfach-Anlage abgelehnt', [
+                'email' => $email,
+                'notCreated' => $resp['notCreated'] ?? null,
+            ]);
             return false;
         }
 
-        $this->logger->info('StalwartService: Postfach angelegt', [
-            'uid' => $uid,
-            'email' => strtolower($email),
-        ]);
-
+        $this->logger->info('StalwartService: Postfach angelegt', ['email' => $email]);
         return true;
     }
 
     /**
-     * Passwort in Stalwart setzen (Spiegelung einer NC-Passwortänderung).
-     *
-     * @param string $uid - NC-User-ID = Stalwart Principal-Name
-     * @param string $password - Klartext-Passwort
-     * @return bool - Erfolg
+     * Passwort eines Postfachs setzen (Spiegelung einer NC-Passwortänderung).
+     * Behält bestehende Zweit-Credentials (App-Passwörter / OTP) unverändert.
      */
-    public function setPassword(string $uid, string $password): bool {
-        $payload = [
-            [
-                'action' => 'set',
-                'field' => 'secrets',
-                'value' => [$password],
-            ],
+    public function setPassword(string $email, string $password): bool {
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return false;
+        }
+
+        $existing = $account['credentials'] ?? [];
+        $credentials = [];
+        $index = 0;
+        $hasPassword = false;
+        foreach ($existing as $cred) {
+            if (!is_array($cred)) {
+                continue;
+            }
+            if (($cred['@type'] ?? '') === 'Password') {
+                // Vorhandenes Passwort-Credential beibehalten, nur Secret ersetzen.
+                $cred['secret'] = $password;
+                $hasPassword = true;
+            }
+            $credentials[(string) $index] = $cred;
+            $index++;
+        }
+        if (!$hasPassword) {
+            $credentials['0'] = ['@type' => 'Password', 'secret' => $password];
+        }
+
+        $accountId = (string) $account['id'];
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => ['credentials' => $credentials]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Passwort gespiegelt', ['email' => $email]);
+        } else {
+            $this->logger->warning('StalwartService: Passwort-Update abgelehnt', [
+                'email' => $email,
+                'notUpdated' => $resp['notUpdated'] ?? null,
+            ]);
+        }
+        return $ok;
+    }
+
+    /**
+     * Disk-Quota eines Postfachs setzen (0 = unbegrenzt).
+     * Patcht gezielt quotas/maxDiskQuota, ohne andere Quotas zu überschreiben.
+     */
+    public function setMailboxQuota(string $email, int $quotaBytes): bool {
+        $accountId = $this->findAccountId($email, 'User');
+        if ($accountId === null) {
+            return false;
+        }
+
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => ['quotas/maxDiskQuota' => max(0, $quotaBytes)]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Postfach-Quota gesetzt', [
+                'email' => $email,
+                'quota' => max(0, $quotaBytes),
+            ]);
+        }
+        return $ok;
+    }
+
+    /**
+     * Postfach löschen. Existiert es nicht (mehr), gilt das als Erfolg (idempotent).
+     */
+    public function deletePrincipal(string $email): bool {
+        $accountId = $this->findAccountId($email, 'User');
+        if ($accountId === null) {
+            return true; // bereits weg
+        }
+
+        $resp = $this->jmapSingle('x:Account/set', ['destroy' => [$accountId]]);
+        if ($resp === null) {
+            return false;
+        }
+
+        $this->logger->info('StalwartService: Postfach gelöscht', ['email' => $email]);
+        return true;
+    }
+
+    /**
+     * Prüft, ob für die Mailadresse ein User-Postfach existiert.
+     */
+    public function principalExists(string $email): bool {
+        return $this->findAccountId($email, 'User') !== null;
+    }
+
+    /**
+     * Alle E-Mail-Adressen eines Postfachs (Haupt-Adresse + Aliase).
+     *
+     * @return string[]
+     */
+    public function getEmails(string $email): array {
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return [];
+        }
+
+        $emails = [];
+        $primary = $this->primaryAddress($account);
+        if ($primary !== null) {
+            $emails[] = $primary;
+        }
+        foreach ($this->aliasAddresses($account) as $alias) {
+            $emails[] = $alias;
+        }
+
+        return array_values(array_unique($emails));
+    }
+
+    /**
+     * Aliase eines Postfachs (ohne Haupt-Adresse).
+     *
+     * @return string[]
+     */
+    public function getAliases(string $email): array {
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return [];
+        }
+        return $this->aliasAddresses($account);
+    }
+
+    /**
+     * Alias hinzufügen.
+     */
+    public function addAlias(string $email, string $alias): bool {
+        $alias = strtolower(trim($alias));
+        if (!filter_var($alias, FILTER_VALIDATE_EMAIL)) {
+            $this->logger->warning('StalwartService: Ungültiges Email-Format für Alias', [
+                'email' => $email, 'alias' => $alias,
+            ]);
+            return false;
+        }
+        if (!$this->configService->isEmailDomainAllowed($alias)) {
+            $this->logger->warning('StalwartService: Domain nicht erlaubt für Alias', [
+                'email' => $email, 'alias' => $alias,
+            ]);
+            return false;
+        }
+
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return false;
+        }
+        $parts = $this->splitEmail($alias);
+        if ($parts === null) {
+            return false;
+        }
+        $aliasDomainId = $this->resolveDomainId($parts['domain']);
+        if ($aliasDomainId === null) {
+            $this->logger->warning('StalwartService: Alias-Domain in Stalwart nicht vorhanden', [
+                'alias' => $alias, 'domain' => $parts['domain'],
+            ]);
+            return false;
+        }
+
+        $entries = $this->aliasEntries($account);
+        foreach ($entries as $entry) {
+            if (strtolower((string) ($entry['name'] ?? '')) === $parts['local']
+                && (string) ($entry['domainId'] ?? '') === $aliasDomainId) {
+                return true; // existiert bereits
+            }
+        }
+        $entries[] = ['enabled' => true, 'name' => $parts['local'], 'domainId' => $aliasDomainId];
+
+        $accountId = (string) $account['id'];
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => ['aliases' => $this->reindexAliasEntries($entries)]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Alias hinzugefügt', ['email' => $email, 'alias' => $alias]);
+        }
+        return $ok;
+    }
+
+    /**
+     * Alias entfernen (die Haupt-Adresse kann nicht entfernt werden).
+     */
+    public function removeAlias(string $email, string $alias): bool {
+        $alias = strtolower(trim($alias));
+        if ($alias === strtolower(trim($email))) {
+            return false; // Haupt-Adresse
+        }
+
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return false;
+        }
+        $parts = $this->splitEmail($alias);
+        if ($parts === null) {
+            return false;
+        }
+        $aliasDomainId = $this->resolveDomainId($parts['domain']);
+
+        $entries = $this->aliasEntries($account);
+        $filtered = array_values(array_filter($entries, function ($entry) use ($parts, $aliasDomainId) {
+            $sameName = strtolower((string) ($entry['name'] ?? '')) === $parts['local'];
+            $sameDomain = $aliasDomainId === null
+                || (string) ($entry['domainId'] ?? '') === $aliasDomainId;
+            return !($sameName && $sameDomain);
+        }));
+
+        if (count($filtered) === count($entries)) {
+            return true; // war nicht vorhanden
+        }
+
+        $accountId = (string) $account['id'];
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => ['aliases' => $this->reindexAliasEntries($filtered)]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Alias entfernt', ['email' => $email, 'alias' => $alias]);
+        }
+        return $ok;
+    }
+
+    /**
+     * Prüft, ob eine Adresse bereits als Haupt-Adresse eines Kontos vergeben ist.
+     */
+    public function isEmailTaken(string $email): bool {
+        $parts = $this->splitEmail(strtolower(trim($email)));
+        if ($parts === null) {
+            return false;
+        }
+        $domainId = $this->resolveDomainId($parts['domain']);
+        if ($domainId === null) {
+            return false; // unbekannte Domain -> nicht vergeben
+        }
+
+        $resp = $this->jmapSingle('x:Account/query', [
+            'filter' => $this->andFilter([
+                ['name' => $parts['local']],
+                ['domainId' => $domainId],
+            ]),
+        ]);
+        return !empty($resp['ids'] ?? []);
+    }
+
+    /**
+     * Postfach-Status für einen Benutzer.
+     *
+     * @return array{exists: bool, email: ?string, aliases: array, quota: int, configured: bool}
+     */
+    public function getMailboxStatus(string $email): array {
+        $configured = $this->configService->isStalwartConfigured();
+        if (!$configured) {
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => false];
+        }
+
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => true];
+        }
+
+        return [
+            'exists' => true,
+            'email' => $this->primaryAddress($account),
+            'aliases' => $this->aliasAddresses($account),
+            'quota' => (int) ($account['quotas']['maxDiskQuota'] ?? 0),
+            'configured' => true,
         ];
+    }
 
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($uid), $payload);
-
-        if ($response === null) {
-            return false;
+    /**
+     * E-Mail-Adressen aller individuellen Postfächer (User-Accounts).
+     *
+     * @return string[]
+     */
+    public function listPrincipalNames(): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return [];
         }
 
-        $this->logger->info('StalwartService: Passwort gespiegelt', [
-            'uid' => $uid,
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Postfach-Quota (Speicherlimit) in Stalwart setzen.
-     *
-     * @param string $uid - NC-User-ID = Stalwart Principal-Name
-     * @param int $quotaBytes - Limit in Bytes (0 = unbegrenzt)
-     * @return bool - Erfolg
-     */
-    public function setMailboxQuota(string $uid, int $quotaBytes): bool {
-        $payload = [
-            [
-                'action' => 'set',
-                'field' => 'quota',
-                'value' => max(0, $quotaBytes),
-            ],
-        ];
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($uid), $payload);
-
-        if ($response === null) {
-            return false;
+        $query = $this->jmapSingle('x:Account/query', ['filter' => ['@type' => 'User']]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
+            return [];
         }
 
-        $this->logger->info('StalwartService: Postfach-Quota gesetzt', [
-            'uid' => $uid,
-            'quota' => max(0, $quotaBytes),
+        $got = $this->jmapSingle('x:Account/get', [
+            'ids' => array_values($ids),
+            'properties' => ['emailAddress'],
         ]);
-
-        return true;
-    }
-
-    /**
-     * Postfach löschen. 404 (bereits weg) wird als Erfolg gewertet (idempotent).
-     *
-     * @param string $uid - NC-User-ID = Stalwart Principal-Name
-     * @return bool
-     */
-    public function deletePrincipal(string $uid): bool {
-        // apiRequest() liefert bei 404 null - das ist hier OK (bereits gelöscht).
-        $this->apiRequest('DELETE', '/api/principal/' . urlencode($uid));
-
-        $this->logger->info('StalwartService: Postfach gelöscht (oder bereits entfernt)', [
-            'uid' => $uid,
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Prüft, ob ein Principal in Stalwart existiert.
-     *
-     * @param string $uid - NC-User-ID = Stalwart Principal-Name
-     * @return bool
-     */
-    public function principalExists(string $uid): bool {
-        return $this->getPrincipal($uid) !== null;
+        $emails = [];
+        foreach ($got['list'] ?? [] as $acc) {
+            if (isset($acc['emailAddress']) && $acc['emailAddress'] !== '') {
+                $emails[] = strtolower((string) $acc['emailAddress']);
+            }
+        }
+        return $emails;
     }
 
     /**
      * Leitet aus einem NC-User die zu verwendende Mailadresse ab.
-     * Berücksichtigt die Domain-Whitelist.
-     *
-     * @param \OCP\IUser $user
-     * @return string|null - Mailadresse oder null, wenn keine ermittelbar ist
      */
     public function mailFor(\OCP\IUser $user): ?string {
         $email = $user->getEMailAddress();
@@ -354,225 +432,386 @@ class StalwartService {
     }
 
     // ============================================================================
-    // API-Kommunikation
+    // Status & Health
+    // ============================================================================
+
+    public function isAvailable(): bool {
+        return $this->configService->isStalwartConfigured() && $this->session() !== false;
+    }
+
+    /**
+     * @return array{configured: bool, available: bool, url: ?string}
+     */
+    public function getStatus(): array {
+        $url = $this->configService->getStalwartApiUrl();
+        return [
+            'configured' => $this->configService->isStalwartConfigured(),
+            'available' => $this->isAvailable(),
+            'url' => $url ? preg_replace('/\/\/[^:]+:[^@]+@/', '//***:***@', $url) : null,
+        ];
+    }
+
+    // ============================================================================
+    // JMAP-Bausteine (auch von SharedMailboxService genutzt)
     // ============================================================================
 
     /**
-     * API-Request an Stalwart senden
-     *
-     * @param string $method - HTTP-Methode (GET, POST, PATCH, DELETE)
-     * @param string $endpoint - API-Endpunkt (z.B. /api/principal/user@domain.de)
-     * @param array|null $data - Request-Body (für POST/PATCH)
-     * @return array|null - Response-Daten oder null bei Fehler
+     * Domain-ID per Domain-Namen auflösen (gecached).
      */
-    private function apiRequest(string $method, string $endpoint, ?array $data = null): ?array {
-        // Config prüfen
-        if (!$this->configService->isStalwartConfigured()) {
-            $this->logger->error('StalwartService: Stalwart nicht konfiguriert');
+    public function resolveDomainId(string $domain): ?string {
+        $domain = strtolower(trim($domain));
+        if ($domain === '') {
+            return null;
+        }
+        if (array_key_exists($domain, $this->domainIdCache)) {
+            return $this->domainIdCache[$domain];
+        }
+
+        $resp = $this->jmapSingle('x:Domain/query', ['filter' => ['name' => $domain]]);
+        $id = $resp['ids'][0] ?? null;
+        $this->domainIdCache[$domain] = $id !== null ? (string) $id : null;
+        return $this->domainIdCache[$domain];
+    }
+
+    /**
+     * Map domainId => domainName (gecached).
+     *
+     * @return array<string,string>
+     */
+    public function domainNameMap(): array {
+        if ($this->domainNameMapCache !== null) {
+            return $this->domainNameMapCache;
+        }
+
+        $map = [];
+        $query = $this->jmapSingle('x:Domain/query', []);
+        $ids = $query['ids'] ?? [];
+        if (!empty($ids)) {
+            $got = $this->jmapSingle('x:Domain/get', [
+                'ids' => array_values($ids),
+                'properties' => ['name'],
+            ]);
+            foreach ($got['list'] ?? [] as $domain) {
+                if (isset($domain['id'], $domain['name'])) {
+                    $map[(string) $domain['id']] = strtolower((string) $domain['name']);
+                }
+            }
+        }
+        $this->domainNameMapCache = $map;
+        return $map;
+    }
+
+    /**
+     * Konto-ID per Mailadresse finden.
+     *
+     * @param string $email
+     * @param string|null $type 'User' | 'Group' | null (beliebig)
+     */
+    public function findAccountId(string $email, ?string $type = null): ?string {
+        $parts = $this->splitEmail(strtolower(trim($email)));
+        if ($parts === null) {
+            return null;
+        }
+        $domainId = $this->resolveDomainId($parts['domain']);
+        if ($domainId === null) {
             return null;
         }
 
+        $conditions = [['name' => $parts['local']], ['domainId' => $domainId]];
+        if ($type !== null) {
+            $conditions[] = ['@type' => $type];
+        }
+
+        $resp = $this->jmapSingle('x:Account/query', ['filter' => $this->andFilter($conditions)]);
+        $id = $resp['ids'][0] ?? null;
+        return $id !== null ? (string) $id : null;
+    }
+
+    /**
+     * Vollständiges Konto-Objekt per Mailadresse laden.
+     *
+     * @return array|null  JMAP-Objekt inkl. id, emailAddress, aliases, quotas, ...
+     */
+    public function getAccount(string $email, ?string $type = null): ?array {
+        $id = $this->findAccountId($email, $type);
+        if ($id === null) {
+            return null;
+        }
+        return $this->getAccountById($id);
+    }
+
+    /**
+     * Vollständiges Konto-Objekt per Konto-ID laden.
+     */
+    public function getAccountById(string $id): ?array {
+        $resp = $this->jmapSingle('x:Account/get', ['ids' => [$id]]);
+        $list = $resp['list'] ?? [];
+        return $list[0] ?? null;
+    }
+
+    /**
+     * Einen einzelnen JMAP-Methodenaufruf absetzen und die Antwort-Argumente
+     * zurückgeben. Hängt automatisch die Management-accountId an.
+     *
+     * @return array|null  Antwort-Argumente oder null bei Transport-/Methodenfehler
+     */
+    public function jmapSingle(string $method, array $args, string $callId = 'c0'): ?array {
+        $accountId = $this->accountId();
+        if ($accountId === null) {
+            return null;
+        }
+        if (!array_key_exists('accountId', $args)) {
+            $args['accountId'] = $accountId;
+        }
+
+        $responses = $this->jmapCall([[$method, $args, $callId]]);
+        if ($responses === null || !isset($responses[0])) {
+            return null;
+        }
+
+        [$name, $respArgs] = [$responses[0][0] ?? '', $responses[0][1] ?? []];
+        if ($name === 'error') {
+            $this->logger->warning('StalwartService: JMAP-Methodenfehler', [
+                'method' => $method,
+                'error' => $respArgs,
+            ]);
+            return null;
+        }
+        return is_array($respArgs) ? $respArgs : [];
+    }
+
+    /**
+     * Mehrere JMAP-Methodenaufrufe in einem Request absetzen.
+     *
+     * @param array $methodCalls Liste von [methodName, args, callId]
+     * @return array|null  methodResponses oder null bei Transportfehler
+     */
+    public function jmapCall(array $methodCalls): ?array {
+        $session = $this->session();
+        if ($session === false) {
+            return null;
+        }
+
+        $body = [
+            'using' => [self::CAP_CORE, self::CAP_STALWART],
+            'methodCalls' => $methodCalls,
+        ];
+
+        $result = $this->http('POST', $session['apiUrl'], $body);
+        if ($result === null) {
+            return null;
+        }
+        [$status, $decoded] = $result;
+        if ($status < 200 || $status >= 300 || !is_array($decoded)) {
+            $this->logger->warning('StalwartService: JMAP-Request fehlgeschlagen', [
+                'status' => $status,
+                'response' => is_array($decoded) ? $decoded : null,
+            ]);
+            return null;
+        }
+        return $decoded['methodResponses'] ?? null;
+    }
+
+    /**
+     * Management-accountId (primaryAccounts[urn:stalwart:jmap]).
+     */
+    public function accountId(): ?string {
+        $session = $this->session();
+        return $session === false ? null : ($session['accountId'] ?? null);
+    }
+
+    // ============================================================================
+    // Interne Helfer
+    // ============================================================================
+
+    /**
+     * JMAP-Session holen (gecached). Liefert ['accountId','apiUrl'] oder false.
+     */
+    private function session(): array|false {
+        if ($this->sessionCache !== null) {
+            return $this->sessionCache;
+        }
+
+        if (!$this->configService->isStalwartConfigured()) {
+            return $this->sessionCache = false;
+        }
+
         $config = $this->configService->getStalwartConfig();
-        $url = rtrim($config['url'], '/') . $endpoint;
+        $base = rtrim((string) $config['url'], '/');
+        // Legacy-Pfade (alte REST-Konfiguration) entfernen -> reine Server-Basis.
+        $base = preg_replace('#/(api|jmap)(/session)?$#', '', $base) ?? $base;
+        $result = $this->http('GET', $base . '/jmap/session', null);
+        if ($result === null) {
+            return $this->sessionCache = false;
+        }
+        [$status, $decoded] = $result;
+        if ($status < 200 || $status >= 300 || !is_array($decoded)) {
+            $this->logger->warning('StalwartService: JMAP-Session nicht erreichbar', ['status' => $status]);
+            return $this->sessionCache = false;
+        }
 
-        // cURL initialisieren
+        $accountId = $decoded['primaryAccounts'][self::CAP_STALWART]
+            ?? (is_array($decoded['primaryAccounts'] ?? null) ? reset($decoded['primaryAccounts']) : null);
+        if (!is_array($decoded['primaryAccounts'] ?? null) || $accountId === null || $accountId === false) {
+            // Fallback: erste accountId aus accounts
+            $accounts = $decoded['accounts'] ?? [];
+            $accountId = is_array($accounts) && !empty($accounts) ? (string) array_key_first($accounts) : null;
+        }
+        if ($accountId === null) {
+            $this->logger->warning('StalwartService: Keine Management-accountId in Session');
+            return $this->sessionCache = false;
+        }
+
+        // POST-URL immer aus der konfigurierten Basis ableiten (interne Erreichbarkeit).
+        return $this->sessionCache = [
+            'accountId' => (string) $accountId,
+            'apiUrl' => $base . '/jmap',
+        ];
+    }
+
+    /**
+     * HTTP-Request (Basic Auth, JSON). Liefert [statusCode, decodedBody|null] oder null.
+     * protected: wird in Tests überschrieben.
+     *
+     * @return array{0:int,1:mixed}|null
+     */
+    protected function http(string $method, string $url, ?array $body): ?array {
+        $config = $this->configService->getStalwartConfig();
+
         $ch = curl_init();
-
-        // Basis-Optionen
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 30,
+            CURLOPT_CUSTOMREQUEST => strtoupper($method),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Accept: application/json'
+                'Accept: application/json',
             ],
-            // Basic Auth
             CURLOPT_USERPWD => $config['user'] . ':' . $config['password'],
-            // SSL-Optionen (für lokale Entwicklung ggf. deaktivieren)
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => 0
+            CURLOPT_SSL_VERIFYHOST => 0,
         ]);
-
-        // Methode und Body setzen
-        switch (strtoupper($method)) {
-            case 'POST':
-                curl_setopt($ch, CURLOPT_POST, true);
-                if ($data !== null) {
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                }
-                break;
-
-            case 'PATCH':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-                if ($data !== null) {
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                }
-                break;
-
-            case 'DELETE':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-                break;
-
-            case 'GET':
-            default:
-                // GET ist Standard
-                break;
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
         }
 
-        // Request ausführen
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
 
-        // Fehlerbehandlung
         if ($error) {
             $this->logger->error('StalwartService: cURL-Fehler', [
-                'url' => $url,
-                'method' => $method,
-                'error' => $error
+                'url' => $url, 'method' => $method, 'error' => $error,
             ]);
             return null;
         }
 
-        // HTTP-Status prüfen
-        if ($httpCode < 200 || $httpCode >= 300) {
-            $this->logger->warning('StalwartService: HTTP-Fehler', [
-                'url' => $url,
-                'method' => $method,
-                'httpCode' => $httpCode,
-                'response' => $response
-            ]);
-            return null;
-        }
-
-        // Response parsen
-        $decoded = json_decode($response, true);
-
-        if ($decoded === null && !empty($response)) {
-            $this->logger->warning('StalwartService: JSON-Parsing fehlgeschlagen', [
-                'url' => $url,
-                'response' => substr($response, 0, 500)
-            ]);
-            return null;
-        }
-
-        return $decoded ?? [];
-    }
-
-    // ============================================================================
-    // Status & Health
-    // ============================================================================
-
-    /**
-     * Prüft ob Stalwart erreichbar ist
-     *
-     * @return bool
-     */
-    public function isAvailable(): bool {
-        if (!$this->configService->isStalwartConfigured()) {
-            return false;
-        }
-
-        // Versuche API-Root aufzurufen
-        $config = $this->configService->getStalwartConfig();
-        $url = rtrim($config['url'], '/') . '/api/principal';
-
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_USERPWD => $config['user'] . ':' . $config['password'],
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => 0
-        ]);
-
-        curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        return $httpCode >= 200 && $httpCode < 300;
+        $decoded = $response !== '' && $response !== false ? json_decode((string) $response, true) : [];
+        return [$httpCode, $decoded];
     }
 
     /**
-     * Gibt Status-Informationen zurück
-     *
-     * @return array
+     * @return array{local:string,domain:string}|null
      */
-    public function getStatus(): array {
+    private function splitEmail(string $email): ?array {
+        $email = strtolower(trim($email));
+        $pos = strrpos($email, '@');
+        if ($pos === false || $pos === 0 || $pos === strlen($email) - 1) {
+            return null;
+        }
         return [
-            'configured' => $this->configService->isStalwartConfigured(),
-            'available' => $this->isAvailable(),
-            'url' => $this->configService->getStalwartApiUrl() ?
-                preg_replace('/\/\/[^:]+:[^@]+@/', '//***:***@', $this->configService->getStalwartApiUrl()) :
-                null
+            'local' => substr($email, 0, $pos),
+            'domain' => substr($email, $pos + 1),
         ];
     }
 
-    // ============================================================================
-    // Postfach-Übersicht (Admin)
-    // ============================================================================
+    /**
+     * Baut einen JMAP-Filter aus mehreren Bedingungen (nur AND wird unterstützt).
+     */
+    private function andFilter(array $conditions): array {
+        $conditions = array_values($conditions);
+        if (count($conditions) === 1) {
+            return $conditions[0];
+        }
+        return ['operator' => 'AND', 'conditions' => $conditions];
+    }
 
     /**
-     * Listet die Namen aller individuellen Postfächer (Principals) in Stalwart.
-     *
-     * @return string[] - Principal-Namen (= NC-UIDs), die ein Postfach besitzen
+     * Haupt-Adresse eines Kontos (emailAddress wird vom Server berechnet).
      */
-    public function listPrincipalNames(): array {
-        if (!$this->configService->isStalwartConfigured()) {
-            return [];
+    private function primaryAddress(array $account): ?string {
+        if (isset($account['emailAddress']) && $account['emailAddress'] !== '') {
+            return strtolower((string) $account['emailAddress']);
         }
-
-        $response = $this->apiRequest('GET', '/api/principal?type=individual&page=1&limit=2000');
-        if ($response === null) {
-            return [];
-        }
-
-        // Stalwart liefert üblicherweise {"data": {"items": [...], "total": N}}
-        $items = $response['data']['items']
-            ?? $response['items']
-            ?? (isset($response['data']) && is_array($response['data']) ? $response['data'] : []);
-
-        $names = [];
-        foreach ($items as $item) {
-            if (is_array($item) && isset($item['name'])) {
-                $names[] = $item['name'];
-            } elseif (is_string($item)) {
-                $names[] = $item;
+        // Fallback aus name + domainId
+        $name = $account['name'] ?? null;
+        $domainId = isset($account['domainId']) ? (string) $account['domainId'] : null;
+        if ($name !== null && $domainId !== null) {
+            $domain = $this->domainNameMap()[$domainId] ?? null;
+            if ($domain !== null) {
+                return strtolower($name . '@' . $domain);
             }
         }
-
-        return $names;
+        return null;
     }
 
     /**
-     * Postfach-Status für einen einzelnen Benutzer.
+     * Roh-Alias-Einträge eines Kontos als Liste (name, domainId, enabled, description).
      *
-     * @param string $uid
-     * @return array{exists: bool, email: ?string, aliases: array, configured: bool}
+     * @return array<int,array>
      */
-    public function getMailboxStatus(string $uid): array {
-        if (!$this->configService->isStalwartConfigured()) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => false];
+    private function aliasEntries(array $account): array {
+        $aliases = $account['aliases'] ?? [];
+        if (!is_array($aliases)) {
+            return [];
         }
+        return array_values(array_filter($aliases, 'is_array'));
+    }
 
-        $principal = $this->getPrincipal($uid);
-        if ($principal === null) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => true];
+    /**
+     * Alias-Adressen eines Kontos als E-Mail-Strings.
+     *
+     * @return string[]
+     */
+    private function aliasAddresses(array $account): array {
+        $map = $this->domainNameMap();
+        $result = [];
+        foreach ($this->aliasEntries($account) as $entry) {
+            $name = $entry['name'] ?? null;
+            $domainId = isset($entry['domainId']) ? (string) $entry['domainId'] : null;
+            if ($name === null || $domainId === null) {
+                continue;
+            }
+            $domain = $map[$domainId] ?? null;
+            if ($domain !== null) {
+                $result[] = strtolower($name . '@' . $domain);
+            }
         }
+        return array_values(array_unique($result));
+    }
 
-        $emails = $principal['emails'] ?? [];
-        $primary = $emails[0] ?? null;
-        $aliases = array_values(array_filter($emails, static fn ($e) => $e !== $primary));
-
-        return [
-            'exists' => true,
-            'email' => $primary,
-            'aliases' => $aliases,
-            'quota' => (int) ($principal['quota'] ?? 0),
-            'configured' => true,
-        ];
+    /**
+     * Alias-Einträge als JMAP-List (Map index => Eintrag) neu indizieren.
+     *
+     * @return array<string,array>
+     */
+    private function reindexAliasEntries(array $entries): array {
+        $map = [];
+        $i = 0;
+        foreach (array_values($entries) as $entry) {
+            $clean = [
+                'enabled' => (bool) ($entry['enabled'] ?? true),
+                'name' => (string) $entry['name'],
+                'domainId' => (string) $entry['domainId'],
+            ];
+            if (isset($entry['description']) && $entry['description'] !== null) {
+                $clean['description'] = (string) $entry['description'];
+            }
+            $map[(string) $i] = $clean;
+            $i++;
+        }
+        return $map;
     }
 }

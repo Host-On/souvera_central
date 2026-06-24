@@ -48,17 +48,19 @@ class PasswordSyncListener implements IEventListener {
             return;
         }
 
+        $mail = $this->stalwart->mailFor($user);
+        if ($mail === null) {
+            return;
+        }
+
         try {
             // Postfach existiert? Wenn nicht (Erst-Sync), anlegen statt nur PW setzen.
-            if (!$this->stalwart->principalExists($uid)) {
-                $mail = $this->stalwart->mailFor($user);
-                if ($mail !== null) {
-                    $this->stalwart->createPrincipal($uid, $password, $mail, $user->getDisplayName());
-                    // Erstanlage -> Mail-Gruppe pflegen (smail-Sichtbarkeit)
-                    $this->mailGroup->addUser($user);
-                }
+            if (!$this->stalwart->principalExists($mail)) {
+                $this->stalwart->createPrincipal($mail, $password, $user->getDisplayName());
+                // Erstanlage -> Mail-Gruppe pflegen (smail-Sichtbarkeit)
+                $this->mailGroup->addUser($user);
             } else {
-                $this->stalwart->setPassword($uid, $password);
+                $this->stalwart->setPassword($mail, $password);
                 // Sicherstellen, dass Bestandspostfächer in der Mail-Gruppe sind
                 $this->mailGroup->addUser($user);
             }

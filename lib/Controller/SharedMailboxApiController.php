@@ -409,9 +409,10 @@ class SharedMailboxApiController extends OCSController {
                 );
             }
 
-            // Prüfe ob User bereits Mitglied ist
+            // Prüfe ob User bereits Mitglied ist (Mitglieder werden als Mailadresse geführt)
+            $memberMail = $this->stalwartService->mailFor($user) ?? $userId;
             $currentMembers = $this->sharedMailboxService->getMembers($id);
-            if (in_array($userId, $currentMembers)) {
+            if (in_array(strtolower($memberMail), array_map('strtolower', $currentMembers), true)) {
                 return new DataResponse(
                     ['error' => 'Benutzer ist bereits Mitglied'],
                     Http::STATUS_CONFLICT

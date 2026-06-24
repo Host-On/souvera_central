@@ -1,385 +1,305 @@
 <?php
 /**
- * Souvera Central - Shared Mailbox Service
+ * Souvera Central - Shared Mailbox Service (Stalwart v0.16 / JMAP)
  *
- * Verwaltung von geteilten Postfächern via Stalwart API
- * Shared Mailboxes sind Stalwart Principals vom Typ "group"
+ * Geteilte Postfächer sind in Stalwart 0.16 Konten vom Typ "Group"
+ * (x:Account mit @type=Group). Mitgliedschaft wird am USER-Konto über das
+ * Feld memberGroupIds (Map<groupId, true>) gepflegt.
+ *
+ * Der Service nutzt die JMAP-Bausteine des StalwartService (jmapSingle,
+ * resolveDomainId, findAccountId, getAccountById, domainNameMap).
  */
 
 namespace OCA\SouveraCentral\Service;
 
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 class SharedMailboxService {
     private ConfigService $configService;
     private StalwartService $stalwartService;
+    private IUserManager $userManager;
     private LoggerInterface $logger;
 
     public function __construct(
         ConfigService $configService,
         StalwartService $stalwartService,
+        IUserManager $userManager,
         LoggerInterface $logger
     ) {
         $this->configService = $configService;
         $this->stalwartService = $stalwartService;
+        $this->userManager = $userManager;
         $this->logger = $logger;
     }
 
     // ============================================================================
-    // CRUD-Operationen für Shared Mailboxes
+    // CRUD
     // ============================================================================
 
     /**
-     * Alle Shared Mailboxes abrufen
+     * Alle geteilten Postfächer (Group-Konten).
      *
-     * @return array
+     * @return array<int,array>
      */
     public function list(): array {
-        $response = $this->apiRequest('GET', '/api/principal?types=group');
-
-        if ($response === null) {
+        $query = $this->stalwartService->jmapSingle('x:Account/query', ['filter' => ['@type' => 'Group']]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
             return [];
         }
 
-        $items = $response['data']['items'] ?? [];
-
-        // Filtere nur echte Shared Mailboxes (haben emails)
-        return array_values(array_filter($items, function($item) {
-            return !empty($item['emails']);
-        }));
+        $got = $this->stalwartService->jmapSingle('x:Account/get', ['ids' => array_values($ids)]);
+        $result = [];
+        foreach ($got['list'] ?? [] as $group) {
+            if (is_array($group)) {
+                $result[] = $this->shape($group);
+            }
+        }
+        return $result;
     }
 
     /**
-     * Shared Mailbox erstellen
-     *
-     * @param string $name - Interner Name (z.B. "support-mailbox")
-     * @param string $email - Email-Adresse (z.B. "support@company.org")
-     * @param string $description - Beschreibung
-     * @return array|null - Erstellte Mailbox oder null bei Fehler
+     * Geteiltes Postfach erstellen.
      */
     public function create(string $name, string $email, string $description = ''): ?array {
-        // Validierung
+        $email = strtolower(trim($email));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->logger->warning('SharedMailboxService: Ungültiges Email-Format', [
-                'email' => $email
-            ]);
+            $this->logger->warning('SharedMailboxService: Ungültiges Email-Format', ['email' => $email]);
             return null;
         }
-
-        // Domain-Validierung
         if (!$this->configService->isEmailDomainAllowed($email)) {
-            $this->logger->warning('SharedMailboxService: Domain nicht erlaubt', [
-                'email' => $email
-            ]);
+            $this->logger->warning('SharedMailboxService: Domain nicht erlaubt', ['email' => $email]);
             return null;
         }
 
-        // Name normalisieren (lowercase, keine Sonderzeichen)
-        $normalizedName = $this->normalizeName($name);
+        $pos = strrpos($email, '@');
+        $local = substr($email, 0, $pos);
+        $domain = substr($email, $pos + 1);
+        $domainId = $this->stalwartService->resolveDomainId($domain);
+        if ($domainId === null) {
+            $this->logger->error('SharedMailboxService: Domain in Stalwart nicht vorhanden', ['domain' => $domain]);
+            return null;
+        }
 
-        $payload = [
-            'type' => 'group',
-            'name' => $normalizedName,
-            'description' => $description,
-            'emails' => [$email]
+        $object = [
+            '@type' => 'Group',
+            'name' => $local,
+            'domainId' => $domainId,
+            'description' => $description !== '' ? $description : $name,
         ];
 
-        $response = $this->apiRequest('POST', '/api/principal', $payload);
-
-        if ($response === null) {
+        $resp = $this->stalwartService->jmapSingle('x:Account/set', ['create' => ['sm0' => $object]]);
+        $created = $resp['created']['sm0'] ?? null;
+        if ($resp === null || !array_key_exists('sm0', $resp['created'] ?? [])) {
+            $this->logger->warning('SharedMailboxService: Anlage abgelehnt', [
+                'email' => $email,
+                'notCreated' => $resp['notCreated'] ?? null,
+            ]);
             return null;
         }
 
-        $this->logger->info('SharedMailboxService: Shared Mailbox erstellt', [
-            'name' => $normalizedName,
-            'email' => $email
-        ]);
+        $this->logger->info('SharedMailboxService: Geteiltes Postfach erstellt', ['email' => $email]);
 
-        // Neu erstellte Mailbox abrufen
-        return $this->get($normalizedName);
+        // Bevorzugt über die zurückgegebene ID das vollständige Objekt laden.
+        if (is_array($created) && isset($created['id'])) {
+            $group = $this->stalwartService->getAccountById((string) $created['id']);
+            if ($group !== null) {
+                return $this->shape($group);
+            }
+        }
+        return $this->get($local);
     }
 
     /**
-     * Shared Mailbox abrufen
-     *
-     * @param string $name - Interner Name
-     * @return array|null
+     * Geteiltes Postfach per Name (Localpart) abrufen.
      */
     public function get(string $name): ?array {
-        $response = $this->apiRequest('GET', '/api/principal/' . urlencode($name));
-
-        if ($response === null) {
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
             return null;
         }
-
-        $data = $response['data'] ?? $response;
-
-        // Prüfe ob es eine Shared Mailbox ist (type=group mit emails)
-        if (($data['type'] ?? '') !== 'group' || empty($data['emails'])) {
+        $group = $this->stalwartService->getAccountById($groupId);
+        if ($group === null || ($group['@type'] ?? '') !== 'Group') {
             return null;
         }
-
-        return $data;
+        return $this->shape($group);
     }
 
     /**
-     * Shared Mailbox aktualisieren
-     *
-     * @param string $name - Interner Name
-     * @param array $updates - Zu aktualisierende Felder
-     * @return bool
+     * Geteiltes Postfach aktualisieren (aktuell: Beschreibung).
      */
     public function update(string $name, array $updates): bool {
-        $operations = [];
-
-        if (isset($updates['description'])) {
-            $operations[] = [
-                'action' => 'set',
-                'field' => 'description',
-                'value' => $updates['description']
-            ];
+        if (!array_key_exists('description', $updates)) {
+            return true;
         }
-
-        if (empty($operations)) {
-            return true; // Nichts zu tun
-        }
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($name), $operations);
-
-        if ($response === null) {
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
             return false;
         }
 
-        $this->logger->info('SharedMailboxService: Shared Mailbox aktualisiert', [
-            'name' => $name,
-            'updates' => array_keys($updates)
+        $resp = $this->stalwartService->jmapSingle('x:Account/set', [
+            'update' => [$groupId => ['description' => (string) $updates['description']]],
         ]);
-
-        return true;
+        return $resp !== null && array_key_exists($groupId, $resp['updated'] ?? []);
     }
 
     /**
-     * Shared Mailbox löschen
-     *
-     * @param string $name - Interner Name
-     * @return bool
+     * Geteiltes Postfach löschen.
      */
     public function delete(string $name): bool {
-        $response = $this->apiRequest('DELETE', '/api/principal/' . urlencode($name));
-
-        // DELETE gibt oft leere Response zurück, prüfe ob kein Fehler
-        $this->logger->info('SharedMailboxService: Shared Mailbox gelöscht', [
-            'name' => $name
-        ]);
-
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
+            return true; // bereits weg
+        }
+        $resp = $this->stalwartService->jmapSingle('x:Account/set', ['destroy' => [$groupId]]);
+        if ($resp === null) {
+            return false;
+        }
+        $this->logger->info('SharedMailboxService: Geteiltes Postfach gelöscht', ['name' => $name]);
         return true;
     }
 
     // ============================================================================
-    // Mitglieder-Verwaltung
+    // Mitglieder (memberGroupIds am User-Konto)
     // ============================================================================
 
     /**
-     * Mitglieder einer Shared Mailbox abrufen
+     * Mitglieder eines geteilten Postfachs (E-Mail-Adressen der User-Konten).
      *
-     * In Stalwart wird Gruppenmitgliedschaft auf dem USER gespeichert (memberOf),
-     * nicht auf der Gruppe. Daher müssen wir alle User durchsuchen.
-     *
-     * @param string $name - Interner Name
-     * @return array - Liste der Mitglieder-IDs
+     * @return string[]
      */
     public function getMembers(string $name): array {
-        // Erst prüfen ob die Gruppe existiert
-        $mailbox = $this->get($name);
-        if ($mailbox === null) {
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
             return [];
         }
 
-        // Alle User abrufen und filtern nach memberOf
-        $response = $this->apiRequest('GET', '/api/principal?types=individual');
-        if ($response === null) {
+        $query = $this->stalwartService->jmapSingle('x:Account/query', [
+            'filter' => ['operator' => 'AND', 'conditions' => [
+                ['memberGroupIds' => $groupId],
+                ['@type' => 'User'],
+            ]],
+        ]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
             return [];
         }
 
-        $users = $response['data']['items'] ?? [];
+        $got = $this->stalwartService->jmapSingle('x:Account/get', [
+            'ids' => array_values($ids),
+            'properties' => ['emailAddress'],
+        ]);
         $members = [];
-
-        foreach ($users as $user) {
-            $memberOf = $user['memberOf'] ?? [];
-            if (in_array($name, $memberOf)) {
-                $members[] = $user['name'];
+        foreach ($got['list'] ?? [] as $acc) {
+            if (isset($acc['emailAddress']) && $acc['emailAddress'] !== '') {
+                $members[] = strtolower((string) $acc['emailAddress']);
             }
         }
-
         return $members;
     }
 
     /**
-     * Mitglied hinzufügen
+     * Mitglied hinzufügen.
      *
-     * Fügt die Gruppe zum memberOf-Feld des Users hinzu
-     *
-     * @param string $name - Interner Name der Mailbox
-     * @param string $userId - Benutzer-ID (Email)
-     * @return bool
+     * @param string $name   Localpart des geteilten Postfachs
+     * @param string $userId NC-Benutzer-ID (= E-Mail)
      */
     public function addMember(string $name, string $userId): bool {
-        // PATCH auf den USER, nicht auf die Gruppe
-        $payload = [
-            [
-                'action' => 'addItem',
-                'field' => 'memberOf',
-                'value' => $name
-            ]
-        ];
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($userId), $payload);
-
-        if ($response === null) {
-            return false;
-        }
-
-        $this->logger->info('SharedMailboxService: Mitglied hinzugefügt', [
-            'mailbox' => $name,
-            'userId' => $userId
-        ]);
-
-        return true;
+        return $this->setMembership($name, $userId, true);
     }
 
     /**
-     * Mitglied entfernen
-     *
-     * Entfernt die Gruppe vom memberOf-Feld des Users
-     *
-     * @param string $name - Interner Name der Mailbox
-     * @param string $userId - Benutzer-ID (Email)
-     * @return bool
+     * Mitglied entfernen.
      */
     public function removeMember(string $name, string $userId): bool {
-        // PATCH auf den USER, nicht auf die Gruppe
-        $payload = [
-            [
-                'action' => 'removeItem',
-                'field' => 'memberOf',
-                'value' => $name
-            ]
-        ];
-
-        $response = $this->apiRequest('PATCH', '/api/principal/' . urlencode($userId), $payload);
-
-        if ($response === null) {
-            return false;
-        }
-
-        $this->logger->info('SharedMailboxService: Mitglied entfernt', [
-            'mailbox' => $name,
-            'userId' => $userId
-        ]);
-
-        return true;
+        return $this->setMembership($name, $userId, false);
     }
 
     // ============================================================================
     // Hilfsmethoden
     // ============================================================================
 
-    /**
-     * Prüft ob eine Email-Adresse bereits als Shared Mailbox existiert
-     *
-     * @param string $email
-     * @return bool
-     */
     public function isEmailTaken(string $email): bool {
         return $this->stalwartService->isEmailTaken($email);
     }
 
     /**
-     * Name normalisieren für Stalwart
-     *
-     * @param string $name
-     * @return string
+     * Setzt/entfernt die Gruppen-Mitgliedschaft am User-Konto.
      */
-    private function normalizeName(string $name): string {
-        // Lowercase, Leerzeichen durch Bindestriche ersetzen
-        $normalized = strtolower(trim($name));
-        $normalized = preg_replace('/\s+/', '-', $normalized);
-        // Nur alphanumerische Zeichen und Bindestriche
-        $normalized = preg_replace('/[^a-z0-9\-]/', '', $normalized);
-        return $normalized;
+    private function setMembership(string $name, string $userId, bool $add): bool {
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
+            return false;
+        }
+
+        $email = $this->emailForUserId($userId);
+        if ($email === null) {
+            return false;
+        }
+        $userAccountId = $this->stalwartService->findAccountId($email, 'User');
+        if ($userAccountId === null) {
+            $this->logger->warning('SharedMailboxService: Kein Postfach für Mitglied', ['userId' => $userId]);
+            return false;
+        }
+
+        $resp = $this->stalwartService->jmapSingle('x:Account/set', [
+            'update' => [$userAccountId => ['memberGroupIds/' . $groupId => $add]],
+        ]);
+        $ok = $resp !== null && array_key_exists($userAccountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('SharedMailboxService: Mitgliedschaft aktualisiert', [
+                'mailbox' => $name, 'userId' => $userId, 'add' => $add,
+            ]);
+        }
+        return $ok;
     }
 
     /**
-     * API-Request an Stalwart senden (nutzt ConfigService)
+     * Group-Konto-ID per Localpart-Namen (über alle Domains) auflösen.
      */
-    private function apiRequest(string $method, string $endpoint, ?array $data = null): ?array {
-        if (!$this->configService->isStalwartConfigured()) {
-            $this->logger->error('SharedMailboxService: Stalwart nicht konfiguriert');
+    private function groupId(string $name): ?string {
+        $name = strtolower(trim($name));
+        if ($name === '') {
             return null;
         }
-
-        $config = $this->configService->getStalwartConfig();
-        $url = rtrim($config['url'], '/') . $endpoint;
-
-        $ch = curl_init();
-
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json'
-            ],
-            CURLOPT_USERPWD => $config['user'] . ':' . $config['password'],
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => 0
+        $query = $this->stalwartService->jmapSingle('x:Account/query', [
+            'filter' => ['operator' => 'AND', 'conditions' => [
+                ['name' => $name],
+                ['@type' => 'Group'],
+            ]],
         ]);
+        $id = $query['ids'][0] ?? null;
+        return $id !== null ? (string) $id : null;
+    }
 
-        switch (strtoupper($method)) {
-            case 'POST':
-                curl_setopt($ch, CURLOPT_POST, true);
-                if ($data !== null) {
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                }
-                break;
-
-            case 'PATCH':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-                if ($data !== null) {
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-                }
-                break;
-
-            case 'DELETE':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-                break;
+    /**
+     * NC-Benutzer-ID -> Mailadresse.
+     */
+    private function emailForUserId(string $userId): ?string {
+        $user = $this->userManager->get($userId);
+        if ($user !== null) {
+            return $this->stalwartService->mailFor($user);
         }
+        return filter_var($userId, FILTER_VALIDATE_EMAIL) ? strtolower($userId) : null;
+    }
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($error) {
-            $this->logger->error('SharedMailboxService: cURL-Fehler', [
-                'url' => $url,
-                'method' => $method,
-                'error' => $error
-            ]);
-            return null;
-        }
-
-        if ($httpCode < 200 || $httpCode >= 300) {
-            $this->logger->warning('SharedMailboxService: HTTP-Fehler', [
-                'url' => $url,
-                'method' => $method,
-                'httpCode' => $httpCode
-            ]);
-            return null;
-        }
-
-        $decoded = json_decode($response, true);
-        return $decoded ?? [];
+    /**
+     * JMAP-Group-Objekt in die vom Frontend erwartete Form bringen.
+     *
+     * @return array{id:string,name:string,email:?string,emails:array,description:?string,type:string}
+     */
+    private function shape(array $group): array {
+        $email = isset($group['emailAddress']) && $group['emailAddress'] !== ''
+            ? strtolower((string) $group['emailAddress'])
+            : null;
+        return [
+            'id' => (string) ($group['name'] ?? ($group['id'] ?? '')),
+            'name' => (string) ($group['name'] ?? ''),
+            'email' => $email,
+            'emails' => $email !== null ? [$email] : [],
+            'description' => $group['description'] ?? null,
+            'type' => 'group',
+        ];
     }
 }

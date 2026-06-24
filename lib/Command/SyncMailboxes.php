@@ -78,19 +78,19 @@ class SyncMailboxes extends Base {
             }
 
             try {
-                if ($this->stalwart->principalExists($uid)) {
+                $mail = $this->stalwart->mailFor($user);
+                if ($mail === null) {
+                    $noMail++;
+                    $output->writeln("  <comment>⊘ $uid: keine gültige Mail-Adresse/Domain</comment>");
+                    return;
+                }
+
+                if ($this->stalwart->principalExists($mail)) {
                     // Bestandspostfach: Mail-Gruppen-Mitgliedschaft nachziehen
                     if (!$dryRun && $this->mailGroup->addUser($user)) {
                         $grouped++;
                     }
                     $skipped++;
-                    return;
-                }
-
-                $mail = $this->stalwart->mailFor($user);
-                if ($mail === null) {
-                    $noMail++;
-                    $output->writeln("  <comment>⊘ $uid: keine gültige Mail-Adresse/Domain</comment>");
                     return;
                 }
 
@@ -101,9 +101,8 @@ class SyncMailboxes extends Base {
                 }
 
                 $ok = $this->stalwart->createPrincipal(
-                    $uid,
-                    $this->randomSecret(),
                     $mail,
+                    $this->randomSecret(),
                     $user->getDisplayName()
                 );
 

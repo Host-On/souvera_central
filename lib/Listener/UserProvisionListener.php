@@ -48,7 +48,7 @@ class UserProvisionListener implements IEventListener {
         }
 
         try {
-            $this->stalwart->createPrincipal($uid, $password, $mail, $user->getDisplayName());
+            $this->stalwart->createPrincipal($mail, $password, $user->getDisplayName());
             // Benutzer mit Postfach kommt in die Mail-Gruppe (smail-Sichtbarkeit)
             $this->mailGroup->addUser($user);
         } catch (\Throwable $e) {

@@ -36,9 +36,14 @@ class UserDeprovisionListener implements IEventListener {
             return;
         }
 
-        $uid = $event->getUser()->getUID();
+        $user = $event->getUser();
+        $uid = $user->getUID();
+        $mail = $this->stalwart->mailFor($user);
+        if ($mail === null) {
+            return;
+        }
         try {
-            $this->stalwart->deletePrincipal($uid);
+            $this->stalwart->deletePrincipal($mail);
         } catch (\Throwable $e) {
             $this->logger->error('SouveraCentral Mailbox-Löschung fehlgeschlagen', [
                 'uid' => $uid,
