@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -35,12 +35,4 @@
         <command>OCA\SouveraCentral\Command\SyncMailboxes</command>
         <command>OCA\SouveraCentral\Command\ProvisionMailbox</command>
     </commands>
-
-    <navigations>
-        <navigation role="admin">
-            <name>Central</name>
-            <route>souvera_central.page.index</route>
-            <icon>app.svg</icon>
-        </navigation>
-    </navigations>
 </info>

@@ -8,6 +8,7 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -15,15 +16,19 @@ use OCP\IUserManager;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\LicenseService;
+use OCA\SouveraCentral\Service\MailGroupService;
 
 class GroupApiController extends OCSController {
     private $userManager;
     private $groupManager;
     private $logger;
     private $configService;
+    private LicenseService $licenseService;
+    private MailGroupService $mailGroupService;
 
-    /** @var array Geschützte Systemgruppen, die nicht gelöscht werden dürfen */
-    private const PROTECTED_GROUPS = ['admin', 'users'];
+    /** @var array NC-Systemgruppen, die nicht gelöscht werden dürfen */
+    private const SYSTEM_GROUPS = ['admin', 'users'];
 
     public function __construct(
         string $appName,
@@ -31,13 +36,30 @@ class GroupApiController extends OCSController {
         IUserManager $userManager,
         IGroupManager $groupManager,
         LoggerInterface $logger,
-        ConfigService $configService
+        ConfigService $configService,
+        LicenseService $licenseService,
+        MailGroupService $mailGroupService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
         $this->groupManager = $groupManager;
         $this->logger = $logger;
         $this->configService = $configService;
+        $this->licenseService = $licenseService;
+        $this->mailGroupService = $mailGroupService;
+    }
+
+    /**
+     * Geschützte Gruppen: NC-Systemgruppen + die von Souvera verwalteten Gruppen
+     * (souvera-users / scadmin). Diese dürfen nicht gelöscht werden.
+     *
+     * @return string[]
+     */
+    private function getProtectedGroups(): array {
+        return array_merge(self::SYSTEM_GROUPS, [
+            $this->configService->getMailGroupId(),
+            $this->configService->getScadminGroupId(),
+        ]);
     }
 
     /**
@@ -47,6 +69,7 @@ class GroupApiController extends OCSController {
      * @param int $limit Anzahl der Ergebnisse pro Seite (Standard: 20)
      * @param int $offset Start-Offset für Pagination (Standard: 0)
      */
+    #[NoAdminRequired]
     public function list(string $search = '', int $limit = 20, int $offset = 0): DataResponse {
         try {
             // Alle Gruppen durchsuchen
@@ -77,7 +100,7 @@ class GroupApiController extends OCSController {
                     'id' => $groupId,
                     'displayName' => $displayName,
                     'userCount' => $group->count(),
-                    'isProtected' => in_array($groupId, self::PROTECTED_GROUPS)
+                    'isProtected' => in_array($groupId, $this->getProtectedGroups(), true)
                 ];
                 $allGroupsData[] = $groupData;
             }
@@ -107,6 +130,7 @@ class GroupApiController extends OCSController {
     /**
      * Einzelne Gruppe abrufen
      */
+    #[NoAdminRequired]
     public function get(string $id): DataResponse {
         try {
             $group = $this->groupManager->get($id);
@@ -122,7 +146,7 @@ class GroupApiController extends OCSController {
                 'id' => $group->getGID(),
                 'displayName' => $group->getDisplayName(),
                 'userCount' => $group->count(),
-                'isProtected' => in_array($id, self::PROTECTED_GROUPS)
+                'isProtected' => in_array($id, $this->getProtectedGroups(), true)
             ];
 
             return new DataResponse($groupData);
@@ -137,6 +161,7 @@ class GroupApiController extends OCSController {
     /**
      * Neue Gruppe erstellen
      */
+    #[NoAdminRequired]
     public function create(string $groupId = '', string $displayName = ''): DataResponse {
         try {
             // Validierung
@@ -210,6 +235,7 @@ class GroupApiController extends OCSController {
     /**
      * Gruppe aktualisieren
      */
+    #[NoAdminRequired]
     public function update(string $id, ?string $displayName = null): DataResponse {
         try {
             $group = $this->groupManager->get($id);
@@ -232,7 +258,7 @@ class GroupApiController extends OCSController {
                     'id' => $group->getGID(),
                     'displayName' => $group->getDisplayName(),
                     'userCount' => $group->count(),
-                    'isProtected' => in_array($id, self::PROTECTED_GROUPS)
+                    'isProtected' => in_array($id, $this->getProtectedGroups(), true)
                 ]
             ]);
 
@@ -247,10 +273,11 @@ class GroupApiController extends OCSController {
     /**
      * Gruppe löschen
      */
+    #[NoAdminRequired]
     public function delete(string $id): DataResponse {
         try {
             // Prüfen ob Gruppe geschützt ist
-            if (in_array($id, self::PROTECTED_GROUPS)) {
+            if (in_array($id, $this->getProtectedGroups(), true)) {
                 return new DataResponse(
                     ['error' => 'Systemgruppen können nicht gelöscht werden'],
                     Http::STATUS_FORBIDDEN
@@ -289,6 +316,7 @@ class GroupApiController extends OCSController {
     /**
      * Mitglieder einer Gruppe abrufen
      */
+    #[NoAdminRequired]
     public function getMembers(string $id, string $search = '', int $limit = 100, int $offset = 0): DataResponse {
         try {
             $group = $this->groupManager->get($id);
@@ -307,6 +335,10 @@ class GroupApiController extends OCSController {
             $membersData = [];
             foreach ($allUsers as $user) {
                 $userId = $user->getUID();
+                // Technische/ausgeblendete Benutzer (z. B. ncadmin) nie anzeigen
+                if ($this->configService->isHiddenUser($userId)) {
+                    continue;
+                }
                 $displayName = $user->getDisplayName();
                 $email = $user->getEMailAddress() ?? '';
 
@@ -357,6 +389,7 @@ class GroupApiController extends OCSController {
     /**
      * Benutzer zu Gruppe hinzufügen
      */
+    #[NoAdminRequired]
     public function addMember(string $id, string $userId): DataResponse {
         try {
             // Validierung
@@ -391,8 +424,34 @@ class GroupApiController extends OCSController {
                 );
             }
 
+            $souveraGid = $this->configService->getMailGroupId();
+            $scadminGid = $this->configService->getScadminGroupId();
+
+            // Aufnahme in souvera-users = lizenzierter "Souvera User" (+ Postfach).
+            // Lizenz-Limit prüfen (scadmin-Mitglieder verbrauchen keine Lizenz).
+            if ($id === $souveraGid) {
+                $isScadmin = $this->groupManager->isInGroup($userId, $scadminGid);
+                if (!$isScadmin && $this->licenseService->isLimitReached()) {
+                    return new DataResponse(
+                        ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Souvera User aufgenommen werden.'],
+                        Http::STATUS_CONFLICT
+                    );
+                }
+                $this->mailGroupService->makeSouveraUser($user);
+                return new DataResponse([
+                    'success' => true,
+                    'message' => 'Benutzer erfolgreich als Souvera User aufgenommen'
+                ]);
+            }
+
             // User zu Gruppe hinzufügen
             $group->addUser($user);
+
+            // Souvera-Administratoren (scadmin) erhalten ebenfalls ein Postfach
+            // (Souvera User), verbrauchen aber keine Lizenz.
+            if ($id === $scadminGid) {
+                $this->mailGroupService->makeSouveraUser($user);
+            }
 
             return new DataResponse([
                 'success' => true,
@@ -410,6 +469,7 @@ class GroupApiController extends OCSController {
     /**
      * Benutzer aus Gruppe entfernen
      */
+    #[NoAdminRequired]
     public function removeMember(string $id, string $userId): DataResponse {
         try {
             // Verhindere Entfernung von Admin-User aus "admin" Gruppe

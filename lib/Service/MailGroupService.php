@@ -176,6 +176,71 @@ class MailGroupService {
     }
 
     /**
+     * Prüft, ob ein Benutzer ein "Souvera User" ist (Mitglied der souvera-users-Gruppe).
+     */
+    public function isMember(IUser $user): bool {
+        $group = $this->groupManager->get($this->getGroupId());
+        return $group !== null && $group->inGroup($user);
+    }
+
+    /**
+     * Macht einen Benutzer zum lizenzierten "Souvera User": Mitgliedschaft in
+     * der souvera-users-Gruppe + Stalwart-Postfach. Idempotent. Die
+     * Gruppen-Mitgliedschaft wird unabhängig von mail_group_sync gesetzt, da sie
+     * die Lizenz markiert.
+     *
+     * @param IUser $user
+     * @param string|null $password Klartext-Passwort fürs Postfach (optional);
+     *                              ohne Angabe wird ein Zufallspasswort verwendet
+     *                              (der Benutzer muss dann sein Passwort neu setzen,
+     *                              damit es nach Stalwart gespiegelt wird).
+     */
+    public function makeSouveraUser(IUser $user, ?string $password = null): bool {
+        $group = $this->ensureGroup();
+        if ($group !== null && !$group->inGroup($user)) {
+            $group->addUser($user);
+            $this->logger->info('SouveraCentral: Benutzer als Souvera User markiert', [
+                'uid' => $user->getUID(),
+                'gid' => $group->getGID(),
+            ]);
+        }
+        if ($this->config->isStalwartConfigured()) {
+            try {
+                $mail = $this->stalwart->mailFor($user);
+                if ($mail !== null && !$this->stalwart->principalExists($mail)) {
+                    $this->stalwart->createPrincipal(
+                        $mail,
+                        $password ?? bin2hex(random_bytes(24)),
+                        $user->getDisplayName()
+                    );
+                }
+            } catch (\Throwable $e) {
+                $this->logger->error('SouveraCentral: Postfach-Anlage für Souvera User fehlgeschlagen', [
+                    'uid' => $user->getUID(),
+                    'error' => $e->getMessage(),
+                ]);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Entfernt den "Souvera User"-Status: Benutzer verlässt die souvera-users-Gruppe
+     * (gibt die Lizenz frei). Das Stalwart-Postfach bleibt erhalten (nicht destruktiv).
+     */
+    public function makeNextcloudUser(IUser $user): void {
+        $group = $this->groupManager->get($this->getGroupId());
+        if ($group !== null && $group->inGroup($user)) {
+            $group->removeUser($user);
+            $this->logger->info('SouveraCentral: Souvera-User-Status entfernt (Nextcloud User)', [
+                'uid' => $user->getUID(),
+                'gid' => $group->getGID(),
+            ]);
+        }
+    }
+
+    /**
      * Info-Objekt für UI (Gruppe, Mitgliederzahl, Status).
      *
      * @return array{id: string, displayName: string, exists: bool, members: int, enabled: bool}

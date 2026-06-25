@@ -66,7 +66,24 @@ Füge in `config/config.php` hinzu:
 'souvera_central.mail_group' => 'souvera-users',        // GID, Default: souvera-users
 'souvera_central.mail_group_name' => 'Souvera Users',   // Anzeigename, Default: Souvera Users
 'souvera_central.mail_group_sync' => true,              // Benutzer mit Postfach automatisch zuordnen
+
+// Delegierte Verwaltung (Souvera-Administrator ohne NC-Superadmin-Rechte)
+'souvera_central.scadmin_group' => 'scadmin',           // GID der Souvera-Admin-Gruppe (vom CloudManager angelegt)
+'souvera_central.scadmin_group_name' => 'Souvera Administrators',
+'souvera_central.hidden_users' => ['ncadmin'],          // in Central ausgeblendete technische Benutzer
 ```
+
+> **Souvera User vs. Nextcloud User**
+> Ein **Souvera User** ist Mitglied der Gruppe `souvera-users`: lizenziert (zählt auf `max_licenses`)
+> und erhält ein Stalwart-Postfach. Ein **Nextcloud User** ist *nicht* in dieser Gruppe: unlizenziert,
+> ohne Postfach. Der Typ wird beim Anlegen/Bearbeiten eines Benutzers umgeschaltet.
+>
+> **Souvera-Administrator (`scadmin`)**
+> Mitglieder der Gruppe `scadmin` dürfen Souvera Central vollständig bedienen (Benutzer, Gruppen,
+> geteilte Postfächer, Einstellungen) – **ohne** echte Nextcloud-Superadmin-Rechte. Sie erhalten
+> ebenfalls ein Postfach, **verbrauchen aber keine Lizenz**. Die Gruppe wird vom CloudManager bei der
+> Installation angelegt; Central verwendet und schützt sie (Wiederherstellung bei versehentlicher Löschung).
+> Das App-Icon erscheint für NC-Superadmins **und** `scadmin`-Mitglieder.
 
 > Beschränke anschließend die **smail**-App in den Nextcloud-App-Einstellungen auf die
 > Gruppe **Souvera Users** (`souvera-users`), damit Benutzer ohne Postfach die Mail-App nicht sehen.

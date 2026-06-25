@@ -301,4 +301,59 @@ class ConfigService {
     public function isMailGroupSyncEnabled(): bool {
         return (bool) $this->config->getSystemValue('souvera_central.mail_group_sync', true);
     }
+
+    // ============================================================================
+    // Souvera-Administrator (delegierte Verwaltung ohne NC-Superadmin)
+    // ============================================================================
+
+    /**
+     * ID der Nextcloud-Gruppe, deren Mitglieder als "Souvera-Administrator"
+     * gelten. Diese Mitglieder dürfen Souvera Central bedienen, ohne echte
+     * Nextcloud-Superadmins zu sein. Die Gruppe wird vom CloudManager beim
+     * Installieren angelegt; die App verwendet und schützt sie nur.
+     *
+     * @return string
+     */
+    public function getScadminGroupId(): string {
+        $gid = (string) $this->config->getSystemValue('souvera_central.scadmin_group', 'scadmin');
+        $gid = trim($gid);
+        return $gid !== '' ? $gid : 'scadmin';
+    }
+
+    /**
+     * Anzeigename der Souvera-Administrator-Gruppe.
+     *
+     * @return string
+     */
+    public function getScadminGroupName(): string {
+        $name = (string) $this->config->getSystemValue('souvera_central.scadmin_group_name', 'Souvera Administrators');
+        $name = trim($name);
+        return $name !== '' ? $name : 'Souvera Administrators';
+    }
+
+    /**
+     * Benutzer-IDs, die in Souvera Central vollständig ausgeblendet werden
+     * (z. B. der technische "ncadmin"). Sie tauchen weder in Listen noch in
+     * Zählungen/Lizenzen auf. Konfigurierbar via config.php (Array oder CSV).
+     *
+     * @return string[]
+     */
+    public function getHiddenUserIds(): array {
+        $raw = $this->config->getSystemValue('souvera_central.hidden_users', ['ncadmin']);
+        if (is_string($raw)) {
+            $raw = array_filter(array_map('trim', explode(',', $raw)));
+        }
+        $list = is_array($raw) ? array_values(array_filter(array_map('strval', $raw))) : ['ncadmin'];
+        return array_map('strtolower', $list);
+    }
+
+    /**
+     * Prüft, ob ein Benutzer in Souvera Central ausgeblendet werden soll.
+     *
+     * @param string $userId
+     * @return bool
+     */
+    public function isHiddenUser(string $userId): bool {
+        return in_array(strtolower($userId), $this->getHiddenUserIds(), true);
+    }
 }

@@ -9,6 +9,7 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -45,6 +46,7 @@ class AliasApiController extends OCSController {
     /**
      * Stalwart-Status abrufen
      */
+    #[NoAdminRequired]
     public function getStatus(): DataResponse {
         try {
             return new DataResponse($this->stalwartService->getStatus());
@@ -59,6 +61,7 @@ class AliasApiController extends OCSController {
     /**
      * Alle Aliase eines Benutzers abrufen
      */
+    #[NoAdminRequired]
     public function list(string $userId): DataResponse {
         try {
             $user = $this->userManager->get($userId);
@@ -105,6 +108,7 @@ class AliasApiController extends OCSController {
     /**
      * Neuen Alias hinzufügen
      */
+    #[NoAdminRequired]
     public function add(string $userId, string $alias = ''): DataResponse {
         try {
             if (empty($alias)) {
@@ -199,6 +203,7 @@ class AliasApiController extends OCSController {
     /**
      * Alias entfernen
      */
+    #[NoAdminRequired]
     public function remove(string $userId, string $alias): DataResponse {
         try {
             $user = $this->userManager->get($userId);
@@ -260,6 +265,7 @@ class AliasApiController extends OCSController {
     /**
      * Prüfen ob Email-Adresse verfügbar ist
      */
+    #[NoAdminRequired]
     public function checkAvailability(string $email = ''): DataResponse {
         try {
             if (empty($email)) {
@@ -302,6 +308,7 @@ class AliasApiController extends OCSController {
      * Liste aller bestehenden Stalwart-Postfächer (Mailadressen) für
      * Tabellen-Badges in der Benutzerverwaltung.
      */
+    #[NoAdminRequired]
     public function listMailboxes(): DataResponse {
         try {
             if (!$this->configService->isStalwartConfigured()) {
@@ -323,6 +330,7 @@ class AliasApiController extends OCSController {
     /**
      * Postfach-Status eines einzelnen Benutzers abrufen.
      */
+    #[NoAdminRequired]
     public function getMailbox(string $userId): DataResponse {
         try {
             $user = $this->userManager->get($userId);
@@ -339,6 +347,7 @@ class AliasApiController extends OCSController {
     /**
      * Postfach für einen Benutzer anlegen/sicherstellen.
      */
+    #[NoAdminRequired]
     public function createMailbox(string $userId): DataResponse {
         try {
             $user = $this->userManager->get($userId);
@@ -394,6 +403,7 @@ class AliasApiController extends OCSController {
     /**
      * Backfill: legt fehlende Postfächer für alle Nextcloud-Benutzer an.
      */
+    #[NoAdminRequired]
     public function syncMailboxes(): DataResponse {
         try {
             if (!$this->configService->isStalwartConfigured()) {
@@ -420,7 +430,13 @@ class AliasApiController extends OCSController {
                 $users = $this->userManager->search('', $limit, $offset);
                 foreach ($users as $user) {
                     $uid = $user->getUID();
-                    if ($this->configService->isAdminUser($uid)) {
+                    if ($this->configService->isHiddenUser($uid) || $this->configService->isAdminUser($uid)) {
+                        $skipped++;
+                        continue;
+                    }
+                    // Nur lizenzierte "Souvera User" (Mitglieder der souvera-users-Gruppe)
+                    // erhalten Postfächer. "Nextcloud User" werden übersprungen.
+                    if (!$this->mailGroupService->isMember($user)) {
                         $skipped++;
                         continue;
                     }
@@ -472,6 +488,7 @@ class AliasApiController extends OCSController {
     /**
      * Info zur Mail-Gruppe (Name, Mitgliederzahl, Status) für das Dashboard.
      */
+    #[NoAdminRequired]
     public function getMailGroup(): DataResponse {
         try {
             return new DataResponse($this->mailGroupService->getInfo());
@@ -483,6 +500,7 @@ class AliasApiController extends OCSController {
     /**
      * Postfach-Quota (Speicherlimit) eines Benutzers setzen.
      */
+    #[NoAdminRequired]
     public function setMailboxQuota(string $userId, int $quota = 0): DataResponse {
         try {
             $user = $this->userManager->get($userId);

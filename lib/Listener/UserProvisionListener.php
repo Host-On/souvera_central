@@ -47,6 +47,15 @@ class UserProvisionListener implements IEventListener {
             return;
         }
 
+        // Postfächer werden nur für "Souvera User" angelegt. Beim Anlegen über
+        // Souvera Central erfolgt die Provisionierung explizit im Controller
+        // (UserApiController::create) mit dem Klartext-Passwort. Dieser Listener
+        // ist ein Sicherheitsnetz für den seltenen Fall, dass ein Benutzer bereits
+        // bei der Erstellung Mitglied der souvera-users-Gruppe ist.
+        if (!$this->mailGroup->isMember($user)) {
+            return;
+        }
+
         try {
             $this->stalwart->createPrincipal($mail, $password, $user->getDisplayName());
             // Benutzer mit Postfach kommt in die Mail-Gruppe (smail-Sichtbarkeit)

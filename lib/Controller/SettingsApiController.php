@@ -8,6 +8,7 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -32,6 +33,7 @@ class SettingsApiController extends OCSController {
     /**
      * Einstellungen abrufen
      */
+    #[NoAdminRequired]
     public function getSettings(): DataResponse {
         try {
             $settings = [
@@ -66,6 +68,7 @@ class SettingsApiController extends OCSController {
     /**
      * Einstellungen speichern
      */
+    #[NoAdminRequired]
     public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null): DataResponse {
         try {
             // Visibility Settings

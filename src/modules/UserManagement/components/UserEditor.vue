@@ -96,6 +96,44 @@
                     </p>
                 </div>
 
+                <!-- Benutzer-Typ: Souvera User (lizenziert, mit Postfach) vs. Nextcloud User -->
+                <div class="form-group" data-testid="user-type-group">
+                    <label class="required">{{ t('souvera_central', 'Benutzer-Typ') }}</label>
+                    <p class="help-text">
+                        {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
+                    </p>
+                    <div class="user-type-options">
+                        <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
+                            <input
+                                v-model="formData.isSouveraUser"
+                                type="radio"
+                                name="userType"
+                                :value="true"
+                                data-testid="user-type-souvera"
+                            />
+                            <Email :size="22" />
+                            <span class="user-type-text">
+                                <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
+                                <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
+                            </span>
+                        </label>
+                        <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
+                            <input
+                                v-model="formData.isSouveraUser"
+                                type="radio"
+                                name="userType"
+                                :value="false"
+                                data-testid="user-type-nextcloud"
+                            />
+                            <Account :size="22" />
+                            <span class="user-type-text">
+                                <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
+                                <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Email-Aliase (nur im Edit-Mode) -->
                 <AliasManager
                     v-if="isEditMode"
@@ -332,6 +370,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import Email from 'vue-material-design-icons/Email.vue'
+import Account from 'vue-material-design-icons/Account.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
@@ -351,6 +390,7 @@ export default {
         ChevronDown,
         ChevronRight,
         Email,
+        Account,
         Delete
     },
 
@@ -377,7 +417,8 @@ export default {
                 adminGroups: [],
                 quota: 'default',
                 manager: '',
-                enabled: true
+                enabled: true,
+                isSouveraUser: true
             },
             emailLocalPart: '',
             emailDomain: '',
@@ -454,7 +495,8 @@ export default {
                 adminGroups: [],
                 quota: this.user.quota.quota,
                 manager: this.user.manager || '',
-                enabled: this.user.enabled
+                enabled: this.user.enabled,
+                isSouveraUser: this.user.isSouveraUser !== false
             }
 
             // Manager-Daten für ManagerSelector vorbereiten
@@ -634,7 +676,8 @@ export default {
                         groups: this.formData.groups,
                         quota: this.formData.quota,
                         enabled: this.formData.enabled,
-                        manager: this.formData.manager
+                        manager: this.formData.manager,
+                        isSouveraUser: this.formData.isSouveraUser
                     }
 
                     // Passwort nur mitschicken wenn es gesetzt ist (nicht leer)
@@ -656,7 +699,8 @@ export default {
                         groups: this.formData.groups,
                         quota: this.formData.quota,
                         enabled: this.formData.enabled,
-                        manager: this.formData.manager
+                        manager: this.formData.manager,
+                        isSouveraUser: this.formData.isSouveraUser
                     }
 
                     const createResponse = await axios.post(url, payload)
@@ -1311,6 +1355,68 @@ export default {
 .status-display .status-text.status-inactive {
     color: var(--color-error);
 }
+
+/* Benutzer-Typ (Souvera User / Nextcloud User) */
+.user-type-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.user-type-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    background: var(--color-main-background);
+}
+
+.user-type-option:hover {
+    border-color: var(--color-primary-element);
+}
+
+.user-type-option.selected {
+    border-color: var(--color-primary-element);
+    background: var(--color-primary-element-light);
+}
+
+.user-type-option input[type='radio'] {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.user-type-option .material-design-icon {
+    color: var(--color-primary-element);
+    flex-shrink: 0;
+}
+
+.user-type-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.user-type-text strong {
+    font-size: 15px;
+    color: var(--color-main-text);
+}
+
+.user-type-text small {
+    font-size: 12px;
+    color: var(--color-text-maxcontrast);
+}
+
+@media (max-width: 500px) {
+    .user-type-options {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* Groups Zone (Collapsible) */
 .groups-zone.collapsible {

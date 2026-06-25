@@ -8,6 +8,7 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -46,6 +47,7 @@ class SharedMailboxApiController extends OCSController {
      *
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function list(): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
@@ -83,6 +85,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $description - Beschreibung
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function create(string $name = '', string $email = '', string $description = ''): DataResponse {
         try {
             // Validierung
@@ -177,6 +180,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $id - Interner Name
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function get(string $id): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
@@ -218,6 +222,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $description - Neue Beschreibung
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function update(string $id, string $description = ''): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
@@ -277,6 +282,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $id - Interner Name
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function delete(string $id): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
@@ -331,6 +337,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $id - Interner Name
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function getMembers(string $id): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
@@ -375,6 +382,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $userId - Benutzer-ID (Email)
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function addMember(string $id, string $userId = ''): DataResponse {
         try {
             if (empty($userId)) {
@@ -457,6 +465,7 @@ class SharedMailboxApiController extends OCSController {
      * @param string $userId - Benutzer-ID (Email)
      * @return DataResponse
      */
+    #[NoAdminRequired]
     public function removeMember(string $id, string $userId): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {

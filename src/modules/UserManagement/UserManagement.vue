@@ -103,6 +103,7 @@
                             <tr>
                                 <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
                                 <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
+                                <th class="type-column">{{ t('souvera_central', 'Typ') }}</th>
                                 <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
                                 <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
                                 <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
@@ -129,6 +130,15 @@
                                     </div>
                                 </td>
                                 <td class="displayname-column">{{ user.displayName }}</td>
+                                <td class="type-column">
+                                    <span
+                                        class="type-badge"
+                                        :class="isSouveraUser(user) ? 'type-souvera' : 'type-nextcloud'"
+                                        :data-testid="'user-type-badge-' + user.id"
+                                    >
+                                        {{ isSouveraUser(user) ? t('souvera_central', 'Souvera User') : t('souvera_central', 'Nextcloud User') }}
+                                    </span>
+                                </td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
                                 <td class="status-column">
                                     <div class="status-badge" :class="user.enabled ? 'status-active' : 'status-inactive'">
@@ -462,7 +472,10 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 const users = data.users || []
                 this.totalUsers = data.total || 0
-                this.usedLicenses = Math.max(0, this.totalUsers - 1)
+                // Genutzte Lizenzen = lizenzierte Souvera User (Backend-Wert, ohne scadmin/hidden)
+                this.usedLicenses = typeof data.usedLicenses === 'number'
+                    ? data.usedLicenses
+                    : Math.max(0, this.totalUsers - 1)
 
                 // Fix groups: Convert object to array
                 this.users = users.map((user) => ({
@@ -497,6 +510,10 @@ export default {
 
         hasMailbox(user) {
             return this.mailboxes.includes(user.id)
+        },
+
+        isSouveraUser(user) {
+            return user.isSouveraUser === true || user.type === 'souvera'
         },
 
         async createMailbox(user) {
@@ -885,6 +902,30 @@ export default {
 .status-text {
     font-weight: 600;
 }
+
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--border-radius-pill);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.type-badge.type-souvera {
+    background: rgba(var(--color-primary-element-rgb, 0, 130, 201), 0.12);
+    color: var(--color-primary-element);
+    border: 1px solid rgba(var(--color-primary-element-rgb, 0, 130, 201), 0.35);
+}
+
+.type-badge.type-nextcloud {
+    background: var(--color-background-dark);
+    color: var(--color-text-maxcontrast);
+    border: 1px solid var(--color-border);
+}
+
 
 /* Actions */
 .user-actions {

@@ -8,6 +8,7 @@
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -16,6 +17,8 @@ use OCP\IGroupManager;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\LicenseService;
+use OCA\SouveraCentral\Service\MailGroupService;
 use OCP\IUserSession;
 
 class UserApiController extends OCSController {
@@ -25,6 +28,8 @@ class UserApiController extends OCSController {
     private $logger;
     private $configService;
     private $userSession;
+    private LicenseService $licenseService;
+    private MailGroupService $mailGroupService;
 
     public function __construct(
         string $appName,
@@ -34,7 +39,9 @@ class UserApiController extends OCSController {
         IConfig $config,
         LoggerInterface $logger,
         ConfigService $configService,
-        IUserSession $userSession
+        IUserSession $userSession,
+        LicenseService $licenseService,
+        MailGroupService $mailGroupService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -43,6 +50,8 @@ class UserApiController extends OCSController {
         $this->logger = $logger;
         $this->configService = $configService;
         $this->userSession = $userSession;
+        $this->licenseService = $licenseService;
+        $this->mailGroupService = $mailGroupService;
     }
 
     /**
@@ -52,15 +61,21 @@ class UserApiController extends OCSController {
      * @param int $limit Anzahl der Ergebnisse pro Seite (Standard: 20)
      * @param int $offset Start-Offset für Pagination (Standard: 0)
      */
+    #[NoAdminRequired]
     public function list(string $search = '', int $limit = 20, int $offset = 0): DataResponse {
         try {
             // Alle Benutzer durchsuchen (Nextcloud UserManager hat keine native Pagination)
             $searchTerm = trim($search);
             $allUsers = $this->userManager->search($searchTerm);
+            $souveraGid = $this->configService->getMailGroupId();
 
             $allUsersData = [];
             foreach ($allUsers as $user) {
                 $userId = $user->getUID();
+                // Technische/ausgeblendete Benutzer (z. B. ncadmin) nie anzeigen
+                if ($this->configService->isHiddenUser($userId)) {
+                    continue;
+                }
                 $displayName = $user->getDisplayName();
                 $email = $user->getEMailAddress() ?? '';
 
@@ -81,6 +96,7 @@ class UserApiController extends OCSController {
                     }
                 }
 
+                $isSouveraUser = $this->groupManager->isInGroup($userId, $souveraGid);
                 $userData = [
                     'id' => $userId,
                     'displayName' => $displayName,
@@ -89,6 +105,8 @@ class UserApiController extends OCSController {
                     'lastLogin' => $user->getLastLogin(),
                     'quota' => $this->getUserQuota($userId),
                     'groups' => $this->getUserGroups($userId),
+                    'isSouveraUser' => $isSouveraUser,
+                    'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
                 ];
                 $allUsersData[] = $userData;
             }
@@ -104,7 +122,9 @@ class UserApiController extends OCSController {
                 'total' => $totalCount,
                 'limit' => $limit,
                 'offset' => $offset,
-                'hasMore' => ($offset + $limit) < $totalCount
+                'hasMore' => ($offset + $limit) < $totalCount,
+                'usedLicenses' => $this->licenseService->getUsedLicenses(),
+                'maxLicenses' => $this->configService->getMaxLicenses()
             ]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -117,6 +137,7 @@ class UserApiController extends OCSController {
     /**
      * Einzelnen Benutzer abrufen
      */
+    #[NoAdminRequired]
     public function get(string $id): DataResponse {
         try {
             $user = $this->userManager->get($id);
@@ -128,6 +149,7 @@ class UserApiController extends OCSController {
                 );
             }
 
+            $isSouveraUser = $this->groupManager->isInGroup($id, $this->configService->getMailGroupId());
             $userData = [
                 'id' => $user->getUID(),
                 'displayName' => $user->getDisplayName(),
@@ -137,6 +159,8 @@ class UserApiController extends OCSController {
                 'quota' => $this->getUserQuota($id),
                 'groups' => $this->getUserGroups($id),
                 'manager' => $this->config->getUserValue($id, 'souvera_central', 'manager', ''),
+                'isSouveraUser' => $isSouveraUser,
+                'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
             ];
 
             return new DataResponse($userData);
@@ -151,6 +175,7 @@ class UserApiController extends OCSController {
     /**
      * Benutzer suchen (für Autocomplete)
      */
+    #[NoAdminRequired]
     public function search(string $query = '', int $limit = 10): DataResponse {
         try {
             if (empty($query) || strlen($query) < 2) {
@@ -164,6 +189,9 @@ class UserApiController extends OCSController {
             $results = [];
 
             foreach ($users as $user) {
+                if ($this->configService->isHiddenUser($user->getUID())) {
+                    continue;
+                }
                 $results[] = [
                     'id' => $user->getUID(),
                     'displayName' => $user->getDisplayName(),
@@ -185,7 +213,8 @@ class UserApiController extends OCSController {
     /**
      * Neuen Benutzer erstellen
      */
-    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = ''): DataResponse {
+    #[NoAdminRequired]
+    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = '', bool $isSouveraUser = true): DataResponse {
         try {
             // Debug: Alle POST-Daten loggen
             $postData = file_get_contents('php://input');
@@ -217,15 +246,11 @@ class UserApiController extends OCSController {
                 );
             }
 
-            // Lizenz-Limit prüfen
-            // Geschäftslogik: max_licenses + 1 Gratis-Lizenz = Maximale Benutzeranzahl
-            $maxLicenses = $this->configService->getMaxLicenses();
-            $currentUserCount = $this->getTotalUserCount();
-            $maxAllowedUsers = $maxLicenses + 1;
-
-            if ($currentUserCount >= $maxAllowedUsers) {
+            // Lizenz-Limit prüfen: nur lizenzierte "Souvera User" (Mitglieder von
+            // souvera-users, ohne scadmin) zählen. "Nextcloud User" sind unlizenziert.
+            if ($isSouveraUser && $this->licenseService->isLimitReached()) {
                 return new DataResponse(
-                    ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'],
+                    ['error' => 'Lizenzlimit erreicht. Es können keine weiteren Souvera User (mit Postfach) erstellt werden.'],
                     Http::STATUS_CONFLICT
                 );
             }
@@ -293,6 +318,14 @@ class UserApiController extends OCSController {
                 $this->config->setUserValue($username, 'souvera_central', 'manager', $manager);
             }
 
+            // Benutzer-Typ anwenden: "Souvera User" (lizenziert: souvera-users + Postfach
+            // mit dem Klartext-Passwort) oder "Nextcloud User" (unlizenziert, kein Postfach).
+            if ($isSouveraUser) {
+                $this->mailGroupService->makeSouveraUser($user, $password);
+            } else {
+                $this->mailGroupService->makeNextcloudUser($user);
+            }
+
             return new DataResponse([
                 'success' => true,
                 'user' => [
@@ -302,6 +335,8 @@ class UserApiController extends OCSController {
                     'enabled' => $user->isEnabled(),
                     'quota' => $this->getUserQuota($username),
                     'groups' => $this->getUserGroups($username),
+                    'isSouveraUser' => $isSouveraUser,
+                    'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
                 ]
             ], Http::STATUS_CREATED);
 
@@ -316,7 +351,8 @@ class UserApiController extends OCSController {
     /**
      * Benutzer aktualisieren
      */
-    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null, ?string $password = null): DataResponse {
+    #[NoAdminRequired]
+    public function update(string $id, ?string $displayName = null, ?string $email = null, ?array $groups = null, ?string $quota = null, ?bool $enabled = null, ?string $manager = null, ?string $password = null, ?bool $isSouveraUser = null): DataResponse {
         try {
             $user = $this->userManager->get($id);
 
@@ -360,11 +396,20 @@ class UserApiController extends OCSController {
 
             // Gruppen aktualisieren
             if ($groups !== null) {
+                // souvera-users (Lizenz/Postfach) + scadmin werden NICHT über die generische
+                // Gruppenliste verwaltet: souvera-users via Typ-Umschalter (isSouveraUser),
+                // scadmin über die Gruppenverwaltung. Daher hier ausnehmen.
+                $protectedGids = [$this->configService->getMailGroupId(), $this->configService->getScadminGroupId()];
+
                 // Entferne User aus allen aktuellen Gruppen
                 $currentGroups = $this->groupManager->getUserGroups($user);
                 foreach ($currentGroups as $group) {
+                    $gid = $group->getGID();
                     // Verhindere Entfernung von Admin-User aus "admin" Gruppe
-                    if ($this->configService->isAdminUser($id) && $group->getGID() === 'admin') {
+                    if ($this->configService->isAdminUser($id) && $gid === 'admin') {
+                        continue;
+                    }
+                    if (in_array($gid, $protectedGids, true)) {
                         continue;
                     }
                     $group->removeUser($user);
@@ -372,6 +417,9 @@ class UserApiController extends OCSController {
 
                 // Füge User zu neuen Gruppen hinzu
                 foreach ($groups as $groupId) {
+                    if (in_array($groupId, $protectedGids, true)) {
+                        continue;
+                    }
                     $group = $this->groupManager->get($groupId);
                     if ($group !== null) {
                         $group->addUser($user);
@@ -410,6 +458,25 @@ class UserApiController extends OCSController {
                 $user->setPassword($password);
             }
 
+            // Benutzer-Typ (Souvera User / Nextcloud User) umschalten
+            if ($isSouveraUser !== null) {
+                $alreadySouvera = $this->mailGroupService->isMember($user);
+                if ($isSouveraUser && !$alreadySouvera) {
+                    // Hochstufen: Lizenzprüfung (scadmin-Mitglieder verbrauchen keine Lizenz)
+                    $isScadmin = $this->groupManager->isInGroup($id, $this->configService->getScadminGroupId());
+                    if (!$isScadmin && $this->licenseService->isLimitReached()) {
+                        return new DataResponse(
+                            ['error' => 'Lizenzlimit erreicht. Dieser Benutzer kann nicht zum Souvera User (mit Postfach) hochgestuft werden.'],
+                            Http::STATUS_CONFLICT
+                        );
+                    }
+                    $this->mailGroupService->makeSouveraUser($user, !empty($password) ? $password : null);
+                } elseif (!$isSouveraUser && $alreadySouvera) {
+                    $this->mailGroupService->makeNextcloudUser($user);
+                }
+            }
+
+            $finalIsSouvera = $this->mailGroupService->isMember($user);
             return new DataResponse([
                 'success' => true,
                 'user' => [
@@ -419,6 +486,8 @@ class UserApiController extends OCSController {
                     'enabled' => $user->isEnabled(),
                     'quota' => $this->getUserQuota($id),
                     'groups' => $this->getUserGroups($id),
+                    'isSouveraUser' => $finalIsSouvera,
+                    'type' => $finalIsSouvera ? 'souvera' : 'nextcloud',
                 ]
             ]);
 
@@ -433,6 +502,7 @@ class UserApiController extends OCSController {
     /**
      * Benutzer löschen
      */
+    #[NoAdminRequired]
     public function delete(string $id): DataResponse {
         try {
             // Prüfe ob versucht wird den Admin-User zu löschen
@@ -483,6 +553,7 @@ class UserApiController extends OCSController {
     /**
      * Benutzer aktivieren
      */
+    #[NoAdminRequired]
     public function enable(string $id): DataResponse {
         try {
             $user = $this->userManager->get($id);
@@ -511,6 +582,7 @@ class UserApiController extends OCSController {
     /**
      * Benutzer deaktivieren
      */
+    #[NoAdminRequired]
     public function disable(string $id): DataResponse {
         try {
             // Prüfe ob versucht wird den Admin-User zu deaktivieren
@@ -556,6 +628,7 @@ class UserApiController extends OCSController {
     /**
      * Alle Geräte trennen und lokale Daten löschen (Wipe Devices)
      */
+    #[NoAdminRequired]
     public function wipeDevices(string $id): DataResponse {
         try {
             $user = $this->userManager->get($id);
@@ -600,6 +673,7 @@ class UserApiController extends OCSController {
     /**
      * Willkommens-Email erneut versenden
      */
+    #[NoAdminRequired]
     public function resendWelcomeEmail(string $id): DataResponse {
         try {
             $user = $this->userManager->get($id);
@@ -655,6 +729,7 @@ class UserApiController extends OCSController {
     /**
      * Aktuellen Benutzer abrufen
      */
+    #[NoAdminRequired]
     public function getCurrentUser(): DataResponse {
         try {
             $currentUser = $this->userSession->getUser();
@@ -682,11 +757,12 @@ class UserApiController extends OCSController {
     /**
      * Config-Informationen abrufen
      */
+    #[NoAdminRequired]
     public function getConfig(): DataResponse {
         try {
             return new DataResponse([
                 'total_users' => $this->getTotalUserCount(),
-                'used_licenses' => $this->getUsedLicenseCount(),
+                'used_licenses' => $this->licenseService->getUsedLicenses(),
                 'max_licenses' => $this->configService->getMaxLicenses(),
                 'allowed_domains' => $this->configService->getAllowedDomains(),
                 // Neue Limit-Felder
@@ -694,6 +770,9 @@ class UserApiController extends OCSController {
                 'max_groups' => $this->configService->getMaxGroups(),
                 'max_aliases_per_user' => $this->configService->getMaxAliasesPerUser(),
                 'warning_threshold' => $this->configService->getWarningThreshold(),
+                // Souvera-Administrator (delegierte Verwaltung)
+                'scadmin_group' => $this->configService->getScadminGroupId(),
+                'souvera_group' => $this->configService->getMailGroupId(),
             ]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -706,6 +785,7 @@ class UserApiController extends OCSController {
     /**
      * Debug-Endpoint für Troubleshooting
      */
+    #[NoAdminRequired]
     public function debug(): DataResponse {
         $debugInfo = [
             'endpoint_reached' => true,
@@ -729,6 +809,7 @@ class UserApiController extends OCSController {
     /**
      * Liste aller Gruppen abrufen
      */
+    #[NoAdminRequired]
     public function listGroups(): DataResponse {
         try {
             $allGroups = $this->groupManager->search('');
@@ -791,18 +872,22 @@ class UserApiController extends OCSController {
      */
     private function getTotalUserCount(): int {
         $allUsers = $this->userManager->search('');
-        return count($allUsers);
+        $count = 0;
+        foreach ($allUsers as $user) {
+            if ($this->configService->isHiddenUser($user->getUID())) {
+                continue;
+            }
+            $count++;
+        }
+        return $count;
     }
 
     /**
-     * Genutzte Lizenzen ermitteln
-     *
-     * Geschäftslogik: 1 Lizenz ist immer kostenlos inkludiert (für Admin).
-     * Genutzte Lizenzen = Gesamtanzahl Benutzer - 1
+     * Genutzte Lizenzen = lizenzierte Souvera-User (souvera-users ohne scadmin/hidden).
      *
      * @return int Anzahl der genutzten Lizenzen
      */
     private function getUsedLicenseCount(): int {
-        return max(0, $this->getTotalUserCount() - 1);
+        return $this->licenseService->getUsedLicenses();
     }
 }

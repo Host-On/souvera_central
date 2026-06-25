@@ -54,16 +54,18 @@ class PasswordSyncListener implements IEventListener {
         }
 
         try {
-            // Postfach existiert? Wenn nicht (Erst-Sync), anlegen statt nur PW setzen.
-            if (!$this->stalwart->principalExists($mail)) {
-                $this->stalwart->createPrincipal($mail, $password, $user->getDisplayName());
-                // Erstanlage -> Mail-Gruppe pflegen (smail-Sichtbarkeit)
-                $this->mailGroup->addUser($user);
-            } else {
+            // Postfach existiert? Dann nur Passwort spiegeln.
+            if ($this->stalwart->principalExists($mail)) {
                 $this->stalwart->setPassword($mail, $password);
-                // Sicherstellen, dass Bestandspostfächer in der Mail-Gruppe sind
-                $this->mailGroup->addUser($user);
+                return;
             }
+            // Kein Postfach: nur für "Souvera User" (Mitglieder der souvera-users-Gruppe)
+            // automatisch anlegen. "Nextcloud User" (unlizenziert) erhalten KEIN Postfach.
+            if (!$this->mailGroup->isMember($user)) {
+                return;
+            }
+            $this->stalwart->createPrincipal($mail, $password, $user->getDisplayName());
+            $this->mailGroup->addUser($user);
         } catch (\Throwable $e) {
             $this->logger->error('SouveraCentral PW-Sync fehlgeschlagen', [
                 'uid' => $uid,
