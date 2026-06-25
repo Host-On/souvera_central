@@ -30,6 +30,12 @@
         <nextcloud min-version="30" max-version="34"/>
     </dependencies>
 
+    <commands>
+        <command>OCA\SouveraCentral\Command\SeedTestUsers</command>
+        <command>OCA\SouveraCentral\Command\SyncMailboxes</command>
+        <command>OCA\SouveraCentral\Command\ProvisionMailbox</command>
+    </commands>
+
     <navigations>
         <navigation role="admin">
             <name>Central</name>
@@ -37,10 +43,4 @@
             <icon>app.svg</icon>
         </navigation>
     </navigations>
-
-    <commands>
-        <command>OCA\SouveraCentral\Command\SeedTestUsers</command>
-        <command>OCA\SouveraCentral\Command\SyncMailboxes</command>
-        <command>OCA\SouveraCentral\Command\ProvisionMailbox</command>
-    </commands>
 </info>
