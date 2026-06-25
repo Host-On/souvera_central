@@ -126,7 +126,15 @@ sudo -u www-data php occ souvera:provision-mailbox info@example.com --generate -
 
 # Backfill: fehlende Postfächer für alle bestehenden Benutzer anlegen
 sudo -u www-data php occ souvera:sync-mailboxes            # mit --dry-run zum Testen
+
+# Bestehenden Nextcloud-Benutzer zum lizenzierten Souvera User machen (Gruppe + Postfach + Lizenzprüfung)
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com            # Zufallspasswort fürs Postfach
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com --generate # Passwort erzeugen + ausgeben
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com --force    # Lizenzlimit ignorieren
 ```
+
+`souvera:make-souvera-user` nutzt dieselbe Logik wie der UI-Button „Zum Souvera User machen".
+Optionen: `--password` | `--password-stdin` | `--generate`, `--force` (Lizenzlimit ignorieren).
 
 `souvera:provision-mailbox` Optionen: `--password` | `--password-stdin` | `--generate`,
 `--display-name`, `--quota` (Bytes, 0 = unbegrenzt).
