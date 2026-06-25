@@ -275,9 +275,21 @@ class ConfigService {
      * @return string
      */
     public function getMailGroupId(): string {
-        $gid = (string) $this->config->getSystemValue('souvera_central.mail_group', 'mail-users');
+        $gid = (string) $this->config->getSystemValue('souvera_central.mail_group', 'souvera-users');
         $gid = trim($gid);
-        return $gid !== '' ? $gid : 'mail-users';
+        return $gid !== '' ? $gid : 'souvera-users';
+    }
+
+    /**
+     * Anzeigename der Mail-Gruppe (in der NC-Oberfläche sichtbar).
+     * Standard: "Souvera Users".
+     *
+     * @return string
+     */
+    public function getMailGroupDisplayName(): string {
+        $name = (string) $this->config->getSystemValue('souvera_central.mail_group_name', 'Souvera Users');
+        $name = trim($name);
+        return $name !== '' ? $name : 'Souvera Users';
     }
 
     /**

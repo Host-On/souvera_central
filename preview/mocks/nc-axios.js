@@ -36,10 +36,10 @@ function respond(url) {
         return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
     }
     if (url.includes('/api/stalwart/sync-mailboxes')) {
-        return { data: { success: true, created: 2, skipped: 6, noMail: 0, errors: 0, grouped: 6, mailGroup: { id: 'mail-users', exists: true, members: 6, enabled: true } } }
+        return { data: { success: true, created: 2, skipped: 6, noMail: 0, errors: 0, grouped: 6, mailGroup: { id: 'souvera-users', displayName: 'Souvera Users', exists: true, members: 6, enabled: true } } }
     }
     if (url.includes('/api/stalwart/mailgroup')) {
-        return { data: { id: 'mail-users', exists: true, members: 6, enabled: true } }
+        return { data: { id: 'souvera-users', displayName: 'Souvera Users', exists: true, members: 6, enabled: true } }
     }
     if (url.includes('/api/stalwart/mailboxes')) {
         return { data: { configured: true, available: true, mailboxes: mailboxNames, total: mailboxNames.length } }

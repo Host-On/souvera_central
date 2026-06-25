@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\AppInfo;
 
+use OCA\SouveraCentral\Listener\GroupDeletionGuardListener;
 use OCA\SouveraCentral\Listener\PasswordSyncListener;
 use OCA\SouveraCentral\Listener\UserDeprovisionListener;
 use OCA\SouveraCentral\Listener\UserProvisionListener;
@@ -18,6 +19,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Group\Events\GroupDeletedEvent;
 use OCP\User\Events\PasswordUpdatedEvent;
 use OCP\User\Events\UserCreatedEvent;
 use OCP\User\Events\UserDeletedEvent;
@@ -36,6 +38,8 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(PasswordUpdatedEvent::class, PasswordSyncListener::class);
         // Postfach beim Löschen eines NC-Users entfernen
         $context->registerEventListener(UserDeletedEvent::class, UserDeprovisionListener::class);
+        // Geschützte Mail-Gruppe ("Souvera Users") bei versehentlichem Löschen wiederherstellen
+        $context->registerEventListener(GroupDeletedEvent::class, GroupDeletionGuardListener::class);
     }
 
     public function boot(IBootContext $context): void {

@@ -63,12 +63,15 @@ Füge in `config/config.php` hinzu:
 'souvera_central.stalwart_admin_password' => 'your-password',
 
 // smail-Sichtbarkeit: dedizierte Mail-Gruppe (optional)
-'souvera_central.mail_group' => 'mail-users',   // Default: mail-users
-'souvera_central.mail_group_sync' => true,       // Benutzer mit Postfach automatisch zuordnen
+'souvera_central.mail_group' => 'souvera-users',        // GID, Default: souvera-users
+'souvera_central.mail_group_name' => 'Souvera Users',   // Anzeigename, Default: Souvera Users
+'souvera_central.mail_group_sync' => true,              // Benutzer mit Postfach automatisch zuordnen
 ```
 
 > Beschränke anschließend die **smail**-App in den Nextcloud-App-Einstellungen auf die
-> Gruppe `mail-users`, damit Benutzer ohne Postfach die Mail-App nicht sehen.
+> Gruppe **Souvera Users** (`souvera-users`), damit Benutzer ohne Postfach die Mail-App nicht sehen.
+> Die Gruppe ist **geschützt**: Wird sie versehentlich gelöscht, legt die App sie automatisch wieder
+> an und stellt alle Postfach-Inhaber als Mitglieder wieder her.
 
 ## occ-Befehle
 

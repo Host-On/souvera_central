@@ -211,7 +211,7 @@
                 <AccountGroup :size="20" class="mailgroup-icon" />
                 <div class="mailgroup-text">
                     <div class="mailgroup-headline">
-                        <span class="mailgroup-name" data-testid="stalwart-mailgroup-name">{{ mailGroup.id }}</span>
+                        <span class="mailgroup-name" data-testid="stalwart-mailgroup-name">{{ mailGroup.displayName || mailGroup.id }}</span>
                         <span class="mailgroup-badge" :class="{ 'badge-warn': !mailGroup.exists }">
                             {{ mailGroup.members }} {{ t('souvera_central', 'Mitglied(er)') }}
                         </span>
@@ -234,7 +234,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.10.0</span>
+                    <span class="info-value">0.11.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -306,7 +306,7 @@ export default {
         return {
             resellerInfo: { support_url: null, url: null, name: null },
             stalwartStatus: { configured: false, available: false, url: null },
-            mailGroup: { id: 'mail-users', exists: false, members: 0, enabled: true },
+            mailGroup: { id: 'souvera-users', displayName: 'Souvera Users', exists: false, members: 0, enabled: true },
             syncing: false,
             syncResult: null,
             syncError: null
@@ -390,13 +390,14 @@ export default {
                 const response = await axios.get(url)
                 const data = response.data?.ocs?.data || response.data?.data || response.data || {}
                 this.mailGroup = {
-                    id: data.id || 'mail-users',
+                    id: data.id || 'souvera-users',
+                    displayName: data.displayName || data.id || 'Souvera Users',
                     exists: !!data.exists,
                     members: data.members || 0,
                     enabled: data.enabled !== false
                 }
             } catch (error) {
-                this.mailGroup = { id: 'mail-users', exists: false, members: 0, enabled: true }
+                this.mailGroup = { id: 'souvera-users', displayName: 'Souvera Users', exists: false, members: 0, enabled: true }
             }
         },
 
@@ -432,6 +433,7 @@ export default {
                 if (data.mailGroup) {
                     this.mailGroup = {
                         id: data.mailGroup.id || this.mailGroup.id,
+                        displayName: data.mailGroup.displayName || this.mailGroup.displayName || data.mailGroup.id,
                         exists: !!data.mailGroup.exists,
                         members: data.mailGroup.members || 0,
                         enabled: data.mailGroup.enabled !== false

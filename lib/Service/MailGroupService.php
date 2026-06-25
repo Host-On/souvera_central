@@ -5,11 +5,11 @@ declare(strict_types=1);
 /**
  * Souvera Central - Mail-Gruppen Service
  *
- * Pflegt die Mitgliedschaft einer dedizierten Nextcloud-Gruppe (Standard:
- * "mail-users"). Jeder Benutzer mit einem Stalwart-Postfach wird automatisch
- * Mitglied dieser Gruppe. Die smail-App wird in den Nextcloud-App-Einstellungen
- * auf diese Gruppe beschränkt - so sehen Benutzer ohne Postfach die App nicht
- * (nativer NC-Mechanismus, keine Hacks).
+ * Pflegt die Mitgliedschaft einer dedizierten Nextcloud-Gruppe (Standard-GID:
+ * "souvera-users", Anzeigename "Souvera Users"). Jeder Benutzer mit einem
+ * Stalwart-Postfach wird automatisch Mitglied dieser Gruppe. Die smail-App wird
+ * in den Nextcloud-App-Einstellungen auf diese Gruppe beschränkt - so sehen
+ * Benutzer ohne Postfach die App nicht (nativer NC-Mechanismus, keine Hacks).
  */
 
 namespace OCA\SouveraCentral\Service;
@@ -17,12 +17,15 @@ namespace OCA\SouveraCentral\Service;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 class MailGroupService {
     public function __construct(
         private IGroupManager $groupManager,
         private ConfigService $config,
+        private IUserManager $userManager,
+        private StalwartService $stalwart,
         private LoggerInterface $logger,
     ) {
     }
@@ -47,7 +50,26 @@ class MailGroupService {
                 $this->logger->info('SouveraCentral: Mail-Gruppe angelegt', ['gid' => $gid]);
             }
         }
+        if ($group !== null) {
+            $this->applyDisplayName($group);
+        }
         return $group;
+    }
+
+    /**
+     * Setzt den Anzeigenamen der Gruppe (best-effort; Backend muss es unterstützen).
+     */
+    private function applyDisplayName(IGroup $group): void {
+        $name = $this->config->getMailGroupDisplayName();
+        try {
+            if ($group->getDisplayName() !== $name) {
+                $group->setDisplayName($name);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->debug('SouveraCentral: Anzeigename konnte nicht gesetzt werden', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -109,9 +131,54 @@ class MailGroupService {
     }
 
     /**
+     * Stellt die Mitgliedschaft wieder her: fügt alle NC-Benutzer mit
+     * Stalwart-Postfach (erneut) zur Mail-Gruppe hinzu. Liefert die Anzahl der
+     * neu hinzugefügten Mitglieder. Wird u. a. nach versehentlichem Löschen der
+     * geschützten Gruppe genutzt.
+     */
+    public function repopulate(): int {
+        if (!$this->isEnabled() || !$this->config->isStalwartConfigured()) {
+            return 0;
+        }
+        $group = $this->ensureGroup();
+        if ($group === null) {
+            return 0;
+        }
+
+        try {
+            $mailboxes = array_flip(array_map('strtolower', $this->stalwart->listPrincipalNames()));
+            if (empty($mailboxes)) {
+                return 0;
+            }
+
+            $added = 0;
+            $limit = 500;
+            $offset = 0;
+            do {
+                $users = $this->userManager->search('', $limit, $offset);
+                foreach ($users as $user) {
+                    $mail = $this->stalwart->mailFor($user);
+                    if ($mail !== null && isset($mailboxes[strtolower($mail)]) && !$group->inGroup($user)) {
+                        $group->addUser($user);
+                        $added++;
+                    }
+                }
+                $offset += $limit;
+            } while (count($users) === $limit);
+
+            return $added;
+        } catch (\Throwable $e) {
+            $this->logger->error('SouveraCentral: Repopulation der Mail-Gruppe fehlgeschlagen', [
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
+
+    /**
      * Info-Objekt für UI (Gruppe, Mitgliederzahl, Status).
      *
-     * @return array{id: string, exists: bool, members: int, enabled: bool}
+     * @return array{id: string, displayName: string, exists: bool, members: int, enabled: bool}
      */
     public function getInfo(): array {
         $gid = $this->getGroupId();
@@ -123,6 +190,7 @@ class MailGroupService {
         }
         return [
             'id' => $gid,
+            'displayName' => $this->config->getMailGroupDisplayName(),
             'exists' => $group !== null,
             'members' => $members,
             'enabled' => $this->isEnabled(),
