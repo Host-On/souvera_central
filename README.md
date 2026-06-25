@@ -90,7 +90,34 @@ Füge in `config/config.php` hinzu:
 > Die Gruppe ist **geschützt**: Wird sie versehentlich gelöscht, legt die App sie automatisch wieder
 > an und stellt alle Postfach-Inhaber als Mitglieder wieder her.
 
-## occ-Befehle
+## Souvera Shield – Einstellungen aus Central auslesen
+
+Die Shield-Einstellungen werden **global** in der Nextcloud-AppConfig der App `souvera_central`
+gespeichert (gepflegt unter *Central → Einstellungen → Souvera Shield*). Die Shield-App liest sie
+direkt aus – kein HTTP, keine Auth nötig (beide Apps laufen auf derselben Instanz).
+
+| AppConfig-Key (`app = souvera_central`)        | Typ           | Default | Bedeutung                                   |
+|------------------------------------------------|---------------|---------|---------------------------------------------|
+| `settings.shield.desktop_notifications`        | `'0'` / `'1'` | `'0'`   | Desktop-Benachrichtigungen erhalten         |
+| `settings.shield.daily_summary`                | `'0'` / `'1'` | `'0'`   | Tägliche Zusammenfassung per E-Mail         |
+| `settings.shield.min_spam_score`               | Float `0..10` | `'2.5'` | Mindest-Spam-Score (0,5-Schritte) für Benachr. |
+
+**In der Shield-App (PHP) auslesen:**
+
+```php
+// IConfig per Dependency Injection (versionsübergreifend kompatibel)
+$desktop      = $config->getAppValue('souvera_central', 'settings.shield.desktop_notifications', '0') === '1';
+$dailySummary = $config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0') === '1';
+$minSpamScore = (float) $config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5');
+```
+
+**Zum Prüfen via occ:**
+
+```bash
+sudo -u www-data php occ config:app:get souvera_central settings.shield.min_spam_score
+```
+
+
 
 ```bash
 # Einzelnes Postfach gezielt provisionieren (z. B. ncadmin im Build-Prozess) – idempotent

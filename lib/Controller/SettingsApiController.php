@@ -54,6 +54,12 @@ class SettingsApiController extends OCSController {
                 'defaults' => [
                     'quota' => $this->config->getAppValue('souvera_central', 'settings.defaults.quota', 'default'),
                 ],
+                // Souvera Shield: global, wird von der Shield-App via AppConfig ausgelesen
+                'shield' => [
+                    'desktop_notifications' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.desktop_notifications', '0'),
+                    'daily_summary' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0'),
+                    'min_spam_score' => (float) $this->config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5'),
+                ],
             ];
 
             return new DataResponse($settings);
@@ -69,7 +75,7 @@ class SettingsApiController extends OCSController {
      * Einstellungen speichern
      */
     #[NoAdminRequired]
-    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null): DataResponse {
+    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null): DataResponse {
         try {
             // Visibility Settings
             if ($visibility !== null) {
@@ -131,6 +137,26 @@ class SettingsApiController extends OCSController {
                 }
             }
 
+            // Souvera Shield Settings (global; werden von der Shield-App via AppConfig ausgelesen)
+            if ($shield !== null) {
+                if (isset($shield['desktop_notifications'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.shield.desktop_notifications', $shield['desktop_notifications'] ? '1' : '0');
+                }
+                if (isset($shield['daily_summary'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.shield.daily_summary', $shield['daily_summary'] ? '1' : '0');
+                }
+                if (array_key_exists('min_spam_score', $shield)) {
+                    $score = $this->normalizeSpamScore($shield['min_spam_score']);
+                    if ($score === null) {
+                        return new DataResponse(
+                            ['error' => 'Ungültiger Spam-Score. Erlaubt: 0 bis 10 in 0,5-Schritten.'],
+                            Http::STATUS_BAD_REQUEST
+                        );
+                    }
+                    $this->config->setAppValue('souvera_central', 'settings.shield.min_spam_score', (string) $score);
+                }
+            }
+
             // Aktualisierte Einstellungen zurückgeben
             return $this->getSettings();
 
@@ -162,5 +188,20 @@ class SettingsApiController extends OCSController {
         }
 
         return false;
+    }
+
+    /**
+     * Validiert/normalisiert den Spam-Score (0..10, 0,5-Schritte). Liefert null bei ungültig.
+     */
+    private function normalizeSpamScore($value): ?float {
+        if (!is_numeric($value)) {
+            return null;
+        }
+        $score = (float) $value;
+        if ($score < 0 || $score > 10) {
+            return null;
+        }
+        // Auf nächste 0,5 runden
+        return round($score * 2) / 2;
     }
 }

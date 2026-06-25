@@ -87,6 +87,69 @@
                 </div>
             </div>
 
+            <!-- 3. SOUVERA SHIELD -->
+            <div class="settings-section" data-testid="shield-settings-section">
+                <div class="section-header">
+                    <ShieldCheck :size="22" />
+                    <h3>{{ t('souvera_central', 'Souvera Shield') }}</h3>
+                </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'Benachrichtigungs-Einstellungen für Souvera Shield.') }}
+                </p>
+
+                <div class="settings-group">
+                    <label class="checkbox-label" data-testid="shield-desktop-label">
+                        <input
+                            v-model="settings.shield.desktop_notifications"
+                            type="checkbox"
+                            data-testid="shield-desktop-checkbox"
+                            @change="saveSettings"
+                        />
+                        <span>{{ t('souvera_central', 'Desktop-Benachrichtigungen erhalten') }}</span>
+                    </label>
+
+                    <label class="checkbox-label" data-testid="shield-summary-label">
+                        <input
+                            v-model="settings.shield.daily_summary"
+                            type="checkbox"
+                            data-testid="shield-summary-checkbox"
+                            @change="saveSettings"
+                        />
+                        <span>{{ t('souvera_central', 'Tägliche Zusammenfassung per E-Mail erhalten') }}</span>
+                    </label>
+
+                    <div v-if="settings.shield.daily_summary" class="spam-score-field" data-testid="shield-spam-score">
+                        <label class="field-label">
+                            {{ t('souvera_central', 'Mindest-Spam-Score für Benachrichtigung') }}
+                        </label>
+                        <div class="slider-row">
+                            <input
+                                type="range"
+                                min="0"
+                                max="10"
+                                step="0.5"
+                                :value="settings.shield.min_spam_score"
+                                class="spam-slider"
+                                data-testid="shield-spam-slider"
+                                @input="settings.shield.min_spam_score = parseFloat($event.target.value)"
+                                @change="saveSettings"
+                            />
+                            <span class="slider-value" data-testid="shield-spam-value">{{ formatScore(settings.shield.min_spam_score) }}</span>
+                        </div>
+                        <div class="slider-scale">
+                            <span>0</span>
+                            <span>2,5</span>
+                            <span>5</span>
+                            <span>7,5</span>
+                            <span>10</span>
+                        </div>
+                        <p class="setting-hint">
+                            {{ t('souvera_central', 'Nur Nachrichten ab diesem Spam-Score lösen eine Benachrichtigung aus (0 = alle, 10 = nur sehr wahrscheinlicher Spam).') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Save Indicator -->
             <div v-if="saving" class="save-indicator">
                 <NcLoadingIcon :size="16" />
@@ -111,6 +174,7 @@ import Check from 'vue-material-design-icons/Check.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Database from 'vue-material-design-icons/Database.vue'
 import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
+import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 
 export default {
     name: 'Settings',
@@ -121,7 +185,8 @@ export default {
         Check,
         Close,
         Database,
-        InfinityIcon
+        InfinityIcon,
+        ShieldCheck
     },
 
     data() {
@@ -136,6 +201,11 @@ export default {
                 },
                 defaults: {
                     quota: 'default'
+                },
+                shield: {
+                    desktop_notifications: false,
+                    daily_summary: false,
+                    min_spam_score: 2.5
                 }
             },
             quotaOptions: [
@@ -169,7 +239,8 @@ export default {
                 if (data) {
                     this.settings = {
                         email: data.email || this.settings.email,
-                        defaults: data.defaults || this.settings.defaults
+                        defaults: data.defaults || this.settings.defaults,
+                        shield: data.shield || this.settings.shield
                     }
                 }
             } catch (error) {
@@ -218,6 +289,11 @@ export default {
         selectQuota(value) {
             this.settings.defaults.quota = value
             this.saveSettings()
+        },
+
+        formatScore(value) {
+            const n = Number(value)
+            return (Number.isFinite(n) ? n : 0).toFixed(1).replace('.', ',')
         }
     }
 }
@@ -418,6 +494,49 @@ export default {
 
 .field-label .material-design-icon {
     opacity: 0.8;
+}
+
+/* Souvera Shield - Spam-Score Slider */
+.spam-score-field {
+    margin-top: 8px;
+    padding: 16px;
+    background: var(--color-background-hover);
+    border-radius: var(--border-radius-large, 12px);
+    animation: slideDown 0.25s ease-out;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.spam-slider {
+    flex: 1;
+    accent-color: var(--color-primary-element);
+    cursor: pointer;
+    height: 6px;
+}
+
+.slider-value {
+    min-width: 48px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-primary-element);
+    background: var(--color-main-background);
+    border: 2px solid var(--color-primary-element);
+    border-radius: var(--border-radius-pill, 16px);
+    padding: 4px 10px;
+}
+
+.slider-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding-right: 64px;
+    font-size: 12px;
+    color: var(--color-text-maxcontrast);
 }
 
 /* Quota Grid */

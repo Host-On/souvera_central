@@ -152,13 +152,14 @@
                                 <td class="actions-column">
                                     <div class="user-actions">
                                         <button
-                                            v-if="stalwartConfigured && !hasMailbox(user)"
+                                            v-if="!isSouveraUser(user)"
                                             class="action-mailbox"
-                                            :title="t('souvera_central', 'Stalwart-Postfach anlegen')"
-                                            :disabled="creatingMailbox === user.id"
-                                            @click.stop="createMailbox(user)"
+                                            :title="t('souvera_central', 'Zum Souvera User machen')"
+                                            :disabled="upgradingUser === user.id"
+                                            :data-testid="'upgrade-souvera-' + user.id"
+                                            @click.stop="upgradeToSouveraUser(user)"
                                         >
-                                            <EmailPlusOutline :size="18" />
+                                            <AccountArrowUp :size="18" />
                                         </button>
                                         <button
                                             class="action-edit"
@@ -239,7 +240,7 @@ import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
 import EmailCheck from 'vue-material-design-icons/EmailCheck.vue'
 import EmailRemoveOutline from 'vue-material-design-icons/EmailRemoveOutline.vue'
-import EmailPlusOutline from 'vue-material-design-icons/EmailPlusOutline.vue'
+import AccountArrowUp from 'vue-material-design-icons/AccountArrowUp.vue'
 
 export default {
     name: 'UserManagement',
@@ -262,7 +263,7 @@ export default {
         AlertOctagon,
         EmailCheck,
         EmailRemoveOutline,
-        EmailPlusOutline
+        AccountArrowUp
     },
 
     props: {
@@ -294,7 +295,7 @@ export default {
             currentUserId: null, // ID des aktuell angemeldeten Benutzers
             mailboxes: [], // Stalwart Principal-Namen (UIDs) mit Postfach
             stalwartConfigured: false,
-            creatingMailbox: null, // UID, während ein Postfach angelegt wird
+            upgradingUser: null, // UID, während ein User zum Souvera User gemacht wird
             resellerInfo: {
                 support_url: null,
                 url: null,
@@ -516,20 +517,34 @@ export default {
             return user.isSouveraUser === true || user.type === 'souvera'
         },
 
-        async createMailbox(user) {
-            this.creatingMailbox = user.id
+        async upgradeToSouveraUser(user) {
+            this.upgradingUser = user.id
             try {
                 const url = generateUrl(
-                    '/apps/souvera_central/api/users/' + encodeURIComponent(user.id) + '/mailbox'
+                    '/apps/souvera_central/api/users/' + encodeURIComponent(user.id)
                 )
-                await axios.post(url)
-                if (!this.mailboxes.includes(user.id)) {
-                    this.mailboxes.push(user.id)
-                }
+                await axios.put(url, { isSouveraUser: true })
+                await this.loadUsers()
+                await this.loadMailboxes()
             } catch (error) {
-                // Fehler still behandeln – der Indikator bleibt auf "fehlt"
+                const status = error.response?.status
+                const msg = error.response?.data?.ocs?.data?.error
+                    || error.response?.data?.error
+                    || error.response?.data?.message
+                this.confirmModal = {
+                    isOpen: true,
+                    title: this.t('souvera_central', 'Upgrade nicht möglich'),
+                    message: status === 409
+                        ? (msg || this.t('souvera_central', 'Lizenzlimit erreicht.'))
+                        : this.t('souvera_central', 'Der Benutzer konnte nicht zum Souvera User gemacht werden.'),
+                    details: '',
+                    type: 'warning',
+                    confirmText: this.t('souvera_central', 'OK'),
+                    cancelText: '',
+                    onConfirm: () => this.closeConfirmModal()
+                }
             } finally {
-                this.creatingMailbox = null
+                this.upgradingUser = null
             }
         },
 
