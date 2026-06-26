@@ -53,12 +53,13 @@ class MakeSouveraUser extends Base {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
-        $uid = trim((string) $input->getArgument('user'));
-        $user = $this->userManager->get($uid);
+        $arg = trim((string) $input->getArgument('user'));
+        $user = $this->resolveUser($arg);
         if ($user === null) {
-            $output->writeln('<error>Benutzer nicht gefunden: ' . $uid . '</error>');
+            $output->writeln('<error>Benutzer nicht gefunden (UID oder E-Mail): ' . $arg . '</error>');
             return 1;
         }
+        $uid = $user->getUID();
 
         if ($this->mailGroup->isMember($user)) {
             $output->writeln('<comment>Benutzer ist bereits ein Souvera User: ' . $uid . '</comment>');
@@ -95,6 +96,23 @@ class MakeSouveraUser extends Base {
         ));
 
         return 0;
+    }
+
+    /**
+     * Benutzer per UID auflösen, sonst per E-Mail-Adresse (CM/CLI nutzt oft die Mail).
+     */
+    private function resolveUser(string $arg): ?\OCP\IUser {
+        $user = $this->userManager->get($arg);
+        if ($user !== null) {
+            return $user;
+        }
+        if (filter_var($arg, FILTER_VALIDATE_EMAIL)) {
+            $byEmail = $this->userManager->getByEmail($arg);
+            if (count($byEmail) >= 1) {
+                return $byEmail[0];
+            }
+        }
+        return null;
     }
 
     /**
