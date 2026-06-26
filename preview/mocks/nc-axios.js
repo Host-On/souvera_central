@@ -30,7 +30,7 @@ const mailboxes = [
 
 function respond(url) {
     if (url.includes('/api/config')) {
-        return { data: { total_users: 8, used_licenses: 7, max_licenses: 25, max_groups: 20, max_shared_mailboxes: 10, warning_threshold: 0.8, allowed_domains: ['souvera.eu'] } }
+        return { data: { total_users: 8, used_licenses: 5, max_licenses: 25, max_groups: 20, max_shared_mailboxes: 10, warning_threshold: 0.8, allowed_domains: ['souvera.eu'], scadmin_group: 'scadmin', souvera_group: 'souvera-users' } }
     }
     if (url.includes('/api/stalwart/status')) {
         return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
