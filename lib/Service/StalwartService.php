@@ -6,8 +6,8 @@
  * vollständig entfernt und durch die JMAP-Management-API ersetzt. Dieser
  * Service spricht ausschließlich JMAP:
  *
- *   - Session-Discovery : GET  {base}/jmap/session   (liefert Management-accountId)
- *   - Methoden-Aufrufe  : POST {base}/jmap            (using: urn:stalwart:jmap)
+ *   - Session-Discovery : GET  {base}/jmap/session   (liefert apiUrl)
+ *   - Methoden-Aufrufe  : POST {base}/jmap            (using: urn:stalwart:jmap; KEINE accountId)
  *   - Objekttypen       : x:Account (User/Group), x:Domain
  *   - Methoden          : x:Account/{get,set,query}, x:Domain/{get,query}
  *
@@ -29,7 +29,7 @@ class StalwartService {
     private ConfigService $configService;
     private LoggerInterface $logger;
 
-    /** Session-Cache (pro Request): ['accountId' => string, 'apiUrl' => string] oder false. */
+    /** Session-Cache (pro Request): ['apiUrl' => string] oder false. */
     private array|false|null $sessionCache = null;
     /** @var array<string,?string> domainName => domainId */
     private array $domainIdCache = [];
@@ -551,19 +551,15 @@ class StalwartService {
 
     /**
      * Einen einzelnen JMAP-Methodenaufruf absetzen und die Antwort-Argumente
-     * zurückgeben. Hängt automatisch die Management-accountId an.
+     * zurückgeben.
+     *
+     * Management-Methoden (x:Account/x:Domain) sind serverglobal und benötigen
+     * KEINE accountId – die offizielle stalwart-cli sendet ebenfalls keine.
+     * Die Args werden daher unverändert übernommen.
      *
      * @return array|null  Antwort-Argumente oder null bei Transport-/Methodenfehler
      */
     public function jmapSingle(string $method, array $args, string $callId = 'c0'): ?array {
-        $accountId = $this->accountId();
-        if ($accountId === null) {
-            return null;
-        }
-        if (!array_key_exists('accountId', $args)) {
-            $args['accountId'] = $accountId;
-        }
-
         $responses = $this->jmapCall([[$method, $args, $callId]]);
         if ($responses === null || !isset($responses[0])) {
             return null;
@@ -612,20 +608,17 @@ class StalwartService {
         return $decoded['methodResponses'] ?? null;
     }
 
-    /**
-     * Management-accountId (primaryAccounts[urn:stalwart:jmap]).
-     */
-    public function accountId(): ?string {
-        $session = $this->session();
-        return $session === false ? null : ($session['accountId'] ?? null);
-    }
-
     // ============================================================================
     // Interne Helfer
     // ============================================================================
 
     /**
-     * JMAP-Session holen (gecached). Liefert ['accountId','apiUrl'] oder false.
+     * JMAP-Session holen (gecached). Liefert ['apiUrl' => string] oder false.
+     *
+     * Management-Methoden (x:Account/x:Domain) sind serverglobal: es wird KEINE
+     * accountId benötigt (die offizielle stalwart-cli liest ebenfalls nur
+     * Capabilities + apiUrl). Die Session gilt daher als verfügbar, sobald
+     * /jmap/session mit HTTP 2xx + JSON antwortet.
      */
     private function session(): array|false {
         if ($this->sessionCache !== null) {
@@ -650,23 +643,29 @@ class StalwartService {
             return $this->sessionCache = false;
         }
 
-        $accountId = $decoded['primaryAccounts'][self::CAP_STALWART]
-            ?? (is_array($decoded['primaryAccounts'] ?? null) ? reset($decoded['primaryAccounts']) : null);
-        if (!is_array($decoded['primaryAccounts'] ?? null) || $accountId === null || $accountId === false) {
-            // Fallback: erste accountId aus accounts
-            $accounts = $decoded['accounts'] ?? [];
-            $accountId = is_array($accounts) && !empty($accounts) ? (string) array_key_first($accounts) : null;
-        }
-        if ($accountId === null) {
-            $this->logger->warning('StalwartService: Keine Management-accountId in Session');
-            return $this->sessionCache = false;
-        }
-
-        // POST-URL immer aus der konfigurierten Basis ableiten (interne Erreichbarkeit).
+        // apiUrl aus der Session nur als PFAD übernehmen und an die intern
+        // konfigurierte Basis hängen. Stalwart 0.16 publiziert in der Discovery
+        // den öffentlichen Hostname – dieser ist intern u. U. nicht erreichbar.
+        $apiPath = $this->apiPathFromSession($decoded['apiUrl'] ?? null);
         return $this->sessionCache = [
-            'accountId' => (string) $accountId,
-            'apiUrl' => $base . '/jmap',
+            'apiUrl' => $base . $apiPath,
         ];
+    }
+
+    /**
+     * Extrahiert aus dem Session-apiUrl einen relativen Pfad (Default /jmap).
+     */
+    private function apiPathFromSession(mixed $apiUrl): string {
+        if (!is_string($apiUrl) || trim($apiUrl) === '') {
+            return '/jmap';
+        }
+        $apiUrl = trim($apiUrl);
+        if (preg_match('#^https?://#i', $apiUrl)) {
+            $path = parse_url($apiUrl, PHP_URL_PATH);
+            $apiUrl = is_string($path) ? $path : '/jmap';
+        }
+        $apiUrl = '/' . trim($apiUrl, '/');
+        return $apiUrl === '/' ? '/jmap' : $apiUrl;
     }
 
     /**
