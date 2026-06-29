@@ -68,8 +68,9 @@ Füge in `config/config.php` hinzu:
 'souvera_central.mail_group_sync' => true,              // Benutzer mit Postfach automatisch zuordnen
 
 // Delegierte Verwaltung (Souvera-Administrator ohne NC-Superadmin-Rechte)
-'souvera_central.scadmin_group' => 'scadmin',           // GID der Souvera-Admin-Gruppe (vom CloudManager angelegt)
-'souvera_central.scadmin_group_name' => 'Souvera Administrators',
+// Hinweis: "scadmin" ist der Admin-BENUTZER, die Admin-GRUPPE heißt "souvera-admins".
+'souvera_central.admin_group' => 'souvera-admins',     // GID der Souvera-Admin-Gruppe (Default)
+'souvera_central.admin_group_name' => 'Souvera Admins',
 'souvera_central.hidden_users' => ['ncadmin'],          // in Central ausgeblendete technische Benutzer
 ```
 
@@ -78,12 +79,13 @@ Füge in `config/config.php` hinzu:
 > und erhält ein Stalwart-Postfach. Ein **Nextcloud User** ist *nicht* in dieser Gruppe: unlizenziert,
 > ohne Postfach. Der Typ wird beim Anlegen/Bearbeiten eines Benutzers umgeschaltet.
 >
-> **Souvera-Administrator (`scadmin`)**
-> Mitglieder der Gruppe `scadmin` dürfen Souvera Central vollständig bedienen (Benutzer, Gruppen,
+> **Souvera-Administrator (Gruppe `souvera-admins`)**
+> Mitglieder der Gruppe `souvera-admins` dürfen Souvera Central vollständig bedienen (Benutzer, Gruppen,
 > geteilte Postfächer, Einstellungen) – **ohne** echte Nextcloud-Superadmin-Rechte. Sie erhalten
 > ebenfalls ein Postfach, **verbrauchen aber keine Lizenz**. Die Gruppe wird vom CloudManager bei der
 > Installation angelegt; Central verwendet und schützt sie (Wiederherstellung bei versehentlicher Löschung).
-> Das App-Icon erscheint für NC-Superadmins **und** `scadmin`-Mitglieder.
+> Die App (Icon **und** Routen) ist **ausschließlich** für `souvera-admins`-Mitglieder und echte
+> NC-Superadmins sichtbar/bedienbar – alle anderen sehen die App nicht und erhalten beim Öffnen 403.
 
 > Beschränke anschließend die **smail**-App in den Nextcloud-App-Einstellungen auf die
 > Gruppe **Souvera Users** (`souvera-users`), damit Benutzer ohne Postfach die Mail-App nicht sehen.

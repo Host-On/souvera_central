@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Macht zwei Gruppen faktisch zu geschützten Systemgruppen:
  *   - die Mail-/Lizenz-Gruppe ("Souvera Users", Standard-GID souvera-users)
- *   - die Souvera-Administrator-Gruppe (Standard-GID scadmin), die vom
+ *   - die Souvera-Administrator-Gruppe (Standard-GID souvera-admins), die vom
  *     CloudManager bei der Installation angelegt wird.
  *
  * Wird eine davon (z. B. versehentlich) in der NC-Oberfläche gelöscht, wird sie
@@ -43,7 +43,7 @@ class GroupDeletionGuardListener implements IEventListener {
 
         // Souvera-Administrator-Gruppe schützen (leer neu anlegen).
         if ($gid === $this->config->getScadminGroupId()) {
-            $this->restoreScadminGroup($gid);
+            $this->restoreAdminGroup($gid);
             return;
         }
 
@@ -74,8 +74,8 @@ class GroupDeletionGuardListener implements IEventListener {
         }
     }
 
-    private function restoreScadminGroup(string $gid): void {
-        $this->logger->warning('SouveraCentral: Geschützte scadmin-Gruppe wurde gelöscht – wird wiederhergestellt', [
+    private function restoreAdminGroup(string $gid): void {
+        $this->logger->warning('SouveraCentral: Geschützte Souvera-Admin-Gruppe wurde gelöscht – wird wiederhergestellt', [
             'gid' => $gid,
         ]);
         try {
@@ -90,7 +90,7 @@ class GroupDeletionGuardListener implements IEventListener {
                 }
             }
         } catch (\Throwable $e) {
-            $this->logger->error('SouveraCentral: Wiederherstellung der scadmin-Gruppe fehlgeschlagen', [
+            $this->logger->error('SouveraCentral: Wiederherstellung der Souvera-Admin-Gruppe fehlgeschlagen', [
                 'error' => $e->getMessage(),
             ]);
         }

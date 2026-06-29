@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Registriert Event-Listener (Provisionierung + Gruppen-Schutz), die
  * Souvera-Admin-Middleware (delegierte Verwaltung) sowie die dynamische
- * Navigation, die auch Mitgliedern der scadmin-Gruppe das App-Icon zeigt.
+ * Navigation, die auch Mitgliedern der souvera-admins-Gruppe das App-Icon zeigt.
  */
 
 namespace OCA\SouveraCentral\AppInfo;
@@ -45,10 +45,10 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(PasswordUpdatedEvent::class, PasswordSyncListener::class);
         // Postfach beim Löschen eines NC-Users entfernen
         $context->registerEventListener(UserDeletedEvent::class, UserDeprovisionListener::class);
-        // Geschützte Gruppen ("Souvera Users" + "scadmin") bei Löschung wiederherstellen
+        // Geschützte Gruppen ("Souvera Users" + "souvera-admins") bei Löschung wiederherstellen
         $context->registerEventListener(GroupDeletedEvent::class, GroupDeletionGuardListener::class);
 
-        // Delegierte Verwaltung: Souvera-Admins (NC-Superadmin ODER scadmin) zulassen.
+        // Delegierte Verwaltung: Souvera-Admins (NC-Superadmin ODER souvera-admins-Mitglied) zulassen.
         $context->registerMiddleware(SouveraAdminMiddleware::class);
     }
 

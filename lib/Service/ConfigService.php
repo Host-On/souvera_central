@@ -303,32 +303,42 @@ class ConfigService {
     }
 
     // ============================================================================
-    // Souvera-Administrator (delegierte Verwaltung ohne NC-Superadmin)
+    // Souvera-Administrator-Gruppe (delegierte Verwaltung ohne NC-Superadmin)
     // ============================================================================
 
     /**
-     * ID der Nextcloud-Gruppe, deren Mitglieder als "Souvera-Administrator"
-     * gelten. Diese Mitglieder dürfen Souvera Central bedienen, ohne echte
-     * Nextcloud-Superadmins zu sein. Die Gruppe wird vom CloudManager beim
-     * Installieren angelegt; die App verwendet und schützt sie nur.
+     * GID der Nextcloud-Gruppe, deren Mitglieder als "Souvera-Administrator"
+     * gelten und Souvera Central sehen + bedienen dürfen, ohne echte
+     * Nextcloud-Superadmins zu sein. Standard-GID: "souvera-admins".
+     *
+     * Hinweis zur Benennung: "scadmin" ist der technische Admin-BENUTZER,
+     * NICHT die Gruppe. Die Admin-GRUPPE heißt "souvera-admins".
+     * Konfigurierbar via `souvera_central.admin_group` (bevorzugt) bzw. dem
+     * Legacy-Schlüssel `souvera_central.scadmin_group`.
      *
      * @return string
      */
     public function getScadminGroupId(): string {
-        $gid = (string) $this->config->getSystemValue('souvera_central.scadmin_group', 'scadmin');
+        $gid = (string) $this->config->getSystemValue(
+            'souvera_central.admin_group',
+            $this->config->getSystemValue('souvera_central.scadmin_group', 'souvera-admins')
+        );
         $gid = trim($gid);
-        return $gid !== '' ? $gid : 'scadmin';
+        return $gid !== '' ? $gid : 'souvera-admins';
     }
 
     /**
-     * Anzeigename der Souvera-Administrator-Gruppe.
+     * Anzeigename der Souvera-Administrator-Gruppe. Standard: "Souvera Admins".
      *
      * @return string
      */
     public function getScadminGroupName(): string {
-        $name = (string) $this->config->getSystemValue('souvera_central.scadmin_group_name', 'Souvera Administrators');
+        $name = (string) $this->config->getSystemValue(
+            'souvera_central.admin_group_name',
+            $this->config->getSystemValue('souvera_central.scadmin_group_name', 'Souvera Admins')
+        );
         $name = trim($name);
-        return $name !== '' ? $name : 'Souvera Administrators';
+        return $name !== '' ? $name : 'Souvera Admins';
     }
 
     /**

@@ -7,7 +7,8 @@ declare(strict_types=1);
  *
  * Zentralisiert die Frage "Darf dieser Benutzer Souvera Central verwalten?".
  * Verwaltungsberechtigt ist, wer entweder echter Nextcloud-Superadmin ist
- * ODER Mitglied der Souvera-Administrator-Gruppe (Standard-GID "scadmin").
+ * ODER Mitglied der Souvera-Administrator-Gruppe (Standard-GID "souvera-admins").
+ * Hinweis: "scadmin" ist der technische Admin-Benutzer, NICHT die Gruppe.
  *
  * Damit lassen sich Benutzer innerhalb von Central verwalten, ohne globale
  * Nextcloud-Superadmin-Rechte zu besitzen (delegierte Administration).
@@ -38,7 +39,7 @@ class PermissionService {
 
     /**
      * Prüft, ob der (aktuelle oder angegebene) Benutzer Souvera Central
-     * verwalten darf: NC-Superadmin ODER Mitglied der scadmin-Gruppe.
+     * verwalten darf: NC-Superadmin ODER Mitglied der souvera-admins-Gruppe.
      *
      * @param string|null $userId UID; null = aktuell angemeldeter Benutzer
      */
@@ -66,7 +67,7 @@ class PermissionService {
     }
 
     /**
-     * Prüft, ob ein Benutzer Mitglied der scadmin-Gruppe ist.
+     * Prüft, ob ein Benutzer Mitglied der souvera-admins-Gruppe ist.
      */
     public function isScadmin(string $userId): bool {
         return $this->groupManager->isInGroup($userId, $this->config->getScadminGroupId());

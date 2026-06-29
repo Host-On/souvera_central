@@ -1,9 +1,9 @@
 # Cloud-Initialisierung für den CloudManager (CM) — Souvera Central
 
 Diese Anleitung beschreibt die **korrekte Reihenfolge** der Provisionierung, damit
-`ncadmin`, `swadmin` und die Lizenz-/Rollen-Logik von Souvera Central v0.12.1+ stimmen.
+`ncadmin`, `swadmin` und die Lizenz-/Rollen-Logik von Souvera Central v0.12.2+ stimmen.
 
-> **Mindestversion:** `souvera_central >= 0.12.1` (enthält `occ souvera:make-souvera-user`).
+> **Mindestversion:** `souvera_central >= 0.12.2` (Admin-Gruppe `souvera-admins`, korrigierte Stalwart-v0.16-Provisionierung).
 > Vorher (z. B. das alte v0.12.0) kennt diesen Befehl nicht.
 
 ---
@@ -16,8 +16,9 @@ Diese Anleitung beschreibt die **korrekte Reihenfolge** der Provisionierung, dam
    `There are no commands defined in the "souvera" namespace`. Reihenfolge umdrehen.
 
 2. **Gruppe `souvera-users` ist die kanonische Mail-/Lizenzgruppe** (nicht mehr `mail-users`).
-   - `souvera-users` = lizenzierte „Souvera User" (mit Postfach, sehen smail/Shield).
-   - `scadmin`       = Souvera-Administratoren (delegierte Verwaltung, **kein** NC-Superadmin).
+   - `souvera-users`  = lizenzierte „Souvera User" (mit Postfach, sehen smail/Shield).
+   - `souvera-admins` = Souvera-Administratoren (delegierte Verwaltung, **kein** NC-Superadmin).
+     Hinweis: `scadmin`/`swadmin` ist der Admin-**Benutzer**, die Admin-**Gruppe** heißt `souvera-admins`.
    Beide werden ohnehin schon vom CM angelegt und von Central geschützt. Die alte Gruppe
    `mail-users` wird **nicht** mehr benötigt — smail & souvera_shield auf `souvera-users` binden.
 
@@ -38,7 +39,7 @@ occ config:system:set souvera_central.max_licenses           --value=25     # Li
 
 # 2) Gruppen anlegen (idempotent)
 occ group:add souvera-users     # Lizenz-/Mailgruppe (Central schützt sie)
-occ group:add scadmin           # Souvera-Administratoren (Central schützt sie)
+occ group:add souvera-admins    # Souvera-Administratoren (Central schützt sie)
 
 # 3) Apps installieren + AKTIVIEREN  ← VOR allen souvera:*-Befehlen!
 occ app:enable souvera_central
@@ -54,30 +55,33 @@ occ souvera:provision-mailbox ncadmin@buxtehude.link --password-stdin <<< "$NCAD
 # 5) Kunden-Admin swadmin anlegen (delegierter Admin, KEIN NC-Superadmin)
 occ user:add swadmin --display-name "Administrator" --password-from-env=SWADMIN_PW
 occ user:setting swadmin settings email "swadmin@buxtehude.link"
-occ group:adduser scadmin swadmin                       # → darf Central bedienen, sieht das Icon
+occ group:adduser souvera-admins swadmin                # → darf Central sehen + bedienen, sieht das Icon
 occ group:removeuser admin  swadmin                     # sicherstellen: NICHT NC-Superadmin
 
-# 6) swadmin zum lizenzierten? -> NEIN: scadmin verbraucht KEINE Lizenz, bekommt aber ein Postfach
+# 6) swadmin zum lizenzierten? -> NEIN: souvera-admins verbraucht KEINE Lizenz, bekommt aber ein Postfach
 occ souvera:make-souvera-user swadmin@buxtehude.link
 #   ^ akzeptiert UID ODER E-Mail. Fügt swadmin zu souvera-users hinzu + legt Stalwart-Postfach an.
-#     Da swadmin in 'scadmin' ist, zählt er NICHT auf max_licenses.
+#     Da swadmin in 'souvera-admins' ist, zählt er NICHT auf max_licenses.
 ```
 
 ---
 
 ## Ergebnis / Sollzustand
 
-| Benutzer  | NC-Superadmin | Gruppe `scadmin` | Gruppe `souvera-users` | Postfach | Lizenz | In Central sichtbar |
+| Benutzer  | NC-Superadmin | Gruppe `souvera-admins` | Gruppe `souvera-users` | Postfach | Lizenz | In Central sichtbar |
 |-----------|:------------:|:----------------:|:----------------------:|:--------:|:------:|:-------------------:|
 | `ncadmin` | ✅ (technisch)| –                | – (oder optional)      | ✅       | nein   | **ausgeblendet**    |
-| `swadmin` | ❌           | ✅               | ✅                     | ✅       | **nein** (scadmin)| ✅ (sieht Icon, voller Funktionsumfang) |
-| Endkunde X| ❌           | ❌               | ✅                     | ✅       | **ja** | ✅                  |
+| `swadmin` | ❌           | ✅               | ✅                     | ✅       | **nein** (souvera-admins)| ✅ (sieht Icon, voller Funktionsumfang) |
+| Endkunde X| ❌           | ❌               | ✅                     | ✅       | **ja** | ❌ (sieht die App NICHT) |
 
-- **Souvera-Administrator** = Mitglied von `scadmin`. Darf Central vollständig bedienen
+- **Souvera-Administrator** = Mitglied von `souvera-admins`. Darf Central vollständig bedienen
   (Benutzer, Gruppen, geteilte Postfächer, Einstellungen) **ohne** NC-Superadmin-Rechte.
 - **Souvera User** = Mitglied von `souvera-users` (lizenziert, Postfach).
 - **Nextcloud User** = nicht in `souvera-users` (unlizenziert, kein Postfach).
-- **Lizenzzählung** = Mitglieder von `souvera-users` **ohne** `scadmin` und **ohne** `ncadmin`.
+- **Lizenzzählung** = Mitglieder von `souvera-users` **ohne** `souvera-admins` und **ohne** `ncadmin`.
+- **Sichtbarkeit/Zugriff:** Die App `souvera_central` (Icon + Routen) ist **ausschließlich** für
+  Mitglieder von `souvera-admins` (sowie echte NC-Superadmins) sichtbar und bedienbar – alle
+  anderen sehen weder das Icon noch können sie die Seite/API öffnen (403).
 
 ---
 
@@ -103,6 +107,6 @@ $minScore = (float) $config->getAppValue('souvera_central', 'settings.shield.min
 
 ```bash
 occ config:system:set souvera_central.mail_group     --value="souvera-users"          # Default
-occ config:system:set souvera_central.scadmin_group  --value="scadmin"                # Default
+occ config:system:set souvera_central.admin_group    --value="souvera-admins"         # Default (Souvera-Admin-Gruppe)
 occ config:system:set souvera_central.hidden_users   --value='["ncadmin"]' --type=json # in Central ausblenden
 ```
