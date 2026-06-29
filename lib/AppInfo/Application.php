@@ -64,8 +64,9 @@ class Application extends App implements IBootstrap {
             if ($user === null) {
                 return;
             }
-            // Nur Souvera-Admins (NC-Superadmin oder scadmin) sehen das App-Icon.
-            if (!$permission->isSouveraAdmin($user->getUID())) {
+            // Nur anzeigen, wenn die App für diesen Benutzer aktiviert ist
+            // (Gruppenbeschränkung) UND er Souvera-Admin ist – sonst kein toter Eintrag.
+            if (!$permission->canSeeCentralNavigation()) {
                 return;
             }
             $navigationManager->add(static function () use ($urlGenerator, $l10n): array {

@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Service;
 
+use OCP\App\IAppManager;
 use OCP\IGroupManager;
 use OCP\IUserSession;
 
@@ -23,6 +24,7 @@ class PermissionService {
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private ConfigService $config,
+        private IAppManager $appManager,
     ) {
     }
 
@@ -68,5 +70,24 @@ class PermissionService {
      */
     public function isScadmin(string $userId): bool {
         return $this->groupManager->isInGroup($userId, $this->config->getScadminGroupId());
+    }
+
+    /**
+     * Soll dem aktuellen Benutzer der Central-Navigationseintrag angezeigt werden?
+     *
+     * Koppelt die Sichtbarkeit an die TATSÄCHLICHE Berechtigung: Der Eintrag
+     * erscheint nur, wenn die App für diesen Benutzer aktiviert ist
+     * (NC-App-Gruppenbeschränkung) UND der Benutzer Souvera-Admin ist. So
+     * entstehen keine toten Menüeinträge (Klick → "App is not enabled").
+     */
+    public function canSeeCentralNavigation(): bool {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return false;
+        }
+        if (!$this->appManager->isEnabledForUser('souvera_central', $user)) {
+            return false;
+        }
+        return $this->isSouveraAdmin($user->getUID());
     }
 }
