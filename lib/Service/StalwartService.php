@@ -692,7 +692,10 @@ class StalwartService {
             CURLOPT_SSL_VERIFYHOST => 0,
         ]);
         if ($body !== null) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+            // Slashes (z. B. in Methodennamen "x:Account/set" und JSON-Pointer-Patches
+            // wie "quotas/maxDiskQuota") sowie Unicode NICHT escapen – identisch zur
+            // offiziellen stalwart-cli; verhindert "x:Account\/set" auf dem Draht.
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         }
 
         $response = curl_exec($ch);
