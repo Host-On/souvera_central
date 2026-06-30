@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.13.0</version>
+    <version>0.13.1</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -36,4 +36,15 @@
         <command>OCA\SouveraCentral\Command\ProvisionMailbox</command>
         <command>OCA\SouveraCentral\Command\MakeSouveraUser</command>
     </commands>
+
+    <!--
+        Bewusst KEIN statischer navigations-Block.
+        Die App-Navigation wird dynamisch in Application::boot() registriert
+        (lib/AppInfo/Application.php) - mit fester id "souvera_central" und NUR
+        fuer eingeloggte souvera-admins sichtbar. Fuer Gaeste/Login wird kein
+        Eintrag erzeugt -> kein NavigationManager::init()-Crash unter NC34.
+        WICHTIG: Falls jemals statisch, MUSS ein navigation-Eintrag id, name und
+        route enthalten, sonst TypeError (null) in IAppManager::isAlwaysEnabled(string).
+        Ebenso KEINE leeren Container-Elemente -> InfoParser-Crash.
+    -->
 </info>
