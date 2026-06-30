@@ -221,18 +221,21 @@ export default {
 
 .manager-input {
     width: 100%;
-    padding: 12px 40px 12px 14px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-size: 15px;
+    padding: var(--sc-control-padding-y) 40px var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
+    font-size: 14px;
     background: var(--color-main-background);
+    color: var(--color-main-text);
     box-sizing: border-box;
-    height: 46px;
+    height: var(--sc-control-height);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .manager-input:focus {
     outline: none;
     border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring);
 }
 
 .input-icon {
