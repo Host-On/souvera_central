@@ -31,6 +31,8 @@ return [
         ['name' => 'user_api#disable', 'url' => '/api/users/{id}/disable', 'verb' => 'POST'],
         ['name' => 'user_api#wipeDevices', 'url' => '/api/users/{id}/wipe-devices', 'verb' => 'POST'],
         ['name' => 'user_api#resendWelcomeEmail', 'url' => '/api/users/{id}/resend-welcome-email', 'verb' => 'POST'],
+        ['name' => 'user_api#makeAdmin', 'url' => '/api/users/{id}/make-admin', 'verb' => 'POST'],
+        ['name' => 'user_api#removeAdmin', 'url' => '/api/users/{id}/remove-admin', 'verb' => 'POST'],
 
         // Groups API-Routen (einfache Liste für User-Management)
         ['name' => 'user_api#listGroups', 'url' => '/api/groups', 'verb' => 'GET'],

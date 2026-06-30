@@ -131,13 +131,23 @@
                                 </td>
                                 <td class="displayname-column">{{ user.displayName }}</td>
                                 <td class="type-column">
-                                    <span
-                                        class="type-badge"
-                                        :class="isSouveraUser(user) ? 'type-souvera' : 'type-nextcloud'"
-                                        :data-testid="'user-type-badge-' + user.id"
-                                    >
-                                        {{ isSouveraUser(user) ? t('souvera_central', 'Souvera User') : t('souvera_central', 'Nextcloud User') }}
-                                    </span>
+                                    <div class="type-cell">
+                                        <span
+                                            class="type-badge"
+                                            :class="isSouveraUser(user) ? 'type-souvera' : 'type-nextcloud'"
+                                            :data-testid="'user-type-badge-' + user.id"
+                                        >
+                                            {{ isSouveraUser(user) ? t('souvera_central', 'Souvera User') : t('souvera_central', 'Nextcloud User') }}
+                                        </span>
+                                        <span
+                                            v-if="isSouveraAdmin(user)"
+                                            class="type-badge type-admin"
+                                            :data-testid="'user-admin-badge-' + user.id"
+                                        >
+                                            <ShieldCrown :size="13" />
+                                            {{ t('souvera_central', 'Admin') }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
                                 <td class="status-column">
@@ -160,6 +170,26 @@
                                             @click.stop="upgradeToSouveraUser(user)"
                                         >
                                             <AccountArrowUp :size="18" />
+                                        </button>
+                                        <button
+                                            v-if="isSouveraUser(user) && !isSouveraAdmin(user)"
+                                            class="action-makeadmin"
+                                            :title="t('souvera_central', 'Zum Souvera-Admin machen')"
+                                            :disabled="updatingAdmin === user.id"
+                                            :data-testid="'make-admin-' + user.id"
+                                            @click.stop="makeAdmin(user)"
+                                        >
+                                            <ShieldCrown :size="18" />
+                                        </button>
+                                        <button
+                                            v-if="isSouveraAdmin(user) && user.id !== currentUserId"
+                                            class="action-removeadmin"
+                                            :title="t('souvera_central', 'Souvera-Admin-Rechte entfernen')"
+                                            :disabled="updatingAdmin === user.id"
+                                            :data-testid="'remove-admin-' + user.id"
+                                            @click.stop="removeAdmin(user)"
+                                        >
+                                            <ShieldRemove :size="18" />
                                         </button>
                                         <button
                                             class="action-edit"
@@ -241,6 +271,8 @@ import AlertOctagon from 'vue-material-design-icons/AlertOctagon.vue'
 import EmailCheck from 'vue-material-design-icons/EmailCheck.vue'
 import EmailRemoveOutline from 'vue-material-design-icons/EmailRemoveOutline.vue'
 import AccountArrowUp from 'vue-material-design-icons/AccountArrowUp.vue'
+import ShieldCrown from 'vue-material-design-icons/ShieldCrown.vue'
+import ShieldRemove from 'vue-material-design-icons/ShieldRemove.vue'
 
 export default {
     name: 'UserManagement',
@@ -263,7 +295,9 @@ export default {
         AlertOctagon,
         EmailCheck,
         EmailRemoveOutline,
-        AccountArrowUp
+        AccountArrowUp,
+        ShieldCrown,
+        ShieldRemove
     },
 
     props: {
@@ -296,6 +330,7 @@ export default {
             mailboxes: [], // Stalwart Principal-Namen (UIDs) mit Postfach
             stalwartConfigured: false,
             upgradingUser: null, // UID, während ein User zum Souvera User gemacht wird
+            updatingAdmin: null, // UID, während Souvera-Admin-Rechte gesetzt/entfernt werden
             resellerInfo: {
                 support_url: null,
                 url: null,
@@ -515,6 +550,84 @@ export default {
 
         isSouveraUser(user) {
             return user.isSouveraUser === true || user.type === 'souvera'
+        },
+
+        isSouveraAdmin(user) {
+            if (user.isSouveraAdmin === true) {
+                return true
+            }
+            const groups = Array.isArray(user.groups) ? user.groups : []
+            return groups.some((g) => (typeof g === 'string' ? g : g.id) === 'souvera-admins')
+        },
+
+        async makeAdmin(user) {
+            this.updatingAdmin = user.id
+            try {
+                const url = generateUrl(
+                    '/apps/souvera_central/api/users/' + encodeURIComponent(user.id) + '/make-admin'
+                )
+                await axios.post(url)
+                await this.loadUsers()
+            } catch (error) {
+                const msg = error.response?.data?.ocs?.data?.error
+                    || error.response?.data?.error
+                    || error.response?.data?.message
+                this.confirmModal = {
+                    isOpen: true,
+                    title: this.t('souvera_central', 'Aktion nicht möglich'),
+                    message: msg || this.t('souvera_central', 'Der Benutzer konnte nicht zum Souvera-Admin gemacht werden.'),
+                    details: '',
+                    type: 'warning',
+                    confirmText: this.t('souvera_central', 'OK'),
+                    cancelText: '',
+                    onConfirm: () => this.closeConfirmModal()
+                }
+            } finally {
+                this.updatingAdmin = null
+            }
+        },
+
+        removeAdmin(user) {
+            this.confirmModal = {
+                isOpen: true,
+                title: this.t('souvera_central', 'Admin-Rechte entfernen?'),
+                message: this.t(
+                    'souvera_central',
+                    'Möchten Sie "{user}" die Souvera-Administrator-Rechte wirklich entziehen?',
+                    { user: user.displayName }
+                ),
+                details: this.t('souvera_central', 'Der Souvera-User-Status (Postfach) bleibt erhalten.'),
+                type: 'warning',
+                confirmText: this.t('souvera_central', 'Ja, Rechte entfernen'),
+                cancelText: this.t('souvera_central', 'Abbrechen'),
+                onConfirm: async () => {
+                    this.updatingAdmin = user.id
+                    try {
+                        const url = generateUrl(
+                            '/apps/souvera_central/api/users/' + encodeURIComponent(user.id) + '/remove-admin'
+                        )
+                        await axios.post(url)
+                        this.closeConfirmModal()
+                        await this.loadUsers()
+                    } catch (error) {
+                        const msg = error.response?.data?.ocs?.data?.error
+                            || error.response?.data?.error
+                            || error.response?.data?.message
+                        this.confirmModal = {
+                            isOpen: true,
+                            title: this.t('souvera_central', 'Aktion nicht möglich'),
+                            message: msg || this.t('souvera_central', 'Die Administrator-Rechte konnten nicht entfernt werden.'),
+                            details: '',
+                            type: 'danger',
+                            confirmText: this.t('souvera_central', 'OK'),
+                            cancelText: '',
+                            onConfirm: () => this.closeConfirmModal()
+                        }
+                    } finally {
+                        this.updatingAdmin = null
+                    }
+                }
+            }
         },
 
         async upgradeToSouveraUser(user) {
@@ -890,6 +1003,18 @@ export default {
     color: var(--color-success-text);
 }
 
+.user-actions button.action-makeadmin:hover:not(:disabled) {
+    background: rgba(var(--color-warning-rgb, 230, 160, 0), 0.15);
+    border-color: var(--color-warning);
+    color: var(--color-main-text);
+}
+
+.user-actions button.action-removeadmin:hover:not(:disabled) {
+    background: rgba(var(--color-error-rgb), 0.12);
+    border-color: var(--color-error);
+    color: var(--color-error-text);
+}
+
 /* Status Badge */
 .status-badge {
     display: inline-flex;
@@ -939,6 +1064,22 @@ export default {
     background: var(--color-background-dark);
     color: var(--color-text-maxcontrast);
     border: 1px solid var(--color-border);
+}
+
+.type-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.type-badge.type-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(var(--color-warning-rgb, 230, 160, 0), 0.15);
+    color: var(--color-main-text);
+    border: 1px solid var(--color-warning);
 }
 
 

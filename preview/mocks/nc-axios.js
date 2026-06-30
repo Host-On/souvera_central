@@ -3,14 +3,14 @@
  * outside of a running Nextcloud instance. */
 
 const users = [
-    { id: 'anna.klein@souvera.eu', displayName: 'Anna Klein', enabled: true, groups: ['Geschäftsführung', 'Marketing'], quota: { quota: '5 GB' }, isSouveraUser: true, type: 'souvera' },
+    { id: 'anna.klein@souvera.eu', displayName: 'Anna Klein', enabled: true, groups: ['Geschäftsführung', 'Marketing'], quota: { quota: '5 GB' }, isSouveraUser: true, isSouveraAdmin: true, type: 'souvera' },
     { id: 'ben.schulz@souvera.eu', displayName: 'Ben Schulz', enabled: true, groups: ['Vertrieb'], quota: { quota: '10 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'clara.weber@souvera.eu', displayName: 'Clara Weber', enabled: true, groups: ['Marketing'], quota: { quota: '5 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'david.meyer@souvera.eu', displayName: 'David Meyer', enabled: false, groups: ['Vertrieb', 'Support'], quota: { quota: '2 GB' }, isSouveraUser: false, type: 'nextcloud' },
     { id: 'eva.fischer@souvera.eu', displayName: 'Eva Fischer', enabled: true, groups: ['Support'], quota: { quota: '5 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'felix.wagner@souvera.eu', displayName: 'Felix Wagner', enabled: true, groups: ['Entwicklung'], quota: { quota: '20 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'greta.hoffmann@souvera.eu', displayName: 'Greta Hoffmann', enabled: true, groups: ['Entwicklung', 'Geschäftsführung'], quota: { quota: '20 GB' }, isSouveraUser: false, type: 'nextcloud' },
-    { id: 'admin@souvera.eu', displayName: 'Administrator', enabled: true, groups: ['admin'], quota: { quota: 'Unbegrenzt' }, isSouveraUser: true, type: 'souvera' }
+    { id: 'admin@souvera.eu', displayName: 'Administrator', enabled: true, groups: ['admin'], quota: { quota: 'Unbegrenzt' }, isSouveraUser: true, isSouveraAdmin: true, type: 'souvera' }
 ]
 
 const groups = [

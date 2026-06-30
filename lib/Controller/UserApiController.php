@@ -68,6 +68,7 @@ class UserApiController extends OCSController {
             $searchTerm = trim($search);
             $allUsers = $this->userManager->search($searchTerm);
             $souveraGid = $this->configService->getMailGroupId();
+            $adminGid = $this->configService->getScadminGroupId();
 
             $allUsersData = [];
             foreach ($allUsers as $user) {
@@ -106,6 +107,7 @@ class UserApiController extends OCSController {
                     'quota' => $this->getUserQuota($userId),
                     'groups' => $this->getUserGroups($userId),
                     'isSouveraUser' => $isSouveraUser,
+                    'isSouveraAdmin' => $this->groupManager->isInGroup($userId, $adminGid),
                     'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
                 ];
                 $allUsersData[] = $userData;
@@ -160,6 +162,7 @@ class UserApiController extends OCSController {
                 'groups' => $this->getUserGroups($id),
                 'manager' => $this->config->getUserValue($id, 'souvera_central', 'manager', ''),
                 'isSouveraUser' => $isSouveraUser,
+                'isSouveraAdmin' => $this->groupManager->isInGroup($id, $this->configService->getScadminGroupId()),
                 'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
             ];
 
@@ -500,6 +503,105 @@ class UserApiController extends OCSController {
                 ]
             ]);
 
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Benutzer zum Souvera-Administrator machen.
+     *
+     * Fügt den Benutzer der souvera-admins-Gruppe hinzu. Nur möglich für
+     * bestehende "Souvera User" (Mitglieder von souvera-users) - ein reiner
+     * Nextcloud-User muss erst per "Zum Souvera User machen" umgewandelt werden.
+     * Souvera-Administratoren verbrauchen keine Lizenz (siehe LicenseService).
+     */
+    #[NoAdminRequired]
+    public function makeAdmin(string $id): DataResponse {
+        try {
+            $user = $this->userManager->get($id);
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            // Voraussetzung: Benutzer ist bereits Souvera User (Lizenzgruppe + Postfach).
+            if (!$this->mailGroupService->isMember($user)) {
+                return new DataResponse(
+                    ['error' => 'Nur Souvera User können zu Souvera-Administratoren gemacht werden. Bitte zuerst in einen Souvera User umwandeln.'],
+                    Http::STATUS_CONFLICT
+                );
+            }
+
+            $adminGid = $this->configService->getScadminGroupId();
+            $group = $this->groupManager->get($adminGid);
+            if ($group === null) {
+                $group = $this->groupManager->createGroup($adminGid);
+            }
+            if ($group === null) {
+                return new DataResponse(
+                    ['error' => 'Administrator-Gruppe konnte nicht angelegt werden'],
+                    Http::STATUS_INTERNAL_SERVER_ERROR
+                );
+            }
+            if (!$group->inGroup($user)) {
+                $group->addUser($user);
+            }
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'Benutzer ist jetzt Souvera-Administrator',
+                'isSouveraAdmin' => true,
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Souvera-Administrator-Rechte entziehen (aus souvera-admins entfernen).
+     *
+     * Der Souvera-User-Status (souvera-users + Postfach) bleibt erhalten.
+     */
+    #[NoAdminRequired]
+    public function removeAdmin(string $id): DataResponse {
+        try {
+            // Selbst-Aussperrung verhindern
+            $currentUser = $this->userSession->getUser();
+            if ($currentUser !== null && $currentUser->getUID() === $id) {
+                return new DataResponse(
+                    ['error' => 'Sie können sich nicht selbst die Administrator-Rechte entziehen. Bitte wenden Sie sich an einen anderen Administrator.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $user = $this->userManager->get($id);
+            if ($user === null) {
+                return new DataResponse(
+                    ['error' => 'Benutzer nicht gefunden'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
+            $adminGid = $this->configService->getScadminGroupId();
+            $group = $this->groupManager->get($adminGid);
+            if ($group !== null && $group->inGroup($user)) {
+                $group->removeUser($user);
+            }
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'Administrator-Rechte entfernt',
+                'isSouveraAdmin' => false,
+            ]);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
