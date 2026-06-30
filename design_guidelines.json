@@ -1,0 +1,107 @@
+{
+  "theme": "Dynamic Nextcloud Native (Adapts to Light/Dark)",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "mission": "Massively polish the Nextcloud admin forms for 'Souvera Central'. Eradicate ugly inconsistencies by enforcing absolute unified control heights, exact alignments, structured spacing, and highly scannable modern component patterns using Nextcloud's CSS variables.",
+  "design_system": {
+    "css_variables_blueprint": {
+      "--sc-control-height": "44px",
+      "--sc-control-padding-x": "16px",
+      "--sc-control-padding-y": "10px",
+      "--sc-control-radius": "var(--border-radius-large, 8px)",
+      "--sc-control-border": "1px solid var(--color-border, #d1d5db)",
+      "--sc-control-border-hover": "1px solid var(--color-text-light, #9ca3af)",
+      "--sc-control-border-focus": "2px solid var(--color-primary-element, #0082c9)",
+      "--sc-control-bg": "var(--color-main-background, #ffffff)",
+      "--sc-control-bg-disabled": "var(--color-background-dark, #f3f4f6)",
+      "--sc-control-text": "var(--color-text-maxcontrast, #111827)",
+      "--sc-control-text-placeholder": "var(--color-text-light, #9ca3af)",
+      "--sc-focus-ring": "0 0 0 3px rgba(var(--color-primary-element-rgb, 0, 130, 201), 0.25)",
+      "--sc-spacing-form-row": "24px",
+      "--sc-spacing-section": "48px"
+    },
+    "typography": {
+      "font_family": "var(--default-font-family, system-ui, -apple-system, sans-serif)",
+      "scale": {
+        "h1": "font-size: 24px; line-height: 32px; font-weight: 700; color: var(--color-text-maxcontrast); letter-spacing: -0.02em;",
+        "h2": "font-size: 20px; line-height: 28px; font-weight: 600; color: var(--color-text-maxcontrast); border-bottom: 1px solid var(--color-border); padding-bottom: 12px; margin-bottom: 24px;",
+        "h3": "font-size: 16px; line-height: 24px; font-weight: 600; color: var(--color-text-maxcontrast);",
+        "label": "font-size: 14px; font-weight: 600; color: var(--color-text-maxcontrast); margin-bottom: 6px; display: block;",
+        "help_text": "font-size: 12px; font-weight: 400; color: var(--color-text-light); margin-top: 6px; line-height: 1.5;",
+        "body": "font-size: 14px; font-weight: 400; color: var(--color-text-maxcontrast); line-height: 1.5;"
+      }
+    }
+  },
+  "component_guidelines": {
+    "TextInput_and_Select": {
+      "rules": "CRITICAL: Text inputs and selects MUST be visually identical. They share the same height (44px), box-sizing (border-box), border, and padding. Selects MUST use 'appearance: none' to hide browser default arrows, replacing it with a custom SVG caret layered on the right.",
+      "css_rules": "height: var(--sc-control-height); padding: var(--sc-control-padding-y) var(--sc-control-padding-x); border: var(--sc-control-border); border-radius: var(--sc-control-radius); background: var(--sc-control-bg); color: var(--sc-control-text); transition: all 0.2s ease; outline: none;",
+      "focus_state": "border: var(--sc-control-border-focus); box-shadow: var(--sc-focus-ring);",
+      "select_specific": "padding-right: 40px; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M1 4L6 9L11 4\" stroke=\"%238a8a8a\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>'); background-repeat: no-repeat; background-position: right 16px center;"
+    },
+    "EmailDomainSplitInput": {
+      "rules": "For emails, combine a text input and a select into a single visually united block. Container has the border & radius. The inputs inside have NO borders, just a vertical divider between them.",
+      "layout": "Flexbox container, radius var(--sc-control-radius), border var(--sc-control-border). Input: flex: 1. Divider: 1px solid var(--color-border). Select: width auto, max-width 40%."
+    },
+    "RadioCard": {
+      "rules": "Replaces ugly generic radio buttons for high-impact choices (e.g., 'Souvera User' vs 'Nextcloud User'). Provides a large click target with prominent icon/title.",
+      "css_rules": "display: flex; gap: 16px; align-items: flex-start; padding: 16px; border: var(--sc-control-border); border-radius: var(--sc-control-radius); background: var(--sc-control-bg); cursor: pointer; transition: all 0.2s ease;",
+      "active_state": "border-color: var(--color-primary-element); background-color: var(--color-primary-element-light, rgba(0, 130, 201, 0.05)); box-shadow: var(--sc-focus-ring);"
+    },
+    "PillMultiselect": {
+      "rules": "Used for group memberships. Container has standard control styling (min-height 44px). Selected values appear as inline rounded pills.",
+      "pill_styles": "display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--color-background-dark); border: 1px solid var(--color-border); border-radius: var(--border-radius-pill, 999px); font-size: 12px; font-weight: 600; color: var(--color-text-maxcontrast);"
+    },
+    "Button": {
+      "rules": "Must match input height exactly (44px) for perfect alignment when placed inline.",
+      "primary": "background: var(--color-primary-element); color: var(--color-primary-text); border: none; font-weight: 600; padding: 0 24px; border-radius: var(--sc-control-radius); height: var(--sc-control-height); cursor: pointer;",
+      "secondary": "background: var(--sc-control-bg); color: var(--color-text-maxcontrast); border: var(--sc-control-border); font-weight: 600; padding: 0 24px; border-radius: var(--sc-control-radius); height: var(--sc-control-height); cursor: pointer; hover: background var(--color-background-hover);",
+      "danger": "background: var(--color-error); color: var(--color-primary-text); border: none; font-weight: 600; padding: 0 24px; border-radius: var(--sc-control-radius); height: var(--sc-control-height);"
+    },
+    "Modal": {
+      "rules": "Max width 500px for simple, 700px for complex. Backdrop blur. Distinct header, scrollable body, and sticky footer.",
+      "backdrop": "position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 10000;",
+      "container": "margin: 10vh auto; background: var(--color-main-background); border-radius: var(--border-radius-large, 12px); border: 1px solid var(--color-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; max-height: 80vh;",
+      "header": "padding: 24px; border-bottom: 1px solid var(--color-border); font-size: 20px; font-weight: 600;",
+      "body": "padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sc-spacing-form-row);",
+      "footer": "padding: 16px 24px; border-top: 1px solid var(--color-border); background: var(--color-background-dark); display: flex; justify-content: flex-end; gap: 12px;"
+    },
+    "ToggleSwitch": {
+      "rules": "Modern toggle switch mapped to Nextcloud variables for Settings page.",
+      "track": "width: 44px; height: 24px; border-radius: 24px; background: var(--color-border); position: relative; cursor: pointer; transition: background 0.3s ease;",
+      "track_active": "background: var(--color-primary-element);",
+      "thumb": "width: 20px; height: 20px; border-radius: 50%; background: var(--color-main-background); position: absolute; top: 2px; left: 2px; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.2);",
+      "thumb_active": "transform: translateX(20px);"
+    },
+    "Badge": {
+      "rules": "Small visual indicators for roles and status.",
+      "styles": "display: inline-flex; align-items: center; padding: 2px 8px; font-size: 12px; font-weight: 600; border-radius: var(--border-radius-pill, 999px); text-transform: uppercase; letter-spacing: 0.5px;"
+    }
+  },
+  "view_guidelines": {
+    "UserEditor": {
+      "layout": "Use a structured Form layout with max-width 800px. Divide into logical sections: 'Basic Profile', 'Account Type', 'Quotas & Roles'.",
+      "sticky_actions": "Wrap the Save/Cancel buttons in a sticky container at the bottom of the form (position: sticky; bottom: 0; background: var(--color-main-background); padding: 16px 0; border-top: 1px solid var(--color-border);).",
+      "danger_zone": "Enclose Deactivate/Wipe/Delete actions in a dedicated 'Danger Zone' section at the bottom. Use a border colored var(--color-error) with a light red tint background."
+    },
+    "GroupEditor_and_MembersModal": {
+      "layout": "For Members Modal: Include a sticky search bar at the top of the body. Display users in a clean list format with avatar, name, and email. Add/Remove buttons should be secondary style but tiny (height: 32px).",
+      "group_creation": "Keep the ID and Display Name inputs side-by-side on desktop (CSS Grid, 1fr 1fr), stacked on mobile."
+    },
+    "SharedMailboxModal": {
+      "layout": "Follow standard Modal rules. The Email field MUST use the EmailDomainSplitInput pattern. Ensure quota select matches height perfectly."
+    },
+    "SettingsPage": {
+      "layout": "Use a unified Card-based layout for Settings sections. Each Card corresponds to a category: General, License, Domains, Shield.",
+      "souvera_shield": "Toggles on the left, clear description text on the right. For the Spam-score slider (0..10), use input[type=range] styled with var(--color-primary-element) for the active track."
+    }
+  },
+  "testing_attributes": {
+    "rules": "All interactive elements MUST have data-testid attributes for E2E testing.",
+    "examples": {
+      "submit_btn": "data-testid='souvera-submit-button'",
+      "email_input": "data-testid='user-email-input'",
+      "role_select": "data-testid='user-role-select'"
+    }
+  },
+  "implementation_notes": "1. Build global wrapper Vue components for inputs (SCInput, SCSelect, SCButton) to ensure developers never manually write CSS heights or paddings again. 2. Verify all custom variables inherit from Nextcloud root vars so Dark Theme switches automatically without extra JS logic. 3. Form fields must have a 24px bottom gap, and logical sections must be separated by 48px."
+}
