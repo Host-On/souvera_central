@@ -6,6 +6,7 @@
 
 import { createApp } from 'vue'
 import App from './App.vue'
+import './styles/forms.css'
 
 // Initialisiere Vue App
 const app = createApp(App)

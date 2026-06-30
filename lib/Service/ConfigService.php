@@ -366,4 +366,35 @@ class ConfigService {
     public function isHiddenUser(string $userId): bool {
         return in_array(strtolower($userId), $this->getHiddenUserIds(), true);
     }
+
+    // ============================================================================
+    // Ausgeblendete Gruppen (z. B. NC-Systemgruppe "admin")
+    // ============================================================================
+
+    /**
+     * Gruppen-IDs, die in Souvera Central vollständig ausgeblendet werden
+     * (Standard: NC-Systemgruppe "admin"). Sie erscheinen weder in der
+     * Gruppenliste noch im Gruppen-Selektor. Konfigurierbar via
+     * `souvera_central.hidden_groups` (Array oder CSV).
+     *
+     * @return string[]
+     */
+    public function getHiddenGroupIds(): array {
+        $raw = $this->config->getSystemValue('souvera_central.hidden_groups', ['admin']);
+        if (is_string($raw)) {
+            $raw = array_filter(array_map('trim', explode(',', $raw)));
+        }
+        $list = is_array($raw) ? array_values(array_filter(array_map('strval', $raw))) : ['admin'];
+        return array_map('strtolower', $list);
+    }
+
+    /**
+     * Prüft, ob eine Gruppe in Souvera Central ausgeblendet werden soll.
+     *
+     * @param string $groupId
+     * @return bool
+     */
+    public function isHiddenGroup(string $groupId): bool {
+        return in_array(strtolower($groupId), $this->getHiddenGroupIds(), true);
+    }
 }

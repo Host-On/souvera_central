@@ -1180,24 +1180,35 @@ export default {
 .form-group input[type='password'],
 .form-group select {
     width: 100%;
-    padding: 16px 18px;
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
-    font-size: 16px;
-    line-height: 1.5;
-    height: 60px;
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
+    font-size: 14px;
+    line-height: 1.4;
+    height: var(--sc-control-height);
     box-sizing: border-box;
-    transition: all 0.2s;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     background: var(--color-main-background);
     color: var(--color-main-text);
     font-weight: 500;
 }
 
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 40px;
+    background-image: var(--sc-caret);
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
+}
+
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.3);
+    border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring);
     background: var(--color-main-background);
 }
 
@@ -1248,39 +1259,46 @@ export default {
 .email-local-part {
     flex: 1;
     min-width: 0;
-    height: 60px;
+    height: var(--sc-control-height);
     box-sizing: border-box;
 }
 
 .email-separator {
     font-weight: 700;
     color: var(--color-main-text);
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .email-domain-select {
     flex: 1;
     min-width: 0;
-    padding: 16px 18px;
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    padding-right: 40px;
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
     background: var(--color-main-background);
+    background-image: var(--sc-caret);
+    background-repeat: no-repeat;
+    background-position: right 16px center;
     color: var(--color-main-text);
-    font-size: 16px;
-    line-height: 1.5;
-    height: 60px;
+    font-size: 14px;
+    line-height: 1.4;
+    height: var(--sc-control-height);
     cursor: pointer;
     box-sizing: border-box;
     font-weight: 500;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     position: relative;
     z-index: 10;
 }
 
 .email-domain-select:focus {
     outline: none;
-    border-color: var(--color-secondary-element);
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.3);
-    background: var(--color-main-background);
+    border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring);
+    background-color: var(--color-main-background);
 }
 
 .email-domain-select.error {
@@ -1680,20 +1698,6 @@ button.primary {
         padding: 15px;
     }
 
-    .form-group input[type='text'],
-    .form-group input[type='email'],
-    .form-group input[type='password'],
-    .form-group select {
-        height: 52px;
-        padding: 14px 16px;
-        font-size: 15px;
-    }
-
-    .email-local-part,
-    .email-domain-select {
-        height: 52px;
-    }
-
     .form-actions {
         flex-direction: column-reverse;
         gap: 10px;
@@ -1735,15 +1739,6 @@ button.primary {
         font-size: 14px;
     }
 
-    .form-group input[type='text'],
-    .form-group input[type='email'],
-    .form-group input[type='password'],
-    .form-group select {
-        height: 48px;
-        padding: 12px 14px;
-        font-size: 14px;
-    }
-
     .email-field {
         flex-direction: column;
         gap: 10px;
@@ -1751,7 +1746,6 @@ button.primary {
 
     .email-local-part,
     .email-domain-select {
-        height: 48px;
         width: 100%;
     }
 

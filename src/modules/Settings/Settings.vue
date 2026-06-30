@@ -632,15 +632,17 @@ export default {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
     background: var(--color-main-background);
-    border: 2px solid var(--color-primary-element);
-    border-radius: 6px;
-    transition: all 0.2s;
+    border: var(--sc-control-border-width) solid var(--color-primary-element);
+    border-radius: var(--sc-control-radius);
+    min-height: var(--sc-control-height);
+    box-sizing: border-box;
+    transition: box-shadow 0.2s ease;
 }
 
 .custom-quota-field:focus-within {
-    box-shadow: 0 0 0 3px rgba(255, 246, 219, 0.3);
+    box-shadow: var(--sc-focus-ring);
 }
 
 .custom-quota-field .icon-edit {

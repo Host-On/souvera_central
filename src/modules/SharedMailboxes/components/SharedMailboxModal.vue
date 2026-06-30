@@ -186,6 +186,8 @@ export default {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -251,21 +253,44 @@ export default {
 }
 
 .form-group input,
-.form-group select,
-.form-group textarea {
+.form-group select {
     width: 100%;
-    padding: 12px 14px;
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
+    height: var(--sc-control-height);
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
     font-size: 14px;
+    line-height: 1.4;
     background: var(--color-main-background);
     color: var(--color-main-text);
-    transition: all 0.2s;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
 }
 
-.form-group input[type="text"] {
-    min-width: 200px;
+.form-group textarea {
+    width: 100%;
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
+    font-size: 14px;
+    line-height: 1.5;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 88px;
+}
+
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 40px;
+    background-image: var(--sc-caret);
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
 }
 
 .form-group input:focus,
@@ -273,18 +298,13 @@ export default {
 .form-group textarea:focus {
     outline: none;
     border-color: var(--color-primary-element);
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-element-rgb), 0.15);
+    box-shadow: var(--sc-focus-ring);
 }
 
 .form-group input:disabled,
 .form-group select:disabled {
     background: var(--color-background-dark);
     cursor: not-allowed;
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 80px;
 }
 
 .email-input-group {
@@ -294,13 +314,14 @@ export default {
 }
 
 .email-input-group input {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .email-input-group select {
-    min-width: 280px;
-    padding: 0 12px;
-    height: 44px;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 45%;
 }
 
 .email-separator {
@@ -337,12 +358,16 @@ export default {
 
 .cancel-button,
 .save-button {
-    padding: 12px 24px;
-    border-radius: 6px;
+    height: var(--sc-control-height);
+    padding: 0 24px;
+    border-radius: var(--sc-control-radius);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .cancel-button {

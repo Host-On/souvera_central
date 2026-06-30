@@ -395,6 +395,15 @@ class UserApiController extends OCSController {
             }
 
             // Gruppen aktualisieren
+            // Fallback: Array-Parameter werden bei manchen PUT/JSON-Konstellationen
+            // nicht typisiert an die Methode gebunden – dann direkt aus dem Request lesen,
+            // damit Gruppenänderungen verlässlich gespeichert werden.
+            if ($groups === null) {
+                $rawGroups = $this->request->getParam('groups');
+                if (is_array($rawGroups)) {
+                    $groups = array_values(array_filter(array_map('strval', $rawGroups)));
+                }
+            }
             if ($groups !== null) {
                 // souvera-users (Lizenz/Postfach) + scadmin werden NICHT über die generische
                 // Gruppenliste verwaltet: souvera-users via Typ-Umschalter (isSouveraUser),
@@ -816,6 +825,10 @@ class UserApiController extends OCSController {
             $groups = [];
 
             foreach ($allGroups as $group) {
+                // Ausgeblendete Gruppen (z. B. NC-Systemgruppe "admin") nicht anbieten
+                if ($this->configService->isHiddenGroup($group->getGID())) {
+                    continue;
+                }
                 $groups[] = [
                     'id' => $group->getGID(),
                     'displayName' => $group->getDisplayName(),

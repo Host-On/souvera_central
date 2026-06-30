@@ -273,6 +273,8 @@ export default {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -363,15 +365,21 @@ export default {
 
 .search-container input {
     width: 100%;
-    padding: 12px 14px;
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
+    height: var(--sc-control-height);
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
     font-size: 14px;
+    box-sizing: border-box;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-container input:focus {
     outline: none;
     border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring);
 }
 
 .search-results {

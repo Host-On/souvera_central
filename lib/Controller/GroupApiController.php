@@ -79,6 +79,10 @@ class GroupApiController extends OCSController {
             $allGroupsData = [];
             foreach ($allGroups as $group) {
                 $groupId = $group->getGID();
+                // Ausgeblendete Gruppen (z. B. NC-Systemgruppe "admin") nie anzeigen
+                if ($this->configService->isHiddenGroup($groupId)) {
+                    continue;
+                }
                 $displayName = $group->getDisplayName();
 
                 // Zusätzlicher Filter: Suche im Gruppennamen und Display Name
