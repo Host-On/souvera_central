@@ -57,6 +57,11 @@
                 <div class="members-section">
                     <label>{{ t('souvera_central', 'Aktuelle Mitglieder') }} ({{ members.length }})</label>
 
+                    <div class="send-as-hint" data-testid="send-as-hint">
+                        <InformationOutline :size="16" />
+                        <span>{{ t('souvera_central', 'Mitglieder können E-Mails dieses Postfachs empfangen UND im Namen des Postfachs senden („Senden als").') }}</span>
+                    </div>
+
                     <div v-if="loading" class="loading">
                         <NcLoadingIcon :size="24" />
                     </div>
@@ -103,6 +108,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 
 export default {
     name: 'MembersModal',
@@ -112,7 +118,8 @@ export default {
         Close,
         Plus,
         Account,
-        Delete
+        Delete,
+        InformationOutline
     },
 
     props: {
@@ -482,6 +489,26 @@ export default {
     color: var(--color-text-maxcontrast);
     background: var(--color-background-hover);
     border-radius: 6px;
+}
+
+.send-as-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-hover);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+
+.send-as-hint .material-design-icon {
+    flex-shrink: 0;
+    color: var(--color-primary-element);
+    margin-top: 1px;
 }
 
 .members-list {

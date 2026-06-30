@@ -182,7 +182,7 @@
                                             <ShieldCrown :size="18" />
                                         </button>
                                         <button
-                                            v-if="isSouveraAdmin(user) && user.id !== currentUserId"
+                                            v-if="isSouveraAdmin(user) && currentUserId && user.id !== currentUserId"
                                             class="action-removeadmin"
                                             :title="t('souvera_central', 'Souvera-Admin-Rechte entfernen')"
                                             :disabled="updatingAdmin === user.id"
