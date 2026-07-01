@@ -234,7 +234,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.14.0</span>
+                    <span class="info-value">0.15.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -456,7 +456,7 @@ export default {
 <style scoped>
 .dashboard-container {
     padding: 30px;
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
 }
 

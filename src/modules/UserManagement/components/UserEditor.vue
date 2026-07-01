@@ -22,119 +22,186 @@
             <form class="user-form" @submit.prevent="saveUser">
                 <!-- Benutzername-Feld entfernt: Username wird automatisch aus Email generiert (Backend) -->
 
-                <!-- Anzeigename -->
-                <div class="form-group">
-                    <label for="displayName" class="required">
-                        {{ t('souvera_central', 'Anzeigename') }}
-                    </label>
-                    <input
-                        id="displayName"
-                        v-model="formData.displayName"
-                        type="text"
-                        :class="{ error: errors.displayName }"
-                        required
-                        @input="validateDisplayName"
-                    />
-                    <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
-                </div>
-
-                <!-- E-Mail -->
-                <div class="form-group">
-                    <label for="email" class="required">
-                        {{ t('souvera_central', 'E-Mail') }}
-                    </label>
-
-                    <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
-                    <div v-if="allowedDomains.length > 0 && !isEditMode" class="email-input-group">
+                <div class="form-grid">
+                    <!-- Anzeigename -->
+                    <div class="form-group">
+                        <label for="displayName" class="required">
+                            {{ t('souvera_central', 'Anzeigename') }}
+                        </label>
                         <input
-                            id="emailLocalPart"
-                            v-model="emailLocalPart"
+                            id="displayName"
+                            v-model="formData.displayName"
                             type="text"
-                            class="email-local-part"
-                            :class="{ error: errors.email }"
-                            placeholder="benutzername"
+                            :class="{ error: errors.displayName }"
                             required
-                            @input="updateFullEmail"
+                            @input="validateDisplayName"
                         />
-                        <span class="email-separator">@</span>
-                        <select
-                            v-model="emailDomain"
-                            class="email-domain-select"
+                        <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
+                    </div>
+
+                    <!-- E-Mail -->
+                    <div class="form-group">
+                        <label for="email" class="required">
+                            {{ t('souvera_central', 'E-Mail') }}
+                        </label>
+
+                        <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
+                        <div v-if="allowedDomains.length > 0 && !isEditMode" class="email-input-group">
+                            <input
+                                id="emailLocalPart"
+                                v-model="emailLocalPart"
+                                type="text"
+                                class="email-local-part"
+                                :class="{ error: errors.email }"
+                                placeholder="benutzername"
+                                required
+                                @input="updateFullEmail"
+                            />
+                            <span class="email-separator">@</span>
+                            <select
+                                v-model="emailDomain"
+                                class="email-domain-select"
+                                :class="{ error: errors.email }"
+                                required
+                                @change="updateFullEmail"
+                            >
+                                <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
+                                <option v-for="domain in allowedDomains" :key="domain" :value="domain">
+                                    {{ domain }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Normale Email-Eingabe wenn keine Domains konfiguriert -->
+                        <input
+                            v-else
+                            id="email"
+                            v-model="formData.email"
+                            type="email"
                             :class="{ error: errors.email }"
-                            required
-                            @change="updateFullEmail"
+                            :disabled="isEditMode"
+                            :required="!isEditMode"
+                            @input="validateEmail"
+                        />
+
+                        <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+                        <p
+                            v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
+                            class="success-message"
                         >
-                            <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
-                            <option v-for="domain in allowedDomains" :key="domain" :value="domain">
-                                {{ domain }}
-                            </option>
+                            <Check :size="16" />
+                            {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
+                        </p>
+                        <p v-if="isEditMode" class="help-text">
+                            {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
+                        </p>
+                    </div>
+
+                    <!-- Benutzer-Typ: Souvera User (lizenziert, mit Postfach) vs. Nextcloud User -->
+                    <div class="form-group span-full" data-testid="user-type-group">
+                        <label class="required">{{ t('souvera_central', 'Benutzer-Typ') }}</label>
+                        <p class="help-text">
+                            {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
+                        </p>
+                        <div class="user-type-options">
+                            <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
+                                <input
+                                    v-model="formData.isSouveraUser"
+                                    type="radio"
+                                    name="userType"
+                                    :value="true"
+                                    data-testid="user-type-souvera"
+                                />
+                                <Email :size="22" />
+                                <span class="user-type-text">
+                                    <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
+                                    <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
+                                </span>
+                            </label>
+                            <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
+                                <input
+                                    v-model="formData.isSouveraUser"
+                                    type="radio"
+                                    name="userType"
+                                    :value="false"
+                                    data-testid="user-type-nextcloud"
+                                />
+                                <Account :size="22" />
+                                <span class="user-type-text">
+                                    <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
+                                    <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Passwort -->
+                    <div class="form-group">
+                        <label for="password" :class="{ required: !isEditMode }">
+                            {{ t('souvera_central', 'Passwort') }}
+                        </label>
+                        <input
+                            id="password"
+                            v-model="formData.password"
+                            type="password"
+                            :class="{ error: errors.password }"
+                            :required="!isEditMode"
+                            @input="validatePassword"
+                        />
+                        <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
+                        <p v-else class="help-text">
+                            {{
+                                isEditMode
+                                    ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
+                                    : t('souvera_central', 'Mindestens 10 Zeichen')
+                            }}
+                        </p>
+                    </div>
+
+                    <!-- Speicherplatz Quota -->
+                    <div class="form-group">
+                        <label for="quota">
+                            {{ t('souvera_central', 'Kontingent') }}
+                        </label>
+                        <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
+                        <select id="quota" v-model="formData.quota">
+                            <option value="default">{{ t('souvera_central', 'Standard') }}</option>
+                            <option value="1 GB">1 GB</option>
+                            <option value="5 GB">5 GB</option>
+                            <option value="10 GB">10 GB</option>
+                            <option value="50 GB">50 GB</option>
+                            <option value="100 GB">100 GB</option>
+                            <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
                         </select>
                     </div>
 
-                    <!-- Normale Email-Eingabe wenn keine Domains konfiguriert -->
-                    <input
-                        v-else
-                        id="email"
-                        v-model="formData.email"
-                        type="email"
-                        :class="{ error: errors.email }"
-                        :disabled="isEditMode"
-                        :required="!isEditMode"
-                        @input="validateEmail"
-                    />
-
-                    <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
-                    <p
-                        v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
-                        class="success-message"
-                    >
-                        <Check :size="16" />
-                        {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
-                    </p>
-                    <p v-if="isEditMode" class="help-text">
-                        {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
-                    </p>
-                </div>
-
-                <!-- Benutzer-Typ: Souvera User (lizenziert, mit Postfach) vs. Nextcloud User -->
-                <div class="form-group" data-testid="user-type-group">
-                    <label class="required">{{ t('souvera_central', 'Benutzer-Typ') }}</label>
-                    <p class="help-text">
-                        {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
-                    </p>
-                    <div class="user-type-options">
-                        <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
-                            <input
-                                v-model="formData.isSouveraUser"
-                                type="radio"
-                                name="userType"
-                                :value="true"
-                                data-testid="user-type-souvera"
-                            />
-                            <Email :size="22" />
-                            <span class="user-type-text">
-                                <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
-                                <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
-                            </span>
+                    <!-- Manager -->
+                    <div class="form-group">
+                        <label for="manager">
+                            {{ t('souvera_central', 'Manager') }}
                         </label>
-                        <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
-                            <input
-                                v-model="formData.isSouveraUser"
-                                type="radio"
-                                name="userType"
-                                :value="false"
-                                data-testid="user-type-nextcloud"
-                            />
-                            <Account :size="22" />
-                            <span class="user-type-text">
-                                <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
-                                <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
+                        <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
+                        <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
+                    </div>
+
+                    <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
+                    <div v-if="isEditMode" class="form-group">
+                        <label>{{ t('souvera_central', 'Status') }}</label>
+                        <div class="status-display">
+                            <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
+                            <CloseCircle v-else :size="20" class="status-icon status-inactive" />
+                            <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
+                                {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
                             </span>
-                        </label>
+                        </div>
+                        <p class="help-text">
+                            {{ t('souvera_central', 'Status kann über „Erweiterte Aktionen" geändert werden') }}
+                        </p>
                     </div>
                 </div>
+                <!-- /form-grid -->
 
-                <!-- Email-Aliase (nur im Edit-Mode) -->
+                <!-- Email-Aliase & Postfach (nur im Edit-Mode) -->
                 <AliasManager
                     v-if="isEditMode"
                     :user-id="user.id"
@@ -142,99 +209,36 @@
                     :allowed-domains="allowedDomains"
                 />
 
-                <!-- Passwort -->
-                <div class="form-group">
-                    <label for="password" :class="{ required: !isEditMode }">
-                        {{ t('souvera_central', 'Passwort') }}
-                    </label>
-                    <input
-                        id="password"
-                        v-model="formData.password"
-                        type="password"
-                        :class="{ error: errors.password }"
-                        :required="!isEditMode"
-                        @input="validatePassword"
-                    />
-                    <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
-                    <p v-else class="help-text">
-                        {{
-                            isEditMode
-                                ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
-                                : t('souvera_central', 'Mindestens 10 Zeichen')
-                        }}
-                    </p>
-                </div>
-
-                <!-- Speicherplatz Quota -->
-                <div class="form-group">
-                    <label for="quota">
-                        {{ t('souvera_central', 'Kontingent') }}
-                    </label>
-                    <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
-                    <select id="quota" v-model="formData.quota">
-                        <option value="default">{{ t('souvera_central', 'Standard') }}</option>
-                        <option value="1 GB">1 GB</option>
-                        <option value="5 GB">5 GB</option>
-                        <option value="10 GB">10 GB</option>
-                        <option value="50 GB">50 GB</option>
-                        <option value="100 GB">100 GB</option>
-                        <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
-                    </select>
-                </div>
-
-                <!-- Manager -->
-                <div class="form-group">
-                    <label for="manager">
-                        {{ t('souvera_central', 'Manager') }}
-                    </label>
-                    <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
-                    <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
-                </div>
-
-                <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
-                <div v-if="isEditMode" class="form-group">
-                    <label>{{ t('souvera_central', 'Status') }}</label>
-                    <div class="status-display">
-                        <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
-                        <CloseCircle v-else :size="20" class="status-icon status-inactive" />
-                        <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
-                            {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
-                        </span>
-                    </div>
-                    <p class="help-text">
-                        {{ t('souvera_central', 'Status kann über "Erweiterte Aktionen" geändert werden') }}
-                    </p>
-                </div>
-
-                <!-- Gruppen Zone (Collapsible) -->
-                <div class="groups-zone collapsible">
-                    <button type="button" class="collapsible-header" @click="groupsExpanded = !groupsExpanded">
-                        <ChevronDown v-if="groupsExpanded" :size="20" />
-                        <ChevronRight v-else :size="20" />
+                <!-- Gruppenzugehörigkeit (Dual-Pane) -->
+                <section class="editor-section groups-section" data-testid="groups-section">
+                    <div class="section-head">
+                        <AccountGroup :size="20" />
                         <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
-                        <span class="optional-badge">{{ t('souvera_central', 'Optional') }}</span>
-                    </button>
-
-                    <div v-if="groupsExpanded" class="collapsible-content">
-                        <!-- Gruppen -->
-                        <div class="form-group">
-                            <label for="groups">
-                                {{ t('souvera_central', 'Mitglied der folgenden Gruppen') }}
-                            </label>
-                            <p class="help-text">{{ t('souvera_central', 'Kontengruppen setzen') }}</p>
+                        <span class="section-hint">{{ t('souvera_central', 'Optional') }}</span>
+                    </div>
+                    <div class="groups-grid">
+                        <div class="group-pane" data-testid="group-pane-member">
+                            <div class="pane-head">
+                                <span class="pane-icon member"><AccountGroup :size="18" /></span>
+                                <div class="pane-titles">
+                                    <span class="pane-title">{{ t('souvera_central', 'Mitglied der Gruppen') }}</span>
+                                    <span class="pane-sub">{{ t('souvera_central', 'Zugriff auf Gruppen-Ressourcen') }}</span>
+                                </div>
+                            </div>
                             <GroupSelector
                                 v-model="formData.groups"
                                 :available-groups="availableGroups"
                                 mode="member"
                             />
                         </div>
-
-                        <!-- Gruppen-Administration -->
-                        <div class="form-group">
-                            <label for="adminGroups">
-                                {{ t('souvera_central', 'Administration der folgenden Gruppen') }}
-                            </label>
-                            <p class="help-text">{{ t('souvera_central', 'Konto als Administration setzen für …') }}</p>
+                        <div class="group-pane" data-testid="group-pane-admin">
+                            <div class="pane-head">
+                                <span class="pane-icon admin"><ShieldAccount :size="18" /></span>
+                                <div class="pane-titles">
+                                    <span class="pane-title">{{ t('souvera_central', 'Administration der Gruppen') }}</span>
+                                    <span class="pane-sub">{{ t('souvera_central', 'Darf diese Gruppen verwalten') }}</span>
+                                </div>
+                            </div>
                             <GroupSelector
                                 v-model="formData.adminGroups"
                                 :available-groups="availableGroups"
@@ -243,78 +247,88 @@
                             />
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Danger Zone (nur im Edit-Mode) -->
-                <div v-if="isEditMode" class="danger-zone">
-                    <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
-                    <div class="danger-actions">
+                <!-- Erweiterte Aktionen (Bento-Grid, nur im Edit-Mode) -->
+                <section v-if="isEditMode" class="editor-section advanced-section" data-testid="advanced-actions">
+                    <div class="section-head">
+                        <Cog :size="20" />
+                        <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
+                    </div>
+                    <div class="action-grid">
                         <button
                             v-if="user.id !== 'admin' && !user.id.startsWith('admin@')"
                             type="button"
-                            :class="['action-button', formData.enabled ? 'warning' : 'success']"
+                            class="action-card"
+                            :class="formData.enabled ? 'is-warning' : 'is-success'"
                             :disabled="togglingStatus"
+                            data-testid="action-card-deactivate"
                             @click="toggleUserStatus"
                         >
-                            <NcLoadingIcon v-if="togglingStatus" :size="16" />
-                            <Close v-else-if="formData.enabled" :size="16" />
-                            <Check v-else :size="16" />
-                            {{
-                                togglingStatus
-                                    ? t('souvera_central', 'Speichert...')
-                                    : formData.enabled
-                                        ? t('souvera_central', 'Benutzer deaktivieren')
-                                        : t('souvera_central', 'Benutzer aktivieren')
-                            }}
+                            <span class="action-icon">
+                                <NcLoadingIcon v-if="togglingStatus" :size="22" />
+                                <AccountCancel v-else-if="formData.enabled" :size="22" />
+                                <AccountCheck v-else :size="22" />
+                            </span>
+                            <span class="action-body">
+                                <strong>{{ formData.enabled ? t('souvera_central', 'Benutzer deaktivieren') : t('souvera_central', 'Benutzer aktivieren') }}</strong>
+                                <small>{{ formData.enabled ? t('souvera_central', 'Anmeldung sperren') : t('souvera_central', 'Anmeldung wieder erlauben') }}</small>
+                            </span>
                         </button>
 
                         <button
                             type="button"
-                            class="action-button secondary"
+                            class="action-card"
                             :disabled="resendingEmail"
+                            data-testid="action-card-resend-welcome"
                             @click="resendWelcomeEmail"
                         >
-                            <NcLoadingIcon v-if="resendingEmail" :size="16" />
-                            <Email v-else :size="16" />
-                            {{
-                                resendingEmail
-                                    ? t('souvera_central', 'Sendet...')
-                                    : t('souvera_central', 'Willkommens-Email erneut versenden')
-                            }}
+                            <span class="action-icon">
+                                <NcLoadingIcon v-if="resendingEmail" :size="22" />
+                                <EmailFast v-else :size="22" />
+                            </span>
+                            <span class="action-body">
+                                <strong>{{ t('souvera_central', 'Willkommens-E-Mail senden') }}</strong>
+                                <small>{{ t('souvera_central', 'Zugangsdaten erneut zustellen') }}</small>
+                            </span>
                         </button>
 
                         <button
                             type="button"
-                            class="action-button danger"
+                            class="action-card is-danger"
                             :disabled="wipingDevices"
+                            data-testid="action-card-wipe-devices"
                             @click="wipeDevices"
                         >
-                            <NcLoadingIcon v-if="wipingDevices" :size="16" />
-                            <Delete v-else :size="16" />
-                            {{
-                                wipingDevices
-                                    ? t('souvera_central', 'Trennt...')
-                                    : t('souvera_central', 'Alle Geräte trennen & Daten löschen')
-                            }}
+                            <span class="action-icon">
+                                <NcLoadingIcon v-if="wipingDevices" :size="22" />
+                                <Devices v-else :size="22" />
+                            </span>
+                            <span class="action-body">
+                                <strong>{{ t('souvera_central', 'Alle Geräte trennen') }}</strong>
+                                <small>{{ t('souvera_central', 'Abmelden & lokale Daten löschen') }}</small>
+                            </span>
                         </button>
 
                         <button
                             type="button"
-                            class="action-button danger"
+                            class="action-card is-danger"
                             :disabled="deletingUser || isOwnAccount"
-                            :title="
-                                isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''
-                            "
+                            :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                            data-testid="action-card-delete-account"
                             @click="deleteUser"
                         >
-                            <NcLoadingIcon v-if="deletingUser" :size="16" />
-                            <Delete v-else :size="16" />
-                            {{
-                                deletingUser ? t('souvera_central', 'Löscht...') : t('souvera_central', 'Konto löschen')
-                            }}
+                            <span class="action-icon">
+                                <NcLoadingIcon v-if="deletingUser" :size="22" />
+                                <DeleteForever v-else :size="22" />
+                            </span>
+                            <span class="action-body">
+                                <strong>{{ t('souvera_central', 'Konto löschen') }}</strong>
+                                <small>{{ t('souvera_central', 'Unwiderruflich entfernen') }}</small>
+                            </span>
                         </button>
                     </div>
-                </div>
+                </section>
 
                 <!-- Form Actions -->
                 <div class="form-actions">
@@ -366,12 +380,16 @@ import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Check from 'vue-material-design-icons/Check.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
-import Close from 'vue-material-design-icons/Close.vue'
-import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
-import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import Email from 'vue-material-design-icons/Email.vue'
 import Account from 'vue-material-design-icons/Account.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import ShieldAccount from 'vue-material-design-icons/ShieldAccount.vue'
+import Cog from 'vue-material-design-icons/Cog.vue'
+import AccountCancel from 'vue-material-design-icons/AccountCancel.vue'
+import AccountCheck from 'vue-material-design-icons/AccountCheck.vue'
+import EmailFast from 'vue-material-design-icons/EmailFast.vue'
+import Devices from 'vue-material-design-icons/Devices.vue'
+import DeleteForever from 'vue-material-design-icons/DeleteForever.vue'
 
 export default {
     name: 'UserEditor',
@@ -386,12 +404,16 @@ export default {
         Check,
         CheckCircle,
         CloseCircle,
-        Close,
-        ChevronDown,
-        ChevronRight,
         Email,
         Account,
-        Delete
+        AccountGroup,
+        ShieldAccount,
+        Cog,
+        AccountCancel,
+        AccountCheck,
+        EmailFast,
+        Devices,
+        DeleteForever
     },
 
     props: {
@@ -1154,8 +1176,24 @@ export default {
 }
 
 .user-form {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
+}
+
+/* Full-width responsive field grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 22px 32px;
+    align-items: start;
+}
+
+.form-grid .form-group {
+    margin-bottom: 0;
+}
+
+.form-grid .span-full {
+    grid-column: 1 / -1;
 }
 
 /* Form Groups */
@@ -1433,6 +1471,190 @@ export default {
     .user-type-options {
         grid-template-columns: 1fr;
     }
+}
+
+/* ===== Editor Sections (full-width) ===== */
+.editor-section {
+    margin-top: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
+    background: var(--color-main-background);
+    padding: 24px;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.section-head h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-main-text);
+    flex: 1;
+}
+
+.section-head > .material-design-icon {
+    color: var(--color-primary-element);
+}
+
+.section-hint {
+    padding: 3px 12px;
+    background: var(--color-background-dark);
+    color: var(--color-text-maxcontrast);
+    border-radius: var(--border-radius-pill, 100px);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Groups Dual-Pane */
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+.group-pane {
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
+    background: var(--color-background-dark);
+    padding: 18px;
+}
+
+.pane-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pane-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    color: #fff;
+}
+
+.pane-icon.member {
+    background: var(--color-primary-element);
+}
+
+.pane-icon.admin {
+    background: var(--color-warning);
+}
+
+.pane-titles {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.pane-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-main-text);
+}
+
+.pane-sub {
+    font-size: 12.5px;
+    color: var(--color-text-maxcontrast);
+}
+
+/* Advanced Actions Bento Grid */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.action-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
+    background: var(--color-main-background);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.action-card:hover:not(:disabled) {
+    background: var(--color-background-hover);
+    transform: translateY(-2px);
+}
+
+.action-card:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background: var(--color-background-dark);
+    color: var(--color-primary-element);
+}
+
+.action-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.action-body strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-main-text);
+}
+
+.action-body small {
+    font-size: 12.5px;
+    color: var(--color-text-maxcontrast);
+}
+
+.action-card.is-warning .action-icon {
+    background: rgba(var(--color-warning-rgb, 236, 167, 0), 0.15);
+    color: var(--color-warning);
+}
+
+.action-card.is-warning:hover:not(:disabled) {
+    border-color: var(--color-warning);
+}
+
+.action-card.is-success .action-icon {
+    background: rgba(var(--color-success-rgb), 0.15);
+    color: var(--color-success);
+}
+
+.action-card.is-success:hover:not(:disabled) {
+    border-color: var(--color-success);
+}
+
+.action-card.is-danger .action-icon {
+    background: rgba(var(--color-error-rgb), 0.12);
+    color: var(--color-error);
+}
+
+.action-card.is-danger:hover:not(:disabled) {
+    border-color: var(--color-error);
+    background: rgba(var(--color-error-rgb), 0.06);
 }
 
 

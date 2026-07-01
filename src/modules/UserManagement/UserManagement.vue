@@ -194,6 +194,7 @@
                                         <button
                                             class="action-edit"
                                             :title="t('souvera_central', 'Bearbeiten')"
+                                            :data-testid="'edit-user-' + user.id"
                                             @click.stop="editUser(user)"
                                         >
                                             <Pencil :size="18" />
@@ -545,7 +546,11 @@ export default {
         },
 
         hasMailbox(user) {
-            return this.mailboxes.includes(user.id)
+            const list = this.mailboxes.map((m) => String(m).toLowerCase())
+            const candidates = [user.email, user.id]
+                .filter(Boolean)
+                .map((s) => String(s).toLowerCase())
+            return candidates.some((c) => list.includes(c))
         },
 
         isSouveraUser(user) {
@@ -827,7 +832,7 @@ export default {
 
 .users-list-view {
     padding: 30px;
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
 }
 

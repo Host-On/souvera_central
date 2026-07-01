@@ -381,7 +381,7 @@ export default {
 <style scoped>
 .shared-mailboxes-view {
     padding: 30px;
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
 }
 

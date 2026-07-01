@@ -49,8 +49,22 @@
 
         <!-- Alias List -->
         <div v-else-if="stalwartAvailable" class="alias-content">
+            <!-- Alias-Auslastung -->
+            <div class="alias-usage" data-testid="alias-quota-bar">
+                <div class="alias-usage-track">
+                    <div
+                        class="alias-usage-fill"
+                        :class="usageClass"
+                        :style="{ width: Math.min(aliasPercentage, 100) + '%' }"
+                    ></div>
+                </div>
+                <span class="alias-usage-label">
+                    {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Aliase') }}
+                </span>
+            </div>
+
             <!-- Primary Email (nicht löschbar) -->
-            <div class="alias-item primary">
+            <div class="alias-item primary" data-testid="alias-row-primary">
                 <div class="alias-info">
                     <Email :size="16" />
                     <span class="alias-email">{{ primaryEmail }}</span>
@@ -124,6 +138,7 @@
                         :class="{ error: aliasError }"
                         :placeholder="t('souvera_central', 'neuer-alias')"
                         :disabled="addingAlias"
+                        data-testid="alias-add-input-local"
                         @keyup.enter="addAlias"
                         @input="clearError"
                     />
@@ -141,6 +156,7 @@
                         type="button"
                         class="add-alias-button"
                         :disabled="!canAddAlias || addingAlias"
+                        data-testid="alias-add-submit"
                         @click="addAlias"
                     >
                         <NcLoadingIcon v-if="addingAlias" :size="16" />
@@ -247,6 +263,12 @@ export default {
         isAliasWarning() {
             return !this.isLimitReached &&
                 this.aliases.length / this.maxAliases >= this.warningThreshold
+        },
+
+        usageClass() {
+            if (this.isLimitReached) return 'is-full'
+            if (this.isAliasWarning) return 'is-warn'
+            return ''
         },
 
         newAliasEmail() {
@@ -619,6 +641,44 @@ export default {
     padding: 15px 20px;
 }
 
+/* Alias-Auslastung (Progress) */
+.alias-usage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.alias-usage-track {
+    flex: 1;
+    height: 8px;
+    border-radius: var(--border-radius-pill, 100px);
+    background: var(--color-background-dark);
+    overflow: hidden;
+}
+
+.alias-usage-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary-element);
+    transition: width 0.3s ease, background-color 0.2s ease;
+}
+
+.alias-usage-fill.is-warn {
+    background: var(--color-warning);
+}
+
+.alias-usage-fill.is-full {
+    background: var(--color-error);
+}
+
+.alias-usage-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-maxcontrast);
+    white-space: nowrap;
+}
+
 .alias-item {
     display: flex;
     align-items: center;
@@ -739,12 +799,13 @@ export default {
 
 .primary-badge {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    background: var(--color-primary-element);
-    color: #fff;
-    padding: 3px 8px;
-    border-radius: 10px;
+    letter-spacing: 0.03em;
+    background: var(--color-success);
+    color: var(--color-main-background);
+    padding: 3px 10px;
+    border-radius: var(--border-radius-pill, 100px);
 }
 
 .alias-remove {
@@ -789,15 +850,16 @@ export default {
 }
 
 .add-alias-input-group {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr auto 1.5fr auto;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .add-alias-input {
-    flex: 1;
     min-width: 0;
-    padding: 12px 14px;
+    padding: 0 14px;
+    height: var(--sc-control-height, 44px);
     border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
@@ -827,7 +889,7 @@ export default {
 }
 
 .add-alias-domain {
-    min-width: 280px;
+    min-width: 0;
     padding: 0 12px;
     border: 2px solid var(--color-border);
     border-radius: 6px;
@@ -835,7 +897,7 @@ export default {
     background: var(--color-main-background);
     color: var(--color-main-text);
     cursor: pointer;
-    height: 44px;
+    height: var(--sc-control-height, 44px);
 }
 
 .add-alias-domain:focus {
@@ -851,8 +913,10 @@ export default {
 .add-alias-button {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 18px;
+    padding: 0 18px;
+    height: var(--sc-control-height, 44px);
     background: var(--color-primary-element);
     color: #fff;
     border: none;
@@ -860,13 +924,12 @@ export default {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s ease;
     white-space: nowrap;
 }
 
 .add-alias-button:hover:not(:disabled) {
     background: var(--color-primary-element-hover);
-    transform: translateY(-1px);
 }
 
 .add-alias-button:disabled {
@@ -891,24 +954,11 @@ export default {
 /* Responsive */
 @media (max-width: 768px) {
     .add-alias-input-group {
-        flex-wrap: wrap;
-    }
-
-    .add-alias-input {
-        flex: 1 1 100%;
-        min-width: 100%;
+        grid-template-columns: 1fr;
     }
 
     .email-separator {
         display: none;
-    }
-
-    .add-alias-domain {
-        flex: 1;
-    }
-
-    .add-alias-button {
-        flex: 1;
     }
 }
 </style>

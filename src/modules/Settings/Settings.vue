@@ -302,7 +302,7 @@ export default {
 <style scoped>
 .settings-container {
     padding: 30px;
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
 }
 

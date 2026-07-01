@@ -599,7 +599,7 @@ export default {
 }
 
 .group-form {
-    max-width: 800px;
+    max-width: none;
     margin: 0 auto;
 }
 

@@ -297,48 +297,44 @@ export default {
 .selected-groups {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 16px;
-    background: var(--color-main-background);
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
-    min-height: 60px;
+    gap: 8px;
+    padding: 4px 0 12px;
+    min-height: 0;
 }
 
 .group-pill {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px 8px 14px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 700;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 6px 8px 6px 12px;
+    border-radius: var(--border-radius-pill, 100px);
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--color-background-dark);
+    border: 1px solid var(--color-border);
+    color: var(--color-main-text);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.group-pill.member-pill {
-    background: var(--color-primary-element);
-    color: #fff;
-    border: 2px solid var(--color-primary-element);
+.group-pill.member-pill .pill-icon {
+    color: var(--color-primary-element);
 }
 
-.group-pill.admin-pill {
-    background: linear-gradient(135deg, #ff9500 0%, #ff8000 100%);
-    color: #fff;
-    border: 2px solid #ff8000;
+.group-pill.admin-pill .pill-icon {
+    color: var(--color-warning);
+}
+
+.group-pill.member-pill:hover {
+    border-color: var(--color-primary-element);
+}
+
+.group-pill.admin-pill:hover {
+    border-color: var(--color-warning);
 }
 
 .pill-icon {
-    opacity: 1;
-    width: 22px;
-    height: 22px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: 50%;
-    color: #fff;
     flex-shrink: 0;
 }
 
@@ -347,58 +343,55 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #fff;
-    font-weight: 700;
+    color: var(--color-main-text);
+    font-weight: 600;
 }
 
 .pill-remove {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: rgba(255, 255, 255, 0.18);
+    width: 22px;
+    height: 22px;
+    background: transparent;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
+    transition: background-color 0.15s ease, color 0.15s ease;
     padding: 0;
-    color: #fff;
+    color: var(--color-text-maxcontrast);
+    flex-shrink: 0;
 }
 
 .pill-remove:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: scale(1.1);
+    background: rgba(var(--color-error-rgb), 0.15);
+    color: var(--color-error);
 }
 
 .pill-locked {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    color: #fff;
-    opacity: 0.85;
+    width: 22px;
+    height: 22px;
+    color: var(--color-text-maxcontrast);
+    flex-shrink: 0;
 }
 
 /* Empty State */
 .empty-state {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 24px;
-    background: var(--color-main-background);
-    border: 2px dashed var(--color-border);
-    border-radius: 6px;
-    color: var(--color-main-text);
-    font-size: 15px;
-    font-weight: 600;
+    gap: 10px;
+    padding: 14px 4px;
+    color: var(--color-text-maxcontrast);
+    font-size: 13.5px;
+    font-weight: 500;
 }
 
 .empty-icon {
     opacity: 0.6;
-    color: var(--color-main-text);
+    color: var(--color-text-maxcontrast);
 }
 
 /* Dropdown Container */
@@ -409,26 +402,23 @@ export default {
 .dropdown-trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 14px 20px;
-    background: var(--color-primary-element);
-    color: #fff;
-    border: 2px solid var(--color-primary-element);
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 15px;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--color-main-background);
+    color: var(--color-primary-element);
+    border: 1px dashed var(--color-primary-element);
+    border-radius: var(--border-radius, 8px);
+    font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     width: 100%;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.3);
 }
 
 .dropdown-trigger:hover {
-    background: var(--color-primary-element-hover);
-    border-color: var(--color-primary-element-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(var(--color-primary-element-rgb), 0.4);
+    background: rgba(var(--color-primary-element-rgb), 0.08);
+    border-style: solid;
 }
 
 /* Dropdown Menu */

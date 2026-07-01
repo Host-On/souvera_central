@@ -1,6 +1,6 @@
 {
   "name": "souvera_central",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Souvera Central - Modulare Management-Zentrale für Nextcloud",
   "private": true,
   "scripts": {
