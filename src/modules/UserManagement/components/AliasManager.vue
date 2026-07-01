@@ -285,7 +285,7 @@ export default {
         // Default Domain setzen
         if (this.allowedDomains.length > 0) {
             // Versuche die Domain der Primary-Email zu nutzen
-            const primaryDomain = this.primaryEmail.split('@')[1]
+            const primaryDomain = (this.primaryEmail || '').split('@')[1]
             if (this.allowedDomains.includes(primaryDomain)) {
                 this.newAliasDomain = primaryDomain
             } else {

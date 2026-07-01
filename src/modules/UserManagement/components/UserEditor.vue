@@ -205,7 +205,7 @@
                 <AliasManager
                     v-if="isEditMode"
                     :user-id="user.id"
-                    :primary-email="user.email"
+                    :primary-email="user.email || user.id"
                     :allowed-domains="allowedDomains"
                 />
 
@@ -511,7 +511,7 @@ export default {
         if (this.isEditMode) {
             this.formData = {
                 displayName: this.user.displayName,
-                email: this.user.email,
+                email: this.user.email || this.user.id,
                 password: '',
                 groups: this.user.groups.map((g) => g.id),
                 adminGroups: [],

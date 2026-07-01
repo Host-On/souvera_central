@@ -13,6 +13,9 @@ const users = [
     { id: 'admin@souvera.eu', displayName: 'Administrator', enabled: true, groups: ['admin'], quota: { quota: 'Unbegrenzt' }, isSouveraUser: true, isSouveraAdmin: true, type: 'souvera' }
 ]
 
+// Im UID-Schema entspricht die User-ID der E-Mail; explizit setzen für den Editor.
+users.forEach((u) => { u.email = u.email || u.id })
+
 const groups = [
     { id: 'admin', displayName: 'admin', userCount: 1, isProtected: true },
     { id: 'Geschäftsführung', displayName: 'Geschäftsführung', userCount: 2, isProtected: false },
