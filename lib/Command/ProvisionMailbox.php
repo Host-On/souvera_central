@@ -47,7 +47,7 @@ class ProvisionMailbox extends Base {
             ->addOption('password-stdin', null, InputOption::VALUE_NONE, 'Passwort aus STDIN lesen (sicher für Pipelines)')
             ->addOption('generate', null, InputOption::VALUE_NONE, 'Zufälliges Passwort erzeugen und ausgeben')
             ->addOption('display-name', null, InputOption::VALUE_REQUIRED, 'Anzeigename (description)')
-            ->addOption('quota', null, InputOption::VALUE_REQUIRED, 'Disk-Quota in Bytes (0 = unbegrenzt)', '0');
+            ->addOption('quota', null, InputOption::VALUE_REQUIRED, 'Disk-Quota in Bytes (0 = unbegrenzt; ohne Angabe = globaler Config-Standard)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
@@ -78,7 +78,8 @@ class ProvisionMailbox extends Base {
         }
 
         $displayName = $input->getOption('display-name');
-        $quota = max(0, (int) $input->getOption('quota'));
+        $quotaOpt = $input->getOption('quota');
+        $quota = ($quotaOpt === null || $quotaOpt === '') ? null : max(0, (int) $quotaOpt);
 
         $existed = $this->stalwart->principalExists($email);
         $ok = $this->stalwart->createPrincipal($email, $password, $displayName ?: null, $quota);

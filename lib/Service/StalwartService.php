@@ -55,13 +55,14 @@ class StalwartService {
      * @param string $email       Haupt-Mailadresse (= Identität, local@domain)
      * @param string $password    Klartext-Passwort (Stalwart hasht serverseitig)
      * @param string|null $displayName Anzeigename (description)
-     * @param int $quota           optionales Disk-Quota in Bytes (0 = unbegrenzt)
+     * @param int|null $quota      Disk-Quota in Bytes; null = globaler Standard
+     *                             (ConfigService::getDefaultMailboxQuota), 0 = unbegrenzt
      */
     public function createPrincipal(
         string $email,
         string $password,
         ?string $displayName = null,
-        int $quota = 0
+        ?int $quota = null
     ): bool {
         $email = strtolower(trim($email));
         $parts = $this->splitEmail($email);
@@ -83,6 +84,9 @@ class StalwartService {
             return false;
         }
 
+        // Kein explizites Quota übergeben => globaler Standard aus der Config.
+        $effectiveQuota = $quota ?? $this->configService->getDefaultMailboxQuota();
+
         $object = [
             '@type' => 'User',
             'name' => $parts['local'],
@@ -90,8 +94,8 @@ class StalwartService {
             'credentials' => ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
         ];
-        if ($quota > 0) {
-            $object['quotas'] = ['maxDiskQuota' => $quota];
+        if ($effectiveQuota > 0) {
+            $object['quotas'] = ['maxDiskQuota' => $effectiveQuota];
         }
 
         $resp = $this->jmapSingle('x:Account/set', ['create' => ['nc0' => $object]]);

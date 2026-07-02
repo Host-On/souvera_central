@@ -262,6 +262,30 @@ class ConfigService {
         return $this->config->getAppValue('souvera_central', 'settings.defaults.quota', 'default');
     }
 
+    /**
+     * Standard-Postfach-Speicherlimit (Stalwart maxDiskQuota) in Bytes.
+     * 0 = unbegrenzt. Wird bei der Postfach-Anlage angewendet und dient dem
+     * occ-Befehl souvera_central:quota:set --all als neuer globaler Standard.
+     */
+    public function getDefaultMailboxQuota(): int {
+        return (int) $this->config->getAppValue(
+            'souvera_central',
+            'settings.defaults.mailbox_quota',
+            (string) QuotaParser::DEFAULT_BYTES
+        );
+    }
+
+    /**
+     * Globalen Standard für das Postfach-Speicherlimit setzen (Bytes, 0 = unbegrenzt).
+     */
+    public function setDefaultMailboxQuota(int $bytes): void {
+        $this->config->setAppValue(
+            'souvera_central',
+            'settings.defaults.mailbox_quota',
+            (string) max(0, $bytes)
+        );
+    }
+
     // ============================================================================
     // Mail-Gruppe (Sichtbarkeit der Mail-App / smail steuern)
     // ============================================================================
