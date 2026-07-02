@@ -315,11 +315,13 @@ class AliasApiController extends OCSController {
                 return new DataResponse(['configured' => false, 'available' => false, 'mailboxes' => [], 'total' => 0]);
             }
 
-            $names = $this->stalwartService->listPrincipalNames();
+            $usage = $this->stalwartService->listMailboxUsage();
+            $names = array_keys($usage);
             return new DataResponse([
                 'configured' => true,
                 'available' => $this->stalwartService->isAvailable(),
                 'mailboxes' => $names,
+                'usage' => $usage,
                 'total' => count($names),
             ]);
         } catch (\Exception $e) {

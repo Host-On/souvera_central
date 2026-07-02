@@ -362,17 +362,17 @@ class StalwartService {
     /**
      * Postfach-Status für einen Benutzer.
      *
-     * @return array{exists: bool, email: ?string, aliases: array, quota: int, configured: bool}
+     * @return array{exists: bool, email: ?string, aliases: array, quota: int, used: int, configured: bool}
      */
     public function getMailboxStatus(string $email): array {
         $configured = $this->configService->isStalwartConfigured();
         if (!$configured) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => false];
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'used' => 0, 'configured' => false];
         }
 
         $account = $this->getAccount($email, 'User');
         if ($account === null) {
-            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'configured' => true];
+            return ['exists' => false, 'email' => null, 'aliases' => [], 'quota' => 0, 'used' => 0, 'configured' => true];
         }
 
         return [
@@ -380,6 +380,7 @@ class StalwartService {
             'email' => $this->primaryAddress($account),
             'aliases' => $this->aliasAddresses($account),
             'quota' => (int) ($account['quotas']['maxDiskQuota'] ?? 0),
+            'used' => (int) ($account['usedDiskQuota'] ?? 0),
             'configured' => true,
         ];
     }
@@ -411,6 +412,42 @@ class StalwartService {
             }
         }
         return $emails;
+    }
+
+    /**
+     * Belegung + Limit aller individuellen Postfächer (User-Accounts).
+     * Nutzt die von Stalwart berechneten Felder usedDiskQuota + quotas/maxDiskQuota.
+     *
+     * @return array<string, array{used:int, quota:int}> Key = Mailadresse (lowercase)
+     */
+    public function listMailboxUsage(): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return [];
+        }
+
+        $query = $this->jmapSingle('x:Account/query', ['filter' => ['@type' => 'User']]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
+            return [];
+        }
+
+        $got = $this->jmapSingle('x:Account/get', [
+            'ids' => array_values($ids),
+            'properties' => ['emailAddress', 'usedDiskQuota', 'quotas'],
+        ]);
+
+        $result = [];
+        foreach ($got['list'] ?? [] as $acc) {
+            $email = strtolower((string) ($acc['emailAddress'] ?? ''));
+            if ($email === '') {
+                continue;
+            }
+            $result[$email] = [
+                'used' => (int) ($acc['usedDiskQuota'] ?? 0),
+                'quota' => (int) ($acc['quotas']['maxDiskQuota'] ?? 0),
+            ];
+        }
+        return $result;
     }
 
     /**

@@ -45,7 +45,7 @@ function respond(url) {
         return { data: { id: 'souvera-users', displayName: 'Souvera Users', exists: true, members: 6, enabled: true } }
     }
     if (url.includes('/api/stalwart/mailboxes')) {
-        return { data: { configured: true, available: true, mailboxes: mailboxNames, total: mailboxNames.length } }
+        return { data: { configured: true, available: true, mailboxes: mailboxNames, usage: mailboxUsage, total: mailboxNames.length } }
     }
     if (url.includes('/aliases')) {
         return { data: { aliases: ['team@souvera.eu', 'kontakt@souvera.eu'], maxAliases: 10 } }
@@ -89,6 +89,16 @@ const mailboxNames = [
     'felix.wagner@souvera.eu',
     'admin@souvera.eu'
 ]
+
+// Belegung + Limit je Postfach (Bytes; quota 0 = unbegrenzt)
+const mailboxUsage = {
+    'anna.klein@souvera.eu': { used: 48318382080, quota: 53687091200 },
+    'ben.schulz@souvera.eu': { used: 5368709120, quota: 53687091200 },
+    'clara.weber@souvera.eu': { used: 42949672960, quota: 53687091200 },
+    'eva.fischer@souvera.eu': { used: 1073741824, quota: 10737418240 },
+    'felix.wagner@souvera.eu': { used: 2147483648, quota: 0 },
+    'admin@souvera.eu': { used: 21474836480, quota: 53687091200 }
+}
 
 const mock = {
     get: (url) => Promise.resolve(respond(url)),

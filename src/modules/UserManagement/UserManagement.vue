@@ -104,7 +104,8 @@
                                 <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
                                 <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
                                 <th class="type-column">{{ t('souvera_central', 'Typ') }}</th>
-                                <th class="quota-column">{{ t('souvera_central', 'Speicherplatz') }}</th>
+                                <th class="quota-column">{{ t('souvera_central', 'NC-Speicher') }}</th>
+                                <th class="mailbox-usage-column">{{ t('souvera_central', 'Postfach (E-Mail)') }}</th>
                                 <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
                                 <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
                             </tr>
@@ -150,6 +151,26 @@
                                     </div>
                                 </td>
                                 <td class="quota-column">{{ user.quota.quota }}</td>
+                                <td class="mailbox-usage-column">
+                                    <div
+                                        v-if="stalwartConfigured && hasMailbox(user)"
+                                        class="mb-usage"
+                                        :data-testid="'mailbox-usage-' + user.id"
+                                    >
+                                        <div v-if="usageFor(user).quota > 0" class="mb-usage-bar">
+                                            <div
+                                                class="mb-usage-fill"
+                                                :class="usageLevelClass(user)"
+                                                :style="{ width: usagePercent(user) + '%' }"
+                                            ></div>
+                                        </div>
+                                        <span class="mb-usage-text">
+                                            {{ formatBytes(usageFor(user).used) }} /
+                                            {{ usageFor(user).quota > 0 ? formatBytes(usageFor(user).quota) : '∞' }}
+                                        </span>
+                                    </div>
+                                    <span v-else-if="stalwartConfigured" class="mb-usage-none">—</span>
+                                </td>
                                 <td class="status-column">
                                     <div class="status-badge" :class="user.enabled ? 'status-active' : 'status-inactive'">
                                         <CheckCircle v-if="user.enabled" :size="16" />
@@ -329,6 +350,7 @@ export default {
             perPage: 20,
             currentUserId: null, // ID des aktuell angemeldeten Benutzers
             mailboxes: [], // Stalwart Principal-Namen (UIDs) mit Postfach
+            mailboxUsage: {}, // { email: { used, quota } } Belegung je Postfach
             stalwartConfigured: false,
             upgradingUser: null, // UID, während ein User zum Souvera User gemacht wird
             updatingAdmin: null, // UID, während Souvera-Admin-Rechte gesetzt/entfernt werden
@@ -539,9 +561,11 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data || {}
                 this.stalwartConfigured = !!data.configured
                 this.mailboxes = data.mailboxes || []
+                this.mailboxUsage = data.usage || {}
             } catch (error) {
                 this.stalwartConfigured = false
                 this.mailboxes = []
+                this.mailboxUsage = {}
             }
         },
 
@@ -551,6 +575,47 @@ export default {
                 .filter(Boolean)
                 .map((s) => String(s).toLowerCase())
             return candidates.some((c) => list.includes(c))
+        },
+
+        usageFor(user) {
+            const k1 = String(user.email || '').toLowerCase()
+            const k2 = String(user.id || '').toLowerCase()
+            return this.mailboxUsage[k1] || this.mailboxUsage[k2] || { used: 0, quota: 0 }
+        },
+
+        usagePercent(user) {
+            const u = this.usageFor(user)
+            if (!u.quota || u.quota <= 0) {
+                return 0
+            }
+            return Math.min(100, Math.round((u.used / u.quota) * 100))
+        },
+
+        usageLevelClass(user) {
+            const p = this.usagePercent(user)
+            if (p >= 90) {
+                return 'is-full'
+            }
+            if (p >= 75) {
+                return 'is-warn'
+            }
+            return ''
+        },
+
+        formatBytes(bytes) {
+            const b = Number(bytes) || 0
+            if (b <= 0) {
+                return '0 B'
+            }
+            const units = ['B', 'KB', 'MB', 'GB', 'TB']
+            let v = b
+            let i = 0
+            while (v >= 1024 && i < units.length - 1) {
+                v /= 1024
+                i++
+            }
+            const s = v === Math.floor(v) ? String(v) : v.toFixed(1)
+            return s + ' ' + units[i]
         },
 
         isSouveraUser(user) {
@@ -961,6 +1026,50 @@ export default {
 
 .quota-column {
     width: 150px;
+    color: var(--color-text-maxcontrast);
+}
+
+.mailbox-usage-column {
+    min-width: 160px;
+}
+
+.mb-usage {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mb-usage-bar {
+    height: 6px;
+    width: 100%;
+    max-width: 140px;
+    border-radius: var(--border-radius-pill, 100px);
+    background: var(--color-background-dark);
+    overflow: hidden;
+}
+
+.mb-usage-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary-element);
+    transition: width 0.3s ease, background-color 0.2s ease;
+}
+
+.mb-usage-fill.is-warn {
+    background: var(--color-warning);
+}
+
+.mb-usage-fill.is-full {
+    background: var(--color-error);
+}
+
+.mb-usage-text {
+    font-size: 12px;
+    color: var(--color-text-maxcontrast);
+    white-space: nowrap;
+}
+
+.mb-usage-none {
     color: var(--color-text-maxcontrast);
 }
 
