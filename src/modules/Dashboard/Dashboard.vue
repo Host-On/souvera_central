@@ -453,27 +453,27 @@ export default {
     margin: 0 auto;
 }
 
-/* KRITISCHES WARNING BANNER */
+/* KRITISCHES WARNING BANNER (100%) */
 .critical-warning {
+    position: relative;
     margin-bottom: 30px;
-    padding: 25px 30px;
-    background: var(--color-error);
-    border: 2px solid var(--color-error);
+    padding: 22px 26px;
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.35);
+    border-left: 4px solid var(--color-error);
     border-radius: var(--border-radius-large);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .critical-warning .warning-content {
     display: flex;
     align-items: center;
-    gap: 20px;
-    color: #fff;
+    gap: 18px;
 }
 
 .critical-warning .warning-icon {
     flex-shrink: 0;
+    color: var(--color-error);
     animation: pulse 2s infinite;
-    color: #fff;
 }
 
 @keyframes pulse {
@@ -482,101 +482,102 @@ export default {
         opacity: 1;
     }
     50% {
-        opacity: 0.6;
+        opacity: 0.55;
     }
 }
 
 .critical-warning .warning-text {
     flex: 1;
+    min-width: 0;
 }
 
 .critical-warning h3 {
-    margin: 0 0 8px;
-    font-size: 20px;
+    margin: 0 0 6px;
+    font-size: 19px;
     font-weight: 700;
-    color: #fff;
+    color: var(--color-error-text);
 }
 
 .critical-warning p {
     margin: 0;
     font-size: 15px;
     line-height: 1.5;
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .contact-button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
-    background: var(--color-main-background);
-    color: var(--color-error);
-    border: 2px solid var(--color-error);
+    padding: 11px 22px;
+    background: var(--color-error);
+    color: #fff;
+    border: none;
     border-radius: var(--border-radius-element);
-    font-weight: 700;
-    font-size: 15px;
+    font-weight: 600;
+    font-size: 14px;
     text-decoration: none;
     white-space: nowrap;
-    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .contact-button:hover {
-    background: var(--color-background-hover);
+    filter: brightness(1.08);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--color-box-shadow);
+    box-shadow: 0 4px 12px rgba(var(--color-error-rgb), 0.35);
 }
 
 /* WARNING BANNER (80%+) */
 .warning-banner {
+    position: relative;
     margin-bottom: 30px;
-    padding: 20px 25px;
-    background: var(--color-warning);
-    border: 2px solid var(--color-warning);
+    padding: 20px 24px;
+    background: rgba(var(--color-warning-rgb), 0.12);
+    border: 1px solid rgba(var(--color-warning-rgb), 0.35);
+    border-left: 4px solid var(--color-warning);
     border-radius: var(--border-radius-large);
-    box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
 .warning-banner .warning-content {
     display: flex;
     align-items: center;
-    gap: 20px;
-    color: #fff;
+    gap: 18px;
 }
 
 .warning-banner .warning-icon {
     flex-shrink: 0;
-    color: #fff;
+    color: var(--color-warning);
 }
 
 .warning-banner .warning-text {
     flex: 1;
+    min-width: 0;
 }
 
 .warning-banner h3 {
     margin: 0 0 5px;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    color: #fff;
+    color: var(--color-warning-text);
 }
 
 .warning-banner p {
     margin: 0;
     font-size: 14px;
-    color: #fff;
+    line-height: 1.5;
+    color: var(--color-main-text);
     font-weight: 500;
 }
 
 .contact-button.secondary {
-    background: var(--color-main-background);
-    color: var(--color-warning-text);
-    border: none;
-    box-shadow: 0 2px 6px var(--color-box-shadow);
+    background: var(--color-warning);
+    color: #3d2c00;
 }
 
 .contact-button.secondary:hover {
-    background: var(--color-background-hover);
+    filter: brightness(1.06);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px var(--color-box-shadow);
+    box-shadow: 0 4px 10px rgba(var(--color-warning-rgb), 0.3);
 }
 
 /* Header */
