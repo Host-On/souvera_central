@@ -53,7 +53,6 @@ class SettingsApiController extends OCSController {
                 ],
                 'defaults' => [
                     'quota' => $this->config->getAppValue('souvera_central', 'settings.defaults.quota', 'default'),
-                    'mailbox_quota' => $this->config->getDefaultMailboxQuota(),
                 ],
                 // Souvera Shield: global, wird von der Shield-App via AppConfig ausgelesen
                 'shield' => [
@@ -136,17 +135,8 @@ class SettingsApiController extends OCSController {
                         );
                     }
                 }
-                if (array_key_exists('mailbox_quota', $defaults)) {
-                    // Postfach-Speicherlimit (Stalwart) in Bytes, 0 = unbegrenzt
-                    $mailboxQuota = (int) $defaults['mailbox_quota'];
-                    if ($mailboxQuota < 0) {
-                        return new DataResponse(
-                            ['error' => 'Ungültiges Postfach-Speicherlimit'],
-                            Http::STATUS_BAD_REQUEST
-                        );
-                    }
-                    $this->config->setDefaultMailboxQuota($mailboxQuota);
-                }
+                // Hinweis: Das Standard-Postfach-Speicherlimit (Stalwart) wird bewusst NICHT über die
+                // UI gesetzt, sondern ausschließlich vom Hoster per occ (souvera_central:quota:*).
             }
 
             // Souvera Shield Settings (global; werden von der Shield-App via AppConfig ausgelesen)

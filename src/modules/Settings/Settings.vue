@@ -85,34 +85,6 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="settings-group">
-                    <label class="field-label">
-                        <Email :size="16" />
-                        {{ t('souvera_central', 'Standard Postfach-Speicherlimit (E-Mail)') }}
-                    </label>
-                    <p class="setting-hint">
-                        {{ t('souvera_central', 'Neue Postfächer werden mit diesem Speicherlimit angelegt (Stalwart). Eine Änderung gilt nur für künftig angelegte Postfächer.') }}
-                    </p>
-                    <div class="quota-grid" data-testid="mailbox-quota-grid">
-                        <button
-                            v-for="option in mailboxQuotaOptions"
-                            :key="option.value"
-                            class="quota-option"
-                            :class="{ 'quota-selected': settings.defaults.mailbox_quota === option.value }"
-                            :data-testid="'mailbox-quota-option-' + option.value"
-                            @click="selectMailboxQuota(option.value)"
-                        >
-                            <component :is="option.value === 0 ? 'InfinityIcon' : 'Email'" :size="32" class="quota-icon" />
-                            <span class="quota-label">{{ option.label }}</span>
-                            <Check
-                                v-if="settings.defaults.mailbox_quota === option.value"
-                                :size="16"
-                                class="selected-indicator"
-                            />
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <!-- 3. SOUVERA SHIELD -->
@@ -244,15 +216,6 @@ export default {
                 { value: '10 GB', label: '10 GB', icon: 'icon-quota' },
                 { value: '50 GB', label: '50 GB', icon: 'icon-quota' },
                 { value: '100 GB', label: '100 GB', icon: 'icon-quota' }
-            ],
-            mailboxQuotaOptions: [
-                { value: 0, label: this.t('souvera_central', 'Unbegrenzt') },
-                { value: 5368709120, label: '5 GB' },
-                { value: 10737418240, label: '10 GB' },
-                { value: 26843545600, label: '25 GB' },
-                { value: 53687091200, label: '50 GB' },
-                { value: 107374182400, label: '100 GB' },
-                { value: 214748364800, label: '200 GB' }
             ]
         }
     },
@@ -276,7 +239,7 @@ export default {
                 if (data) {
                     this.settings = {
                         email: data.email || this.settings.email,
-                        defaults: { ...this.settings.defaults, ...(data.defaults || {}) },
+                        defaults: data.defaults || this.settings.defaults,
                         shield: data.shield || this.settings.shield
                     }
                 }
@@ -325,11 +288,6 @@ export default {
 
         selectQuota(value) {
             this.settings.defaults.quota = value
-            this.saveSettings()
-        },
-
-        selectMailboxQuota(value) {
-            this.settings.defaults.mailbox_quota = value
             this.saveSettings()
         },
 

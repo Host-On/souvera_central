@@ -75,7 +75,7 @@ function respond(url) {
         return { data: { support_url: 'https://support.souvera.eu', url: 'https://souvera.eu', name: 'Souvera' } }
     }
     if (url.includes('/api/settings')) {
-        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default', mailbox_quota: 53687091200 }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 } } }
+        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 } } }
     }
     return { data: {} }
 }
