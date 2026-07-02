@@ -23,7 +23,6 @@
                     v-if="currentRoute === 'dashboard'"
                     :total-users="totalUsers"
                     :used-licenses="usedLicenses"
-                    :active-user-count="activeUserCount"
                     :group-count="groupCount"
                     :shared-mailbox-count="sharedMailboxCount"
                     :max-licenses="maxLicenses"
@@ -105,7 +104,6 @@ export default {
             currentPath: '',
             totalUsers: 0,
             usedLicenses: 0,
-            activeUserCount: 0,
             groupCount: 0,
             sharedMailboxCount: 0,
             maxLicenses: 10,
@@ -253,8 +251,8 @@ export default {
                 const users = data.users || []
 
                 this.totalUsers = data.total || users.length
-                this.usedLicenses = Math.max(0, this.totalUsers - 1)
-                this.activeUserCount = users.filter((user) => user.enabled).length
+                // Lizenzzahlen kommen ausschließlich aus /api/config (LicenseService),
+                // hier NICHT überschreiben/schätzen.
 
                 await this.loadGroupCount()
                 await this.loadSharedMailboxCount()

@@ -115,15 +115,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Aktive Benutzer -->
-            <div class="stat-card" data-testid="stat-active-users">
-                <div class="stat-icon"><AccountCheck :size="40" /></div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ activeUserCount }}</div>
-                    <div class="stat-label">{{ t('souvera_central', 'Aktive Benutzer') }}</div>
-                </div>
-            </div>
         </div>
 
         <!-- Quick Actions -->
@@ -242,7 +233,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Verfügbare Lizenzen') }}:</span>
-                    <span class="info-value">{{ maxLicenses }} {{ t('souvera_central', 'Lizenzen') }}</span>
+                    <span class="info-value">{{ availableLicenses }} {{ t('souvera_central', 'von') }} {{ maxLicenses }}</span>
                 </div>
             </div>
         </div>
@@ -290,7 +281,6 @@ export default {
     props: {
         totalUsers: { type: Number, default: 0 },
         usedLicenses: { type: Number, default: 0 },
-        activeUserCount: { type: Number, default: 0 },
         groupCount: { type: Number, default: 0 },
         sharedMailboxCount: { type: Number, default: 0 },
         maxLicenses: { type: Number, default: 10 },
@@ -323,6 +313,9 @@ export default {
         },
         isLicenseWarning() {
             return !this.isLicenseLimitReached && this.usedLicenses / this.maxLicenses >= this.warningThreshold
+        },
+        availableLicenses() {
+            return Math.max(0, this.maxLicenses - this.usedLicenses)
         },
         groupPercentage() {
             if (this.maxGroups === 0) return 0
