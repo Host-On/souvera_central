@@ -26,6 +26,14 @@ class ConfigService {
     }
 
     /**
+     * Maximale Anzahl an Lizenzen setzen (config.php, systemValue).
+     * Wird ausschließlich vom Hoster per occ gesetzt.
+     */
+    public function setMaxLicenses(int $count): void {
+        $this->config->setSystemValue('souvera_central.max_licenses', max(0, $count));
+    }
+
+    /**
      * Liste der erlaubten E-Mail-Domains
      *
      * @return array
