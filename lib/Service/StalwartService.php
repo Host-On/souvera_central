@@ -346,6 +346,104 @@ class StalwartService {
         return $ok;
     }
 
+    // ============================================================================
+    // Globale Alias-Verwaltung (serverweit, unabhängig vom Hauptpostfach)
+    //
+    // Zweck: Eine Mailadresse kann als Alias auf einem (Alt-)Konto "hängen" und
+    // dadurch die Anlage eines neuen Postfachs blockieren. Diese Methoden finden
+    // und entfernen einen Alias serverweit – unabhängig davon, welches
+    // Hauptpostfach ihn hält.
+    // ============================================================================
+
+    /**
+     * Globale Alias-Übersicht über ALLE Konten (User + optional Group).
+     *
+     * @param bool $includeGroups Auch geteilte Postfächer (@type=Group) durchsuchen.
+     * @return array<int, array{alias:string, owner:?string, ownerType:string, accountId:string}>
+     */
+    public function listAllAliases(bool $includeGroups = true): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return [];
+        }
+
+        $ids = $this->queryAccountIds($includeGroups);
+        if (empty($ids)) {
+            return [];
+        }
+
+        $got = $this->jmapSingle('x:Account/get', [
+            'ids' => array_values($ids),
+            'properties' => ['@type', 'name', 'domainId', 'emailAddress', 'aliases'],
+        ]);
+
+        $result = [];
+        foreach ($got['list'] ?? [] as $acc) {
+            if (!is_array($acc)) {
+                continue;
+            }
+            $owner = $this->primaryAddress($acc);
+            $ownerType = ($acc['@type'] ?? 'User') === 'Group' ? 'group' : 'user';
+            $accountId = (string) ($acc['id'] ?? '');
+            foreach ($this->aliasAddresses($acc) as $alias) {
+                $result[] = [
+                    'alias' => $alias,
+                    'owner' => $owner,
+                    'ownerType' => $ownerType,
+                    'accountId' => $accountId,
+                ];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Findet alle Konten, die einen bestimmten Alias führen (serverweit).
+     *
+     * @return array<int, array{owner:?string, ownerType:string, accountId:string}>
+     */
+    public function findAliasOwners(string $alias, bool $includeGroups = true): array {
+        $alias = strtolower(trim($alias));
+        $owners = [];
+        foreach ($this->listAllAliases($includeGroups) as $entry) {
+            if ($entry['alias'] === $alias) {
+                $owners[] = [
+                    'owner' => $entry['owner'],
+                    'ownerType' => $entry['ownerType'],
+                    'accountId' => $entry['accountId'],
+                ];
+            }
+        }
+        return $owners;
+    }
+
+    /**
+     * Entfernt einen Alias serverweit von JEDEM Konto, das ihn führt – gibt die
+     * Adresse frei (z. B. wenn sie ein neues Postfach blockiert).
+     *
+     * @return array<int, array{owner:?string, ownerType:string, accountId:string, removed:bool}>
+     */
+    public function removeAliasByAddress(string $alias, bool $includeGroups = true): array {
+        $alias = strtolower(trim($alias));
+        $parts = $this->splitEmail($alias);
+        if ($parts === null) {
+            $this->lastError = ['stage' => 'validate', 'detail' => 'Ungültige Alias-Adresse: ' . $alias];
+            return [];
+        }
+        $aliasDomainId = $this->resolveDomainId($parts['domain']);
+
+        $results = [];
+        foreach ($this->findAliasOwners($alias, $includeGroups) as $owner) {
+            $removed = $this->removeAliasFromAccountId($owner['accountId'], $parts['local'], $aliasDomainId);
+            $results[] = [
+                'owner' => $owner['owner'],
+                'ownerType' => $owner['ownerType'],
+                'accountId' => $owner['accountId'],
+                'removed' => $removed,
+            ];
+        }
+        return $results;
+    }
+
     /**
      * Prüft, ob eine Adresse bereits als Haupt-Adresse eines Kontos vergeben ist.
      */
@@ -949,5 +1047,53 @@ class StalwartService {
             $i++;
         }
         return $map;
+    }
+
+    /**
+     * IDs aller Konten (User; optional auch Group) für die serverweite
+     * Alias-Suche. includeGroups=true -> kein @type-Filter (alle Konten).
+     *
+     * @return array<int,string>
+     */
+    private function queryAccountIds(bool $includeGroups): array {
+        $args = $includeGroups ? [] : ['filter' => ['@type' => 'User']];
+        $query = $this->jmapSingle('x:Account/query', $args);
+        return $query['ids'] ?? [];
+    }
+
+    /**
+     * Entfernt einen Alias (Localpart + domainId) direkt von einem Konto per ID.
+     * Idempotent: fehlt der Alias, gilt das als Erfolg.
+     */
+    private function removeAliasFromAccountId(string $accountId, string $aliasLocal, ?string $aliasDomainId): bool {
+        $account = $this->getAccountById($accountId);
+        if ($account === null) {
+            return false;
+        }
+
+        $entries = $this->aliasEntries($account);
+        $filtered = array_values(array_filter($entries, function ($entry) use ($aliasLocal, $aliasDomainId) {
+            $sameName = strtolower((string) ($entry['name'] ?? '')) === $aliasLocal;
+            $sameDomain = $aliasDomainId === null
+                || (string) ($entry['domainId'] ?? '') === $aliasDomainId;
+            return !($sameName && $sameDomain);
+        }));
+
+        if (count($filtered) === count($entries)) {
+            return true; // war nicht vorhanden
+        }
+
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => ['aliases' => (object) $this->reindexAliasEntries($filtered)]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Alias serverweit entfernt', [
+                'alias' => $aliasLocal, 'accountId' => $accountId,
+            ]);
+        } elseif ($resp !== null) {
+            $this->lastError = ['stage' => 'alias:global-remove', 'notUpdated' => $resp['notUpdated'] ?? null];
+        }
+        return $ok;
     }
 }
