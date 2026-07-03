@@ -707,9 +707,20 @@ class StalwartService {
             return null;
         }
 
+        // JMAP-Methoden-Argumente MÜSSEN ein Objekt sein. Leere Args ([]) würde
+        // PHP als JSON-Array [] kodieren -> Stalwart lehnt mit "notRequest" ab
+        // (z. B. x:Domain/query ohne Filter). Daher leere Args in {} umwandeln.
+        $normalizedCalls = [];
+        foreach ($methodCalls as $call) {
+            if (is_array($call) && array_key_exists(1, $call) && $call[1] === []) {
+                $call[1] = new \stdClass();
+            }
+            $normalizedCalls[] = $call;
+        }
+
         $body = [
             'using' => [self::CAP_CORE, self::CAP_STALWART],
-            'methodCalls' => $methodCalls,
+            'methodCalls' => $normalizedCalls,
         ];
 
         $result = $this->http('POST', $session['apiUrl'], $body);
