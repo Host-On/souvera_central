@@ -5,16 +5,16 @@ declare(strict_types=1);
 /**
  * Souvera Central - Lizenz-Service
  *
- * Eine "Lizenz" entspricht einem lizenzpflichtigen "Souvera User" = Mitglied
- * der Gruppe "souvera-users". NICHT mitgezählt werden:
- *   - Der technische Souvera-Admin-BENUTZER "scadmin" (er ist User UND Admin,
- *     verbraucht aber keine Lizenz). Erkannt über ConfigService::isAdminAccount().
+ * Es zählen NUR die Mitglieder der Gruppe "souvera-users" – aber NICHT der
+ * technische scadmin-Benutzer. Konkret nicht mitgezählt:
+ *   - Der scadmin-BENUTZER (erkannt über ConfigService::isAdminAccount()).
  *   - Ausgeblendete technische Benutzer (z. B. "ncadmin").
  *   - Normale Nextcloud User (sind ohnehin nicht in souvera-users).
  *
- * WICHTIG: Ein regulärer Souvera User, der ZUSÄTZLICH Souvera-Admin-Rechte
- * (Gruppe souvera-admins) erhält, bleibt lizenzpflichtig und wird MITGEZÄHLT –
- * nur der technische scadmin-Benutzer selbst nicht.
+ * Die Zählung basiert AUSSCHLIESSLICH auf der souvera-users-Mitgliedschaft;
+ * Souvera-Admin-Rechte (Gruppe souvera-admins) sind dafür irrelevant. Ein
+ * souvera-users-Mitglied zählt also unabhängig davon, ob es zusätzlich
+ * Souvera-Admin ist – nur der scadmin-Benutzer wird nie mitgezählt.
  *
  * Das Limit ist die in config.php konfigurierte souvera_central.max_licenses.
  */
@@ -31,10 +31,9 @@ class LicenseService {
     }
 
     /**
-     * Anzahl der genutzten Lizenzen = lizenzpflichtige Souvera Users
-     * (Mitglieder von souvera-users, ohne den scadmin-Benutzer und ohne
-     * ausgeblendete User). Promoted Admins (souvera-users + souvera-admins)
-     * zählen weiterhin mit.
+     * Anzahl der genutzten Lizenzen = Mitglieder von souvera-users, OHNE den
+     * scadmin-Benutzer und OHNE ausgeblendete User (z. B. ncadmin). Die Zählung
+     * hängt allein an der souvera-users-Mitgliedschaft (Admin-Rechte irrelevant).
      */
     public function getUsedLicenses(): int {
         $souvera = $this->groupManager->get($this->config->getMailGroupId());
