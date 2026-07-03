@@ -225,7 +225,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.23.1</span>
+                    <span class="info-value">0.24.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>

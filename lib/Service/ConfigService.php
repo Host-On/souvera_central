@@ -444,4 +444,58 @@ class ConfigService {
     public function isHiddenGroup(string $groupId): bool {
         return in_array(strtolower($groupId), $this->getHiddenGroupIds(), true);
     }
+
+    // ============================================================================
+    // Technischer Souvera-Admin-BENUTZER (z. B. "scadmin")
+    // ============================================================================
+
+    /**
+     * Benutzer-Kennung(en) des technischen Souvera-Administrator-BENUTZERS
+     * (Standard "scadmin"). Dieser Account erhält zwar ein Postfach + volle
+     * Central-Rechte, zählt aber NICHT als Souvera User / Lizenz.
+     *
+     * WICHTIG: Dies ist der einzelne Admin-BENUTZER – NICHT die Admin-GRUPPE
+     * "souvera-admins". Ein regulärer Souvera User, der zusätzlich
+     * Souvera-Admin-Rechte (Gruppe) erhält, wird weiterhin mitgezählt.
+     * Konfigurierbar via `souvera_central.admin_user` (Array oder CSV).
+     *
+     * @return string[] lowercase
+     */
+    public function getAdminUserIds(): array {
+        $raw = $this->config->getSystemValue('souvera_central.admin_user', ['scadmin']);
+        if (is_string($raw)) {
+            $raw = array_filter(array_map('trim', explode(',', $raw)));
+        }
+        $list = is_array($raw) ? array_values(array_filter(array_map('strval', $raw))) : ['scadmin'];
+        return array_map('strtolower', $list);
+    }
+
+    /**
+     * Prüft, ob der Benutzer der technische Souvera-Admin-BENUTZER ist (z. B.
+     * scadmin). Matcht UID und E-Mail sowie deren Localpart, damit sowohl
+     * "scadmin" als auch "scadmin@domain" erkannt werden.
+     *
+     * @param string $userId
+     * @param string|null $email optionale E-Mail-Adresse des Benutzers
+     * @return bool
+     */
+    public function isAdminAccount(string $userId, ?string $email = null): bool {
+        $candidates = [strtolower($userId)];
+        if (str_contains($userId, '@')) {
+            $candidates[] = strtolower(substr($userId, 0, strpos($userId, '@')));
+        }
+        if ($email !== null && $email !== '') {
+            $email = strtolower($email);
+            $candidates[] = $email;
+            if (str_contains($email, '@')) {
+                $candidates[] = substr($email, 0, strpos($email, '@'));
+            }
+        }
+        foreach ($this->getAdminUserIds() as $admin) {
+            if (in_array($admin, $candidates, true)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
