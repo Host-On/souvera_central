@@ -43,15 +43,19 @@ class SouveraUsersCount extends Base {
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $count = $this->licenseService->countSouveraUsers();
+        $max = $this->licenseService->getMaxLicenses();
+        $available = max(0, $max - $count);
 
         if ($input->getOption('json')) {
             $output->writeln((string) json_encode([
                 'souvera_users' => $count,
+                'max_licenses' => $max,
+                'available' => $available,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             return 0;
         }
 
-        $output->writeln('Souvera Users: <info>' . $count . '</info>');
+        $output->writeln('Souvera Users: <info>' . $count . '</info> von <info>' . $max . '</info> (verfügbar: <info>' . $available . '</info>)');
         return 0;
     }
 }
