@@ -20,9 +20,15 @@
         <!-- Form -->
         <div class="editor-content">
             <form class="user-form" @submit.prevent="saveUser">
-                <!-- Benutzername-Feld entfernt: Username wird automatisch aus Email generiert (Backend) -->
-
-                <div class="form-grid">
+                <div class="editor-layout">
+                    <div class="editor-main">
+                        <!-- Basisdaten -->
+                        <section class="ed-card">
+                            <div class="section-head">
+                                <Account :size="20" />
+                                <h3>{{ t('souvera_central', 'Basisdaten') }}</h3>
+                            </div>
+                            <div class="base-grid">
                     <!-- Anzeigename -->
                     <div class="form-group">
                         <label for="displayName" class="required">
@@ -97,43 +103,8 @@
                         </p>
                     </div>
 
-                    <!-- Benutzer-Typ: Souvera User (lizenziert, mit Postfach) vs. Nextcloud User -->
-                    <div class="form-group span-full" data-testid="user-type-group">
-                        <label class="required">{{ t('souvera_central', 'Benutzer-Typ') }}</label>
-                        <p class="help-text">
-                            {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
-                        </p>
-                        <div class="user-type-options">
-                            <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
-                                <input
-                                    v-model="formData.isSouveraUser"
-                                    type="radio"
-                                    name="userType"
-                                    :value="true"
-                                    data-testid="user-type-souvera"
-                                />
-                                <Email :size="22" />
-                                <span class="user-type-text">
-                                    <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
-                                    <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
-                                </span>
-                            </label>
-                            <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
-                                <input
-                                    v-model="formData.isSouveraUser"
-                                    type="radio"
-                                    name="userType"
-                                    :value="false"
-                                    data-testid="user-type-nextcloud"
-                                />
-                                <Account :size="22" />
-                                <span class="user-type-text">
-                                    <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
-                                    <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
+                    <!-- Benutzer-Typ: verschoben in die Seitenspalte -->
+
 
                     <!-- Passwort -->
                     <div class="form-group">
@@ -198,8 +169,10 @@
                             {{ t('souvera_central', 'Status kann über „Erweiterte Aktionen" geändert werden') }}
                         </p>
                     </div>
-                </div>
-                <!-- /form-grid -->
+                            </div>
+                        </section>
+                        <!-- /Basisdaten -->
+
 
                 <!-- Email-Aliase & Postfach (nur im Edit-Mode) -->
                 <AliasManager
@@ -248,6 +221,50 @@
                         </div>
                     </div>
                 </section>
+                    </div>
+                    <!-- /editor-main -->
+
+                    <div class="editor-side">
+                        <!-- Benutzer-Typ -->
+                        <section class="ed-card" data-testid="user-type-group">
+                            <div class="section-head">
+                                <Email :size="20" />
+                                <h3>{{ t('souvera_central', 'Benutzer-Typ') }}</h3>
+                            </div>
+                            <p class="help-text">
+                                {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
+                            </p>
+                            <div class="user-type-options">
+                                <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
+                                    <input
+                                        v-model="formData.isSouveraUser"
+                                        type="radio"
+                                        name="userType"
+                                        :value="true"
+                                        data-testid="user-type-souvera"
+                                    />
+                                    <Email :size="22" />
+                                    <span class="user-type-text">
+                                        <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
+                                        <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
+                                    </span>
+                                </label>
+                                <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
+                                    <input
+                                        v-model="formData.isSouveraUser"
+                                        type="radio"
+                                        name="userType"
+                                        :value="false"
+                                        data-testid="user-type-nextcloud"
+                                    />
+                                    <Account :size="22" />
+                                    <span class="user-type-text">
+                                        <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
+                                        <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </section>
 
                 <!-- Erweiterte Aktionen (Bento-Grid, nur im Edit-Mode) -->
                 <section v-if="isEditMode" class="editor-section advanced-section" data-testid="advanced-actions">
@@ -329,6 +346,10 @@
                         </button>
                     </div>
                 </section>
+                    </div>
+                    <!-- /editor-side -->
+                </div>
+                <!-- /editor-layout -->
 
                 <!-- Form Actions -->
                 <div class="form-actions">
@@ -1180,19 +1201,49 @@ export default {
     margin: 0;
 }
 
-/* Full-width responsive field grid */
-.form-grid {
+/* Control-Room Layout: Hauptspalte + Seitenspalte */
+.editor-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 22px 32px;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    gap: 28px;
     align-items: start;
 }
 
-.form-grid .form-group {
+.editor-main,
+.editor-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+@media (max-width: 1100px) {
+    .editor-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Karten */
+.ed-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
+    background: var(--color-main-background);
+    padding: 24px;
+}
+
+/* Basisdaten-Raster */
+.base-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px 24px;
+    align-items: start;
+}
+
+.base-grid .form-group {
     margin-bottom: 0;
 }
 
-.form-grid .span-full {
+.base-grid .span-full {
     grid-column: 1 / -1;
 }
 
@@ -1415,7 +1466,7 @@ export default {
 /* Benutzer-Typ (Souvera User / Nextcloud User) */
 .user-type-options {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 8px;
 }
@@ -1475,7 +1526,7 @@ export default {
 
 /* ===== Editor Sections (full-width) ===== */
 .editor-section {
-    margin-top: 32px;
+    margin-top: 0;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large, 12px);
     background: var(--color-main-background);
@@ -1572,8 +1623,8 @@ export default {
 /* Advanced Actions Bento Grid */
 .action-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+    grid-template-columns: 1fr;
+    gap: 12px;
 }
 
 .action-card {

@@ -523,9 +523,9 @@ export default {
 
 <style scoped>
 .alias-manager {
-    margin-top: 25px;
-    border: 2px solid var(--color-border);
-    border-radius: 6px;
+    margin-top: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large, 12px);
     background: var(--color-main-background);
     overflow: hidden;
 }
@@ -534,8 +534,8 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 20px;
-    background: var(--color-background-hover);
+    padding: 18px 20px 14px;
+    background: transparent;
     border-bottom: 1px solid var(--color-border);
 }
 
