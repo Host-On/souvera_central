@@ -69,6 +69,7 @@ class StalwartService {
         $email = strtolower(trim($email));
         $parts = $this->splitEmail($email);
         if ($parts === null) {
+            $this->lastError = ['stage' => 'validate', 'detail' => 'Ungültige Mailadresse: ' . $email];
             $this->logger->warning('StalwartService: Ungültige Mailadresse für Postfach', ['email' => $email]);
             return false;
         }
@@ -79,6 +80,7 @@ class StalwartService {
 
         $domainId = $this->resolveDomainId($parts['domain']);
         if ($domainId === null) {
+            $this->lastError = ['stage' => 'domain', 'detail' => "Domain '{$parts['domain']}' existiert nicht in Stalwart. Anlegen mit: occ souvera:domain:add {$parts['domain']}"];
             $this->logger->error('StalwartService: Domain in Stalwart nicht vorhanden', [
                 'email' => $email,
                 'domain' => $parts['domain'],
