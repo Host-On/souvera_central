@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.20.0</version>
+    <version>0.21.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -39,6 +39,13 @@
         <command>OCA\SouveraCentral\Command\QuotaDefault</command>
         <command>OCA\SouveraCentral\Command\SouveraReport</command>
         <command>OCA\SouveraCentral\Command\LicensesSet</command>
+        <command>OCA\SouveraCentral\Command\StalwartStatus</command>
+        <command>OCA\SouveraCentral\Command\MailboxList</command>
+        <command>OCA\SouveraCentral\Command\MailboxGet</command>
+        <command>OCA\SouveraCentral\Command\MailboxDelete</command>
+        <command>OCA\SouveraCentral\Command\AliasList</command>
+        <command>OCA\SouveraCentral\Command\AliasAdd</command>
+        <command>OCA\SouveraCentral\Command\AliasRemove</command>
     </commands>
 
     <!--

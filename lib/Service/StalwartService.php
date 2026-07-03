@@ -35,6 +35,8 @@ class StalwartService {
     private array $domainIdCache = [];
     /** @var array<string,string>|null domainId => domainName */
     private ?array $domainNameMapCache = null;
+    /** Letzter Fehler (JMAP-/HTTP-/Validierungsdetail) – für Diagnose via OCC. */
+    private ?array $lastError = null;
 
     public function __construct(
         ConfigService $configService,
@@ -100,6 +102,9 @@ class StalwartService {
 
         $resp = $this->jmapSingle('x:Account/set', ['create' => ['nc0' => $object]]);
         if ($resp === null || !array_key_exists('nc0', $resp['created'] ?? [])) {
+            if ($resp !== null) {
+                $this->lastError = ['stage' => 'create', 'notCreated' => $resp['notCreated'] ?? null];
+            }
             $this->logger->warning('StalwartService: Postfach-Anlage abgelehnt', [
                 'email' => $email,
                 'notCreated' => $resp['notCreated'] ?? null,
@@ -291,6 +296,8 @@ class StalwartService {
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
         if ($ok) {
             $this->logger->info('StalwartService: Alias hinzugefügt', ['email' => $email, 'alias' => $alias]);
+        } elseif ($resp !== null) {
+            $this->lastError = ['stage' => 'alias:add', 'notUpdated' => $resp['notUpdated'] ?? null];
         }
         return $ok;
     }
@@ -492,6 +499,15 @@ class StalwartService {
         ];
     }
 
+    /**
+     * Letzter erfasster Fehler (JMAP-/HTTP-/Validierungsdetail) für Diagnose.
+     *
+     * @return array|null
+     */
+    public function getLastError(): ?array {
+        return $this->lastError;
+    }
+
     // ============================================================================
     // JMAP-Bausteine (auch von SharedMailboxService genutzt)
     // ============================================================================
@@ -608,6 +624,7 @@ class StalwartService {
 
         [$name, $respArgs] = [$responses[0][0] ?? '', $responses[0][1] ?? []];
         if ($name === 'error') {
+            $this->lastError = ['stage' => 'method:' . $method, 'error' => $respArgs];
             $this->logger->warning('StalwartService: JMAP-Methodenfehler', [
                 'method' => $method,
                 'error' => $respArgs,
@@ -640,6 +657,7 @@ class StalwartService {
         }
         [$status, $decoded] = $result;
         if ($status < 200 || $status >= 300 || !is_array($decoded)) {
+            $this->lastError = ['stage' => 'http', 'status' => $status, 'response' => is_array($decoded) ? $decoded : null];
             $this->logger->warning('StalwartService: JMAP-Request fehlgeschlagen', [
                 'status' => $status,
                 'response' => is_array($decoded) ? $decoded : null,
