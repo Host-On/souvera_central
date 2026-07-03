@@ -559,6 +559,67 @@ class StalwartService {
     }
 
     /**
+     * Rohdaten aller Domains (für Diagnose): IDs + vollständige Objekte.
+     *
+     * @return array{ids: array, list: array}
+     */
+    public function listDomainsRaw(): array {
+        $query = $this->jmapSingle('x:Domain/query', []);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
+            return ['ids' => [], 'list' => []];
+        }
+        $got = $this->jmapSingle('x:Domain/get', ['ids' => array_values($ids)]);
+        return ['ids' => array_values($ids), 'list' => $got['list'] ?? []];
+    }
+
+    /**
+     * Domain in Stalwart anlegen (idempotent). Voraussetzung für Postfächer/Aliase.
+     */
+    public function createDomain(string $name): bool {
+        $name = strtolower(trim($name));
+        if ($name === '') {
+            return false;
+        }
+        if ($this->resolveDomainId($name) !== null) {
+            return true; // existiert bereits
+        }
+
+        $resp = $this->jmapSingle('x:Domain/set', ['create' => ['nc0' => ['name' => $name]]]);
+        $ok = $resp !== null && array_key_exists('nc0', $resp['created'] ?? []);
+        if ($ok) {
+            $this->domainIdCache = [];
+            $this->domainNameMapCache = null;
+            $this->logger->info('StalwartService: Domain angelegt', ['domain' => $name]);
+        } elseif ($resp !== null) {
+            $this->lastError = ['stage' => 'domain:create', 'notCreated' => $resp['notCreated'] ?? null];
+        }
+        return $ok;
+    }
+
+    /**
+     * Domain in Stalwart löschen.
+     */
+    public function deleteDomain(string $name): bool {
+        $name = strtolower(trim($name));
+        $id = $this->resolveDomainId($name);
+        if ($id === null) {
+            return false;
+        }
+
+        $resp = $this->jmapSingle('x:Domain/set', ['destroy' => [$id]]);
+        $ok = $resp !== null && in_array($id, $resp['destroyed'] ?? [], true);
+        if ($ok) {
+            $this->domainIdCache = [];
+            $this->domainNameMapCache = null;
+            $this->logger->info('StalwartService: Domain gelöscht', ['domain' => $name]);
+        } elseif ($resp !== null) {
+            $this->lastError = ['stage' => 'domain:delete', 'notDestroyed' => $resp['notDestroyed'] ?? null];
+        }
+        return $ok;
+    }
+
+    /**
      * Konto-ID per Mailadresse finden.
      *
      * @param string $email

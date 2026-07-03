@@ -62,6 +62,15 @@ class StalwartStatus extends Base {
         foreach ($domains as $id => $name) {
             $output->writeln('  - ' . $name . ' <comment>(id=' . $id . ')</comment>');
         }
+        if (empty($domains)) {
+            $raw = $this->stalwart->listDomainsRaw();
+            $output->writeln('  <comment>Keine Domains lesbar (Roh-IDs vom Server: ' . count($raw['ids']) . ').</comment>');
+            if (!empty($raw['list'])) {
+                $output->writeln('  <comment>Roh-Objekte: ' . json_encode($raw['list'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</comment>');
+            }
+            $output->writeln('  <comment>→ Lege zuerst eine Domain an: occ souvera:domain:add &lt;domain&gt;</comment>');
+            $this->printLastError($output);
+        }
 
         $email = $input->getOption('email');
         if ($email !== null && $email !== '') {

@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.21.0</version>
+    <version>0.22.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -46,6 +46,9 @@
         <command>OCA\SouveraCentral\Command\AliasList</command>
         <command>OCA\SouveraCentral\Command\AliasAdd</command>
         <command>OCA\SouveraCentral\Command\AliasRemove</command>
+        <command>OCA\SouveraCentral\Command\DomainList</command>
+        <command>OCA\SouveraCentral\Command\DomainAdd</command>
+        <command>OCA\SouveraCentral\Command\DomainDelete</command>
     </commands>
 
     <!--

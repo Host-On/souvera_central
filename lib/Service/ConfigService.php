@@ -50,6 +50,21 @@ class ConfigService {
     }
 
     /**
+     * Fügt eine Domain zur Central-Erlaubnisliste hinzu (config.php, systemValue).
+     */
+    public function addAllowedDomain(string $domain): void {
+        $domain = strtolower(trim($domain));
+        if ($domain === '') {
+            return;
+        }
+        $domains = $this->getAllowedDomains();
+        if (!in_array($domain, array_map('strtolower', $domains), true)) {
+            $domains[] = $domain;
+            $this->config->setSystemValue('souvera_central.allowed_domains', array_values($domains));
+        }
+    }
+
+    /**
      * Prüft ob eine E-Mail-Domain erlaubt ist
      *
      * @param string $email
