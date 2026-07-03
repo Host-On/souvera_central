@@ -71,9 +71,9 @@ class SyncMailboxes extends Base {
         $process = function (IUser $user) use (&$created, &$skipped, &$noMail, &$errors, &$grouped, $dryRun, $output) {
             $uid = $user->getUID();
 
-            // Admin-User wird von der Provisionierung ausgenommen
-            if ($this->config->isAdminUser($uid)) {
-                $skipped++;
+            // Versteckte/technische Benutzer (z. B. ncadmin, admin) werden NIE
+            // mitgezählt (kein Teil der Provisionierung, auch nicht "übersprungen").
+            if ($this->config->isHiddenUser($uid) || $this->config->isAdminUser($uid)) {
                 return;
             }
 

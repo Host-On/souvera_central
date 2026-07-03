@@ -432,8 +432,10 @@ class AliasApiController extends OCSController {
                 $users = $this->userManager->search('', $limit, $offset);
                 foreach ($users as $user) {
                     $uid = $user->getUID();
+                    // Versteckte/technische Benutzer (z. B. ncadmin, admin) werden
+                    // NIE mitgezählt – sie sind kein Teil der Souvera-User-
+                    // Provisionierung (auch nicht als "übersprungen").
                     if ($this->configService->isHiddenUser($uid) || $this->configService->isAdminUser($uid)) {
-                        $skipped++;
                         continue;
                     }
                     // Nur lizenzierte "Souvera User" (Mitglieder der souvera-users-Gruppe)
