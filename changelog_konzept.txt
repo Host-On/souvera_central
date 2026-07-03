@@ -92,6 +92,20 @@ danach die Oberflaeche neu bauen.
 (Nur die Kategorien verwenden, die tatsaechlich zutreffen.)
 
 
+8) ERSTSTAND / INITIALER EINTRAG
+--------------------------------
+Beim ERSTMALIGEN Anlegen des Changelogs einer App wird der bisherige
+Entwicklungsstand zu EINEM EINZIGEN Versionsblock zusammengefasst (die
+aktuelle App-Version, datiert auf den Starttag). Der Block erhaelt den
+Hinweis:
+  "Erststand des Changelogs – fasst den bisherigen Entwicklungsstand
+   zusammen. Kuenftige Aenderungen werden als einzelne Versionen gefuehrt."
+Grund: viele historische Einzelversionen sind unuebersichtlich.
+
+AB DANN gilt: jede weitere Aenderung bekommt eine EIGENE Version (ein
+eigener Block), nicht mehr sammeln.
+
+
 ========================================================================
  Ende des Konzepts. Bitte identisch fuer Central, Shield und Mail anwenden.
 ========================================================================
