@@ -91,7 +91,7 @@ class StalwartService {
             '@type' => 'User',
             'name' => $parts['local'],
             'domainId' => $domainId,
-            'credentials' => ['0' => ['@type' => 'Password', 'secret' => $password]],
+            'credentials' => (object) ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
         ];
         if ($effectiveQuota > 0) {
@@ -143,7 +143,7 @@ class StalwartService {
 
         $accountId = (string) $account['id'];
         $resp = $this->jmapSingle('x:Account/set', [
-            'update' => [$accountId => ['credentials' => $credentials]],
+            'update' => [$accountId => ['credentials' => (object) $credentials]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
         if ($ok) {
@@ -282,11 +282,11 @@ class StalwartService {
                 return true; // existiert bereits
             }
         }
-        $entries[] = ['enabled' => true, 'name' => $parts['local'], 'domainId' => $aliasDomainId];
+        $entries[] = ['name' => $parts['local'], 'domainId' => $aliasDomainId];
 
         $accountId = (string) $account['id'];
         $resp = $this->jmapSingle('x:Account/set', [
-            'update' => [$accountId => ['aliases' => $this->reindexAliasEntries($entries)]],
+            'update' => [$accountId => ['aliases' => (object) $this->reindexAliasEntries($entries)]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
         if ($ok) {
@@ -328,7 +328,7 @@ class StalwartService {
 
         $accountId = (string) $account['id'];
         $resp = $this->jmapSingle('x:Account/set', [
-            'update' => [$accountId => ['aliases' => $this->reindexAliasEntries($filtered)]],
+            'update' => [$accountId => ['aliases' => (object) $this->reindexAliasEntries($filtered)]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
         if ($ok) {
@@ -837,6 +837,8 @@ class StalwartService {
 
     /**
      * Alias-Einträge als JMAP-List (Map index => Eintrag) neu indizieren.
+     * Aufrufer casten das Ergebnis via (object), damit es als JSON-Objekt
+     * {"0":{...}} statt als Array serialisiert wird (Stalwart-Anforderung).
      *
      * @return array<string,array>
      */
@@ -845,7 +847,6 @@ class StalwartService {
         $i = 0;
         foreach (array_values($entries) as $entry) {
             $clean = [
-                'enabled' => (bool) ($entry['enabled'] ?? true),
                 'name' => (string) $entry['name'],
                 'domainId' => (string) $entry['domainId'],
             ];
