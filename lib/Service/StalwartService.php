@@ -569,10 +569,10 @@ class StalwartService {
     /**
      * Reindexiert die Mails eines EINZELNEN Kontos (Postfach).
      * Entspricht: stalwart-cli create task/AccountMaintenance
-     *   --field accountId=<ID> --field maintenanceType=reindex --field status={...}.
+     *   --field accountId=<ID> --field maintenanceType=reindex --field status={"@type":"Pending"}.
      *
      * @param string $email Mailadresse des Postfachs (accountId wird aufgelöst)
-     * @param string|null $due ISO-8601-Fälligkeit (Default: jetzt, UTC)
+     * @param string|null $due optionale ISO-8601-Fälligkeit (Default: sofort/asap)
      */
     public function reindexAccount(string $email, ?string $due = null): bool {
         $accountId = $this->findAccountId($email, 'User');
@@ -584,22 +584,22 @@ class StalwartService {
             '@type' => 'AccountMaintenance',
             'accountId' => $accountId,
             'maintenanceType' => 'reindex',
-            'status' => ['@type' => 'Pending', 'due' => $this->taskDue($due)],
+            'status' => $this->pendingStatus($due),
         ]);
     }
 
     /**
      * Reindexiert die Mails ALLER Konten (Store-weit).
      * Entspricht: stalwart-cli create task/StoreMaintenance
-     *   --field maintenanceType=reindexAccounts --field status={...}.
+     *   --field maintenanceType=reindexAccounts --field status={"@type":"Pending"}.
      *
-     * @param string|null $due ISO-8601-Fälligkeit (Default: jetzt, UTC)
+     * @param string|null $due optionale ISO-8601-Fälligkeit (Default: sofort/asap)
      */
     public function reindexAllAccounts(?string $due = null): bool {
         return $this->createMaintenanceTask([
             '@type' => 'StoreMaintenance',
             'maintenanceType' => 'reindexAccounts',
-            'status' => ['@type' => 'Pending', 'due' => $this->taskDue($due)],
+            'status' => $this->pendingStatus($due),
         ]);
     }
 
@@ -621,13 +621,18 @@ class StalwartService {
     }
 
     /**
-     * Normalisiert die Task-Fälligkeit auf ISO-8601 (UTC). Ohne Angabe: jetzt.
+     * Task-Status. In Stalwart 0.16 ist das schlicht {"@type":"Pending"} (läuft
+     * sofort). Nur wenn eine Fälligkeit angegeben ist, wird zusätzlich `due`
+     * (ISO-8601) gesetzt.
+     *
+     * @return array
      */
-    private function taskDue(?string $due): string {
+    private function pendingStatus(?string $due): array {
+        $status = ['@type' => 'Pending'];
         if ($due !== null && trim($due) !== '') {
-            return trim($due);
+            $status['due'] = trim($due);
         }
-        return gmdate('Y-m-d\TH:i:s\Z');
+        return $status;
     }
 
     /**
