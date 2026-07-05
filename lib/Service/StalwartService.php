@@ -557,6 +557,79 @@ class StalwartService {
         return $result;
     }
 
+    // ============================================================================
+    // Wartung / Mail-Reindexierung (Stalwart-Tasks)
+    //
+    // Übersetzt die stalwart-cli-Befehle `create task/AccountMaintenance` bzw.
+    // `create task/StoreMaintenance` in JMAP: die CLI-Kurzform Object/Variant
+    // legt ein x:Task-Objekt an und injiziert @type=<Variant>. Damit ist der
+    // JMAP-Aufruf `x:Task/set` mit create + @type=AccountMaintenance/StoreMaintenance.
+    // ============================================================================
+
+    /**
+     * Reindexiert die Mails eines EINZELNEN Kontos (Postfach).
+     * Entspricht: stalwart-cli create task/AccountMaintenance
+     *   --field accountId=<ID> --field maintenanceType=reindex --field status={...}.
+     *
+     * @param string $email Mailadresse des Postfachs (accountId wird aufgelöst)
+     * @param string|null $due ISO-8601-Fälligkeit (Default: jetzt, UTC)
+     */
+    public function reindexAccount(string $email, ?string $due = null): bool {
+        $accountId = $this->findAccountId($email, 'User');
+        if ($accountId === null) {
+            $this->lastError = ['stage' => 'reindex', 'detail' => "Kein Postfach für {$email} gefunden."];
+            return false;
+        }
+        return $this->createMaintenanceTask([
+            '@type' => 'AccountMaintenance',
+            'accountId' => $accountId,
+            'maintenanceType' => 'reindex',
+            'status' => ['@type' => 'Pending', 'due' => $this->taskDue($due)],
+        ]);
+    }
+
+    /**
+     * Reindexiert die Mails ALLER Konten (Store-weit).
+     * Entspricht: stalwart-cli create task/StoreMaintenance
+     *   --field maintenanceType=reindexAccounts --field status={...}.
+     *
+     * @param string|null $due ISO-8601-Fälligkeit (Default: jetzt, UTC)
+     */
+    public function reindexAllAccounts(?string $due = null): bool {
+        return $this->createMaintenanceTask([
+            '@type' => 'StoreMaintenance',
+            'maintenanceType' => 'reindexAccounts',
+            'status' => ['@type' => 'Pending', 'due' => $this->taskDue($due)],
+        ]);
+    }
+
+    /**
+     * Legt einen Stalwart-Wartungs-Task an (x:Task/set create).
+     */
+    private function createMaintenanceTask(array $object): bool {
+        $resp = $this->jmapSingle('x:Task/set', ['create' => ['nc0' => $object]]);
+        $ok = $resp !== null && array_key_exists('nc0', $resp['created'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: Wartungs-Task angelegt', [
+                'type' => $object['@type'] ?? '?',
+                'maintenanceType' => $object['maintenanceType'] ?? '?',
+            ]);
+        } elseif ($resp !== null) {
+            $this->lastError = ['stage' => 'task:create', 'notCreated' => $resp['notCreated'] ?? null];
+        }
+        return $ok;
+    }
+
+    /**
+     * Normalisiert die Task-Fälligkeit auf ISO-8601 (UTC). Ohne Angabe: jetzt.
+     */
+    private function taskDue(?string $due): string {
+        if ($due !== null && trim($due) !== '') {
+            return trim($due);
+        }
+        return gmdate('Y-m-d\TH:i:s\Z');
+    }
+
     /**
      * Leitet aus einem NC-User die zu verwendende Mailadresse ab.
      */
