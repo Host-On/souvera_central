@@ -20,6 +20,7 @@ class SharedMailboxService {
     private StalwartService $stalwartService;
     private IUserManager $userManager;
     private LoggerInterface $logger;
+    private ?string $lastError = null;
 
     public function __construct(
         ConfigService $configService,
@@ -53,7 +54,9 @@ class SharedMailboxService {
         $result = [];
         foreach ($got['list'] ?? [] as $group) {
             if (is_array($group)) {
-                $result[] = $this->shape($group);
+                $shaped = $this->shape($group);
+                $shaped['memberCount'] = $this->countMembers((string) ($group['id'] ?? ''));
+                $result[] = $shaped;
             }
         }
         return $result;
@@ -146,18 +149,40 @@ class SharedMailboxService {
 
     /**
      * Geteiltes Postfach löschen.
+     *
+     * Löst zuerst etwaige Mitglieds-Referenzen (memberGroupIds an den
+     * User-Konten), damit Stalwart das Group-Konto nicht wegen Abhängigkeiten
+     * ablehnt, und verifiziert anschließend, dass das Konto tatsächlich
+     * gelöscht wurde (destroyed). Bei Ablehnung wird der echte Grund gemerkt.
      */
     public function delete(string $name): bool {
+        $this->lastError = null;
         $groupId = $this->groupId($name);
         if ($groupId === null) {
             return true; // bereits weg
         }
+
+        $this->detachAllMembers($groupId);
+
         $resp = $this->stalwartService->jmapSingle('x:Account/set', ['destroy' => [$groupId]]);
-        if ($resp === null) {
-            return false;
+        $destroyed = $resp !== null && in_array($groupId, $resp['destroyed'] ?? [], true);
+        if ($destroyed) {
+            $this->logger->info('SharedMailboxService: Geteiltes Postfach gelöscht', ['name' => $name]);
+            return true;
         }
-        $this->logger->info('SharedMailboxService: Geteiltes Postfach gelöscht', ['name' => $name]);
-        return true;
+
+        $this->lastError = $this->describeDeleteFailure($resp, $groupId);
+        $this->logger->warning('SharedMailboxService: Löschen fehlgeschlagen', [
+            'name' => $name, 'groupId' => $groupId, 'reason' => $this->lastError,
+        ]);
+        return false;
+    }
+
+    /**
+     * Letzte (menschenlesbare) Fehlermeldung, z. B. warum ein Löschen scheiterte.
+     */
+    public function getLastError(): ?string {
+        return $this->lastError;
     }
 
     // ============================================================================
@@ -225,6 +250,66 @@ class SharedMailboxService {
     }
 
     /**
+     * Anzahl der Mitglieder eines Group-Kontos (User mit memberGroupIds=groupId).
+     */
+    private function countMembers(string $groupId): int {
+        if ($groupId === '') {
+            return 0;
+        }
+        $query = $this->stalwartService->jmapSingle('x:Account/query', [
+            'filter' => ['operator' => 'AND', 'conditions' => [
+                ['memberGroupIds' => $groupId],
+                ['@type' => 'User'],
+            ]],
+        ]);
+        return count($query['ids'] ?? []);
+    }
+
+    /**
+     * Löst alle memberGroupIds-Verweise auf diese Gruppe von den User-Konten
+     * (null entfernt den Map-Eintrag – JMAP-Patch-Semantik).
+     */
+    private function detachAllMembers(string $groupId): void {
+        $query = $this->stalwartService->jmapSingle('x:Account/query', [
+            'filter' => ['operator' => 'AND', 'conditions' => [
+                ['memberGroupIds' => $groupId],
+                ['@type' => 'User'],
+            ]],
+        ]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
+            return;
+        }
+        $update = [];
+        foreach ($ids as $uid) {
+            $update[(string) $uid] = ['memberGroupIds/' . $groupId => null];
+        }
+        $this->stalwartService->jmapSingle('x:Account/set', ['update' => $update]);
+    }
+
+    /**
+     * Baut eine menschenlesbare Fehlermeldung aus einer fehlgeschlagenen
+     * destroy-Antwort (notDestroyed) bzw. dem StalwartService-Fehler.
+     */
+    private function describeDeleteFailure(?array $resp, string $groupId): string {
+        $nd = $resp['notDestroyed'][$groupId] ?? ($resp['notDestroyed'] ?? null);
+        if (is_array($nd)) {
+            $msg = $nd['description'] ?? ($nd['type'] ?? null);
+            if (is_string($msg) && $msg !== '') {
+                return $msg;
+            }
+        }
+        $st = $this->stalwartService->getLastError();
+        if (is_array($st)) {
+            $msg = $st['detail'] ?? ($st['type'] ?? null);
+            if (is_string($msg) && $msg !== '') {
+                return $msg;
+            }
+        }
+        return 'Stalwart hat das Löschen abgelehnt.';
+    }
+
+    /**
      * Setzt/entfernt die Gruppen-Mitgliedschaft am User-Konto.
      */
     private function setMembership(string $name, string $userId, bool $add): bool {
@@ -244,7 +329,7 @@ class SharedMailboxService {
         }
 
         $resp = $this->stalwartService->jmapSingle('x:Account/set', [
-            'update' => [$userAccountId => ['memberGroupIds/' . $groupId => $add]],
+            'update' => [$userAccountId => ['memberGroupIds/' . $groupId => $add ? true : null]],
         ]);
         $ok = $resp !== null && array_key_exists($userAccountId, $resp['updated'] ?? []);
         if ($ok) {

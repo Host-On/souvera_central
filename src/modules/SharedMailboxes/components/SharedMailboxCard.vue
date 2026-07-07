@@ -78,6 +78,9 @@ export default {
         },
 
         memberCount() {
+            if (typeof this.mailbox.memberCount === 'number') {
+                return this.mailbox.memberCount
+            }
             const members = this.mailbox.members || []
             return members.length
         }

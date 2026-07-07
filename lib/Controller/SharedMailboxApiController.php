@@ -304,8 +304,9 @@ class SharedMailboxApiController extends OCSController {
             $success = $this->sharedMailboxService->delete($id);
 
             if (!$success) {
+                $reason = $this->sharedMailboxService->getLastError();
                 return new DataResponse(
-                    ['error' => 'Löschen fehlgeschlagen'],
+                    ['error' => $reason !== null ? ('Löschen fehlgeschlagen: ' . $reason) : 'Löschen fehlgeschlagen'],
                     Http::STATUS_INTERNAL_SERVER_ERROR
                 );
             }
