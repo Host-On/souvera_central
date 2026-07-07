@@ -498,4 +498,38 @@ class ConfigService {
         }
         return false;
     }
+
+    // ============================================================================
+    // Instanzweite App-Umbenennung (Branding): Talk -> "Link", Office -> "Desk"
+    //
+    // Immer aktiv (kein Ein/Aus-Schalter). Die Anzeigenamen sind über die
+    // Central-Oberfläche editierbar (AppConfig).
+    // ============================================================================
+
+    public function getBrandingTalkName(): string {
+        $n = trim((string) $this->config->getAppValue('souvera_central', 'settings.branding.talk_name', 'Link'));
+        return $n !== '' ? $n : 'Link';
+    }
+
+    public function getBrandingOfficeName(): string {
+        $n = trim((string) $this->config->getAppValue('souvera_central', 'settings.branding.office_name', 'Desk'));
+        return $n !== '' ? $n : 'Desk';
+    }
+
+    /**
+     * Branding-Konfiguration für das global eingespielte Frontend-Skript.
+     * Bildet App-IDs auf die neuen Anzeigenamen ab.
+     *
+     * @return array{names: array<string,string>}
+     */
+    public function getBrandingConfig(): array {
+        $office = $this->getBrandingOfficeName();
+        return [
+            'names' => [
+                'spreed' => $this->getBrandingTalkName(),
+                'richdocuments' => $office,
+                'richdocumentscode' => $office,
+            ],
+        ];
+    }
 }

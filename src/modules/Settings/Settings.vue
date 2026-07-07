@@ -150,6 +150,51 @@
                 </div>
             </div>
 
+            <!-- 4. APP-NAMEN (BRANDING) -->
+            <div class="settings-section" data-testid="branding-settings-section">
+                <div class="section-header">
+                    <Tag :size="22" />
+                    <h3>{{ t('souvera_central', 'App-Namen (Branding)') }}</h3>
+                </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'Überschreibt instanzweit die Anzeigenamen für alle Benutzer. Immer aktiv.') }}
+                </p>
+
+                <div class="settings-group">
+                    <label class="field-label" for="branding-talk">
+                        {{ t('souvera_central', 'Talk heißt') }}
+                    </label>
+                    <input
+                        id="branding-talk"
+                        v-model="settings.branding.talk_name"
+                        type="text"
+                        class="branding-input"
+                        data-testid="branding-talk-input"
+                        placeholder="Link"
+                        maxlength="32"
+                        @change="saveSettings"
+                    />
+
+                    <label class="field-label" for="branding-office">
+                        {{ t('souvera_central', 'Office / Collabora heißt') }}
+                    </label>
+                    <input
+                        id="branding-office"
+                        v-model="settings.branding.office_name"
+                        type="text"
+                        class="branding-input"
+                        data-testid="branding-office-input"
+                        placeholder="Desk"
+                        maxlength="32"
+                        @change="saveSettings"
+                    />
+
+                    <p class="setting-hint">
+                        {{ t('souvera_central', 'Gilt für App-Menü und Seitentitel bei allen Benutzern der Instanz. Änderungen wirken nach dem nächsten Seitenaufbau.') }}
+                    </p>
+                </div>
+            </div>
+
             <!-- Save Indicator -->
             <div v-if="saving" class="save-indicator">
                 <NcLoadingIcon :size="16" />
@@ -175,6 +220,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import Database from 'vue-material-design-icons/Database.vue'
 import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
+import Tag from 'vue-material-design-icons/Tag.vue'
 
 export default {
     name: 'Settings',
@@ -186,7 +232,8 @@ export default {
         Close,
         Database,
         InfinityIcon,
-        ShieldCheck
+        ShieldCheck,
+        Tag
     },
 
     data() {
@@ -206,6 +253,10 @@ export default {
                     desktop_notifications: false,
                     daily_summary: false,
                     min_spam_score: 2.5
+                },
+                branding: {
+                    talk_name: 'Link',
+                    office_name: 'Desk'
                 }
             },
             quotaOptions: [
@@ -240,7 +291,8 @@ export default {
                     this.settings = {
                         email: data.email || this.settings.email,
                         defaults: data.defaults || this.settings.defaults,
-                        shield: data.shield || this.settings.shield
+                        shield: data.shield || this.settings.shield,
+                        branding: data.branding || this.settings.branding
                     }
                 }
             } catch (error) {
@@ -671,6 +723,28 @@ export default {
     font-size: 13px;
     color: var(--color-text-lighter);
     font-style: italic;
+}
+
+/* Branding Inputs */
+.branding-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 10px 14px;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.branding-input:focus {
+    outline: none;
+    border-color: var(--color-primary-element);
+    box-shadow: 0 0 0 2px var(--color-primary-element-light);
 }
 
 /* Save Indicator */

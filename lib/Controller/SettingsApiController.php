@@ -60,6 +60,11 @@ class SettingsApiController extends OCSController {
                     'daily_summary' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0'),
                     'min_spam_score' => (float) $this->config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5'),
                 ],
+                // Instanzweite App-Umbenennung (immer aktiv, kein Schalter)
+                'branding' => [
+                    'talk_name' => $this->config->getAppValue('souvera_central', 'settings.branding.talk_name', 'Link'),
+                    'office_name' => $this->config->getAppValue('souvera_central', 'settings.branding.office_name', 'Desk'),
+                ],
             ];
 
             return new DataResponse($settings);
@@ -75,7 +80,7 @@ class SettingsApiController extends OCSController {
      * Einstellungen speichern
      */
     #[NoAdminRequired]
-    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null): DataResponse {
+    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null, array $branding = null): DataResponse {
         try {
             // Visibility Settings
             if ($visibility !== null) {
@@ -159,9 +164,18 @@ class SettingsApiController extends OCSController {
                 }
             }
 
+            // Instanzweite App-Umbenennung (immer aktiv, kein Schalter)
+            if ($branding !== null) {
+                if (isset($branding['talk_name'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.branding.talk_name', trim((string) $branding['talk_name']));
+                }
+                if (isset($branding['office_name'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.branding.office_name', trim((string) $branding['office_name']));
+                }
+            }
+
             // Aktualisierte Einstellungen zurückgeben
             return $this->getSettings();
-
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],

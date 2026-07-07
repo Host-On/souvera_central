@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\AppInfo;
 
+use OCA\SouveraCentral\Listener\BrandingScriptListener;
 use OCA\SouveraCentral\Listener\GroupDeletionGuardListener;
 use OCA\SouveraCentral\Listener\PasswordSyncListener;
 use OCA\SouveraCentral\Listener\UserDeprovisionListener;
@@ -22,6 +23,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\IL10N;
 use OCP\INavigationManager;
@@ -50,6 +52,10 @@ class Application extends App implements IBootstrap {
 
         // Delegierte Verwaltung: Souvera-Admins (NC-Superadmin ODER souvera-admins-Mitglied) zulassen.
         $context->registerMiddleware(SouveraAdminMiddleware::class);
+
+        // Instanzweite App-Umbenennung (Talk -> "Link", Office/Collabora -> "Desk")
+        // global auf jeder Seite einspielen.
+        $context->registerEventListener(BeforeTemplateRenderedEvent::class, BrandingScriptListener::class);
     }
 
     public function boot(IBootContext $context): void {
