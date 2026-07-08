@@ -125,12 +125,14 @@ souvera-users komplett – die Verwaltung bleibt trotzdem admin-only):
 occ app:enable souvera_central --groups souvera-admins --groups souvera-users
 ```
 
-**2) BookStack-Doku anbinden** (Regal „Benutzer" für alle, „Administratoren"
-zusätzlich für souvera-admins):
+**2) BookStack-Doku anbinden** — der API-Token wird **verschlüsselt** per occ
+gesetzt (nicht mehr in `config.php`). Die BookStack-URL wird nicht benötigt
+(fester Default `https://doku.souvera.eu`):
 
 ```bash
-occ config:system:set souvera_central.bookstack_url   --value="https://doku.souvera.eu"
-occ config:system:set souvera_central.bookstack_token --value="<TOKEN_ID>:<TOKEN_SECRET>"
+# Empfohlen: über STDIN (keine Shell-History)
+printf '%s' '<TOKEN_ID>:<TOKEN_SECRET>' | occ souvera:bookstack-token:set --stdin
+occ souvera:bookstack-token:show          # Status (maskiert)
 # Optional (Shelf-IDs), Defaults: User=1 (Benutzer), Admin=2 (Administratoren)
 occ config:system:set souvera_central.help_user_shelves  --value='[1]' --type=json
 occ config:system:set souvera_central.help_admin_shelves --value='[2]' --type=json
@@ -138,6 +140,8 @@ occ config:system:set souvera_central.help_admin_shelves --value='[2]' --type=js
 
 Ohne Token zeigt die Hilfe einen „nicht konfiguriert"-Hinweis. Der „Hilfe"-Eintrag
 erscheint oben rechts im Nutzer-Menü (Avatar-Dropdown) für souvera-users + souvera-admins.
+Der Token ist – wie der provider.tools-Token – zentral und auch für Shield/Mail abrufbar
+(siehe `docs/SHARED_PROVIDER_TOKEN.md`).
 
 ---
 

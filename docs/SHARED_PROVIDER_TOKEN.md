@@ -5,7 +5,10 @@ zentral in Central hinterlegt und von dort an die anderen Souvera-Apps
 (**Shield**, **Mail**) ausgegeben – sie müssen **nicht** in jeder App gespeichert
 werden.
 
-Aktuell zentral verwaltet: der API-Token für **`provider.tools`**.
+Aktuell zentral verwaltet:
+- der API-Token für **`provider.tools`** (`ProviderTokenService`)
+- der **BookStack**-API-Token (`BookStackTokenService`) – für die Central-Hilfe
+  und ebenfalls für Shield/Mail abrufbar.
 
 ---
 
@@ -102,3 +105,35 @@ durch den Hoster in Central (occ).
   nicht mehr entschlüsselbar → `getToken()` liefert `null`; einmal neu setzen.
 - **Erweiterbarkeit:** Weitere gemeinsame Credentials können analog als eigene
   Service-Methoden/Keys ergänzt werden – Central bleibt die einzige Quelle.
+
+---
+
+## 5. BookStack-Token (zweite zentrale Zugangsdaten)
+
+Der BookStack-API-Token wird **identisch** verwaltet (verschlüsselt via `ICrypto`,
+gebunden an das Instanz-`secret`). Die BookStack-**URL** wird nicht konfiguriert
+(fester Default `https://doku.souvera.eu`) – zentral verwaltet wird nur der Token.
+
+**Setzen/Status/Löschen (Hoster, via occ):**
+
+```bash
+printf '%s' '<TOKEN_ID>:<TOKEN_SECRET>' | occ souvera:bookstack-token:set --stdin
+occ souvera:bookstack-token:show            # maskiert
+occ souvera:bookstack-token:show --reveal   # Klartext (Debug)
+occ souvera:bookstack-token:delete
+```
+
+**Abrufen (aus Shield / Mail):**
+
+```php
+use OCA\SouveraCentral\Service\BookStackTokenService;
+
+$token = \OCP\Server::get(BookStackTokenService::class)->getToken();
+// string  -> "<TOKEN_ID>:<TOKEN_SECRET>" (entschlüsselt)
+// null    -> nicht gesetzt oder nicht entschlüsselbar
+```
+
+Service-API `OCA\SouveraCentral\Service\BookStackTokenService` (Contract identisch
+zu `ProviderTokenService`): `hasToken()`, `getToken()`, `getMaskedToken()`,
+`getSetAt()`, `setToken(string)`, `clearToken()`, Konstante `PROVIDER = 'bookstack'`.
+**Nur lesen** aus Shield/Mail; Setzen/Löschen erfolgt zentral in Central (occ).
