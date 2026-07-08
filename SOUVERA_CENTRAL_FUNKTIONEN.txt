@@ -1,6 +1,6 @@
 ================================================================================
  SOUVERA CENTRAL – Funktionsübersicht
- App-ID: souvera_central   |   Version: 0.30.0   |   Nextcloud v34
+ App-ID: souvera_central   |   Version: 0.31.0   |   Nextcloud v34
 ================================================================================
 
 Souvera Central ist die zentrale Verwaltungs- und Integrationsapp der Souvera-
@@ -148,6 +148,13 @@ Zentraler, verschlüsselter Zugangsdaten-Hub (für Shield & Mail):
    -> verschlüsselt via Nextcloud ICrypto; andere Souvera-Apps lesen den Token
       zentral aus Central aus (keine Duplikate in jeder App).
 
+Hilfe-Cache & App-Umbenennung (Branding):
+   occ souvera:help:cache-clear                          (BookStack-Cache leeren)
+   souvera_central.help_cache_ttl                        (Cache-Dauer in s, Std. 600)
+   occ souvera:branding:install-theme [--activate]       (Talk->Link, Office->Desk)
+   -> sauberer Theme-l10n-Override; Repair-Step schreibt bei jedem Update ins
+      aktive Theme. Danach: occ maintenance:theme:update
+
 Wichtige Konfigurationsschlüssel (config.php / occ config:system:set):
    souvera_central.stalwart_api_url / .stalwart_admin_user / .stalwart_admin_password
    souvera_central.allowed_domains          (erlaubte Mail-Domains)
@@ -170,6 +177,6 @@ Wichtige Konfigurationsschlüssel (config.php / occ config:system:set):
    - Instanzweites Branding (Link/Desk) + l10n-Overrides auf jeder Seite.
 
 --------------------------------------------------------------------------------
- Hinweis: Diese Übersicht bezieht sich auf Souvera Central v0.30.0.
+ Hinweis: Diese Übersicht bezieht sich auf Souvera Central v0.31.0.
  Bei neuen Funktionen bitte Handbuch + Changelog (BookStack) mitpflegen.
 --------------------------------------------------------------------------------

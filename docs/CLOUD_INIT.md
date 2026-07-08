@@ -143,6 +143,31 @@ erscheint oben rechts im Nutzer-Menü (Avatar-Dropdown) für souvera-users + sou
 Der Token ist – wie der provider.tools-Token – zentral und auch für Shield/Mail abrufbar
 (siehe `docs/SHARED_PROVIDER_TOKEN.md`).
 
+**Cache (ab v0.31.0):** BookStack-Antworten (Baum/Bücher/Seiten) werden instanzweit
+zwischengespeichert (geteilt über Redis/APCu) → schnellere Ladezeiten, weniger Traffic.
+
+```bash
+# TTL in Sekunden (Standard 600 = 10 min; 0 = Cache aus)
+occ config:system:set souvera_central.help_cache_ttl --value=600 --type=integer
+occ souvera:help:cache-clear      # nach Doku-Änderungen sofort neu laden
+```
+
+---
+
+## App-Umbenennung / Branding (Talk→Link, Office/Collabora→Desk)
+
+Der **saubere, dauerhafte** Weg (auch im von Vue gerenderten App-Menü oben) ist der
+Theme-l10n-Override. Ab v0.31.0 schreibt ein **Repair-Step** die Overrides bei jedem
+App-Update automatisch in das **aktive** Theme. Ist noch kein Theme aktiv, einmalig:
+
+```bash
+occ souvera:branding:install-theme --activate   # schreibt Overrides + aktiviert Theme "souvera"
+occ maintenance:theme:update                      # Theme-Cache neu aufbauen
+```
+
+Zusätzlich läuft ein JS-Fallback (best effort) für Instanzen ohne aktives Theme.
+Bei aktivem Theme greift der saubere Override; das JS ändert dann nichts mehr.
+
 ---
 
 ## Zentraler provider.tools-Token (Souvera-Hub, ab v0.28.0)
