@@ -285,9 +285,9 @@ export default {
 }
 
 .help-article {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 32px 40px 64px;
+    max-width: none;
+    margin: 0;
+    padding: 32px clamp(20px, 4vw, 64px) 64px;
 }
 
 .help-article-title {
@@ -417,5 +417,20 @@ export default {
 .rich-content :deep(.callout.danger) {
     border-inline-start-color: var(--color-error);
     background: rgba(var(--color-error-rgb), 0.08);
+}
+
+/* BookStack-Seiten nutzen inline gestylte Info-/Screenshot-Boxen (helle
+   Hintergründe fürs Light-Theme). Farb-/Hintergrundwerte werden serverseitig
+   entfernt; hier ein dezenter, theme-bewusster Hintergrund für gute Lesbarkeit
+   in Light UND Dark. Ränder (border-left etc.) bleiben aus dem Inline-Style. */
+.rich-content :deep(.screenshot-placeholder) {
+    background: var(--color-background-hover);
+    color: var(--color-text-maxcontrast);
+}
+
+.rich-content :deep([style*="border-left"]),
+.rich-content :deep([style*="border-inline-start"]) {
+    background: var(--color-background-hover);
+    border-radius: var(--border-radius, 8px);
 }
 </style>

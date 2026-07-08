@@ -121,8 +121,40 @@ class BookStackService {
             'id' => (int) ($page['id'] ?? $pageId),
             'name' => (string) ($page['name'] ?? ''),
             'book_id' => (int) ($page['book_id'] ?? 0),
-            'html' => (string) ($page['html'] ?? ''),
+            'html' => self::sanitizeInlineStyles((string) ($page['html'] ?? '')),
         ];
+    }
+
+    /**
+     * Entfernt hartkodierte Farb-/Hintergrund-Angaben (color, background,
+     * background-color) aus inline style-Attributen der BookStack-HTML. Diese
+     * Werte sind für das BookStack-Light-Theme gedacht und machen Textboxen in
+     * der Dark-Ansicht unlesbar (z. B. weißer Text auf hellem Kasten). Ränder,
+     * Padding etc. bleiben erhalten; die Farbgebung übernimmt das NC-Theme.
+     */
+    public static function sanitizeInlineStyles(string $html): string {
+        if ($html === '') {
+            return $html;
+        }
+        return (string) preg_replace_callback(
+            '/\sstyle\s*=\s*"([^"]*)"/i',
+            static function (array $m): string {
+                $kept = [];
+                foreach (explode(';', $m[1]) as $decl) {
+                    $decl = trim($decl);
+                    if ($decl === '') {
+                        continue;
+                    }
+                    $prop = strtolower(trim((string) (explode(':', $decl, 2)[0])));
+                    if (in_array($prop, ['color', 'background', 'background-color'], true)) {
+                        continue;
+                    }
+                    $kept[] = $decl;
+                }
+                return $kept === [] ? '' : ' style="' . implode('; ', $kept) . '"';
+            },
+            $html
+        );
     }
 
     /**
