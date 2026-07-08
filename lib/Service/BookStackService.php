@@ -6,10 +6,12 @@ declare(strict_types=1);
  * Souvera Central - BookStack-Dokumentations-Gateway (Hilfe-Seite)
  *
  * Liest die Doku-Inhalte read-only aus der BookStack-Instanz
- * (Standard: https://doku.souvera.eu) über deren REST-API und stellt sie der
- * Central-Hilfe-Seite bereit. Zugang via Config (config.php):
- *   souvera_central.bookstack_url   (Default https://doku.souvera.eu)
- *   souvera_central.bookstack_token ("<TOKEN_ID>:<TOKEN_SECRET>")
+ * (fester Default: https://doku.souvera.eu) über deren REST-API und stellt sie
+ * der Central-Hilfe-Seite bereit.
+ *
+ * Der API-Token wird NICHT mehr im Klartext in config.php gehalten, sondern
+ * zentral + verschlüsselt über BookStackTokenService (occ
+ * souvera:bookstack-token:set). Die BookStack-URL wird nicht konfiguriert.
  *
  * Sichtbarkeit: normale Souvera-User sehen die Regale aus
  * getHelpUserShelfIds() (Default "Benutzer"), Souvera-Admins zusätzlich die
@@ -24,13 +26,14 @@ use Psr\Log\LoggerInterface;
 class BookStackService {
     public function __construct(
         private ConfigService $config,
+        private BookStackTokenService $tokenService,
         private IClientService $clientService,
         private LoggerInterface $logger,
     ) {
     }
 
     public function isConfigured(): bool {
-        return $this->config->isBookStackConfigured();
+        return $this->tokenService->hasToken();
     }
 
     /**
@@ -128,7 +131,8 @@ class BookStackService {
      * @return array<string,mixed>|null
      */
     protected function apiGet(string $path): ?array {
-        if (!$this->config->isBookStackConfigured()) {
+        $token = $this->tokenService->getToken();
+        if ($token === null || $token === '') {
             return null;
         }
         $url = $this->config->getBookStackUrl() . $path;
@@ -136,7 +140,7 @@ class BookStackService {
             $client = $this->clientService->newClient();
             $res = $client->get($url, [
                 'headers' => [
-                    'Authorization' => 'Token ' . $this->config->getBookStackToken(),
+                    'Authorization' => 'Token ' . $token,
                     'Accept' => 'application/json',
                 ],
                 'timeout' => 15,

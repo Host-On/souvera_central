@@ -505,22 +505,12 @@ class ConfigService {
 
     /**
      * Basis-URL der BookStack-Instanz (ohne abschließenden Slash).
+     * Fester Default; nicht als Hoster-Config vorgesehen. Der Zugang läuft
+     * ausschließlich über den verschlüsselten BookStackTokenService (occ).
      */
     public function getBookStackUrl(): string {
         $url = (string) $this->config->getSystemValue('souvera_central.bookstack_url', 'https://doku.souvera.eu');
         return rtrim(trim($url), '/');
-    }
-
-    /**
-     * BookStack API-Token im Format "<TOKEN_ID>:<TOKEN_SECRET>".
-     * Aus Sicherheitsgründen nur via config.php setzbar (kein Default/UI).
-     */
-    public function getBookStackToken(): string {
-        return trim((string) $this->config->getSystemValue('souvera_central.bookstack_token', ''));
-    }
-
-    public function isBookStackConfigured(): bool {
-        return $this->getBookStackUrl() !== '' && $this->getBookStackToken() !== '';
     }
 
     /**
