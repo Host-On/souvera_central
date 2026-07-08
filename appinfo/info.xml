@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.30.0</version>
+    <version>0.31.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -62,6 +62,7 @@
         <command>OCA\SouveraCentral\Command\BookStackTokenSet</command>
         <command>OCA\SouveraCentral\Command\BookStackTokenShow</command>
         <command>OCA\SouveraCentral\Command\BookStackTokenDelete</command>
+        <command>OCA\SouveraCentral\Command\HelpCacheClear</command>
     </commands>
 
     <!--

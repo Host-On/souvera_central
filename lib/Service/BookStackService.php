@@ -20,20 +20,59 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Service;
 
+use OCA\SouveraCentral\AppInfo\Application;
 use OCP\Http\Client\IClientService;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 
 class BookStackService {
+    private bool $cacheResolved = false;
+    private ?ICache $cache = null;
+
     public function __construct(
         private ConfigService $config,
         private BookStackTokenService $tokenService,
         private IClientService $clientService,
         private LoggerInterface $logger,
+        private ICacheFactory $cacheFactory,
     ) {
     }
 
     public function isConfigured(): bool {
         return $this->tokenService->hasToken();
+    }
+
+    /**
+     * Gemeinsamer (instanzweiter) Cache für BookStack-Antworten. Bevorzugt den
+     * verteilten Cache (Redis/Memcached), fällt auf lokalen Cache (APCu) zurück;
+     * ohne Memcache = kein Cache (null). BookStack-Inhalte sind für alle Nutzer
+     * identisch, daher ist ein geteilter Cache ideal.
+     */
+    private function getCache(): ?ICache {
+        if ($this->cacheResolved) {
+            return $this->cache;
+        }
+        $this->cacheResolved = true;
+        $prefix = Application::APP_ID . '_help/';
+        if ($this->cacheFactory->isAvailable()) {
+            $this->cache = $this->cacheFactory->createDistributed($prefix);
+        } elseif ($this->cacheFactory->isLocalCacheAvailable()) {
+            $this->cache = $this->cacheFactory->createLocal($prefix);
+        }
+        return $this->cache;
+    }
+
+    /**
+     * Leert den Hilfe-Cache. Rückgabe false, wenn kein Cache verfügbar ist.
+     */
+    public function clearCache(): bool {
+        $cache = $this->getCache();
+        if ($cache === null) {
+            return false;
+        }
+        $cache->clear();
+        return true;
     }
 
     /**
@@ -158,7 +197,10 @@ class BookStackService {
     }
 
     /**
-     * Führt einen GET gegen die BookStack-API aus.
+     * Führt einen GET gegen die BookStack-API aus. Erfolgreiche Antworten werden
+     * (sofern ein Cache verfügbar und help_cache_ttl > 0) instanzweit
+     * zwischengespeichert – das verkürzt Ladezeiten und minimiert den Traffic
+     * zur BookStack-Instanz. Fehler/leer werden nicht gecacht (erneuter Versuch).
      *
      * @return array<string,mixed>|null
      */
@@ -167,6 +209,20 @@ class BookStackService {
         if ($token === null || $token === '') {
             return null;
         }
+
+        $ttl = $this->config->getHelpCacheTtl();
+        $cache = $ttl > 0 ? $this->getCache() : null;
+        $cacheKey = $cache !== null ? 'bs:' . md5($path) : null;
+        if ($cache !== null) {
+            $hit = $cache->get($cacheKey);
+            if (is_string($hit)) {
+                $decoded = json_decode($hit, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
+
         $url = $this->config->getBookStackUrl() . $path;
         try {
             $client = $this->clientService->newClient();
@@ -178,7 +234,13 @@ class BookStackService {
                 'timeout' => 15,
             ]);
             $data = json_decode((string) $res->getBody(), true);
-            return is_array($data) ? $data : null;
+            if (!is_array($data)) {
+                return null;
+            }
+            if ($cache !== null && $cacheKey !== null) {
+                $cache->set($cacheKey, json_encode($data), $ttl);
+            }
+            return $data;
         } catch (\Throwable $e) {
             $this->logger->warning('[souvera_central] BookStack API GET fehlgeschlagen (' . $path . '): ' . $e->getMessage());
             return null;

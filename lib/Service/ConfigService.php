@@ -514,6 +514,16 @@ class ConfigService {
     }
 
     /**
+     * Cache-Dauer (Sekunden) für BookStack-Antworten der Hilfe. Verkürzt
+     * Ladezeiten und minimiert Traffic zur BookStack-Instanz. Standard: 600 (10 min).
+     * 0 = Cache deaktiviert. Config: souvera_central.help_cache_ttl.
+     */
+    public function getHelpCacheTtl(): int {
+        $v = (int) $this->config->getSystemValue('souvera_central.help_cache_ttl', 600);
+        return $v < 0 ? 0 : $v;
+    }
+
+    /**
      * BookStack-Shelf-IDs, die normale Souvera-User (Endnutzer) in der Hilfe
      * sehen. Standard: [1] ("Benutzer"). Config: souvera_central.help_user_shelves.
      *
