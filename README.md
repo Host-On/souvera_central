@@ -141,6 +141,31 @@ Optionen: `--password` | `--password-stdin` | `--generate`, `--force` (Lizenzlim
 `souvera:provision-mailbox` Optionen: `--password` | `--password-stdin` | `--generate`,
 `--display-name`, `--quota` (Bytes, 0 = unbegrenzt).
 
+### Instanzweite App-Umbenennung (Talk → „Link", Office/Collabora → „Desk")
+
+Das App-Menü + der Seitentitel werden automatisch umbenannt (Frontend-Skript, immer aktiv).
+Für die **tiefe** Umbenennung **innerhalb** von Talk und Office/Collabora (Menüs, Titel,
+Benachrichtigungstexte) werden native NC-Theme-l10n-Overrides installiert:
+
+```bash
+# Overrides für de/en/nl in ein Theme schreiben und dieses aktivieren
+sudo -u www-data php occ souvera:branding:install-theme --activate
+
+# Vorschau ohne Schreiben
+sudo -u www-data php occ souvera:branding:install-theme --dry-run
+
+# Alle vorhandenen Sprachen der Ziel-Apps, eigenes Theme
+sudo -u www-data php occ souvera:branding:install-theme --theme=souvera --all-langs --activate
+
+# Danach Theme-Caches aktualisieren
+sudo -u www-data php occ maintenance:theme:update
+```
+
+Schreibt `themes/<theme>/apps/{spreed,richdocuments,richdocumentscode}/l10n/<lang>.{js,json}`
+(vollständige Dateien, nur die Produktnamen geändert). **Nach NC-/App-Updates erneut ausführen.**
+Optionen: `--theme=<name>` (Default: aktives Theme oder `souvera`), `--lang=de,en,nl`,
+`--all-langs`, `--activate`, `--dry-run`.
+
 ## Entwicklung
 
 ```bash

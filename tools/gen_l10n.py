@@ -1,18 +1,43 @@
 #!/usr/bin/env python3
 """Generiert die Nextcloud-l10n-Dateien (EN, NL) für souvera_central.
 
-Quelle: /tmp/i18n_strings.json (sortierte, deduplizierte Liste aller
-uebersetzbaren Strings). EN/NL sind index-gleich zur Quelle ausgerichtet.
+Quelle (selbst-tragend): Alle uebersetzbaren Strings werden direkt aus dem
+Frontend-Code (src/**/*.vue, *.js) extrahiert -> t('souvera_central', '...').
+Ergibt die sortierte, deduplizierte Liste (SRC). EN/NL sind index-gleich zur
+Quelle ausgerichtet. Der Legacy-Key 'Central' (frueher im Code, inzwischen
+entfernt) wird ergaenzt, damit die Ausrichtung zu den EN/NL-Arrays exakt bleibt.
 """
+import glob
 import json
 import os
+import re
 
 APP = "souvera_central"
 PLURAL = "nplurals=2; plural=(n != 1);"
-OUT = os.path.join(os.path.dirname(__file__), "..", "l10n")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "l10n")
 
-with open("/tmp/i18n_strings.json", encoding="utf-8") as f:
-    SRC = json.load(f)
+_PAT = re.compile(
+    r"""[^A-Za-z0-9_][tn]\(\s*['"]souvera_central['"]\s*,\s*(['"])(.*?)(?<!\\)\1""",
+    re.S,
+)
+
+
+def extract_src():
+    found = set()
+    files = glob.glob(os.path.join(ROOT, "src", "**", "*.vue"), recursive=True)
+    files += glob.glob(os.path.join(ROOT, "src", "**", "*.js"), recursive=True)
+    for f in files:
+        with open(f, encoding="utf-8") as fh:
+            for m in _PAT.finditer(fh.read()):
+                s = m.group(2).replace("\\'", "'").replace('\\"', '"').replace("\\n", "\n")
+                found.add(s)
+    # Legacy-Key (nicht mehr im Code, aber Teil der ausgerichteten EN/NL-Arrays)
+    found.add("Central")
+    return sorted(found)
+
+
+SRC = extract_src()
 
 EN = [
     "\"{group}\" was removed.",
