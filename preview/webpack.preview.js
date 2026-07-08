@@ -4,7 +4,10 @@ const { VueLoaderPlugin } = require('vue-loader')
 module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production'
     return {
-        entry: { preview: path.join(__dirname, 'preview-entry.js') },
+        entry: {
+            preview: path.join(__dirname, 'preview-entry.js'),
+            'help-preview': path.join(__dirname, 'help-entry.js')
+        },
         output: {
             path: path.resolve(__dirname),
             filename: '[name].js',

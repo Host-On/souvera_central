@@ -91,4 +91,28 @@ class PermissionService {
         }
         return $this->isSouveraAdmin($user->getUID());
     }
+
+    /**
+     * Prüft, ob der Benutzer ein lizenzierter "Souvera User" ist
+     * (Mitglied der souvera-users-Gruppe).
+     *
+     * @param string|null $userId UID; null = aktuell angemeldeter Benutzer
+     */
+    public function isSouveraUser(?string $userId = null): bool {
+        $userId ??= $this->getCurrentUserId();
+        if ($userId === null || $userId === '') {
+            return false;
+        }
+        return $this->groupManager->isInGroup($userId, $this->config->getMailGroupId());
+    }
+
+    /**
+     * Darf der (aktuelle) Benutzer die Hilfe-Seite sehen?
+     * Zugang für Souvera-Admins UND Souvera-User – NICHT für reine NC-User.
+     *
+     * @param string|null $userId UID; null = aktuell angemeldeter Benutzer
+     */
+    public function canSeeHelp(?string $userId = null): bool {
+        return $this->isSouveraAdmin($userId) || $this->isSouveraUser($userId);
+    }
 }

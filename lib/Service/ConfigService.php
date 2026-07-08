@@ -500,6 +500,72 @@ class ConfigService {
     }
 
     // ============================================================================
+    // Hilfe / BookStack-Dokumentation (Standard: doku.souvera.eu)
+    // ============================================================================
+
+    /**
+     * Basis-URL der BookStack-Instanz (ohne abschließenden Slash).
+     */
+    public function getBookStackUrl(): string {
+        $url = (string) $this->config->getSystemValue('souvera_central.bookstack_url', 'https://doku.souvera.eu');
+        return rtrim(trim($url), '/');
+    }
+
+    /**
+     * BookStack API-Token im Format "<TOKEN_ID>:<TOKEN_SECRET>".
+     * Aus Sicherheitsgründen nur via config.php setzbar (kein Default/UI).
+     */
+    public function getBookStackToken(): string {
+        return trim((string) $this->config->getSystemValue('souvera_central.bookstack_token', ''));
+    }
+
+    public function isBookStackConfigured(): bool {
+        return $this->getBookStackUrl() !== '' && $this->getBookStackToken() !== '';
+    }
+
+    /**
+     * BookStack-Shelf-IDs, die normale Souvera-User (Endnutzer) in der Hilfe
+     * sehen. Standard: [1] ("Benutzer"). Config: souvera_central.help_user_shelves.
+     *
+     * @return int[]
+     */
+    public function getHelpUserShelfIds(): array {
+        return $this->parseShelfIds('souvera_central.help_user_shelves', [1]);
+    }
+
+    /**
+     * Zusätzliche Shelf-IDs, die NUR Souvera-Admins sehen. Standard: [2]
+     * ("Administratoren"). Config: souvera_central.help_admin_shelves.
+     *
+     * @return int[]
+     */
+    public function getHelpAdminShelfIds(): array {
+        return $this->parseShelfIds('souvera_central.help_admin_shelves', [2]);
+    }
+
+    /**
+     * @param int[] $default
+     * @return int[]
+     */
+    private function parseShelfIds(string $key, array $default): array {
+        $raw = $this->config->getSystemValue($key, $default);
+        if (is_string($raw)) {
+            $raw = array_map('trim', explode(',', $raw));
+        }
+        if (!is_array($raw)) {
+            $raw = $default;
+        }
+        $ids = [];
+        foreach ($raw as $v) {
+            $n = (int) $v;
+            if ($n > 0) {
+                $ids[] = $n;
+            }
+        }
+        return array_values(array_unique($ids !== [] ? $ids : $default));
+    }
+
+    // ============================================================================
     // Instanzweite App-Umbenennung (Branding): Talk -> "Link", Office -> "Desk"
     //
     // Feste Souvera-Namen (NICHT editierbar), immer aktiv.

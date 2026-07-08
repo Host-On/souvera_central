@@ -16,6 +16,15 @@
     min-height: 0;
 }
 
+/* Hilfe-Seite nutzt denselben Vue-Mount-Mechanismus wie die Verwaltung. */
+#souvera-help-app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 /* Lade-Zustand vor dem Mounten der Vue-App */
 .loading-container {
     display: flex;

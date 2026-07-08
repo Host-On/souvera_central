@@ -70,20 +70,35 @@ class Application extends App implements IBootstrap {
             if ($user === null) {
                 return;
             }
-            // Nur anzeigen, wenn die App für diesen Benutzer aktiviert ist
-            // (Gruppenbeschränkung) UND er Souvera-Admin ist – sonst kein toter Eintrag.
-            if (!$permission->canSeeCentralNavigation()) {
-                return;
+            // Verwaltungs-Navigation (App-Menü, oben) – NUR Souvera-Admins.
+            // Erscheint nur, wenn die App für den Benutzer aktiviert ist UND er
+            // Souvera-Admin ist – sonst kein toter Eintrag.
+            if ($permission->canSeeCentralNavigation()) {
+                $navigationManager->add(static function () use ($urlGenerator, $l10n): array {
+                    return [
+                        'id' => self::APP_ID,
+                        'order' => 10,
+                        'href' => $urlGenerator->linkToRoute('souvera_central.page.index'),
+                        'icon' => $urlGenerator->imagePath(self::APP_ID, 'app.svg'),
+                        'name' => $l10n->t('Central'),
+                    ];
+                });
             }
-            $navigationManager->add(static function () use ($urlGenerator, $l10n): array {
-                return [
-                    'id' => self::APP_ID,
-                    'order' => 10,
-                    'href' => $urlGenerator->linkToRoute('souvera_central.page.index'),
-                    'icon' => $urlGenerator->imagePath(self::APP_ID, 'app.svg'),
-                    'name' => $l10n->t('Central'),
-                ];
-            });
+            // Hilfe (Nutzer-Menü oben rechts, type "settings") – Souvera-User UND
+            // Souvera-Admins. Bewusst getrennt von der Verwaltung: normale
+            // Souvera-User sehen ausschließlich die Hilfe, nie die Verwaltung.
+            if ($permission->canSeeHelp()) {
+                $navigationManager->add(static function () use ($urlGenerator, $l10n): array {
+                    return [
+                        'id' => 'souvera_central_help',
+                        'order' => 5,
+                        'type' => 'settings',
+                        'href' => $urlGenerator->linkToRoute('souvera_central.help.index'),
+                        'icon' => $urlGenerator->imagePath(self::APP_ID, 'app.svg'),
+                        'name' => $l10n->t('Hilfe'),
+                    ];
+                });
+            }
         });
     }
 }

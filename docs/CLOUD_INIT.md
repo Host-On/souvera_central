@@ -110,3 +110,43 @@ occ config:system:set souvera_central.mail_group     --value="souvera-users"    
 occ config:system:set souvera_central.admin_group    --value="souvera-admins"         # Default (Souvera-Admin-Gruppe)
 occ config:system:set souvera_central.hidden_users   --value='["ncadmin"]' --type=json # in Central ausblenden
 ```
+
+---
+
+## Hilfe-Seite (BookStack) & App-Freigabe (ab v0.28.0)
+
+Die Hilfe ist Teil von Central, aber – anders als die Verwaltung – auch für
+**souvera-users** zugänglich. Verwaltung bleibt ausschließlich für **souvera-admins**.
+
+**1) App für BEIDE Gruppen freigeben** (sonst blockt NC den Hilfe-Zugriff für
+souvera-users komplett – die Verwaltung bleibt trotzdem admin-only):
+
+```bash
+occ app:enable souvera_central --groups souvera-admins --groups souvera-users
+```
+
+**2) BookStack-Doku anbinden** (Regal „Benutzer" für alle, „Administratoren"
+zusätzlich für souvera-admins):
+
+```bash
+occ config:system:set souvera_central.bookstack_url   --value="https://doku.souvera.eu"
+occ config:system:set souvera_central.bookstack_token --value="<TOKEN_ID>:<TOKEN_SECRET>"
+# Optional (Shelf-IDs), Defaults: User=1 (Benutzer), Admin=2 (Administratoren)
+occ config:system:set souvera_central.help_user_shelves  --value='[1]' --type=json
+occ config:system:set souvera_central.help_admin_shelves --value='[2]' --type=json
+```
+
+Ohne Token zeigt die Hilfe einen „nicht konfiguriert"-Hinweis. Der „Hilfe"-Eintrag
+erscheint oben rechts im Nutzer-Menü (Avatar-Dropdown) für souvera-users + souvera-admins.
+
+---
+
+## Zentraler provider.tools-Token (Souvera-Hub, ab v0.28.0)
+
+Central hält gemeinsame Zugangsdaten einmal verschlüsselt vor; Shield/Mail beziehen
+sie von hier (siehe `docs/SHARED_PROVIDER_TOKEN.md`).
+
+```bash
+printf '%s' 'PROVIDER_TOOLS_TOKEN' | occ souvera:provider-token:set --stdin
+occ souvera:provider-token:show          # Status (maskiert)
+```

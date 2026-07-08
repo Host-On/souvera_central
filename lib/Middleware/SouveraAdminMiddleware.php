@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Middleware;
 
+use OCA\SouveraCentral\Controller\HelpApiController;
+use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Exception\NotSouveraAdminException;
 use OCA\SouveraCentral\Service\PermissionService;
 use OCP\AppFramework\Controller;
@@ -31,6 +33,11 @@ class SouveraAdminMiddleware extends Middleware {
     }
 
     public function beforeController(Controller $controller, string $methodName): void {
+        // Hilfe-Controller haben eine eigene, gelockerte Prüfung (canSeeHelp)
+        // und sind daher von der Souvera-Admin-Pflicht ausgenommen.
+        if ($controller instanceof HelpController || $controller instanceof HelpApiController) {
+            return;
+        }
         if ($this->permission->isSouveraAdmin()) {
             return;
         }

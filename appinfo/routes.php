@@ -84,5 +84,11 @@ return [
         ['name' => 'shared_mailbox_api#getMembers', 'url' => '/api/shared-mailboxes/{id}/members', 'verb' => 'GET'],
         ['name' => 'shared_mailbox_api#addMember', 'url' => '/api/shared-mailboxes/{id}/members', 'verb' => 'POST'],
         ['name' => 'shared_mailbox_api#removeMember', 'url' => '/api/shared-mailboxes/{id}/members/{userId}', 'verb' => 'DELETE'],
+
+        // Hilfe-Seite (Souvera-User + Souvera-Admins) + BookStack-Doku-Proxy
+        ['name' => 'help#index', 'url' => '/help', 'verb' => 'GET'],
+        ['name' => 'help_api#tree', 'url' => '/api/help/tree', 'verb' => 'GET'],
+        ['name' => 'help_api#book', 'url' => '/api/help/books/{id}', 'verb' => 'GET'],
+        ['name' => 'help_api#page', 'url' => '/api/help/pages/{id}', 'verb' => 'GET'],
     ]
 ];
