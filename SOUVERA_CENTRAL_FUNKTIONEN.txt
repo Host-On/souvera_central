@@ -1,0 +1,175 @@
+================================================================================
+ SOUVERA CENTRAL – Funktionsübersicht
+ App-ID: souvera_central   |   Version: 0.30.0   |   Nextcloud v34
+================================================================================
+
+Souvera Central ist die zentrale Verwaltungs- und Integrationsapp der Souvera-
+Plattform in Nextcloud. Sie verbindet Nextcloud mit dem Stalwart-Mailserver
+(v0.16, JMAP), stellt eine delegierte Administration bereit, liefert eine
+integrierte Hilfe (BookStack) und dient als zentraler, verschlüsselter
+Zugangsdaten-Hub für die übrigen Souvera-Apps (Shield, Mail).
+
+Rollenmodell:
+  - Nextcloud User  : regulärer NC-Account OHNE Souvera-Lizenz/Postfach.
+  - Souvera User    : lizenzierter Nutzer MIT Stalwart-Postfach (Gruppe
+                      "souvera-users").
+  - Souvera-Admin   : darf Central verwalten OHNE NC-Superadmin zu sein
+                      (Gruppe "souvera-admins").
+  - Hoster/Superadmin: richtet die Instanz per OCC/config.php ein.
+
+
+================================================================================
+ A) NUTZER-FUNKTIONEN  (für alle Souvera User / Endnutzer)
+================================================================================
+
+1. Hilfe & Dokumentation
+   - "Hilfe"-Eintrag oben rechts im Nutzer-Menü (Avatar-Dropdown).
+   - Integrierte Doku aus BookStack im Central-Layout (Regale > Bücher >
+     Kapitel > Seiten), inkl. Bilder/Screenshots.
+   - Sichtbar für Souvera User UND Souvera-Admins (rollenbasiert).
+   - Endnutzer sehen das Regal "Benutzer"; Admins zusätzlich "Administratoren".
+
+2. E-Mail-Postfach (automatisch bereitgestellt)
+   - Als Souvera User wird automatisch ein Stalwart-Postfach angelegt
+     (E-Mail-Adresse = Nextcloud-Kennung/erlaubte Domain).
+   - Nextcloud-Passwortänderungen werden automatisch zum Postfach gespiegelt
+     (Self-Service, "Passwort vergessen", Admin-Reset).
+   - Nur Souvera User sehen die Mail-App (smail) – gesteuert über die Gruppe
+     "Souvera Users".
+
+3. Oberfläche & Sprache
+   - Instanzweite App-Umbenennung: Talk -> "Link", Collabora/Office -> "Desk"
+     (in der gesamten Nextcloud-Oberfläche sichtbar).
+   - Vollständige Übersetzungen: Deutsch "du" (de) und Deutsch "Sie" (de_DE),
+     Englisch (en), Niederländisch (nl) – je 308 Texte.
+   - Natives Nextcloud-v34-Design inkl. Hell/Dunkel-Modus.
+
+
+================================================================================
+ B) ADMIN-FUNKTIONEN – Oberfläche  (für Souvera-Admins, App "Central")
+================================================================================
+Zugang: App-Icon oben, NUR für Mitglieder der Gruppe "souvera-admins"
+(bzw. NC-Superadmin). Nicht-Admins erhalten kein Icon und 403.
+
+1. Dashboard
+   - Kennzahlen: Benutzer, Gruppen, geteilte Postfächer, Lizenzen (genutzt/max).
+   - Lizenz-Warnbanner ab 80 % / bei 100 % (hell & dunkel lesbar).
+   - Stalwart-Status (verbunden/nicht erreichbar/nicht konfiguriert + Server-URL).
+   - Mail-Gruppe "Souvera Users" inkl. Mitgliederzahl.
+   - System-Info (App-Version).
+
+2. Benutzerverwaltung
+   - Anlegen, Bearbeiten, Löschen von Benutzern (Löschen entfernt auch das
+     Stalwart-Postfach).
+   - Aktivieren / Deaktivieren.
+   - Passwort setzen, NC-Speicherkontingent (Quota) festlegen.
+   - Benutzertyp umschalten: "Souvera User" <-> "Nextcloud User".
+   - "Zum Souvera User machen" (Upgrade inkl. Lizenzprüfung + Postfach).
+   - "Zum Souvera-Admin machen" / "Souvera-Admin-Rechte entfernen"
+     (mit Selbst-Aussperr-Schutz).
+   - Gruppenmitgliedschaft & Manager zuweisen.
+   - Alle Geräte trennen + lokale Daten löschen (Remote-Wipe).
+   - Willkommens-E-Mail erneut versenden.
+   - Anzeige je Nutzer: Typ-Badge (Souvera/Nextcloud/Admin), Postfach-Indikator,
+     NC-Speicher, Postfach-Belegung (farbcodierter Auslastungsbalken).
+   - Lizenzzählung (Souvera-Admins und ausgeblendete Technik-User zählen nicht).
+
+3. Postfach-Verwaltung (Stalwart, pro Benutzer)
+   - Postfach anlegen/prüfen.
+   - Postfach-Speicherlimit (E-Mail-Quota) je Benutzer setzen.
+   - E-Mail-Aliase verwalten (hinzufügen/entfernen, Verfügbarkeit prüfen).
+   - Postfächer synchronisieren (Backfill bestehender Souvera User).
+
+4. Gruppenverwaltung
+   - Gruppen anlegen, bearbeiten, löschen.
+   - Mitglieder anzeigen, hinzufügen, entfernen.
+   - Souvera-Systemgruppen ("souvera-users"/"souvera-admins") sind im normalen
+     Editor gesperrt und vor Löschung geschützt; NC-Systemgruppe "admin"
+     ausgeblendet.
+
+5. Geteilte Postfächer (Shared Mailboxes)
+   - Anlegen, Bearbeiten, Löschen.
+   - Mitglieder verwalten (Mitglieder können empfangen UND "im Namen senden").
+
+6. Einstellungen
+   - Sichtbarkeit von Feldern (Manager, Gruppen, Speicherort, letzter Login,
+     E-Mail, Backend).
+   - Gruppen-Sortierung, Willkommens-E-Mail an neue Benutzer, Standard-Quota.
+   - Souvera-Shield-Einstellungen (Central ist die Quelle, Shield liest sie):
+     Desktop-Benachrichtigungen, tägliche Zusammenfassung, minimaler Spam-Score.
+
+7. Hilfe (Admin-Sicht)
+   - Zusätzlich zum Regal "Benutzer" auch "Administratoren".
+
+
+================================================================================
+ C) ADMIN-FUNKTIONEN – Hoster / Kommandozeile (occ)  &  Konfiguration
+================================================================================
+Diese Funktionen liegen beim Hoster/NC-Superadmin (nicht in der UI).
+
+Provisionierung & Benutzer:
+   occ souvera:provision-mailbox <email> [--password|--password-stdin|--generate]
+   occ souvera:make-souvera-user <uid|email> [--generate] [--force]
+   occ souvera:sync-mailboxes [--dry-run]
+   occ souvera:seed-users                      (Testdaten)
+   occ souvera_central:users:count
+
+Lizenzen & Quota:
+   occ souvera_central:licenses:set <anzahl>
+   occ souvera_central:quota:default <größe>          (Standard neuer Postfächer)
+   occ souvera_central:quota:set <größe> <email>|--all
+   occ souvera_central:report [--json]                 (Belegung/Limit-Übersicht)
+
+Postfächer & Aliase (Stalwart):
+   occ souvera:mailbox:list [--json]
+   occ souvera:mailbox:get <email>
+   occ souvera:mailbox:delete <email> [--yes]
+   occ souvera:mailbox:reindex <email> | souvera:mailbox:reindex-all
+   occ souvera:alias:list <email>
+   occ souvera:alias:add <email> <alias>
+   occ souvera:alias:remove <email> <alias>
+   occ souvera:alias:global-list [--json]              (serverweite Alias-Liste)
+   occ souvera:alias:global-find <alias>
+   occ souvera:alias:global-remove <alias> [--yes]     (gibt Adresse frei)
+
+Domains & Diagnose:
+   occ souvera:domain:list [--json]
+   occ souvera:domain:add <domain> [--allow]
+   occ souvera:domain:delete <domain> [--yes]
+   occ souvera:stalwart:status [--email <adresse>]
+
+Branding (instanzweite Umbenennung Talk/Office):
+   occ souvera:branding:install-theme [--activate]
+   (danach: occ maintenance:theme:update)
+
+Zentraler, verschlüsselter Zugangsdaten-Hub (für Shield & Mail):
+   occ souvera:provider-token:set|show|delete           (provider.tools-Token)
+   occ souvera:bookstack-token:set|show|delete           (BookStack-Token)
+   -> verschlüsselt via Nextcloud ICrypto; andere Souvera-Apps lesen den Token
+      zentral aus Central aus (keine Duplikate in jeder App).
+
+Wichtige Konfigurationsschlüssel (config.php / occ config:system:set):
+   souvera_central.stalwart_api_url / .stalwart_admin_user / .stalwart_admin_password
+   souvera_central.allowed_domains          (erlaubte Mail-Domains)
+   souvera_central.max_licenses             (Lizenzanzahl)
+   souvera_central.admin_group              (Default "souvera-admins")
+   souvera_central.mail_group               (Default "souvera-users")
+   souvera_central.hidden_users             (Default ["ncadmin"])
+   souvera_central.hidden_groups            (Default ["admin"])
+   souvera_central.help_user_shelves / .help_admin_shelves
+
+
+================================================================================
+ D) AUTOMATISCHE HINTERGRUND-FUNKTIONEN (ohne Interaktion)
+================================================================================
+   - Postfach anlegen bei Erstellung eines Souvera Users (Event-Listener).
+   - Passwort-Synchronisation Nextcloud -> Stalwart bei jeder PW-Änderung.
+   - Postfach-Löschung bei Löschung eines Nextcloud-Benutzers.
+   - Automatische Pflege der Gruppe "Souvera Users" (smail-Sichtbarkeit).
+   - Schutz der Souvera-Systemgruppen vor versehentlicher Löschung.
+   - Instanzweites Branding (Link/Desk) + l10n-Overrides auf jeder Seite.
+
+--------------------------------------------------------------------------------
+ Hinweis: Diese Übersicht bezieht sich auf Souvera Central v0.30.0.
+ Bei neuen Funktionen bitte Handbuch + Changelog (BookStack) mitpflegen.
+--------------------------------------------------------------------------------
