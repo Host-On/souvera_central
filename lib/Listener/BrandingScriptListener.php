@@ -19,6 +19,7 @@ use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\IURLGenerator;
 use OCP\Util;
 
 /** @template-implements IEventListener<BeforeTemplateRenderedEvent> */
@@ -26,6 +27,7 @@ class BrandingScriptListener implements IEventListener {
     public function __construct(
         private ConfigService $config,
         private IInitialState $initialState,
+        private IURLGenerator $urlGenerator,
     ) {
     }
 
@@ -38,7 +40,14 @@ class BrandingScriptListener implements IEventListener {
             return;
         }
 
-        $this->initialState->provideInitialState('branding', $this->config->getBrandingConfig());
+        $branding = $this->config->getBrandingConfig();
+        // Icon-Override (Talk/spreed -> Souvera-Icon). Weitere Apps können hier
+        // analog ergänzt werden, sobald ein Motiv vorliegt.
+        $branding['icons'] = [
+            'spreed' => $this->urlGenerator->imagePath(Application::APP_ID, 'link.png'),
+        ];
+
+        $this->initialState->provideInitialState('branding', $branding);
         Util::addScript(Application::APP_ID, Application::APP_ID . '-branding');
     }
 }
