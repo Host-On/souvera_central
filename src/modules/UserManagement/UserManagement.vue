@@ -115,7 +115,7 @@
                                 <td class="user-column">
                                     <div class="user-info">
                                         <Account class="row-user-icon" :size="20" />
-                                        <span class="username">{{ user.id }}</span>
+                                        <span class="username" :title="user.id">{{ user.id }}</span>
                                         <EmailCheck
                                             v-if="stalwartConfigured && hasMailbox(user)"
                                             class="mailbox-indicator has-mailbox"
@@ -130,7 +130,9 @@
                                         />
                                     </div>
                                 </td>
-                                <td class="displayname-column">{{ user.displayName }}</td>
+                                <td class="displayname-column">
+                                    <span class="cell-ellipsis" :title="user.displayName">{{ user.displayName }}</span>
+                                </td>
                                 <td class="type-column">
                                     <div class="type-cell">
                                         <span
@@ -1088,14 +1090,32 @@ export default {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
 }
 
 .row-user-icon {
     color: var(--color-text-maxcontrast);
+    flex-shrink: 0;
 }
 
 .username {
     font-weight: 500;
+    display: inline-block;
+    max-width: 185px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Generisch: Zellinhalt einzeilig kürzen + voller Text via title-Tooltip */
+.cell-ellipsis {
+    display: inline-block;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
 }
 
 .mailbox-indicator {
