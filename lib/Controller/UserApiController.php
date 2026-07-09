@@ -108,6 +108,7 @@ class UserApiController extends OCSController {
                     'groups' => $this->getUserGroups($userId),
                     'isSouveraUser' => $isSouveraUser,
                     'isSouveraAdmin' => $this->groupManager->isInGroup($userId, $adminGid),
+                    'isProtected' => $this->configService->isAdminAccount($userId, $email),
                     'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
                 ];
                 $allUsersData[] = $userData;
@@ -163,6 +164,7 @@ class UserApiController extends OCSController {
                 'manager' => $this->config->getUserValue($id, 'souvera_central', 'manager', ''),
                 'isSouveraUser' => $isSouveraUser,
                 'isSouveraAdmin' => $this->groupManager->isInGroup($id, $this->configService->getScadminGroupId()),
+                'isProtected' => $this->configService->isAdminAccount($user->getUID(), $user->getEMailAddress()),
                 'type' => $isSouveraUser ? 'souvera' : 'nextcloud',
             ];
 
@@ -616,7 +618,19 @@ class UserApiController extends OCSController {
     #[NoAdminRequired]
     public function delete(string $id): DataResponse {
         try {
-            // Prüfe ob versucht wird den Admin-User zu löschen
+            $user = $this->userManager->get($id);
+            $targetEmail = $user !== null ? $user->getEMailAddress() : null;
+
+            // Geschützter Souvera-Administrator-BENUTZER (z. B. "scadmin"): darf NIE
+            // gelöscht werden. Deckt UID UND E-Mail (localpart) ab.
+            if ($this->configService->isAdminAccount($id, $targetEmail)) {
+                return new DataResponse(
+                    ['error' => 'Der Souvera-Administrator (scadmin) ist geschützt und kann nicht gelöscht werden.'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // Prüfe ob versucht wird den (NC-)Admin-User zu löschen
             if ($this->configService->isAdminUser($id)) {
                 return new DataResponse(
                     ['error' => 'Der Administrator-Account kann nicht gelöscht werden.'],
@@ -632,8 +646,6 @@ class UserApiController extends OCSController {
                     Http::STATUS_FORBIDDEN
                 );
             }
-
-            $user = $this->userManager->get($id);
 
             if ($user === null) {
                 return new DataResponse(

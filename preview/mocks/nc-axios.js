@@ -10,6 +10,7 @@ const users = [
     { id: 'eva.fischer@souvera.eu', displayName: 'Eva Fischer', enabled: true, groups: ['Support'], quota: { quota: '5 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'felix.wagner@souvera.eu', displayName: 'Felix Wagner', enabled: true, groups: ['Entwicklung'], quota: { quota: '20 GB' }, isSouveraUser: true, type: 'souvera' },
     { id: 'greta.hoffmann@souvera.eu', displayName: 'Greta Hoffmann', enabled: true, groups: ['Entwicklung', 'Geschäftsführung'], quota: { quota: '20 GB' }, isSouveraUser: false, type: 'nextcloud' },
+    { id: 'scadmin@souvera.eu', displayName: 'Souvera Administrator', enabled: true, groups: ['souvera-admins', 'souvera-users'], quota: { quota: 'Unbegrenzt' }, isSouveraUser: true, isSouveraAdmin: true, isProtected: true, type: 'souvera' },
     { id: 'admin@souvera.eu', displayName: 'Administrator', enabled: true, groups: ['admin'], quota: { quota: 'Unbegrenzt' }, isSouveraUser: true, isSouveraAdmin: true, type: 'souvera' }
 ]
 

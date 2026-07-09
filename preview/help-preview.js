@@ -15252,6 +15252,18 @@ var users = [{
   isSouveraUser: false,
   type: 'nextcloud'
 }, {
+  id: 'scadmin@souvera.eu',
+  displayName: 'Souvera Administrator',
+  enabled: true,
+  groups: ['souvera-admins', 'souvera-users'],
+  quota: {
+    quota: 'Unbegrenzt'
+  },
+  isSouveraUser: true,
+  isSouveraAdmin: true,
+  isProtected: true,
+  type: 'souvera'
+}, {
   id: 'admin@souvera.eu',
   displayName: 'Administrator',
   enabled: true,

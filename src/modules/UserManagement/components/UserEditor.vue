@@ -328,6 +328,7 @@
                         </button>
 
                         <button
+                            v-if="!isProtected"
                             type="button"
                             class="action-card is-danger"
                             :disabled="deletingUser || isOwnAccount"
@@ -521,6 +522,10 @@ export default {
 
         isOwnAccount() {
             return this.isEditMode && this.user && this.currentUserId && this.user.id === this.currentUserId
+        },
+
+        isProtected() {
+            return this.isEditMode && this.user && this.user.isProtected === true
         }
     },
 
@@ -1055,6 +1060,9 @@ export default {
         },
 
         deleteUser() {
+            if (this.isProtected) {
+                return
+            }
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Konto löschen?'),

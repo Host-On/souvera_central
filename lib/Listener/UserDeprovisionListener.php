@@ -42,6 +42,14 @@ class UserDeprovisionListener implements IEventListener {
         if ($mail === null) {
             return;
         }
+        // Geschützter Souvera-Administrator (scadmin): Postfach NIE mitlöschen,
+        // selbst wenn der NC-Account außerhalb von Central entfernt wurde.
+        if ($this->config->isAdminAccount($uid, $user->getEMailAddress())) {
+            $this->logger->warning('SouveraCentral: Löschung des geschützten scadmin erkannt – Postfach bleibt erhalten.', [
+                'uid' => $uid,
+            ]);
+            return;
+        }
         try {
             $this->stalwart->deletePrincipal($mail);
         } catch (\Throwable $e) {

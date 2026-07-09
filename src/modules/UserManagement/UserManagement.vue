@@ -221,7 +221,7 @@
                                             <Pencil :size="18" />
                                         </button>
                                         <button
-                                            v-if="user.id !== currentUserId && user.id !== 'admin' && !user.id.startsWith('admin@')"
+                                            v-if="user.id !== currentUserId && user.id !== 'admin' && !user.id.startsWith('admin@') && !user.isProtected"
                                             class="action-delete"
                                             :title="t('souvera_central', 'Löschen')"
                                             @click.stop="deleteUser(user)"

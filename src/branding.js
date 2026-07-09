@@ -141,6 +141,20 @@
         }
     }
 
+    // Favicon/Tab-Icon der aktuell geöffneten App (kommt aus der Theming-App und
+    // basiert auf dem Original-App-Icon). Für Apps mit Souvera-Icon umbiegen.
+    function renameFavicon() {
+        const appId = appIdFromPath(window.location.pathname)
+        const url = iconFor(appId)
+        if (!url) { return }
+        document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"], link[rel="shortcut icon"]').forEach(function (link) {
+            if (link.getAttribute('href') !== url) {
+                link.setAttribute('href', url)
+                link.setAttribute('type', 'image/png')
+            }
+        })
+    }
+
     let scheduled = false
     function apply() {
         if (scheduled) { return }
@@ -149,6 +163,7 @@
             scheduled = false
             try { renameAppMenu() } catch (e) { /* noop */ }
             try { renameCurrentApp() } catch (e) { /* noop */ }
+            try { renameFavicon() } catch (e) { /* noop */ }
             try { renameTitle() } catch (e) { /* noop */ }
         })
     }
