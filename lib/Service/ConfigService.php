@@ -592,6 +592,12 @@ class ConfigService {
                 'spreed' => $this->getBrandingTalkName(),
                 'richdocuments' => $office,
                 'richdocumentscode' => $office,
+                // Alias-Keys für das App-Menü: Nextcloud Office registriert seinen
+                // Navigations-Eintrag unter dem Pfad /apps/office/ (nicht
+                // /apps/richdocuments/). Das JS-Fallback matcht per href, daher hier
+                // zusätzlich die tatsächlich verwendeten Pfad-Segmente abbilden.
+                'office' => $office,
+                'collabora' => $office,
             ],
         ];
     }
