@@ -125,6 +125,11 @@ souvera-users komplett – die Verwaltung bleibt trotzdem admin-only):
 occ app:enable souvera_central --groups souvera-admins --groups souvera-users
 ```
 
+> Ab **v0.32.2** sichert ein automatischer Repair-Step das ab: Ist die App per
+> Gruppen beschränkt, wird `souvera-users` (+ `souvera-admins`) bei jedem
+> App-Update automatisch zur Freigabe ergänzt (idempotent – bei bereits korrekter
+> Freigabe passiert nichts). Bei global aktivierter App bleibt alles unverändert.
+
 **2) BookStack-Doku anbinden** — der API-Token wird **verschlüsselt** per occ
 gesetzt (nicht mehr in `config.php`). Die BookStack-URL wird nicht benötigt
 (fester Default `https://doku.souvera.eu`):

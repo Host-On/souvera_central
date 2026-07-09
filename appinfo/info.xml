@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.32.1</version>
+    <version>0.32.2</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -33,6 +33,7 @@
     <repair-steps>
         <post-migration>
             <step>OCA\SouveraCentral\Repair\InstallBrandingTheme</step>
+            <step>OCA\SouveraCentral\Repair\EnsureHelpGroupAccess</step>
         </post-migration>
     </repair-steps>
     <commands>
