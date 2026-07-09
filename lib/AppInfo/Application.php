@@ -25,7 +25,7 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
-use OCP\IL10N;
+use OCP\L10N\IFactory;
 use OCP\INavigationManager;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
@@ -64,12 +64,15 @@ class Application extends App implements IBootstrap {
             INavigationManager $navigationManager,
             IURLGenerator $urlGenerator,
             PermissionService $permission,
-            IL10N $l10n,
+            IFactory $l10nFactory,
         ): void {
             $user = $userSession->getUser();
             if ($user === null) {
                 return;
             }
+            // IL10N NICHT direkt autowiren (schlägt im CLI/Upgrade-Kontext mit
+            // "Could not resolve OCP\IL10N" fehl) – über die IFactory holen.
+            $l10n = $l10nFactory->get(self::APP_ID);
             // Verwaltungs-Navigation (App-Menü, oben) – NUR Souvera-Admins.
             // Erscheint nur, wenn die App für den Benutzer aktiviert ist UND er
             // Souvera-Admin ist – sonst kein toter Eintrag.
