@@ -28,6 +28,24 @@ class BrandingThemeInstaller {
         return (string) $this->config->getSystemValue('theme', '');
     }
 
+    /** Absoluter Pfad des Theme-Verzeichnisses. */
+    public function themeDir(string $theme): string {
+        return \OC::$SERVERROOT . '/themes/' . $theme;
+    }
+
+    /** Legt das Theme-Verzeichnis an (idempotent). */
+    public function ensureThemeDir(string $theme): void {
+        $dir = $this->themeDir($theme);
+        if (!is_dir($dir) && !@mkdir($dir, 0o755, true) && !is_dir($dir)) {
+            throw new \RuntimeException('Konnte Theme-Verzeichnis nicht anlegen: ' . $dir);
+        }
+    }
+
+    /** Aktiviert ein Theme instanzweit (config.php system value "theme"). */
+    public function activate(string $theme): void {
+        $this->config->setSystemValue('theme', $theme);
+    }
+
     /** Ziel-Theme auflösen: expliziter Wert > aktives Theme > "souvera". */
     public function resolveTheme(?string $theme): string {
         $theme = trim((string) $theme);

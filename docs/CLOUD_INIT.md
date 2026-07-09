@@ -162,16 +162,28 @@ occ souvera:help:cache-clear      # nach Doku-Änderungen sofort neu laden
 ## App-Umbenennung / Branding (Talk→Link, Office/Collabora→Desk)
 
 Der **saubere, dauerhafte** Weg (auch im von Vue gerenderten App-Menü oben) ist der
-Theme-l10n-Override. Ab v0.31.0 schreibt ein **Repair-Step** die Overrides bei jedem
-App-Update automatisch in das **aktive** Theme. Ist noch kein Theme aktiv, einmalig:
+Theme-l10n-Override. Ab **v0.34.0** ist das **vollautomatisch**: der **Repair-Step**
+(läuft bei jeder App-Installation/-Aktualisierung) schreibt die Overrides in das aktive
+Theme – und legt, falls **kein Theme aktiv** ist, automatisch ein minimales Theme
+`souvera` an, aktiviert es in `config.php` und schreibt die Overrides hinein. Es sind
+**keine manuellen Schritte** mehr nötig.
+
+Optional abschalten (dann kein Auto-Aktivieren; nur bei bereits aktivem Theme):
+
+```bash
+occ config:app:set souvera_central branding_auto_activate_theme --value no
+```
+
+Manuell (nur falls Auto-Aktivierung deaktiviert wurde):
 
 ```bash
 occ souvera:branding:install-theme --activate   # schreibt Overrides + aktiviert Theme "souvera"
 occ maintenance:theme:update                      # Theme-Cache neu aufbauen
 ```
 
-Zusätzlich läuft ein JS-Fallback (best effort) für Instanzen ohne aktives Theme.
-Bei aktivem Theme greift der saubere Override; das JS ändert dann nichts mehr.
+Ein JS-Fallback (best effort) übernimmt zusätzlich die **Icons** (Theme kann fremde
+App-Icons technisch nicht überschreiben) sowie – falls kein Theme greift – die Namen.
+Bei aktivem Theme greift für die Namen der saubere, flackerfreie Server-Override.
 
 ---
 
