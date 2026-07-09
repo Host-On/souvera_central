@@ -45,6 +45,50 @@
         return new RegExp('\\b(' + words.map(reEscape).join('|') + ')\\b', flags)
     }
 
+    // ---- Theme-Erkennung + kontextabhängige Icon-Farbe -----------------------
+    // Icon-Vorlage ist schwarzes Linien-Motiv auf Transparenz.
+    //   WEISS  = brightness(0) invert(1)   (schwarz -> weiss)
+    //   SCHWARZ = brightness(0)             (bleibt schwarz)
+    const FILTER_WHITE = 'brightness(0) invert(1)'
+    const FILTER_BLACK = 'brightness(0)'
+
+    function parseColorToRgb(str) {
+        str = (str || '').trim()
+        if (str === '') { return null }
+        if (str.charAt(0) === '#') {
+            let h = str.slice(1)
+            if (h.length === 3) { h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) }
+            if (h.length >= 6) {
+                return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+            }
+            return null
+        }
+        const m = str.match(/rgba?\(([^)]+)\)/)
+        if (m) {
+            const p = m[1].split(',').map(function (s) { return parseFloat(s) })
+            if (p.length >= 3) { return [p[0], p[1], p[2]] }
+        }
+        return null
+    }
+
+    // Effektiven Hintergrund (--color-main-background) auswerten → Dark, wenn dunkel.
+    function isDarkMode() {
+        try {
+            const bg = getComputedStyle(document.body).getPropertyValue('--color-main-background')
+            const rgb = parseColorToRgb(bg)
+            if (rgb) {
+                const lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255
+                return lum < 0.5
+            }
+        } catch (e) { /* noop */ }
+        return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    }
+
+    // App-Menü: Kreis ist farbig/hell → Light=WEISS, Dark=SCHWARZ.
+    function menuFilter() { return isDarkMode() ? FILTER_BLACK : FILTER_WHITE }
+    // Dashboard-Panel: Fläche hell/dunkel → Light=SCHWARZ, Dark=WEISS.
+    function dashFilter() { return isDarkMode() ? FILTER_WHITE : FILTER_BLACK }
+
     function nameFor(appId) {
         return appId && Object.prototype.hasOwnProperty.call(names, appId) ? names[appId] : null
     }
@@ -99,15 +143,14 @@
         if (el && el.getAttribute(attr) !== newName) { el.setAttribute(attr, newName) }
     }
 
-    // Icon-<img> auf unser Motiv umbiegen; Maske/Filter neutralisieren. invert=true
-    // (Standard) färbt die schwarzen Linien weiß (für farbigen App-Menü-Kreis);
-    // invert=false lässt sie schwarz (für helle Flächen wie Dashboard-Panels).
-    function applyIcon(img, url, invert) {
+    // Icon-<img> auf unser Motiv umbiegen; Maske/Filter neutralisieren und den
+    // übergebenen Farb-Filter (WEISS/SCHWARZ, theme-abhängig) anwenden.
+    function applyIcon(img, url, filterVal) {
         if (!img || !url) { return }
         if (img.getAttribute('src') !== url) { img.setAttribute('src', url) }
         img.style.setProperty('mask', 'none', 'important')
         img.style.setProperty('-webkit-mask', 'none', 'important')
-        img.style.setProperty('filter', invert === false ? 'none' : 'brightness(0) invert(1)', 'important')
+        img.style.setProperty('filter', filterVal, 'important')
     }
 
     // Kachel im Waffle-Grid (a.app-item).
@@ -117,7 +160,7 @@
         setAttr(anchor, 'title', newName)
         setLabelText(anchor.querySelector('.app-item__label'), newName)
         const url = iconFor(appId)
-        if (url) { applyIcon(anchor.querySelector('.app-item__icon'), url) }
+        if (url) { applyIcon(anchor.querySelector('.app-item__icon'), url, menuFilter()) }
     }
 
     function renameAppMenu() {
@@ -139,7 +182,7 @@
         const url = iconFor(appId)
         if (url) {
             document.querySelectorAll('.app-menu__current-app-icon').forEach(function (img) {
-                applyIcon(img, url)
+                applyIcon(img, url, menuFilter())
             })
         }
     }
@@ -169,27 +212,29 @@
         })
     }
 
-    // Icon im Dashboard-Widget-Header umbiegen (helle Panels → dunkel lassen).
+    // Icon im Dashboard-Widget-Header umbiegen (theme-abhängige Farbe via dashFilter).
     function swapDashIcon(h2, url) {
         const img = h2.querySelector('img')
         if (img) {
-            applyIcon(img, url, false)
+            applyIcon(img, url, dashFilter())
             return
         }
         const span = h2.querySelector('span')
-        if (span && span.getAttribute('data-souvera-icon') !== url) {
+        if (!span) { return }
+        if (span.getAttribute('data-souvera-icon') !== url) {
             span.style.setProperty('background-image', 'url("' + url + '")', 'important')
             span.style.setProperty('background-size', 'contain', 'important')
             span.style.setProperty('background-repeat', 'no-repeat', 'important')
             span.style.setProperty('background-position', 'center', 'important')
             span.style.setProperty('mask', 'none', 'important')
             span.style.setProperty('-webkit-mask', 'none', 'important')
-            span.style.setProperty('filter', 'none', 'important')
             span.style.setProperty('display', 'inline-block')
             if (!span.style.width) { span.style.setProperty('width', '20px') }
             if (!span.style.height) { span.style.setProperty('height', '20px') }
             span.setAttribute('data-souvera-icon', url)
         }
+        // Farb-Filter immer aktualisieren (reagiert auf Theme-Wechsel).
+        span.style.setProperty('filter', dashFilter(), 'important')
     }
 
     // Dashboard-Widgets (App „Dashboard"): Panel-Titel enthalten ganze Phrasen
@@ -236,6 +281,18 @@
         // an <body> gehängt). Debounced via rAF.
         try {
             new MutationObserver(apply).observe(document.body, { childList: true, subtree: true })
+        } catch (e) { /* noop */ }
+        // Auf Theme-Wechsel (Dark/Light) reagieren, damit die Icon-Farbe nachgezogen
+        // wird: Attribute an <html>/<body> (NC setzt data-theme*/Klassen) + System-
+        // Präferenz.
+        try {
+            new MutationObserver(apply).observe(document.documentElement, { attributes: true })
+            new MutationObserver(apply).observe(document.body, { attributes: true })
+        } catch (e) { /* noop */ }
+        try {
+            const mq = window.matchMedia('(prefers-color-scheme: dark)')
+            if (mq.addEventListener) { mq.addEventListener('change', apply) }
+            else if (mq.addListener) { mq.addListener(apply) }
         } catch (e) { /* noop */ }
         // Absicherung gegen späte Hydration in den ersten Sekunden.
         let ticks = 0
