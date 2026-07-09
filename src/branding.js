@@ -32,6 +32,19 @@
     const names = cfg.names
     const icons = cfg.icons || {}
 
+    // Ursprüngliche Produktbezeichnungen je App-ID (für Text-/Icon-Erkennung im
+    // Dashboard-Widget-Titel, der eine ganze Phrase sein kann, z. B. „Talk
+    // Erwähnungen"). Von der spezifischsten zur allgemeinsten Phrase.
+    const DASH_RULES = [
+        { words: ['Nextcloud Talk', 'Talk'], to: (names.spreed || 'Link'), icon: icons.spreed || null },
+        { words: ['Nextcloud Office', 'Collabora Online', 'Collabora', 'Office'], to: (names.richdocuments || 'Desk'), icon: icons.richdocuments || null },
+    ]
+
+    function reEscape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') }
+    function wordsRegex(words, flags) {
+        return new RegExp('\\b(' + words.map(reEscape).join('|') + ')\\b', flags)
+    }
+
     function nameFor(appId) {
         return appId && Object.prototype.hasOwnProperty.call(names, appId) ? names[appId] : null
     }
@@ -86,14 +99,15 @@
         if (el && el.getAttribute(attr) !== newName) { el.setAttribute(attr, newName) }
     }
 
-    // Icon-<img> auf unser Motiv umbiegen; Maske/Filter neutralisieren und die
-    // schwarzen Linien per Filter weiß einfärben (Kontrast auf farbigem Kreis).
-    function applyIcon(img, url) {
+    // Icon-<img> auf unser Motiv umbiegen; Maske/Filter neutralisieren. invert=true
+    // (Standard) färbt die schwarzen Linien weiß (für farbigen App-Menü-Kreis);
+    // invert=false lässt sie schwarz (für helle Flächen wie Dashboard-Panels).
+    function applyIcon(img, url, invert) {
         if (!img || !url) { return }
         if (img.getAttribute('src') !== url) { img.setAttribute('src', url) }
         img.style.setProperty('mask', 'none', 'important')
         img.style.setProperty('-webkit-mask', 'none', 'important')
-        img.style.setProperty('filter', 'brightness(0) invert(1)', 'important')
+        img.style.setProperty('filter', invert === false ? 'none' : 'brightness(0) invert(1)', 'important')
     }
 
     // Kachel im Waffle-Grid (a.app-item).
@@ -155,6 +169,51 @@
         })
     }
 
+    // Icon im Dashboard-Widget-Header umbiegen (helle Panels → dunkel lassen).
+    function swapDashIcon(h2, url) {
+        const img = h2.querySelector('img')
+        if (img) {
+            applyIcon(img, url, false)
+            return
+        }
+        const span = h2.querySelector('span')
+        if (span && span.getAttribute('data-souvera-icon') !== url) {
+            span.style.setProperty('background-image', 'url("' + url + '")', 'important')
+            span.style.setProperty('background-size', 'contain', 'important')
+            span.style.setProperty('background-repeat', 'no-repeat', 'important')
+            span.style.setProperty('background-position', 'center', 'important')
+            span.style.setProperty('mask', 'none', 'important')
+            span.style.setProperty('-webkit-mask', 'none', 'important')
+            span.style.setProperty('filter', 'none', 'important')
+            span.style.setProperty('display', 'inline-block')
+            if (!span.style.width) { span.style.setProperty('width', '20px') }
+            if (!span.style.height) { span.style.setProperty('height', '20px') }
+            span.setAttribute('data-souvera-icon', url)
+        }
+    }
+
+    // Dashboard-Widgets (App „Dashboard"): Panel-Titel enthalten ganze Phrasen
+    // wie „Talk Erwähnungen". Wortweise ersetzen + Icon tauschen.
+    function renameDashboard() {
+        document.querySelectorAll('#app-dashboard .panel--header h2').forEach(function (h2) {
+            const text = h2.textContent || ''
+            for (let i = 0; i < DASH_RULES.length; i++) {
+                const rule = DASH_RULES[i]
+                if (!wordsRegex(rule.words).test(text)) { continue }
+                const reG = wordsRegex(rule.words, 'g')
+                for (let j = 0; j < h2.childNodes.length; j++) {
+                    const n = h2.childNodes[j]
+                    if (n.nodeType === 3 && n.nodeValue) {
+                        const rep = n.nodeValue.replace(reG, rule.to)
+                        if (rep !== n.nodeValue) { n.nodeValue = rep }
+                    }
+                }
+                if (rule.icon) { swapDashIcon(h2, rule.icon) }
+                break
+            }
+        })
+    }
+
     let scheduled = false
     function apply() {
         if (scheduled) { return }
@@ -164,6 +223,7 @@
             try { renameAppMenu() } catch (e) { /* noop */ }
             try { renameCurrentApp() } catch (e) { /* noop */ }
             try { renameFavicon() } catch (e) { /* noop */ }
+            try { renameDashboard() } catch (e) { /* noop */ }
             try { renameTitle() } catch (e) { /* noop */ }
         })
     }
