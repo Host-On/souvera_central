@@ -44,13 +44,35 @@
                 <article v-else-if="pageHtml" class="help-article" data-testid="help-article">
                     <h2 class="help-article-title">{{ pageTitle }}</h2>
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <div class="rich-content" v-html="pageHtml"></div>
+                    <div class="rich-content" data-testid="help-rich-content" @click="onContentClick" v-html="pageHtml"></div>
                 </article>
 
                 <div v-else class="help-empty" data-testid="help-welcome">
                     <HelpCircleOutline :size="64" class="help-empty__icon" />
                     <h2 class="help-empty__title">{{ t('souvera_central', 'Hilfe & Dokumentation') }}</h2>
                     <p class="help-empty__desc">{{ t('souvera_central', 'Wählen Sie links ein Thema, um die Anleitung zu öffnen.') }}</p>
+                </div>
+
+                <div
+                    v-if="lightbox.src"
+                    class="help-lightbox"
+                    data-testid="help-image-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    @click="closeLightbox">
+                    <button
+                        class="help-lightbox__close"
+                        data-testid="help-image-modal-close"
+                        :aria-label="t('souvera_central', 'Schließen')"
+                        @click.stop="closeLightbox">
+                        <Close :size="28" />
+                    </button>
+                    <img
+                        :src="lightbox.src"
+                        :alt="lightbox.alt"
+                        class="help-lightbox__img"
+                        data-testid="help-image-modal-img"
+                        @click.stop />
                 </div>
             </div>
         </NcAppContent>
@@ -69,6 +91,7 @@ import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 export default {
     name: 'HelpApp',
@@ -80,6 +103,7 @@ export default {
         NcAppContent,
         FileDocumentOutline,
         HelpCircleOutline,
+        Close,
     },
 
     data() {
@@ -91,6 +115,7 @@ export default {
             pageTitle: '',
             pageHtml: '',
             pageLoading: false,
+            lightbox: { src: '', alt: '' },
         }
     },
 
@@ -120,10 +145,48 @@ export default {
 
     mounted() {
         this.loadTree()
+        window.addEventListener('keydown', this.onKeydown)
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('keydown', this.onKeydown)
     },
 
     methods: {
         t,
+
+        onKeydown(e) {
+            if (e.key === 'Escape' && this.lightbox.src) {
+                this.closeLightbox()
+            }
+        },
+
+        // Bilder in der Doku im Lightbox-Modal öffnen (statt zur Vollbild-URL
+        // zu navigieren). BookStack umschließt Bilder mit einem <a> auf die
+        // Originalgröße – diese bevorzugen wir für die Modal-Ansicht.
+        onContentClick(e) {
+            const img = e.target.closest('img')
+            if (!img) {
+                return
+            }
+            let src = img.getAttribute('src') || ''
+            const link = img.closest('a')
+            if (link) {
+                const href = link.getAttribute('href') || ''
+                if (/\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(href)) {
+                    src = href
+                }
+            }
+            if (!src) {
+                return
+            }
+            e.preventDefault()
+            this.lightbox = { src, alt: img.getAttribute('alt') || '' }
+        },
+
+        closeLightbox() {
+            this.lightbox = { src: '', alt: '' }
+        },
 
         unwrap(response) {
             const d = response?.data
@@ -426,6 +489,61 @@ export default {
 .rich-content :deep(.screenshot-placeholder) {
     background: var(--color-background-hover);
     color: var(--color-text-maxcontrast);
+}
+
+/* Bilder als anklickbar kennzeichnen (öffnen im Lightbox-Modal). */
+.rich-content :deep(img) {
+    cursor: zoom-in;
+}
+
+/* Lightbox / Galerie-Modal für Doku-Bilder */
+.help-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vmin;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(4px);
+    cursor: zoom-out;
+    animation: help-lightbox-in 0.15s ease-out;
+}
+
+@keyframes help-lightbox-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.help-lightbox__img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--border-radius-large, 12px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+    cursor: default;
+}
+
+.help-lightbox__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.help-lightbox__close:hover {
+    background: rgba(255, 255, 255, 0.28);
 }
 
 .rich-content :deep([style*="border-left"]),

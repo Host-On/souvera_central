@@ -240,6 +240,7 @@ OC.L10N.register(
     "Postfächer synchronisieren" : "Synchronize mailboxes",
     "Primär" : "Primary",
     "Pro Seite" : "Per page",
+    "Schließen" : "Close",
     "Schnellaktionen" : "Quick actions",
     "Sie haben {count} von {total} Gruppen erstellt ({percentage}%)." : "You have created {count} of {total} groups ({percentage}%).",
     "Sie haben {count} von {total} Gruppen erstellt. Es können keine weiteren Gruppen erstellt werden." : "You have created {count} of {total} groups. No further groups can be created.",

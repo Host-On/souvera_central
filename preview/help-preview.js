@@ -14724,10 +14724,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _nextcloud_vue_components_NcAppContent__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @nextcloud/vue/components/NcAppContent */ "./node_modules/@nextcloud/vue/dist/components/NcAppContent/index.mjs");
 /* harmony import */ var vue_material_design_icons_FileDocumentOutline_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vue-material-design-icons/FileDocumentOutline.vue */ "./node_modules/vue-material-design-icons/FileDocumentOutline.vue");
 /* harmony import */ var vue_material_design_icons_HelpCircleOutline_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! vue-material-design-icons/HelpCircleOutline.vue */ "./node_modules/vue-material-design-icons/HelpCircleOutline.vue");
+/* harmony import */ var vue_material_design_icons_Close_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! vue-material-design-icons/Close.vue */ "./node_modules/vue-material-design-icons/Close.vue");
 function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+
 
 
 
@@ -14745,7 +14747,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     NcAppNavigationItem: _nextcloud_vue_components_NcAppNavigationItem__WEBPACK_IMPORTED_MODULE_5__["default"],
     NcAppContent: _nextcloud_vue_components_NcAppContent__WEBPACK_IMPORTED_MODULE_6__["default"],
     FileDocumentOutline: vue_material_design_icons_FileDocumentOutline_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
-    HelpCircleOutline: vue_material_design_icons_HelpCircleOutline_vue__WEBPACK_IMPORTED_MODULE_8__["default"]
+    HelpCircleOutline: vue_material_design_icons_HelpCircleOutline_vue__WEBPACK_IMPORTED_MODULE_8__["default"],
+    Close: vue_material_design_icons_Close_vue__WEBPACK_IMPORTED_MODULE_9__["default"]
   },
   data: function data() {
     return {
@@ -14755,7 +14758,11 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       activePageId: null,
       pageTitle: '',
       pageHtml: '',
-      pageLoading: false
+      pageLoading: false,
+      lightbox: {
+        src: '',
+        alt: ''
+      }
     };
   },
   computed: {
@@ -14808,9 +14815,49 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   },
   mounted: function mounted() {
     this.loadTree();
+    window.addEventListener('keydown', this.onKeydown);
+  },
+  beforeUnmount: function beforeUnmount() {
+    window.removeEventListener('keydown', this.onKeydown);
   },
   methods: {
     t: _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate,
+    onKeydown: function onKeydown(e) {
+      if (e.key === 'Escape' && this.lightbox.src) {
+        this.closeLightbox();
+      }
+    },
+    // Bilder in der Doku im Lightbox-Modal öffnen (statt zur Vollbild-URL
+    // zu navigieren). BookStack umschließt Bilder mit einem <a> auf die
+    // Originalgröße – diese bevorzugen wir für die Modal-Ansicht.
+    onContentClick: function onContentClick(e) {
+      var img = e.target.closest('img');
+      if (!img) {
+        return;
+      }
+      var src = img.getAttribute('src') || '';
+      var link = img.closest('a');
+      if (link) {
+        var href = link.getAttribute('href') || '';
+        if (/\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(href)) {
+          src = href;
+        }
+      }
+      if (!src) {
+        return;
+      }
+      e.preventDefault();
+      this.lightbox = {
+        src: src,
+        alt: img.getAttribute('alt') || ''
+      };
+    },
+    closeLightbox: function closeLightbox() {
+      this.lightbox = {
+        src: '',
+        alt: ''
+      };
+    },
     unwrap: function unwrap(response) {
       var _d$ocs;
       var d = response === null || response === void 0 ? void 0 : response.data;
@@ -15014,11 +15061,14 @@ var _hoisted_12 = {
 var _hoisted_13 = {
   class: "help-empty__desc"
 };
+var _hoisted_14 = ["aria-label"];
+var _hoisted_15 = ["src", "alt"];
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_FileDocumentOutline = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("FileDocumentOutline");
   var _component_NcAppNavigationItem = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("NcAppNavigationItem");
   var _component_NcAppNavigation = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("NcAppNavigation");
   var _component_HelpCircleOutline = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("HelpCircleOutline");
+  var _component_Close = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("Close");
   var _component_NcAppContent = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("NcAppContent");
   var _component_NcContent = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("NcContent");
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_NcContent, {
@@ -15030,7 +15080,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "aria-label": $options.t('souvera_central', 'Hilfe')
       }, {
         list: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [$data.loading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, _toConsumableArray(_cache[0] || (_cache[0] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
+          return [$data.loading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, _toConsumableArray(_cache[4] || (_cache[4] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
             class: "icon-loading"
           }, null, -1 /* CACHED */)])))) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, {
             key: 1
@@ -15061,20 +15111,48 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         _: 1 /* STABLE */
       }, 8 /* PROPS */, ["aria-label"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_NcAppContent, null, {
         default: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [$data.loading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_3, _toConsumableArray(_cache[1] || (_cache[1] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [$data.loading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_3, _toConsumableArray(_cache[5] || (_cache[5] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
             class: "icon-loading"
           }, null, -1 /* CACHED */)])))) : !$data.configured ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_HelpCircleOutline, {
             size: 64,
             class: "help-empty__icon"
-          }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Hilfe noch nicht verfügbar')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Die Dokumentation ist derzeit nicht erreichbar. Bitte wenden Sie sich an Ihren Administrator.')), 1 /* TEXT */)])) : $data.pageLoading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_7, _toConsumableArray(_cache[2] || (_cache[2] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
+          }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Hilfe noch nicht verfügbar')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Die Dokumentation ist derzeit nicht erreichbar. Bitte wenden Sie sich an Ihren Administrator.')), 1 /* TEXT */)])) : $data.pageLoading ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_7, _toConsumableArray(_cache[6] || (_cache[6] = [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", {
             class: "icon-loading"
           }, null, -1 /* CACHED */)])))) : $data.pageHtml ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("article", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($data.pageTitle), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" eslint-disable-next-line vue/no-v-html "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", {
             class: "rich-content",
+            "data-testid": "help-rich-content",
+            onClick: _cache[0] || (_cache[0] = function () {
+              return $options.onContentClick && $options.onContentClick.apply($options, arguments);
+            }),
             innerHTML: $data.pageHtml
           }, null, 8 /* PROPS */, _hoisted_10)])) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_11, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_HelpCircleOutline, {
             size: 64,
             class: "help-empty__icon"
-          }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Hilfe & Dokumentation')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Wählen Sie links ein Thema, um die Anleitung zu öffnen.')), 1 /* TEXT */)]))])];
+          }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Hilfe & Dokumentation')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($options.t('souvera_central', 'Wählen Sie links ein Thema, um die Anleitung zu öffnen.')), 1 /* TEXT */)])), $data.lightbox.src ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", {
+            key: 5,
+            class: "help-lightbox",
+            "data-testid": "help-image-modal",
+            role: "dialog",
+            "aria-modal": "true",
+            onClick: _cache[3] || (_cache[3] = function () {
+              return $options.closeLightbox && $options.closeLightbox.apply($options, arguments);
+            })
+          }, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("button", {
+            class: "help-lightbox__close",
+            "data-testid": "help-image-modal-close",
+            "aria-label": $options.t('souvera_central', 'Schließen'),
+            onClick: _cache[1] || (_cache[1] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function () {
+              return $options.closeLightbox && $options.closeLightbox.apply($options, arguments);
+            }, ["stop"]))
+          }, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_Close, {
+            size: 28
+          })], 8 /* PROPS */, _hoisted_14), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("img", {
+            src: $data.lightbox.src,
+            alt: $data.lightbox.alt,
+            class: "help-lightbox__img",
+            "data-testid": "help-image-modal-img",
+            onClick: _cache[2] || (_cache[2] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function () {}, ["stop"]))
+          }, null, 8 /* PROPS */, _hoisted_15)])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)])];
         }),
         _: 1 /* STABLE */
       })];
@@ -15908,7 +15986,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.help-content[data-v-4f8a2633] {\n    width: 100%;\n    min-height: 100%;\n    box-sizing: border-box;\n}\n.help-nav-loading[data-v-4f8a2633] {\n    display: flex;\n    justify-content: center;\n    padding: 24px 0;\n}\n\n/* Hierarchische Beschriftungen: Regal > Buch > Kapitel */\n.help-caption[data-v-4f8a2633] {\n    list-style: none;\n    margin: 0;\n    padding: 14px 16px 4px;\n    font-size: 0.75rem;\n    font-weight: 600;\n    text-transform: uppercase;\n    letter-spacing: 0.05em;\n    color: var(--color-text-maxcontrast);\n}\n.help-caption--book[data-v-4f8a2633] {\n    text-transform: none;\n    font-size: 0.95rem;\n    font-weight: 700;\n    color: var(--color-main-text);\n    padding-top: 16px;\n}\n.help-caption--chapter[data-v-4f8a2633] {\n    text-transform: none;\n    font-size: 0.82rem;\n    font-weight: 500;\n    color: var(--color-text-maxcontrast);\n    padding-inline-start: 28px;\n    padding-top: 8px;\n}\n.help-state[data-v-4f8a2633] {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 60vh;\n}\n.icon-loading[data-v-4f8a2633] {\n    display: inline-block;\n    width: 44px;\n    height: 44px;\n    border: 3px solid var(--color-border-dark);\n    border-top-color: var(--color-primary-element);\n    border-radius: 50%;\n    animation: help-spin-4f8a2633 0.8s linear infinite;\n}\n@keyframes help-spin-4f8a2633 {\nto { transform: rotate(360deg);\n}\n}\n.help-empty[data-v-4f8a2633] {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    text-align: center;\n    min-height: 60vh;\n    padding: 24px;\n    gap: 8px;\n}\n.help-empty__icon[data-v-4f8a2633] {\n    color: var(--color-text-maxcontrast);\n    opacity: 0.7;\n    margin-bottom: 8px;\n}\n.help-empty__title[data-v-4f8a2633] {\n    font-size: 1.3rem;\n    font-weight: var(--font-weight-heading, 700);\n    color: var(--color-main-text);\n    margin: 0;\n}\n.help-empty__desc[data-v-4f8a2633] {\n    color: var(--color-text-maxcontrast);\n    max-width: 420px;\n    margin: 0;\n}\n.help-article[data-v-4f8a2633] {\n    max-width: none;\n    margin: 0;\n    padding: 32px clamp(20px, 4vw, 64px) 64px;\n}\n.help-article-title[data-v-4f8a2633] {\n    font-size: 1.7rem;\n    font-weight: var(--font-weight-heading, 700);\n    margin: 0 0 24px;\n    padding-bottom: 16px;\n    border-bottom: 1px solid var(--color-border);\n    color: var(--color-main-text);\n}\n\n/* BookStack-HTML im Central-Look rendern */\n.rich-content[data-v-4f8a2633] {\n    color: var(--color-main-text);\n    line-height: 1.65;\n    font-size: 1rem;\n}\n.rich-content[data-v-4f8a2633] h1,\n.rich-content[data-v-4f8a2633] h2,\n.rich-content[data-v-4f8a2633] h3,\n.rich-content[data-v-4f8a2633] h4 {\n    color: var(--color-main-text);\n    font-weight: var(--font-weight-heading, 700);\n    margin: 1.6em 0 0.6em;\n    line-height: 1.3;\n}\n.rich-content[data-v-4f8a2633] h1 { font-size: 1.5rem;\n}\n.rich-content[data-v-4f8a2633] h2 { font-size: 1.3rem;\n}\n.rich-content[data-v-4f8a2633] h3 { font-size: 1.12rem;\n}\n.rich-content[data-v-4f8a2633] p { margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] a {\n    color: var(--color-primary-element);\n    text-decoration: underline;\n}\n.rich-content[data-v-4f8a2633] ul,\n.rich-content[data-v-4f8a2633] ol {\n    margin: 0 0 1em;\n    padding-inline-start: 1.5em;\n}\n.rich-content[data-v-4f8a2633] li { margin: 0.25em 0;\n}\n.rich-content[data-v-4f8a2633] img {\n    max-width: 100%;\n    height: auto;\n    border-radius: var(--border-radius-large, 12px);\n    border: 1px solid var(--color-border);\n    margin: 0.5em 0;\n}\n.rich-content[data-v-4f8a2633] code {\n    background: var(--color-background-dark);\n    padding: 0.15em 0.4em;\n    border-radius: var(--border-radius-small, 4px);\n    font-family: monospace;\n    font-size: 0.9em;\n}\n.rich-content[data-v-4f8a2633] pre {\n    background: var(--color-background-dark);\n    padding: 16px;\n    border-radius: var(--border-radius-large, 12px);\n    overflow: auto;\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] pre code {\n    background: none;\n    padding: 0;\n}\n.rich-content[data-v-4f8a2633] blockquote {\n    margin: 0 0 1em;\n    padding: 8px 16px;\n    border-inline-start: 4px solid var(--color-primary-element);\n    background: var(--color-background-hover);\n    border-radius: var(--border-radius);\n}\n.rich-content[data-v-4f8a2633] table {\n    width: 100%;\n    border-collapse: collapse;\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] th,\n.rich-content[data-v-4f8a2633] td {\n    border: 1px solid var(--color-border);\n    padding: 8px 12px;\n    text-align: start;\n}\n.rich-content[data-v-4f8a2633] th {\n    background: var(--color-background-dark);\n    font-weight: 600;\n}\n\n/* BookStack-Callouts */\n.rich-content[data-v-4f8a2633] .callout {\n    padding: 12px 16px;\n    border-radius: var(--border-radius-large, 12px);\n    border-inline-start: 4px solid var(--color-primary-element);\n    background: var(--color-background-hover);\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] .callout.info {\n    border-inline-start-color: var(--color-primary-element);\n    background: rgba(var(--color-primary-element-rgb), 0.08);\n}\n.rich-content[data-v-4f8a2633] .callout.success {\n    border-inline-start-color: var(--color-success);\n    background: rgba(var(--color-success-rgb), 0.08);\n}\n.rich-content[data-v-4f8a2633] .callout.warning {\n    border-inline-start-color: var(--color-warning);\n    background: rgba(var(--color-warning-rgb), 0.1);\n}\n.rich-content[data-v-4f8a2633] .callout.danger {\n    border-inline-start-color: var(--color-error);\n    background: rgba(var(--color-error-rgb), 0.08);\n}\n\n/* BookStack-Seiten nutzen inline gestylte Info-/Screenshot-Boxen (helle\n   Hintergründe fürs Light-Theme). Farb-/Hintergrundwerte werden serverseitig\n   entfernt; hier ein dezenter, theme-bewusster Hintergrund für gute Lesbarkeit\n   in Light UND Dark. Ränder (border-left etc.) bleiben aus dem Inline-Style. */\n.rich-content[data-v-4f8a2633] .screenshot-placeholder {\n    background: var(--color-background-hover);\n    color: var(--color-text-maxcontrast);\n}\n.rich-content[data-v-4f8a2633] [style*=\"border-left\"],\n.rich-content[data-v-4f8a2633] [style*=\"border-inline-start\"] {\n    background: var(--color-background-hover);\n    border-radius: var(--border-radius, 8px);\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.help-content[data-v-4f8a2633] {\n    width: 100%;\n    min-height: 100%;\n    box-sizing: border-box;\n}\n.help-nav-loading[data-v-4f8a2633] {\n    display: flex;\n    justify-content: center;\n    padding: 24px 0;\n}\n\n/* Hierarchische Beschriftungen: Regal > Buch > Kapitel */\n.help-caption[data-v-4f8a2633] {\n    list-style: none;\n    margin: 0;\n    padding: 14px 16px 4px;\n    font-size: 0.75rem;\n    font-weight: 600;\n    text-transform: uppercase;\n    letter-spacing: 0.05em;\n    color: var(--color-text-maxcontrast);\n}\n.help-caption--book[data-v-4f8a2633] {\n    text-transform: none;\n    font-size: 0.95rem;\n    font-weight: 700;\n    color: var(--color-main-text);\n    padding-top: 16px;\n}\n.help-caption--chapter[data-v-4f8a2633] {\n    text-transform: none;\n    font-size: 0.82rem;\n    font-weight: 500;\n    color: var(--color-text-maxcontrast);\n    padding-inline-start: 28px;\n    padding-top: 8px;\n}\n.help-state[data-v-4f8a2633] {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 60vh;\n}\n.icon-loading[data-v-4f8a2633] {\n    display: inline-block;\n    width: 44px;\n    height: 44px;\n    border: 3px solid var(--color-border-dark);\n    border-top-color: var(--color-primary-element);\n    border-radius: 50%;\n    animation: help-spin-4f8a2633 0.8s linear infinite;\n}\n@keyframes help-spin-4f8a2633 {\nto { transform: rotate(360deg);\n}\n}\n.help-empty[data-v-4f8a2633] {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    text-align: center;\n    min-height: 60vh;\n    padding: 24px;\n    gap: 8px;\n}\n.help-empty__icon[data-v-4f8a2633] {\n    color: var(--color-text-maxcontrast);\n    opacity: 0.7;\n    margin-bottom: 8px;\n}\n.help-empty__title[data-v-4f8a2633] {\n    font-size: 1.3rem;\n    font-weight: var(--font-weight-heading, 700);\n    color: var(--color-main-text);\n    margin: 0;\n}\n.help-empty__desc[data-v-4f8a2633] {\n    color: var(--color-text-maxcontrast);\n    max-width: 420px;\n    margin: 0;\n}\n.help-article[data-v-4f8a2633] {\n    max-width: none;\n    margin: 0;\n    padding: 32px clamp(20px, 4vw, 64px) 64px;\n}\n.help-article-title[data-v-4f8a2633] {\n    font-size: 1.7rem;\n    font-weight: var(--font-weight-heading, 700);\n    margin: 0 0 24px;\n    padding-bottom: 16px;\n    border-bottom: 1px solid var(--color-border);\n    color: var(--color-main-text);\n}\n\n/* BookStack-HTML im Central-Look rendern */\n.rich-content[data-v-4f8a2633] {\n    color: var(--color-main-text);\n    line-height: 1.65;\n    font-size: 1rem;\n}\n.rich-content[data-v-4f8a2633] h1,\n.rich-content[data-v-4f8a2633] h2,\n.rich-content[data-v-4f8a2633] h3,\n.rich-content[data-v-4f8a2633] h4 {\n    color: var(--color-main-text);\n    font-weight: var(--font-weight-heading, 700);\n    margin: 1.6em 0 0.6em;\n    line-height: 1.3;\n}\n.rich-content[data-v-4f8a2633] h1 { font-size: 1.5rem;\n}\n.rich-content[data-v-4f8a2633] h2 { font-size: 1.3rem;\n}\n.rich-content[data-v-4f8a2633] h3 { font-size: 1.12rem;\n}\n.rich-content[data-v-4f8a2633] p { margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] a {\n    color: var(--color-primary-element);\n    text-decoration: underline;\n}\n.rich-content[data-v-4f8a2633] ul,\n.rich-content[data-v-4f8a2633] ol {\n    margin: 0 0 1em;\n    padding-inline-start: 1.5em;\n}\n.rich-content[data-v-4f8a2633] li { margin: 0.25em 0;\n}\n.rich-content[data-v-4f8a2633] img {\n    max-width: 100%;\n    height: auto;\n    border-radius: var(--border-radius-large, 12px);\n    border: 1px solid var(--color-border);\n    margin: 0.5em 0;\n}\n.rich-content[data-v-4f8a2633] code {\n    background: var(--color-background-dark);\n    padding: 0.15em 0.4em;\n    border-radius: var(--border-radius-small, 4px);\n    font-family: monospace;\n    font-size: 0.9em;\n}\n.rich-content[data-v-4f8a2633] pre {\n    background: var(--color-background-dark);\n    padding: 16px;\n    border-radius: var(--border-radius-large, 12px);\n    overflow: auto;\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] pre code {\n    background: none;\n    padding: 0;\n}\n.rich-content[data-v-4f8a2633] blockquote {\n    margin: 0 0 1em;\n    padding: 8px 16px;\n    border-inline-start: 4px solid var(--color-primary-element);\n    background: var(--color-background-hover);\n    border-radius: var(--border-radius);\n}\n.rich-content[data-v-4f8a2633] table {\n    width: 100%;\n    border-collapse: collapse;\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] th,\n.rich-content[data-v-4f8a2633] td {\n    border: 1px solid var(--color-border);\n    padding: 8px 12px;\n    text-align: start;\n}\n.rich-content[data-v-4f8a2633] th {\n    background: var(--color-background-dark);\n    font-weight: 600;\n}\n\n/* BookStack-Callouts */\n.rich-content[data-v-4f8a2633] .callout {\n    padding: 12px 16px;\n    border-radius: var(--border-radius-large, 12px);\n    border-inline-start: 4px solid var(--color-primary-element);\n    background: var(--color-background-hover);\n    margin: 0 0 1em;\n}\n.rich-content[data-v-4f8a2633] .callout.info {\n    border-inline-start-color: var(--color-primary-element);\n    background: rgba(var(--color-primary-element-rgb), 0.08);\n}\n.rich-content[data-v-4f8a2633] .callout.success {\n    border-inline-start-color: var(--color-success);\n    background: rgba(var(--color-success-rgb), 0.08);\n}\n.rich-content[data-v-4f8a2633] .callout.warning {\n    border-inline-start-color: var(--color-warning);\n    background: rgba(var(--color-warning-rgb), 0.1);\n}\n.rich-content[data-v-4f8a2633] .callout.danger {\n    border-inline-start-color: var(--color-error);\n    background: rgba(var(--color-error-rgb), 0.08);\n}\n\n/* BookStack-Seiten nutzen inline gestylte Info-/Screenshot-Boxen (helle\n   Hintergründe fürs Light-Theme). Farb-/Hintergrundwerte werden serverseitig\n   entfernt; hier ein dezenter, theme-bewusster Hintergrund für gute Lesbarkeit\n   in Light UND Dark. Ränder (border-left etc.) bleiben aus dem Inline-Style. */\n.rich-content[data-v-4f8a2633] .screenshot-placeholder {\n    background: var(--color-background-hover);\n    color: var(--color-text-maxcontrast);\n}\n\n/* Bilder als anklickbar kennzeichnen (öffnen im Lightbox-Modal). */\n.rich-content[data-v-4f8a2633] img {\n    cursor: zoom-in;\n}\n\n/* Lightbox / Galerie-Modal für Doku-Bilder */\n.help-lightbox[data-v-4f8a2633] {\n    position: fixed;\n    inset: 0;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    padding: 4vmin;\n    background: rgba(0, 0, 0, 0.82);\n    backdrop-filter: blur(4px);\n    cursor: zoom-out;\n    animation: help-lightbox-in-4f8a2633 0.15s ease-out;\n}\n@keyframes help-lightbox-in-4f8a2633 {\nfrom { opacity: 0;\n}\nto { opacity: 1;\n}\n}\n.help-lightbox__img[data-v-4f8a2633] {\n    max-width: 100%;\n    max-height: 100%;\n    object-fit: contain;\n    border-radius: var(--border-radius-large, 12px);\n    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);\n    cursor: default;\n}\n.help-lightbox__close[data-v-4f8a2633] {\n    position: absolute;\n    top: 16px;\n    right: 16px;\n    width: 44px;\n    height: 44px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    border-radius: 50%;\n    color: #fff;\n    background: rgba(255, 255, 255, 0.14);\n    cursor: pointer;\n    transition: background-color 0.15s ease;\n}\n.help-lightbox__close[data-v-4f8a2633]:hover {\n    background: rgba(255, 255, 255, 0.28);\n}\n.rich-content[data-v-4f8a2633] [style*=\"border-left\"],\n.rich-content[data-v-4f8a2633] [style*=\"border-inline-start\"] {\n    background: var(--color-background-hover);\n    border-radius: var(--border-radius, 8px);\n}\n", ""]);
 // Exports
 /* harmony default export */ __webpack_exports__["default"] = (___CSS_LOADER_EXPORT___);
 
@@ -19107,6 +19185,60 @@ exports["default"] = (sfc, props) => {
 
 /***/ }),
 
+/***/ "./node_modules/vue-material-design-icons/Close.vue":
+/*!**********************************************************!*\
+  !*** ./node_modules/vue-material-design-icons/Close.vue ***!
+  \**********************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Close_vue_vue_type_template_id_3cc2737c__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Close.vue?vue&type=template&id=3cc2737c */ "./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c");
+/* harmony import */ var _Close_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Close.vue?vue&type=script&lang=js */ "./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js");
+/* harmony import */ var _vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
+
+
+
+
+;
+const __exports__ = /*#__PURE__*/(0,_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_Close_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_Close_vue_vue_type_template_id_3cc2737c__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"node_modules/vue-material-design-icons/Close.vue"]])
+/* hot reload */
+if (false) // removed by dead control flow
+{}
+
+
+/* harmony default export */ __webpack_exports__["default"] = (__exports__);
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js":
+/*!******************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js ***!
+  \******************************************************************************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  name: "CloseIcon",
+  emits: ['click'],
+  props: {
+    title: {
+      type: String,
+    },
+    fillColor: {
+      type: String,
+      default: "currentColor"
+    },
+    size: {
+      type: Number,
+      default: 24
+    }
+  }
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/vue-material-design-icons/FileDocumentOutline.vue":
 /*!************************************************************************!*\
   !*** ./node_modules/vue-material-design-icons/FileDocumentOutline.vue ***!
@@ -19285,6 +19417,21 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js":
+/*!**********************************************************************************!*\
+  !*** ./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js ***!
+  \**********************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": function() { return /* reexport safe */ _vue_loader_dist_index_js_ruleSet_1_rules_9_use_0_Close_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]; }
+/* harmony export */ });
+/* harmony import */ var _vue_loader_dist_index_js_ruleSet_1_rules_9_use_0_Close_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./Close.vue?vue&type=script&lang=js */ "./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=script&lang=js");
+ 
+
+/***/ }),
+
 /***/ "./node_modules/vue-material-design-icons/FileDocumentOutline.vue?vue&type=script&lang=js":
 /*!************************************************************************************************!*\
   !*** ./node_modules/vue-material-design-icons/FileDocumentOutline.vue?vue&type=script&lang=js ***!
@@ -19315,6 +19462,21 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c":
+/*!****************************************************************************************!*\
+  !*** ./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c ***!
+  \****************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: function() { return /* reexport safe */ _vue_loader_dist_templateLoader_js_ruleSet_1_rules_3_vue_loader_dist_index_js_ruleSet_1_rules_9_use_0_Close_vue_vue_type_template_id_3cc2737c__WEBPACK_IMPORTED_MODULE_0__.render; }
+/* harmony export */ });
+/* harmony import */ var _vue_loader_dist_templateLoader_js_ruleSet_1_rules_3_vue_loader_dist_index_js_ruleSet_1_rules_9_use_0_Close_vue_vue_type_template_id_3cc2737c__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!../vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./Close.vue?vue&type=template&id=3cc2737c */ "./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c");
+
+
+/***/ }),
+
 /***/ "./node_modules/vue-material-design-icons/FileDocumentOutline.vue?vue&type=template&id=a39be6e2":
 /*!******************************************************************************************************!*\
   !*** ./node_modules/vue-material-design-icons/FileDocumentOutline.vue?vue&type=template&id=a39be6e2 ***!
@@ -19342,6 +19504,50 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _vue_loader_dist_templateLoader_js_ruleSet_1_rules_3_vue_loader_dist_index_js_ruleSet_1_rules_9_use_0_HelpCircleOutline_vue_vue_type_template_id_59a2ea95__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!../vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./HelpCircleOutline.vue?vue&type=template&id=59a2ea95 */ "./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/HelpCircleOutline.vue?vue&type=template&id=59a2ea95");
 
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c":
+/*!**********************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[9].use[0]!./node_modules/vue-material-design-icons/Close.vue?vue&type=template&id=3cc2737c ***!
+  \**********************************************************************************************************************************************************************************************************************************/
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: function() { return /* binding */ render; }
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm-bundler.js");
+
+
+const _hoisted_1 = ["aria-hidden", "aria-label"]
+const _hoisted_2 = ["fill", "width", "height"]
+const _hoisted_3 = { d: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" }
+const _hoisted_4 = { key: 0 }
+
+function render(_ctx, _cache, $props, $setup, $data, $options) {
+  return ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", (0,vue__WEBPACK_IMPORTED_MODULE_0__.mergeProps)(_ctx.$attrs, {
+    "aria-hidden": $props.title ? null : 'true',
+    "aria-label": $props.title,
+    class: "material-design-icon close-icon",
+    role: "img",
+    onClick: _cache[0] || (_cache[0] = $event => (_ctx.$emit('click', $event)))
+  }), [
+    ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", {
+      fill: $props.fillColor,
+      class: "material-design-icon__svg",
+      width: $props.size,
+      height: $props.size,
+      viewBox: "0 0 24 24"
+    }, [
+      (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("path", _hoisted_3, [
+        ($props.title)
+          ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("title", _hoisted_4, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($props.title), 1 /* TEXT */))
+          : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)
+      ])
+    ], 8 /* PROPS */, _hoisted_2))
+  ], 16 /* FULL_PROPS */, _hoisted_1))
+}
 
 /***/ }),
 

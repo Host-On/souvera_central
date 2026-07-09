@@ -150,7 +150,7 @@ Zentraler, verschlüsselter Zugangsdaten-Hub (für Shield & Mail):
 
 Hilfe-Cache & App-Umbenennung (Branding):
    occ souvera:help:cache-clear                          (BookStack-Cache leeren)
-   souvera_central.help_cache_ttl                        (Cache-Dauer in s, Std. 600)
+   souvera_central.help_cache_ttl                        (Cache-Dauer in s, Std. 86400/24h)
    occ souvera:branding:install-theme [--activate]       (Talk->Link, Office->Desk)
    -> sauberer Theme-l10n-Override; Repair-Step schreibt bei jedem Update ins
       aktive Theme. Danach: occ maintenance:theme:update

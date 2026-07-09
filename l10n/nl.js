@@ -240,6 +240,7 @@ OC.L10N.register(
     "Postfächer synchronisieren" : "Postbussen synchroniseren",
     "Primär" : "Primair",
     "Pro Seite" : "Per pagina",
+    "Schließen" : "Sluiten",
     "Schnellaktionen" : "Snelle acties",
     "Sie haben {count} von {total} Gruppen erstellt ({percentage}%)." : "Je hebt {count} van {total} groepen aangemaakt ({percentage}%).",
     "Sie haben {count} von {total} Gruppen erstellt. Es können keine weiteren Gruppen erstellt werden." : "Je hebt {count} van {total} groepen aangemaakt. Er kunnen geen groepen meer worden aangemaakt.",

@@ -147,8 +147,8 @@ Der Token ist – wie der provider.tools-Token – zentral und auch für Shield/
 zwischengespeichert (geteilt über Redis/APCu) → schnellere Ladezeiten, weniger Traffic.
 
 ```bash
-# TTL in Sekunden (Standard 600 = 10 min; 0 = Cache aus)
-occ config:system:set souvera_central.help_cache_ttl --value=600 --type=integer
+# TTL in Sekunden (Standard 86400 = 24 h; 0 = Cache aus)
+occ config:system:set souvera_central.help_cache_ttl --value=86400 --type=integer
 occ souvera:help:cache-clear      # nach Doku-Änderungen sofort neu laden
 ```
 
