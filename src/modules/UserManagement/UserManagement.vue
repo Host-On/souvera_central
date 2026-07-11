@@ -778,7 +778,11 @@ export default {
             const url = generateUrl('/apps/souvera_central/users/edit/{id}', { id: user.id })
             window.history.pushState({}, '', url)
 
-            this.selectedUser = user
+            this.selectedUser = {
+                ...user,
+                mailboxUsed: this.usageFor(user).used || 0,
+                mailboxUsedText: this.hasMailbox(user) ? this.formatBytes(this.usageFor(user).used) : ''
+            }
             this.showEditor = true
         },
 
@@ -828,14 +832,16 @@ export default {
             }
 
             const withMailbox = this.stalwartConfigured && this.hasMailbox(user)
+            const mbUsed = withMailbox ? Number(this.usageFor(user).used) || 0 : 0
+            const mbSize = this.formatBytes(mbUsed)
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Benutzer löschen?'),
                 message: withMailbox
                     ? this.t(
                         'souvera_central',
-                        'Möchten Sie den Benutzer „{user}" wirklich löschen? Das Postfach und ALLE E-Mails werden dabei unwiderruflich aus Stalwart (S3) gelöscht.',
-                        { user: user.displayName }
+                        'Möchten Sie den Benutzer „{user}" wirklich löschen? Das Postfach und ALLE E-Mails (ca. {size}) werden dabei unwiderruflich aus Stalwart (S3) gelöscht.',
+                        { user: user.displayName, size: mbSize }
                     )
                     : this.t(
                         'souvera_central',
@@ -845,7 +851,8 @@ export default {
                 details: withMailbox
                     ? this.t(
                         'souvera_central',
-                        'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs werden dauerhaft von Stalwart/S3 entfernt.'
+                        'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs (ca. {size}) werden dauerhaft von Stalwart/S3 entfernt.',
+                        { size: mbSize }
                     )
                     : this.t(
                         'souvera_central',
