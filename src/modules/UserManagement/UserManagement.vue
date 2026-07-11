@@ -266,6 +266,8 @@
             :type="confirmModal.type"
             :confirm-text="confirmModal.confirmText"
             :cancel-text="confirmModal.cancelText"
+            :require-text="confirmModal.requireText"
+            :require-label="confirmModal.requireLabel"
             @confirm="confirmModal.onConfirm"
             @close="closeConfirmModal"
         />
@@ -369,6 +371,8 @@ export default {
                 type: 'info',
                 confirmText: 'Bestätigen',
                 cancelText: 'Abbrechen',
+                requireText: '',
+                requireLabel: '',
                 onConfirm: () => {}
             }
         }
@@ -823,21 +827,37 @@ export default {
                 return
             }
 
+            const withMailbox = this.stalwartConfigured && this.hasMailbox(user)
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Benutzer löschen?'),
-                message: this.t(
-                    'souvera_central',
-                    'Möchten Sie den Benutzer "{user}" wirklich unwiderruflich löschen?',
-                    { user: user.displayName }
-                ),
-                details: this.t(
-                    'souvera_central',
-                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
-                ),
+                message: withMailbox
+                    ? this.t(
+                        'souvera_central',
+                        'Möchten Sie den Benutzer „{user}" wirklich löschen? Das Postfach und ALLE E-Mails werden dabei unwiderruflich aus Stalwart (S3) gelöscht.',
+                        { user: user.displayName }
+                    )
+                    : this.t(
+                        'souvera_central',
+                        'Möchten Sie den Benutzer "{user}" wirklich unwiderruflich löschen?',
+                        { user: user.displayName }
+                    ),
+                details: withMailbox
+                    ? this.t(
+                        'souvera_central',
+                        'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs werden dauerhaft von Stalwart/S3 entfernt.'
+                    )
+                    : this.t(
+                        'souvera_central',
+                        'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
+                    ),
                 type: 'danger',
                 confirmText: this.t('souvera_central', 'Ja, Benutzer löschen'),
                 cancelText: this.t('souvera_central', 'Abbrechen'),
+                requireText: withMailbox ? user.id : '',
+                requireLabel: withMailbox
+                    ? this.t('souvera_central', 'Zur Bestätigung den Benutzernamen „{user}" eingeben:', { user: user.id })
+                    : '',
                 onConfirm: async () => {
                     try {
                         const url = generateUrl('/apps/souvera_central/api/users/{id}', { id: user.id })
@@ -1279,23 +1299,24 @@ export default {
 .critical-warning {
     margin-bottom: 30px;
     padding: 25px 30px;
-    background: var(--color-error);
-    border: 2px solid var(--color-error);
+    background: rgba(211, 47, 47, 0.12);
+    border: 1px solid rgba(211, 47, 47, 0.5);
+    border-left: 4px solid #d32f2f;
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .critical-warning .warning-content {
     display: flex;
     align-items: center;
     gap: 20px;
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .critical-warning .warning-icon {
     flex-shrink: 0;
     animation: pulse 2s infinite;
-    color: #fff;
+    color: #d32f2f;
 }
 
 @keyframes pulse {
@@ -1316,14 +1337,14 @@ export default {
     margin: 0 0 8px;
     font-size: 20px;
     font-weight: 700;
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .critical-warning p {
     margin: 0;
     font-size: 15px;
     line-height: 1.5;
-    color: #fff;
+    color: var(--color-text-maxcontrast);
 }
 
 .contact-button {
@@ -1331,9 +1352,9 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: #fff;
-    color: var(--color-error);
-    border: 2px solid #fff;
+    background: #d32f2f;
+    color: #fff;
+    border: 2px solid #d32f2f;
     border-radius: 6px;
     font-weight: 700;
     font-size: 15px;
@@ -1344,7 +1365,8 @@ export default {
 }
 
 .contact-button:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: #b71c1c;
+    border-color: #b71c1c;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px var(--color-box-shadow);
 }
@@ -1353,22 +1375,23 @@ export default {
 .warning-banner {
     margin-bottom: 30px;
     padding: 20px 25px;
-    background: var(--color-warning);
-    border: 2px solid var(--color-warning);
+    background: rgba(209, 135, 0, 0.12);
+    border: 1px solid rgba(209, 135, 0, 0.45);
+    border-left: 4px solid #d18700;
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .warning-banner .warning-content {
     display: flex;
     align-items: center;
     gap: 20px;
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .warning-banner .warning-icon {
     flex-shrink: 0;
-    color: #fff;
+    color: #d18700;
 }
 
 .warning-banner .warning-text {
@@ -1379,46 +1402,49 @@ export default {
     margin: 0 0 5px;
     font-size: 18px;
     font-weight: 700;
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .warning-banner p {
     margin: 0;
     font-size: 14px;
-    color: #fff;
+    color: var(--color-text-maxcontrast);
     font-weight: 500;
 }
 
 .contact-button.secondary {
-    background: #fff;
-    color: var(--color-warning);
+    background: #d18700;
+    color: #fff;
     border: none;
     box-shadow: 0 2px 6px var(--color-box-shadow);
 }
 
 .contact-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: #b87500;
     transform: translateY(-2px);
     box-shadow: 0 4px 10px var(--color-box-shadow);
 }
 
 /* License Status Badge Colors */
 .license-status.license-warning {
-    background: var(--color-warning);
-    color: #fff;
-    border: 1px solid var(--color-warning);
+    background: rgba(209, 135, 0, 0.15);
+    color: var(--color-main-text);
+    border: 1px solid rgba(209, 135, 0, 0.5);
     font-weight: 600;
 }
 
-.license-status.license-warning .material-design-icon,
+.license-status.license-warning .material-design-icon {
+    color: #d18700;
+}
+
 .license-status.license-critical .material-design-icon {
-    color: #fff;
+    color: #d32f2f;
 }
 
 .license-status.license-critical {
-    background: var(--color-error);
-    color: #fff;
-    border: 1px solid var(--color-error);
+    background: rgba(211, 47, 47, 0.15);
+    color: var(--color-main-text);
+    border: 1px solid rgba(211, 47, 47, 0.5);
 }
 
 /* Responsive Design */

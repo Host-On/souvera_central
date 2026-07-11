@@ -383,6 +383,8 @@
             :type="confirmModal.type"
             :confirm-text="confirmModal.confirmText"
             :cancel-text="confirmModal.cancelText"
+            :require-text="confirmModal.requireText"
+            :require-label="confirmModal.requireLabel"
             @confirm="confirmModal.onConfirm"
             @close="closeConfirmModal"
         />
@@ -499,6 +501,8 @@ export default {
                 type: 'info',
                 confirmText: 'Bestätigen',
                 cancelText: 'Abbrechen',
+                requireText: '',
+                requireLabel: '',
                 onConfirm: () => {}
             }
         }
@@ -1063,19 +1067,33 @@ export default {
             if (this.isProtected) {
                 return
             }
+            const withMailbox = !!(this.user && this.user.isSouveraUser)
             this.confirmModal = {
                 isOpen: true,
                 title: this.t('souvera_central', 'Konto löschen?'),
-                message: this.t('souvera_central', 'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?', {
-                    user: this.formData.displayName
-                }),
-                details: this.t(
-                    'souvera_central',
-                    'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
-                ),
+                message: withMailbox
+                    ? this.t('souvera_central', 'Möchten Sie das Konto „{user}" wirklich löschen? Das Postfach und ALLE E-Mails werden dabei unwiderruflich aus Stalwart (S3) gelöscht.', {
+                        user: this.formData.displayName
+                    })
+                    : this.t('souvera_central', 'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?', {
+                        user: this.formData.displayName
+                    }),
+                details: withMailbox
+                    ? this.t(
+                        'souvera_central',
+                        'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs werden dauerhaft von Stalwart/S3 entfernt.'
+                    )
+                    : this.t(
+                        'souvera_central',
+                        'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
+                    ),
                 type: 'danger',
                 confirmText: this.t('souvera_central', 'Ja, Konto löschen'),
                 cancelText: this.t('souvera_central', 'Abbrechen'),
+                requireText: withMailbox ? this.user.id : '',
+                requireLabel: withMailbox
+                    ? this.t('souvera_central', 'Zur Bestätigung den Benutzernamen „{user}" eingeben:', { user: this.user.id })
+                    : '',
                 onConfirm: async () => {
                     this.deletingUser = true
 

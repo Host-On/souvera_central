@@ -17,13 +17,34 @@
             <div class="modal-body">
                 <p>{{ message }}</p>
                 <p v-if="details" class="modal-details">{{ details }}</p>
+                <div v-if="requireText" class="modal-confirm-input">
+                    <label :for="'confirm-require-input'">
+                        {{ requireLabel || defaultRequireLabel }}
+                    </label>
+                    <input
+                        id="confirm-require-input"
+                        v-model="typedValue"
+                        type="text"
+                        autocomplete="off"
+                        spellcheck="false"
+                        :placeholder="requireText"
+                        data-testid="confirm-modal-require-input"
+                        @keyup.enter="canConfirm && confirm()"
+                    >
+                </div>
             </div>
 
             <div class="modal-footer">
-                <button class="button secondary" @click="close">
+                <button class="button secondary" data-testid="confirm-modal-cancel" @click="close">
                     {{ cancelText }}
                 </button>
-                <button class="button primary" :class="typeClass" @click="confirm">
+                <button
+                    class="button primary"
+                    :class="typeClass"
+                    :disabled="!canConfirm"
+                    data-testid="confirm-modal-confirm"
+                    @click="confirm"
+                >
                     {{ confirmText }}
                 </button>
             </div>
@@ -78,14 +99,36 @@ export default {
         cancelText: {
             type: String,
             default: 'Abbrechen'
+        },
+        requireText: {
+            type: String,
+            default: ''
+        },
+        requireLabel: {
+            type: String,
+            default: ''
         }
     },
 
     emits: ['confirm', 'cancel', 'close'],
 
+    data() {
+        return {
+            typedValue: ''
+        }
+    },
+
     computed: {
         typeClass() {
             return `modal-${this.type}`
+        },
+
+        canConfirm() {
+            return !this.requireText || this.typedValue.trim() === this.requireText
+        },
+
+        defaultRequireLabel() {
+            return `Zur Bestätigung „${this.requireText}" eingeben:`
         }
     },
 
@@ -94,6 +137,8 @@ export default {
             if (newValue) {
                 // Verhindere Body-Scrolling wenn Modal offen ist
                 document.body.style.overflow = 'hidden'
+                // Type-to-confirm Eingabe bei jedem Öffnen zurücksetzen
+                this.typedValue = ''
             } else {
                 document.body.style.overflow = ''
             }
@@ -107,6 +152,9 @@ export default {
 
     methods: {
         confirm() {
+            if (!this.canConfirm) {
+                return
+            }
             this.$emit('confirm')
             this.close()
         },
@@ -260,6 +308,35 @@ export default {
     border-left: 3px solid var(--color-border);
 }
 
+/* Type-to-confirm Eingabe (starke Doppelbestätigung) */
+.modal-confirm-input {
+    margin-top: 18px;
+}
+
+.modal-confirm-input label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-main-text);
+    margin-bottom: 8px;
+}
+
+.modal-confirm-input input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+}
+
+.modal-confirm-input input:focus {
+    outline: none;
+    border-color: var(--color-primary-element);
+}
+
 /* Modal Footer */
 .modal-footer {
     display: flex;
@@ -302,6 +379,13 @@ export default {
     background: var(--color-primary-element-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+.button.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Type-specific Button Styles */
