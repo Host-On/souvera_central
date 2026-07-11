@@ -18,6 +18,7 @@ return [
         ['name' => 'page#groups', 'url' => '/groups', 'verb' => 'GET'],
         ['name' => 'page#sharedMailboxes', 'url' => '/shared-mailboxes', 'verb' => 'GET'],
         ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
+        ['name' => 'page#email', 'url' => '/email', 'verb' => 'GET'],
 
         // User API-Routen
         ['name' => 'user_api#getCurrentUser', 'url' => '/api/users/current', 'verb' => 'GET'],
@@ -90,5 +91,18 @@ return [
         ['name' => 'help_api#tree', 'url' => '/api/help/tree', 'verb' => 'GET'],
         ['name' => 'help_api#book', 'url' => '/api/help/books/{id}', 'verb' => 'GET'],
         ['name' => 'help_api#page', 'url' => '/api/help/pages/{id}', 'verb' => 'GET'],
+
+        // BIMI API (Souvera-Admin)
+        ['name' => 'bimi_api#list', 'url' => '/api/bimi', 'verb' => 'GET'],
+        ['name' => 'bimi_api#get', 'url' => '/api/bimi/{domain}', 'verb' => 'GET'],
+        ['name' => 'bimi_api#checkDmarc', 'url' => '/api/bimi/{domain}/check-dmarc', 'verb' => 'POST'],
+        ['name' => 'bimi_api#uploadLogo', 'url' => '/api/bimi/{domain}/logo', 'verb' => 'POST'],
+        ['name' => 'bimi_api#setVmc', 'url' => '/api/bimi/{domain}/vmc', 'verb' => 'POST'],
+        ['name' => 'bimi_api#delete', 'url' => '/api/bimi/{domain}', 'verb' => 'DELETE'],
+
+        // BIMI öffentlich (OHNE Login – für Souvera CloudManager + Mail-Provider)
+        ['name' => 'bimi_public#record', 'url' => '/api/public/bimi/{domain}', 'verb' => 'GET'],
+        ['name' => 'bimi_public#logo', 'url' => '/bimi/{domain}/logo.svg', 'verb' => 'GET'],
+        ['name' => 'bimi_public#vmc', 'url' => '/bimi/{domain}/vmc.pem', 'verb' => 'GET'],
     ]
 ];

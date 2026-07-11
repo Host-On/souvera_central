@@ -50,6 +50,11 @@
                 <!-- Shared Mailboxes -->
                 <SharedMailboxesView v-else-if="currentRoute === 'shared-mailboxes'" :key="routeKey" />
 
+                <!-- E-Mail (BIMI u. a.) -->
+                <Email
+                    v-else-if="currentRoute === 'email'"
+                    :allowed-domains="allowedDomains" />
+
                 <!-- Settings -->
                 <Settings
                     v-else-if="currentRoute === 'settings'"
@@ -75,12 +80,14 @@ import ViewDashboard from 'vue-material-design-icons/ViewDashboard.vue'
 import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
+import EmailIcon from 'vue-material-design-icons/Email.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
 import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
 import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.vue'
+import Email from './modules/Email/Email.vue'
 import Settings from './modules/Settings/Settings.vue'
 
 export default {
@@ -95,6 +102,7 @@ export default {
         UserManagement,
         GroupManagement,
         SharedMailboxesView,
+        Email,
         Settings
     },
 
@@ -135,6 +143,12 @@ export default {
                     label: t('souvera_central', 'Geteilte Postfächer'),
                     icon: markRaw(EmailMultiple),
                     url: generateUrl('/apps/souvera_central/shared-mailboxes')
+                },
+                {
+                    id: 'email',
+                    label: t('souvera_central', 'E-Mail'),
+                    icon: markRaw(EmailIcon),
+                    url: generateUrl('/apps/souvera_central/email')
                 },
                 {
                     id: 'settings',
@@ -190,7 +204,7 @@ export default {
 
         handlePopState() {
             const path = window.location.pathname
-            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings)/)
+            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|email|settings)/)
 
             this.currentRoute = match && match[1] ? match[1] : 'dashboard'
             this.updateCurrentPath()

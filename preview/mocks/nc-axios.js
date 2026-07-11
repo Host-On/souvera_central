@@ -32,7 +32,55 @@ const mailboxes = [
     { id: 'sales', name: 'Vertrieb', email: 'sales@souvera.eu', memberCount: 2 }
 ]
 
+// --- BIMI Preview-Helfer ---
+function bimiDmarc(domain) {
+    return { found: true, enforced: true, policy: 'reject', pct: 100, rua: 'mailto:dmarc@' + domain, record: 'v=DMARC1; p=reject; rua=mailto:dmarc@' + domain, issues: [], checkedAt: new Date().toISOString() }
+}
+function bimiPayload(domain, opts) {
+    opts = opts || {}
+    const base = 'https://cloud.souvera.eu/apps/souvera_central'
+    const hasLogo = opts.hasLogo !== undefined ? opts.hasLogo : true
+    const ready = opts.ready !== undefined ? opts.ready : true
+    const vmcMode = opts.vmcMode || 'pem'
+    const vmcUrl = vmcMode === 'none' ? null : base + '/bimi/' + domain + '/vmc.pem'
+    let record = 'v=BIMI1; l=' + base + '/bimi/' + domain + '/logo.svg'
+    if (vmcUrl) record += '; a=' + vmcUrl
+    if (opts.record === null) record = null
+    return {
+        domain, selector: 'default', host: 'default._bimi.' + domain, type: 'TXT',
+        record,
+        logoUrl: base + '/bimi/' + domain + '/logo.svg',
+        vmcUrl, vmcMode, hasLogo, svgSize: hasLogo ? 3120 : 0,
+        dmarc: bimiDmarc(domain), dmarcEnforced: true,
+        ready, status: ready ? 'ready' : 'incomplete', updatedAt: new Date().toISOString(),
+    }
+}
+
 function respond(url) {
+    // --- BIMI (Preview-Mock) ---
+    const bimiMatch = url.match(/\/api\/bimi\/([^/?]+)/)
+    if (url.includes('/api/bimi')) {
+        const domain = bimiMatch ? decodeURIComponent(bimiMatch[1]) : 'souvera.eu'
+        if (url.includes('/logo')) {
+            return { data: { ok: true, size: 2480, warnings: ['<title> ergänzt (in SVG P/S erforderlich).', 'viewBox aus width/height ergänzt.'], payload: bimiPayload(domain, { hasLogo: true, ready: true }) } }
+        }
+        if (url.includes('/check-dmarc')) {
+            return { data: bimiDmarc(domain) }
+        }
+        if (url.includes('/vmc')) {
+            return { data: { ok: true, payload: bimiPayload(domain, { hasLogo: true, ready: true, vmcMode: 'url' }) } }
+        }
+        if (url.match(/\/api\/bimi\/?$/)) {
+            return { data: { domains: [bimiPayload('souvera.eu', { hasLogo: true, ready: true })] } }
+        }
+        // GET einzelne Domain: sauberer Ausgangszustand (DMARC ok, noch kein Logo)
+        return { data: bimiPayload(domain, { hasLogo: false, ready: false, record: null }) }
+    }
+    if (url.includes('/api/public/bimi')) {
+        const domain = bimiMatch ? decodeURIComponent(bimiMatch[1]) : 'souvera.eu'
+        return { data: bimiPayload(domain, { hasLogo: true, ready: true }) }
+    }
+
     // --- Hilfe / BookStack (Preview-Mock) ---
     if (url.includes('/api/help/tree')) {
         return { data: helpTree }

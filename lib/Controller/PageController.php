@@ -75,6 +75,12 @@ class PageController extends Controller {
         return $this->renderPage('settings');
     }
 
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
+    public function email(): TemplateResponse {
+        return $this->renderPage('email');
+    }
+
     /**
      * Helper: Rendert die Seite mit Initial-Route und optionalen Daten
      */
