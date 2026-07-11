@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Middleware;
 
-use OCA\SouveraCentral\Controller\BimiPublicController;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Exception\NotSouveraAdminException;
@@ -37,11 +36,6 @@ class SouveraAdminMiddleware extends Middleware {
         // Hilfe-Controller haben eine eigene, gelockerte Prüfung (canSeeHelp)
         // und sind daher von der Souvera-Admin-Pflicht ausgenommen.
         if ($controller instanceof HelpController || $controller instanceof HelpApiController) {
-            return;
-        }
-        // Öffentlicher BIMI-Endpunkt: bewusst ohne Login (PublicPage) – der
-        // DNS-Record ist öffentliche Information für den CloudManager/Mail-Provider.
-        if ($controller instanceof BimiPublicController) {
             return;
         }
         if ($this->permission->isSouveraAdmin()) {
