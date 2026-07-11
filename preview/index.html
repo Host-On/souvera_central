@@ -137,6 +137,31 @@
 
         * { box-sizing: border-box; }
 
+        /* ===== Simuliertes Nextcloud-34-Server-Formular-CSS (Preview ≈ Live) =====
+           NC gibt Formularelementen global eine min-height (--default-clickable-area)
+           und eigenes Padding/Border. Native Selects rendern dabei etwas höher als
+           Text-Inputs -> genau die live gemeldete Höhen-Ungleichheit. Diese Regeln
+           machen die Preview realistisch; unsere forms.css (#app-... !important)
+           normalisiert alle Controls wieder auf exakt 44px. */
+        #app-souvera-user-management input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+        #app-souvera-user-management textarea,
+        #app-souvera-user-management select {
+            margin: 3px 3px 3px 0;
+            padding: 0 12px;
+            font-size: 13px;
+            background-color: var(--color-main-background);
+            color: var(--color-main-text);
+            border: 2px solid var(--color-border-maxcontrast);
+            border-radius: var(--border-radius-large);
+            box-sizing: border-box;
+            min-height: var(--default-clickable-area);
+            outline: none;
+        }
+        #app-souvera-user-management select {
+            min-height: calc(var(--default-clickable-area) + 7px);
+            padding: 4px 26px 4px 10px;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -190,8 +215,7 @@
             font-weight: 700; font-size: 14px;
         }
 
-        /* ===== Content area below header (where the Vue app renders) ===== */
-        #app-souvera-user-management {
+        /* ===== Content area below header (where the Vue app renders) ===== */        #app-souvera-user-management {
             position: absolute;
             top: var(--header-height);
             left: 0;

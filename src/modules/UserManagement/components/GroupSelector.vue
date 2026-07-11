@@ -404,8 +404,8 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 11px 16px;
-    background: var(--color-primary-element-light);
-    color: var(--color-primary-element-light-text);
+    background: var(--color-primary-element);
+    color: var(--color-primary-element-text);
     border: 1px solid var(--color-primary-element);
     border-radius: var(--border-radius, 8px);
     font-weight: 600;
@@ -417,9 +417,13 @@ export default {
 }
 
 .dropdown-trigger:hover {
-    background: var(--color-primary-element-light-hover);
+    background: var(--color-primary-element-hover);
     border-color: var(--color-primary-element-hover);
-    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.25);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.35);
+}
+
+.dropdown-trigger .material-design-icon {
+    color: var(--color-primary-element-text);
 }
 
 /* Dropdown Menu */
