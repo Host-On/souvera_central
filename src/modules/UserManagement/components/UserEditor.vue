@@ -134,7 +134,6 @@
                         <label for="quota">
                             {{ t('souvera_central', 'Kontingent') }}
                         </label>
-                        <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
                         <select id="quota" v-model="formData.quota">
                             <option value="default">{{ t('souvera_central', 'Standard') }}</option>
                             <option value="1 GB">1 GB</option>
@@ -144,6 +143,7 @@
                             <option value="100 GB">100 GB</option>
                             <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
                         </select>
+                        <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
                     </div>
 
                     <!-- Manager -->
@@ -151,8 +151,8 @@
                         <label for="manager">
                             {{ t('souvera_central', 'Manager') }}
                         </label>
-                        <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
                         <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
+                        <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
                     </div>
 
                     <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
@@ -1254,11 +1254,11 @@ export default {
     padding: 24px;
 }
 
-/* Basisdaten-Raster */
+/* Basisdaten-Raster: geordnetes 2-Spalten-Layout */
 .base-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 20px 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 28px;
     align-items: start;
 }
 
@@ -1268,6 +1268,12 @@ export default {
 
 .base-grid .span-full {
     grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+    .base-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Form Groups */

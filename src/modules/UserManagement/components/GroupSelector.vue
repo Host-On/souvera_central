@@ -403,22 +403,23 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
-    background: var(--color-main-background);
-    color: var(--color-primary-element);
-    border: 1px dashed var(--color-primary-element);
+    padding: 11px 16px;
+    background: var(--color-primary-element-light);
+    color: var(--color-primary-element-light-text);
+    border: 1px solid var(--color-primary-element);
     border-radius: var(--border-radius, 8px);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     width: 100%;
     justify-content: center;
 }
 
 .dropdown-trigger:hover {
-    background: rgba(var(--color-primary-element-rgb), 0.08);
-    border-style: solid;
+    background: var(--color-primary-element-light-hover);
+    border-color: var(--color-primary-element-hover);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-element-rgb), 0.25);
 }
 
 /* Dropdown Menu */
