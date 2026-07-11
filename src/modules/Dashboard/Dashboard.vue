@@ -458,9 +458,9 @@ export default {
     position: relative;
     margin-bottom: 30px;
     padding: 22px 26px;
-    background: rgba(var(--color-error-rgb), 0.1);
-    border: 1px solid rgba(var(--color-error-rgb), 0.35);
-    border-left: 4px solid var(--color-error);
+    background: rgba(211, 47, 47, 0.1);
+    border: 1px solid rgba(211, 47, 47, 0.35);
+    border-left: 4px solid #d32f2f;
     border-radius: var(--border-radius-large);
 }
 
@@ -472,7 +472,7 @@ export default {
 
 .critical-warning .warning-icon {
     flex-shrink: 0;
-    color: var(--color-error);
+    color: #d32f2f;
     animation: pulse 2s infinite;
 }
 
@@ -495,7 +495,7 @@ export default {
     margin: 0 0 6px;
     font-size: 19px;
     font-weight: 700;
-    color: var(--color-error-text);
+    color: #c62828;
 }
 
 .critical-warning p {
@@ -510,7 +510,7 @@ export default {
     align-items: center;
     gap: 8px;
     padding: 11px 22px;
-    background: var(--color-error);
+    background: #d32f2f;
     color: #fff;
     border: none;
     border-radius: var(--border-radius-element);
@@ -524,7 +524,7 @@ export default {
 .contact-button:hover {
     filter: brightness(1.08);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(var(--color-error-rgb), 0.35);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.35);
 }
 
 /* WARNING BANNER (80%+) */
@@ -532,9 +532,9 @@ export default {
     position: relative;
     margin-bottom: 30px;
     padding: 20px 24px;
-    background: rgba(var(--color-warning-rgb), 0.12);
-    border: 1px solid rgba(var(--color-warning-rgb), 0.35);
-    border-left: 4px solid var(--color-warning);
+    background: rgba(209, 135, 0, 0.12);
+    border: 1px solid rgba(209, 135, 0, 0.35);
+    border-left: 4px solid #d18700;
     border-radius: var(--border-radius-large);
 }
 
@@ -546,7 +546,7 @@ export default {
 
 .warning-banner .warning-icon {
     flex-shrink: 0;
-    color: var(--color-warning);
+    color: #d18700;
 }
 
 .warning-banner .warning-text {
@@ -558,7 +558,7 @@ export default {
     margin: 0 0 5px;
     font-size: 17px;
     font-weight: 700;
-    color: var(--color-warning-text);
+    color: #a86a00;
 }
 
 .warning-banner p {
@@ -570,14 +570,14 @@ export default {
 }
 
 .contact-button.secondary {
-    background: var(--color-warning);
-    color: #3d2c00;
+    background: #d18700;
+    color: #fff;
 }
 
 .contact-button.secondary:hover {
     filter: brightness(1.06);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(var(--color-warning-rgb), 0.3);
+    box-shadow: 0 4px 10px rgba(209, 135, 0, 0.3);
 }
 
 /* Header */
@@ -626,15 +626,15 @@ export default {
 }
 
 .stat-card.stat-warning {
-    border-color: var(--color-warning);
-    background: rgba(var(--color-warning-rgb), 0.08);
+    border-color: #d18700;
+    background: rgba(209, 135, 0, 0.08);
 }
 
 .stat-card.stat-critical {
-    border-color: var(--color-error);
+    border-color: #d32f2f;
     border-width: 2px;
-    background: var(--color-error);
-    color: #fff;
+    background: rgba(211, 47, 47, 0.1);
+    color: var(--color-main-text);
 }
 
 .stat-icon {
@@ -661,7 +661,7 @@ export default {
 }
 
 .stat-card.stat-critical .stat-value {
-    color: #fff;
+    color: var(--color-main-text);
 }
 
 .stat-label {
@@ -671,20 +671,20 @@ export default {
 }
 
 .stat-card.stat-critical .stat-label {
-    color: #fff;
+    color: var(--color-text-maxcontrast);
 }
 
 .stat-warning-text {
     margin-top: 5px;
     font-size: 12px;
-    color: var(--color-warning-text);
+    color: #a86a00;
     font-weight: 600;
 }
 
 .stat-critical-text {
     margin-top: 5px;
     font-size: 12px;
-    color: #fff;
+    color: #d32f2f;
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -800,13 +800,13 @@ export default {
 }
 
 .status-dot.dot-ok {
-    background: var(--color-success);
-    box-shadow: 0 0 0 3px rgba(var(--color-success-rgb), 0.2);
+    background: #2e9e4f;
+    box-shadow: 0 0 0 3px rgba(46, 158, 79, 0.2);
 }
 
 .status-dot.dot-error {
-    background: var(--color-error);
-    box-shadow: 0 0 0 3px rgba(var(--color-error-rgb), 0.2);
+    background: #d32f2f;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
 }
 
 .status-dot.dot-muted {
@@ -871,13 +871,13 @@ export default {
     border-radius: var(--border-radius-element);
     font-size: 14px;
     font-weight: 500;
-    background: rgba(var(--color-success-rgb), 0.12);
-    color: var(--color-success-text);
+    background: rgba(46, 158, 79, 0.12);
+    color: #2e7d32;
 }
 
 .sync-result.has-errors {
-    background: rgba(var(--color-error-rgb), 0.12);
-    color: var(--color-error-text);
+    background: rgba(211, 47, 47, 0.12);
+    color: #c62828;
 }
 
 /* Mail-Gruppe Info */
@@ -920,13 +920,13 @@ export default {
     font-weight: 600;
     padding: 2px 10px;
     border-radius: var(--border-radius-pill);
-    background: rgba(var(--color-success-rgb), 0.15);
-    color: var(--color-success-text);
+    background: rgba(46, 158, 79, 0.15);
+    color: #2e7d32;
 }
 
 .mailgroup-badge.badge-warn {
-    background: rgba(var(--color-warning-rgb), 0.15);
-    color: var(--color-warning-text);
+    background: rgba(209, 135, 0, 0.15);
+    color: #a86a00;
 }
 
 .mailgroup-hint {

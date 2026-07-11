@@ -406,13 +406,13 @@ export default {
 }
 
 .toggle-button.toggle-active {
-    background: var(--color-success);
+    background: #2e9e4f;
     color: #fff;
-    border: 2px solid var(--color-success);
+    border: 2px solid #2e9e4f;
 }
 
 .toggle-button.toggle-active:hover {
-    background: var(--color-success-hover);
+    background: #278a44;
 }
 
 .toggle-button.toggle-active .toggle-icon {
@@ -420,13 +420,13 @@ export default {
 }
 
 .toggle-button.toggle-inactive {
-    background: var(--color-error);
+    background: #d32f2f;
     color: #fff;
-    border: 2px solid var(--color-error);
+    border: 2px solid #d32f2f;
 }
 
 .toggle-button.toggle-inactive:hover {
-    background: var(--color-error-hover);
+    background: #b71c1c;
 }
 
 .toggle-button.toggle-inactive .toggle-icon {
@@ -600,7 +600,7 @@ export default {
     right: 8px;
     font-size: 20px;
     color: #fff;
-    background: var(--color-success);
+    background: #2e9e4f;
     border-radius: 50%;
     width: 28px;
     height: 28px;
@@ -691,8 +691,8 @@ export default {
 }
 
 .save-indicator.success {
-    border-color: var(--color-success);
-    background: var(--color-success);
+    border-color: #2e9e4f;
+    background: #2e9e4f;
     color: white;
 }
 
