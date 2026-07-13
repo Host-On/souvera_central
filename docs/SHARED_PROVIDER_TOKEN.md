@@ -9,6 +9,8 @@ Aktuell zentral verwaltet:
 - der API-Token für **`provider.tools`** (`ProviderTokenService`)
 - der **BookStack**-API-Token (`BookStackTokenService`) – für die Central-Hilfe
   und ebenfalls für Shield/Mail abrufbar.
+- das **Postmaster-App-Passwort** (`PostmasterCredentialService`) – das beim Deploy
+  erzeugte App-Passwort des `postmaster@`-Postfachs.
 
 ---
 
@@ -137,3 +139,38 @@ Service-API `OCA\SouveraCentral\Service\BookStackTokenService` (Contract identis
 zu `ProviderTokenService`): `hasToken()`, `getToken()`, `getMaskedToken()`,
 `getSetAt()`, `setToken(string)`, `clearToken()`, Konstante `PROVIDER = 'bookstack'`.
 **Nur lesen** aus Shield/Mail; Setzen/Löschen erfolgt zentral in Central (occ).
+
+---
+
+## 6. Postmaster-App-Passwort (dritte zentrale Zugangsdaten)
+
+Das beim Deploy erzeugte **App-Passwort des `postmaster@`-Postfachs** wird
+**identisch** verwaltet (verschlüsselt via `ICrypto`, gebunden an das Instanz-`secret`).
+Es wird **nur** das Passwort gespeichert – keine Adresse.
+
+**Setzen/Status/Löschen (Hoster/Deploy, via occ):**
+
+```bash
+# Empfohlen: über STDIN (keine Shell-History) – so setzt es das Deploy-Skript
+printf '%s' "$POSTMASTER_APP_PASSWORD" | occ souvera:postmaster-password:set --stdin
+
+occ souvera:postmaster-password:show            # maskiert
+occ souvera:postmaster-password:show --reveal   # Klartext (Debug)
+occ souvera:postmaster-password:show --output=json
+occ souvera:postmaster-password:delete
+```
+
+**Abrufen (aus anderen Souvera-Apps):**
+
+```php
+use OCA\SouveraCentral\Service\PostmasterCredentialService;
+
+$password = \OCP\Server::get(PostmasterCredentialService::class)->getPassword();
+// string  -> App-Passwort im Klartext (entschlüsselt)
+// null    -> nicht gesetzt oder nicht entschlüsselbar
+```
+
+Service-API `OCA\SouveraCentral\Service\PostmasterCredentialService` (Contract analog
+zu `ProviderTokenService`): `hasPassword()`, `getPassword()`, `getMaskedPassword()`,
+`getSetAt()`, `setPassword(string)`, `clearPassword()`, Konstante `CREDENTIAL = 'postmaster'`.
+**Nur lesen** aus anderen Apps; Setzen/Löschen erfolgt zentral in Central (occ, i. d. R. beim Deploy).
