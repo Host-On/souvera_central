@@ -30,7 +30,7 @@
                         :placeholder="requireText"
                         data-testid="confirm-modal-require-input"
                         @keyup.enter="canConfirm && confirm()"
-                    >
+                    />
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\LicenseService;
 use OCA\SouveraCentral\Service\MailGroupService;
+use OCA\SouveraCentral\Service\StorageService;
 use OCP\IUserSession;
 
 class UserApiController extends OCSController {
@@ -30,6 +31,7 @@ class UserApiController extends OCSController {
     private $userSession;
     private LicenseService $licenseService;
     private MailGroupService $mailGroupService;
+    private StorageService $storageService;
 
     public function __construct(
         string $appName,
@@ -41,7 +43,8 @@ class UserApiController extends OCSController {
         ConfigService $configService,
         IUserSession $userSession,
         LicenseService $licenseService,
-        MailGroupService $mailGroupService
+        MailGroupService $mailGroupService,
+        StorageService $storageService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -52,6 +55,7 @@ class UserApiController extends OCSController {
         $this->userSession = $userSession;
         $this->licenseService = $licenseService;
         $this->mailGroupService = $mailGroupService;
+        $this->storageService = $storageService;
     }
 
     /**
@@ -896,7 +900,26 @@ class UserApiController extends OCSController {
                 // Souvera-Administrator (delegierte Verwaltung)
                 'scadmin_group' => $this->configService->getScadminGroupId(),
                 'souvera_group' => $this->configService->getMailGroupId(),
+                // Mail-Speicher-Pool (nur Limit + Schrittweite; belegte Menge via /api/mail-storage)
+                'mail_storage_max' => $this->configService->getMaxMailStorage(),
+                'mail_storage_step' => StorageService::GIB,
             ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Mail-Speicher-Pool: Gesamt/verteilt/verfügbar (Bytes) für die UI.
+     * Ermittelt die verteilte Menge live aus Stalwart (User + geteilte Postfächer).
+     */
+    #[NoAdminRequired]
+    public function getMailStorage(): DataResponse {
+        try {
+            return new DataResponse($this->storageService->getSummary());
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],

@@ -79,20 +79,36 @@
                     <span class="quota-current">{{ quotaDisplay }}</span>
                 </div>
                 <div class="quota-control-row">
-                    <select
-                        v-model.number="selectedQuotaBytes"
-                        class="quota-select"
-                        :disabled="quotaSaving"
-                        data-testid="mailbox-quota-select"
+                    <div class="quota-stepper">
+                        <input
+                            v-model.number="selectedQuotaGB"
+                            type="number"
+                            min="1"
+                            step="1"
+                            :max="poolEnabled ? maxGbForThis : null"
+                            class="quota-input"
+                            :disabled="quotaSaving || unlimited"
+                            data-testid="mailbox-quota-input"
+                        />
+                        <span class="quota-unit">{{ t('souvera_central', 'GB') }}</span>
+                    </div>
+                    <label
+                        v-if="!poolEnabled"
+                        class="quota-unlimited-label"
+                        data-testid="mailbox-quota-unlimited-label"
                     >
-                        <option v-for="opt in quotaOptions" :key="opt.bytes" :value="opt.bytes">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                        <input
+                            v-model="unlimited"
+                            type="checkbox"
+                            :disabled="quotaSaving"
+                            data-testid="mailbox-quota-unlimited"
+                        />
+                        <span>{{ t('souvera_central', 'Unbegrenzt') }}</span>
+                    </label>
                     <button
                         type="button"
                         class="quota-save-button"
-                        :disabled="quotaSaving || selectedQuotaBytes === currentQuotaBytes"
+                        :disabled="quotaSaving || !quotaChanged"
                         data-testid="mailbox-quota-save"
                         @click="saveQuota"
                     >
@@ -100,6 +116,9 @@
                         {{ quotaSaving ? t('souvera_central', 'Speichert…') : t('souvera_central', 'Limit setzen') }}
                     </button>
                 </div>
+                <p v-if="poolEnabled" class="quota-pool-hint" data-testid="mailbox-quota-pool-hint">
+                    {{ t('souvera_central', 'Für dieses Postfach im Pool verfügbar: {available}', { available: formatBytes(poolAvailableForThis) }) }}
+                </p>
                 <p v-if="quotaSuccess" class="success-message" data-testid="mailbox-quota-success">{{ quotaSuccess }}</p>
                 <p v-if="quotaError" class="error-message" data-testid="mailbox-quota-error">{{ quotaError }}</p>
             </div>
@@ -223,7 +242,9 @@ export default {
             aliasError: null,
             aliasSuccess: null,
             currentQuotaBytes: 0,
-            selectedQuotaBytes: 0,
+            selectedQuotaGB: 1,
+            unlimited: false,
+            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 },
             quotaSaving: false,
             quotaSuccess: null,
             quotaError: null
@@ -235,16 +256,33 @@ export default {
             return this.newAliasLocalPart.trim().length > 0 && this.newAliasDomain && !this.isLimitReached
         },
 
-        quotaOptions() {
-            const GB = 1024 * 1024 * 1024
-            return [
-                { bytes: 0, label: this.t('souvera_central', 'Unbegrenzt') },
-                { bytes: 1 * GB, label: '1 GB' },
-                { bytes: 5 * GB, label: '5 GB' },
-                { bytes: 10 * GB, label: '10 GB' },
-                { bytes: 25 * GB, label: '25 GB' },
-                { bytes: 50 * GB, label: '50 GB' }
-            ]
+        GiB() {
+            return 1024 * 1024 * 1024
+        },
+
+        poolEnabled() {
+            return !!this.mailStorage.pool_enabled
+        },
+
+        // Bytes, die dieses Postfach maximal belegen darf (Rest im Pool + eigenes bisheriges Limit)
+        poolAvailableForThis() {
+            return (this.mailStorage.available || 0) + Math.max(0, this.currentQuotaBytes)
+        },
+
+        maxGbForThis() {
+            return Math.max(1, Math.floor(this.poolAvailableForThis / this.GiB))
+        },
+
+        selectedQuotaBytes() {
+            if (this.unlimited) {
+                return 0
+            }
+            const gb = Number(this.selectedQuotaGB)
+            return Number.isFinite(gb) && gb > 0 ? Math.round(gb) * this.GiB : 0
+        },
+
+        quotaChanged() {
+            return this.selectedQuotaBytes !== this.currentQuotaBytes
         },
 
         quotaDisplay() {
@@ -325,6 +363,7 @@ export default {
 
                 // Postfach-Status (inkl. Quota) laden
                 await this.loadMailboxQuota()
+                await this.loadMailStorage()
 
             } catch (error) {
                 console.error('AliasManager: Fehler beim Laden', error)
@@ -342,10 +381,42 @@ export default {
                 const response = await axios.get(url)
                 const data = response.data.ocs?.data || response.data.data || response.data || {}
                 this.currentQuotaBytes = data.quota || 0
-                this.selectedQuotaBytes = this.currentQuotaBytes
+                this.syncQuotaControls()
             } catch (error) {
                 this.currentQuotaBytes = 0
-                this.selectedQuotaBytes = 0
+                this.syncQuotaControls()
+            }
+        },
+
+        async loadMailStorage() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/mail-storage')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.mailStorage = {
+                    max: data.max || 0,
+                    allocated: data.allocated || 0,
+                    available: data.available || 0,
+                    pool_enabled: !!data.pool_enabled,
+                    step_bytes: data.step_bytes || 1073741824
+                }
+            } catch (error) {
+                this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 }
+            } finally {
+                this.syncQuotaControls()
+            }
+        },
+
+        // Stepper + Unbegrenzt-Checkbox aus dem aktuellen Limit ableiten
+        syncQuotaControls() {
+            const bytes = this.currentQuotaBytes
+            if (bytes > 0) {
+                this.unlimited = false
+                this.selectedQuotaGB = Math.max(1, Math.round(bytes / this.GiB))
+            } else {
+                // 0 = unbegrenzt. Bei aktivem Pool ist unbegrenzt nicht erlaubt → 1 GB vorschlagen.
+                this.unlimited = !this.poolEnabled
+                this.selectedQuotaGB = 1
             }
         },
 
@@ -362,9 +433,23 @@ export default {
         },
 
         async saveQuota() {
-            if (this.quotaSaving || this.selectedQuotaBytes === this.currentQuotaBytes) {
+            if (this.quotaSaving || !this.quotaChanged) {
                 return
             }
+            const targetBytes = this.selectedQuotaBytes
+
+            // Client-seitige Vorabprüfung gegen den Pool (Server validiert erneut)
+            if (this.poolEnabled) {
+                if (targetBytes <= 0) {
+                    this.quotaError = this.t('souvera_central', 'Bei aktivem Mail-Speicher-Pool ist „Unbegrenzt" nicht erlaubt.')
+                    return
+                }
+                if (targetBytes > this.poolAvailableForThis) {
+                    this.quotaError = this.t('souvera_central', 'Nicht genügend Mail-Speicher im Pool verfügbar.')
+                    return
+                }
+            }
+
             this.quotaSaving = true
             this.quotaError = null
             this.quotaSuccess = null
@@ -373,7 +458,7 @@ export default {
                 const url = generateUrl('/apps/souvera_central/api/users/{userId}/mailbox/quota', {
                     userId: this.userId
                 })
-                const response = await axios.post(url, { quota: this.selectedQuotaBytes })
+                const response = await axios.post(url, { quota: targetBytes })
                 const data = response.data.ocs?.data || response.data.data || response.data || {}
 
                 const statusCode = response.data?.ocs?.meta?.statuscode
@@ -382,9 +467,11 @@ export default {
                 }
 
                 if (data.success) {
-                    this.currentQuotaBytes = data.quota ?? this.selectedQuotaBytes
-                    this.selectedQuotaBytes = this.currentQuotaBytes
+                    this.currentQuotaBytes = data.quota ?? targetBytes
+                    this.syncQuotaControls()
                     this.quotaSuccess = this.t('souvera_central', 'Speicherlimit aktualisiert')
+                    // Pool-Anzeige aktualisieren
+                    await this.loadMailStorage()
                     setTimeout(() => {
                         this.quotaSuccess = null
                     }, 3000)
@@ -730,29 +817,63 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
-.quota-select {
-    flex: 1;
-    min-width: 0;
+.quota-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quota-input {
+    width: 110px;
     height: 44px;
     padding: 0 12px;
     border: 2px solid var(--color-border);
     border-radius: 6px;
     font-size: 14px;
+    font-weight: 600;
     background: var(--color-main-background);
     color: var(--color-main-text);
-    cursor: pointer;
 }
 
-.quota-select:focus {
+.quota-input:focus {
     outline: none;
     border-color: var(--color-primary-element);
 }
 
-.quota-select:disabled {
+.quota-input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.quota-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.quota-unlimited-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-main-text);
+    cursor: pointer;
+}
+
+.quota-unlimited-label input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.quota-pool-hint {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    font-weight: 500;
 }
 
 .quota-save-button {

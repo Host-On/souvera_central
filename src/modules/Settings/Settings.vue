@@ -87,7 +87,50 @@
                 </div>
             </div>
 
-            <!-- 3. SOUVERA SHIELD -->
+            <!-- 3. MAIL-SPEICHER-POOL (read-only, nur per OCC) -->
+            <div class="settings-section" data-testid="mail-storage-section">
+                <div class="section-header">
+                    <Database :size="22" />
+                    <h3>{{ t('souvera_central', 'Mail-Speicher-Pool') }}</h3>
+                </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'Gesamter E-Mail-Speicher, der auf Souvera-User und geteilte Postfächer verteilt wird. Wird vom Hoster per Kommandozeile festgelegt (nicht mit dem Nextcloud-Dateispeicher zu verwechseln).') }}
+                </p>
+
+                <div v-if="mailStorage.pool_enabled" class="settings-group">
+                    <div class="pool-stats" data-testid="mail-storage-stats">
+                        <div class="pool-stat">
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Gesamt') }}</span>
+                            <span class="pool-stat-value" data-testid="mail-storage-total">{{ formatBytes(mailStorage.max) }}</span>
+                        </div>
+                        <div class="pool-stat">
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Verteilt') }}</span>
+                            <span class="pool-stat-value" data-testid="mail-storage-allocated">{{ formatBytes(mailStorage.allocated) }}</span>
+                        </div>
+                        <div class="pool-stat">
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Verfügbar') }}</span>
+                            <span class="pool-stat-value available" data-testid="mail-storage-available">{{ formatBytes(mailStorage.available) }}</span>
+                        </div>
+                    </div>
+                    <div class="pool-bar-track">
+                        <div
+                            class="pool-bar-fill"
+                            :class="poolLevelClass"
+                            :style="{ width: poolPercent + '%' }"
+                        ></div>
+                    </div>
+                    <p class="setting-hint">
+                        {{ t('souvera_central', 'Änderbar nur per Kommandozeile: occ souvera_central:mailstorage:set 100G') }}
+                    </p>
+                </div>
+                <div v-else class="settings-group">
+                    <p class="pool-empty" data-testid="mail-storage-empty">
+                        {{ t('souvera_central', 'Kein Mail-Speicher-Pool gesetzt (unbegrenzt). Der Hoster kann ihn per „occ souvera_central:mailstorage:set 100G" aktivieren.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- 4. SOUVERA SHIELD -->
             <div class="settings-section" data-testid="shield-settings-section">
                 <div class="section-header">
                     <ShieldCheck :size="22" />
@@ -195,6 +238,7 @@ export default {
             saving: false,
             saveSuccess: false,
             customQuota: '',
+            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 },
             settings: {
                 email: {
                     send_to_new_users: false
@@ -220,12 +264,61 @@ export default {
         }
     },
 
+    computed: {
+        poolPercent() {
+            if (!this.mailStorage.max || this.mailStorage.max <= 0) {
+                return 0
+            }
+            return Math.min(100, Math.round((this.mailStorage.allocated / this.mailStorage.max) * 100))
+        },
+
+        poolLevelClass() {
+            if (this.poolPercent >= 90) return 'is-full'
+            if (this.poolPercent >= 75) return 'is-warn'
+            return ''
+        }
+    },
+
     mounted() {
         this.loadSettings()
+        this.loadMailStorage()
     },
 
     methods: {
         t,
+
+        async loadMailStorage() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/mail-storage')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.mailStorage = {
+                    max: data.max || 0,
+                    allocated: data.allocated || 0,
+                    available: data.available || 0,
+                    pool_enabled: !!data.pool_enabled,
+                    step_bytes: data.step_bytes || 1073741824
+                }
+            } catch (error) {
+                this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 }
+            }
+        },
+
+        formatBytes(bytes) {
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unbegrenzt')
+            }
+            const TB = 1024 ** 4
+            const GB = 1024 ** 3
+            const MB = 1024 ** 2
+            if (bytes >= TB) {
+                return `${(bytes / TB).toFixed(bytes % TB === 0 ? 0 : 1)} TB`
+            }
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
+        },
 
         async loadSettings() {
             try {
@@ -536,6 +629,72 @@ export default {
     margin-top: 6px;
     padding-right: 64px;
     font-size: 12px;
+    color: var(--color-text-maxcontrast);
+}
+
+/* Mail-Speicher-Pool */
+.pool-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.pool-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    background: var(--color-background-dark);
+    border-radius: 8px;
+}
+
+.pool-stat-label {
+    font-size: 12px;
+    color: var(--color-text-maxcontrast);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+}
+
+.pool-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-main-text);
+}
+
+.pool-stat-value.available {
+    color: #2e9e4f;
+}
+
+.pool-bar-track {
+    height: 10px;
+    border-radius: 100px;
+    background: var(--color-background-dark);
+    overflow: hidden;
+}
+
+.pool-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary-element);
+    transition: width 0.3s ease;
+}
+
+.pool-bar-fill.is-warn {
+    background: #d18700;
+}
+
+.pool-bar-fill.is-full {
+    background: #d32f2f;
+}
+
+.pool-empty {
+    margin: 0;
+    padding: 16px;
+    background: var(--color-background-hover);
+    border-radius: 8px;
+    font-size: 14px;
     color: var(--color-text-maxcontrast);
 }
 

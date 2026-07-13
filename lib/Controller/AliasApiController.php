@@ -18,12 +18,14 @@ use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\StalwartService;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\MailGroupService;
+use OCA\SouveraCentral\Service\StorageService;
 
 class AliasApiController extends OCSController {
     private IUserManager $userManager;
     private StalwartService $stalwartService;
     private ConfigService $configService;
     private MailGroupService $mailGroupService;
+    private StorageService $storageService;
     private LoggerInterface $logger;
 
     public function __construct(
@@ -33,6 +35,7 @@ class AliasApiController extends OCSController {
         StalwartService $stalwartService,
         ConfigService $configService,
         MailGroupService $mailGroupService,
+        StorageService $storageService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
@@ -40,6 +43,7 @@ class AliasApiController extends OCSController {
         $this->stalwartService = $stalwartService;
         $this->configService = $configService;
         $this->mailGroupService = $mailGroupService;
+        $this->storageService = $storageService;
         $this->logger = $logger;
     }
 
@@ -524,6 +528,16 @@ class AliasApiController extends OCSController {
             }
 
             $quota = max(0, (int) $quota);
+
+            // Mail-Speicher-Pool durchsetzen: neues Limit darf den Pool nicht sprengen
+            // und muss (bei aktivem Pool) in ganzen GB-Schritten liegen. Das bisherige
+            // Limit dieses Postfachs wird herausgerechnet.
+            $current = (int) ($this->stalwartService->getMailboxStatus($mail)['quota'] ?? 0);
+            $poolError = $this->storageService->assertAllocation($current, $quota);
+            if ($poolError !== null) {
+                return new DataResponse(['error' => $poolError], Http::STATUS_CONFLICT);
+            }
+
             $ok = $this->stalwartService->setMailboxQuota($mail, $quota);
             if (!$ok) {
                 return new DataResponse(['error' => 'Quota konnte nicht gesetzt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);

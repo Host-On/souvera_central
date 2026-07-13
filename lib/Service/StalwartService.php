@@ -557,6 +557,43 @@ class StalwartService {
         return $result;
     }
 
+    /**
+     * Belegung + Limit aller GETEILTEN Postfächer (Group-Konten).
+     * Analog zu listMailboxUsage(), aber @type=Group. Wird für den
+     * Mail-Speicher-Pool benötigt (Verteilung zählt User + geteilte Postfächer).
+     *
+     * @return array<string, array{used:int, quota:int}> Key = Mailadresse (lowercase)
+     */
+    public function listSharedMailboxUsage(): array {
+        if (!$this->configService->isStalwartConfigured()) {
+            return [];
+        }
+
+        $query = $this->jmapSingle('x:Account/query', ['filter' => ['@type' => 'Group']]);
+        $ids = $query['ids'] ?? [];
+        if (empty($ids)) {
+            return [];
+        }
+
+        $got = $this->jmapSingle('x:Account/get', [
+            'ids' => array_values($ids),
+            'properties' => ['emailAddress', 'usedDiskQuota', 'quotas'],
+        ]);
+
+        $result = [];
+        foreach ($got['list'] ?? [] as $acc) {
+            $email = strtolower((string) ($acc['emailAddress'] ?? ''));
+            if ($email === '') {
+                continue;
+            }
+            $result[$email] = [
+                'used' => (int) ($acc['usedDiskQuota'] ?? 0),
+                'quota' => (int) ($acc['quotas']['maxDiskQuota'] ?? 0),
+            ];
+        }
+        return $result;
+    }
+
     // ============================================================================
     // Wartung / Mail-Reindexierung (Stalwart-Tasks)
     //

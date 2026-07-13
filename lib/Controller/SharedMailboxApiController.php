@@ -17,12 +17,14 @@ use Psr\Log\LoggerInterface;
 use OCA\SouveraCentral\Service\SharedMailboxService;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\StalwartService;
+use OCA\SouveraCentral\Service\StorageService;
 
 class SharedMailboxApiController extends OCSController {
     private IUserManager $userManager;
     private SharedMailboxService $sharedMailboxService;
     private StalwartService $stalwartService;
     private ConfigService $configService;
+    private StorageService $storageService;
     private LoggerInterface $logger;
 
     public function __construct(
@@ -32,6 +34,7 @@ class SharedMailboxApiController extends OCSController {
         SharedMailboxService $sharedMailboxService,
         StalwartService $stalwartService,
         ConfigService $configService,
+        StorageService $storageService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
@@ -39,6 +42,7 @@ class SharedMailboxApiController extends OCSController {
         $this->sharedMailboxService = $sharedMailboxService;
         $this->stalwartService = $stalwartService;
         $this->configService = $configService;
+        $this->storageService = $storageService;
         $this->logger = $logger;
     }
 
@@ -63,7 +67,8 @@ class SharedMailboxApiController extends OCSController {
                 'mailboxes' => $mailboxes,
                 'total' => count($mailboxes),
                 'maxMailboxes' => $this->configService->getMaxSharedMailboxes(),
-                'warningThreshold' => $this->configService->getWarningThreshold()
+                'warningThreshold' => $this->configService->getWarningThreshold(),
+                'mailStorage' => $this->storageService->getSummary()
             ]);
 
         } catch (\Exception $e) {
@@ -86,7 +91,7 @@ class SharedMailboxApiController extends OCSController {
      * @return DataResponse
      */
     #[NoAdminRequired]
-    public function create(string $name = '', string $email = '', string $description = ''): DataResponse {
+    public function create(string $name = '', string $email = '', string $description = '', ?int $quota = null): DataResponse {
         try {
             // Validierung
             if (empty($name)) {
@@ -145,8 +150,17 @@ class SharedMailboxApiController extends OCSController {
                 );
             }
 
+            // Mail-Speicher-Pool durchsetzen (neues Postfach: bisheriges Limit 0)
+            if ($quota !== null) {
+                $quota = max(0, (int) $quota);
+                $poolError = $this->storageService->assertAllocation(0, $quota);
+                if ($poolError !== null) {
+                    return new DataResponse(['error' => $poolError], Http::STATUS_CONFLICT);
+                }
+            }
+
             // Erstellen
-            $mailbox = $this->sharedMailboxService->create($name, $email, $description);
+            $mailbox = $this->sharedMailboxService->create($name, $email, $description, $quota);
 
             if ($mailbox === null) {
                 return new DataResponse(
@@ -223,7 +237,7 @@ class SharedMailboxApiController extends OCSController {
      * @return DataResponse
      */
     #[NoAdminRequired]
-    public function update(string $id, string $description = ''): DataResponse {
+    public function update(string $id, string $description = '', ?int $quota = null): DataResponse {
         try {
             if (!$this->stalwartService->isAvailable()) {
                 return new DataResponse(
@@ -253,6 +267,22 @@ class SharedMailboxApiController extends OCSController {
                     ['error' => 'Aktualisierung fehlgeschlagen'],
                     Http::STATUS_INTERNAL_SERVER_ERROR
                 );
+            }
+
+            // Speicherlimit ändern (Mail-Speicher-Pool durchsetzen)
+            if ($quota !== null) {
+                $quota = max(0, (int) $quota);
+                $current = (int) ($mailbox['quota'] ?? 0);
+                $poolError = $this->storageService->assertAllocation($current, $quota);
+                if ($poolError !== null) {
+                    return new DataResponse(['error' => $poolError], Http::STATUS_CONFLICT);
+                }
+                if (!$this->sharedMailboxService->setQuota($id, $quota)) {
+                    return new DataResponse(
+                        ['error' => 'Speicherlimit konnte nicht gesetzt werden'],
+                        Http::STATUS_INTERNAL_SERVER_ERROR
+                    );
+                }
             }
 
             // Aktualisierte Mailbox abrufen

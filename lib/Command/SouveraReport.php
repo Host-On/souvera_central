@@ -19,6 +19,7 @@ use OC\Core\Command\Base;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\QuotaParser;
 use OCA\SouveraCentral\Service\StalwartService;
+use OCA\SouveraCentral\Service\StorageService;
 use OCP\IGroupManager;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,6 +31,7 @@ class SouveraReport extends Base {
         private StalwartService $stalwart,
         private ConfigService $config,
         private IGroupManager $groupManager,
+        private StorageService $storage,
     ) {
         parent::__construct();
     }
@@ -113,9 +115,14 @@ class SouveraReport extends Base {
         }
 
         if ($input->getOption('json')) {
+            $poolMax = $this->config->getMaxMailStorage();
+            $allocated = $this->storage->getAllocatedStorage();
             $output->writeln((string) json_encode([
                 'generated_at' => date('c'),
                 'default_mailbox_quota_bytes' => $this->config->getDefaultMailboxQuota(),
+                'mail_storage_pool_bytes' => $poolMax,
+                'mail_storage_allocated_bytes' => $allocated,
+                'mail_storage_available_bytes' => StorageService::available($poolMax, $allocated),
                 'mailbox_count' => count($rows),
                 'total_used_bytes' => $totalUsed,
                 'total_quota_bytes' => $totalQuota,
@@ -153,6 +160,20 @@ class SouveraReport extends Base {
             $unlimited > 0 ? sprintf(' (+%d unbegrenzt)', $unlimited) : '',
             QuotaParser::format($this->config->getDefaultMailboxQuota())
         ));
+
+        // Mail-Speicher-Pool (verteilt = User + geteilte Postfächer)
+        $poolMax = $this->config->getMaxMailStorage();
+        if ($poolMax > 0) {
+            $allocated = $this->storage->getAllocatedStorage();
+            $output->writeln(sprintf(
+                'Mail-Speicher-Pool: <info>%s</info> gesamt | <info>%s</info> verteilt | <info>%s</info> verfügbar',
+                QuotaParser::format($poolMax),
+                QuotaParser::format($allocated),
+                QuotaParser::format(StorageService::available($poolMax, $allocated))
+            ));
+        } else {
+            $output->writeln('Mail-Speicher-Pool: <comment>nicht gesetzt (unbegrenzt)</comment>');
+        }
         return 0;
     }
 }

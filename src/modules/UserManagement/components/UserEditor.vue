@@ -29,198 +29,198 @@
                                 <h3>{{ t('souvera_central', 'Basisdaten') }}</h3>
                             </div>
                             <div class="base-grid">
-                    <!-- Anzeigename -->
-                    <div class="form-group">
-                        <label for="displayName" class="required">
-                            {{ t('souvera_central', 'Anzeigename') }}
-                        </label>
-                        <input
-                            id="displayName"
-                            v-model="formData.displayName"
-                            type="text"
-                            :class="{ error: errors.displayName }"
-                            required
-                            @input="validateDisplayName"
-                        />
-                        <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
-                    </div>
+                                <!-- Anzeigename -->
+                                <div class="form-group">
+                                    <label for="displayName" class="required">
+                                        {{ t('souvera_central', 'Anzeigename') }}
+                                    </label>
+                                    <input
+                                        id="displayName"
+                                        v-model="formData.displayName"
+                                        type="text"
+                                        :class="{ error: errors.displayName }"
+                                        required
+                                        @input="validateDisplayName"
+                                    />
+                                    <p v-if="errors.displayName" class="error-message">{{ errors.displayName }}</p>
+                                </div>
 
-                    <!-- E-Mail -->
-                    <div class="form-group">
-                        <label for="email" class="required">
-                            {{ t('souvera_central', 'E-Mail') }}
-                        </label>
+                                <!-- E-Mail -->
+                                <div class="form-group">
+                                    <label for="email" class="required">
+                                        {{ t('souvera_central', 'E-Mail') }}
+                                    </label>
 
-                        <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
-                        <div v-if="allowedDomains.length > 0 && !isEditMode" class="email-input-group">
-                            <input
-                                id="emailLocalPart"
-                                v-model="emailLocalPart"
-                                type="text"
-                                class="email-local-part"
-                                :class="{ error: errors.email }"
-                                placeholder="benutzername"
-                                required
-                                @input="updateFullEmail"
-                            />
-                            <span class="email-separator">@</span>
-                            <select
-                                v-model="emailDomain"
-                                class="email-domain-select"
-                                :class="{ error: errors.email }"
-                                required
-                                @change="updateFullEmail"
-                            >
-                                <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
-                                <option v-for="domain in allowedDomains" :key="domain" :value="domain">
-                                    {{ domain }}
-                                </option>
-                            </select>
-                        </div>
+                                    <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
+                                    <div v-if="allowedDomains.length > 0 && !isEditMode" class="email-input-group">
+                                        <input
+                                            id="emailLocalPart"
+                                            v-model="emailLocalPart"
+                                            type="text"
+                                            class="email-local-part"
+                                            :class="{ error: errors.email }"
+                                            placeholder="benutzername"
+                                            required
+                                            @input="updateFullEmail"
+                                        />
+                                        <span class="email-separator">@</span>
+                                        <select
+                                            v-model="emailDomain"
+                                            class="email-domain-select"
+                                            :class="{ error: errors.email }"
+                                            required
+                                            @change="updateFullEmail"
+                                        >
+                                            <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
+                                            <option v-for="domain in allowedDomains" :key="domain" :value="domain">
+                                                {{ domain }}
+                                            </option>
+                                        </select>
+                                    </div>
 
-                        <!-- Normale Email-Eingabe wenn keine Domains konfiguriert -->
-                        <input
-                            v-else
-                            id="email"
-                            v-model="formData.email"
-                            type="email"
-                            :class="{ error: errors.email }"
-                            :disabled="isEditMode"
-                            :required="!isEditMode"
-                            @input="validateEmail"
-                        />
+                                    <!-- Normale Email-Eingabe wenn keine Domains konfiguriert -->
+                                    <input
+                                        v-else
+                                        id="email"
+                                        v-model="formData.email"
+                                        type="email"
+                                        :class="{ error: errors.email }"
+                                        :disabled="isEditMode"
+                                        :required="!isEditMode"
+                                        @input="validateEmail"
+                                    />
 
-                        <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
-                        <p
-                            v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
-                            class="success-message"
-                        >
-                            <Check :size="16" />
-                            {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
-                        </p>
-                        <p v-if="isEditMode" class="help-text">
-                            {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
-                        </p>
-                    </div>
+                                    <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+                                    <p
+                                        v-else-if="formData.email && !errors.email && !isEditMode && allowedDomains.length === 0"
+                                        class="success-message"
+                                    >
+                                        <Check :size="16" />
+                                        {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
+                                    </p>
+                                    <p v-if="isEditMode" class="help-text">
+                                        {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
+                                    </p>
+                                </div>
 
-                    <!-- Benutzer-Typ: verschoben in die Seitenspalte -->
+                                <!-- Benutzer-Typ: verschoben in die Seitenspalte -->
 
 
-                    <!-- Passwort -->
-                    <div class="form-group">
-                        <label for="password" :class="{ required: !isEditMode }">
-                            {{ t('souvera_central', 'Passwort') }}
-                        </label>
-                        <input
-                            id="password"
-                            v-model="formData.password"
-                            type="password"
-                            :class="{ error: errors.password }"
-                            :required="!isEditMode"
-                            @input="validatePassword"
-                        />
-                        <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
-                        <p v-else class="help-text">
-                            {{
-                                isEditMode
-                                    ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
-                                    : t('souvera_central', 'Mindestens 10 Zeichen')
-                            }}
-                        </p>
-                    </div>
+                                <!-- Passwort -->
+                                <div class="form-group">
+                                    <label for="password" :class="{ required: !isEditMode }">
+                                        {{ t('souvera_central', 'Passwort') }}
+                                    </label>
+                                    <input
+                                        id="password"
+                                        v-model="formData.password"
+                                        type="password"
+                                        :class="{ error: errors.password }"
+                                        :required="!isEditMode"
+                                        @input="validatePassword"
+                                    />
+                                    <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
+                                    <p v-else class="help-text">
+                                        {{
+                                            isEditMode
+                                                ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
+                                                : t('souvera_central', 'Mindestens 10 Zeichen')
+                                        }}
+                                    </p>
+                                </div>
 
-                    <!-- Speicherplatz Quota -->
-                    <div class="form-group">
-                        <label for="quota">
-                            {{ t('souvera_central', 'Kontingent') }}
-                        </label>
-                        <select id="quota" v-model="formData.quota">
-                            <option value="default">{{ t('souvera_central', 'Standard') }}</option>
-                            <option value="1 GB">1 GB</option>
-                            <option value="5 GB">5 GB</option>
-                            <option value="10 GB">10 GB</option>
-                            <option value="50 GB">50 GB</option>
-                            <option value="100 GB">100 GB</option>
-                            <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
-                        </select>
-                        <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
-                    </div>
+                                <!-- Speicherplatz Quota -->
+                                <div class="form-group">
+                                    <label for="quota">
+                                        {{ t('souvera_central', 'Kontingent') }}
+                                    </label>
+                                    <select id="quota" v-model="formData.quota">
+                                        <option value="default">{{ t('souvera_central', 'Standard') }}</option>
+                                        <option value="1 GB">1 GB</option>
+                                        <option value="5 GB">5 GB</option>
+                                        <option value="10 GB">10 GB</option>
+                                        <option value="50 GB">50 GB</option>
+                                        <option value="100 GB">100 GB</option>
+                                        <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
+                                    </select>
+                                    <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
+                                </div>
 
-                    <!-- Manager -->
-                    <div class="form-group">
-                        <label for="manager">
-                            {{ t('souvera_central', 'Manager') }}
-                        </label>
-                        <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
-                        <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
-                    </div>
+                                <!-- Manager -->
+                                <div class="form-group">
+                                    <label for="manager">
+                                        {{ t('souvera_central', 'Manager') }}
+                                    </label>
+                                    <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
+                                    <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
+                                </div>
 
-                    <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
-                    <div v-if="isEditMode" class="form-group">
-                        <label>{{ t('souvera_central', 'Status') }}</label>
-                        <div class="status-display">
-                            <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
-                            <CloseCircle v-else :size="20" class="status-icon status-inactive" />
-                            <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
-                                {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
-                            </span>
-                        </div>
-                        <p class="help-text">
-                            {{ t('souvera_central', 'Status kann über „Erweiterte Aktionen" geändert werden') }}
-                        </p>
-                    </div>
+                                <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
+                                <div v-if="isEditMode" class="form-group">
+                                    <label>{{ t('souvera_central', 'Status') }}</label>
+                                    <div class="status-display">
+                                        <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
+                                        <CloseCircle v-else :size="20" class="status-icon status-inactive" />
+                                        <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
+                                            {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                                        </span>
+                                    </div>
+                                    <p class="help-text">
+                                        {{ t('souvera_central', 'Status kann über „Erweiterte Aktionen" geändert werden') }}
+                                    </p>
+                                </div>
                             </div>
                         </section>
                         <!-- /Basisdaten -->
 
 
-                <!-- Email-Aliase & Postfach (nur im Edit-Mode) -->
-                <AliasManager
-                    v-if="isEditMode"
-                    :user-id="user.id"
-                    :primary-email="user.email || user.id"
-                    :allowed-domains="allowedDomains"
-                />
+                        <!-- Email-Aliase & Postfach (nur im Edit-Mode) -->
+                        <AliasManager
+                            v-if="isEditMode"
+                            :user-id="user.id"
+                            :primary-email="user.email || user.id"
+                            :allowed-domains="allowedDomains"
+                        />
 
-                <!-- Gruppenzugehörigkeit (Dual-Pane) -->
-                <section class="editor-section groups-section" data-testid="groups-section">
-                    <div class="section-head">
-                        <AccountGroup :size="20" />
-                        <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
-                        <span class="section-hint">{{ t('souvera_central', 'Optional') }}</span>
-                    </div>
-                    <div class="groups-grid">
-                        <div class="group-pane" data-testid="group-pane-member">
-                            <div class="pane-head">
-                                <span class="pane-icon member"><AccountGroup :size="18" /></span>
-                                <div class="pane-titles">
-                                    <span class="pane-title">{{ t('souvera_central', 'Mitglied der Gruppen') }}</span>
-                                    <span class="pane-sub">{{ t('souvera_central', 'Zugriff auf Gruppen-Ressourcen') }}</span>
+                        <!-- Gruppenzugehörigkeit (Dual-Pane) -->
+                        <section class="editor-section groups-section" data-testid="groups-section">
+                            <div class="section-head">
+                                <AccountGroup :size="20" />
+                                <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
+                                <span class="section-hint">{{ t('souvera_central', 'Optional') }}</span>
+                            </div>
+                            <div class="groups-grid">
+                                <div class="group-pane" data-testid="group-pane-member">
+                                    <div class="pane-head">
+                                        <span class="pane-icon member"><AccountGroup :size="18" /></span>
+                                        <div class="pane-titles">
+                                            <span class="pane-title">{{ t('souvera_central', 'Mitglied der Gruppen') }}</span>
+                                            <span class="pane-sub">{{ t('souvera_central', 'Zugriff auf Gruppen-Ressourcen') }}</span>
+                                        </div>
+                                    </div>
+                                    <GroupSelector
+                                        v-model="formData.groups"
+                                        :available-groups="availableGroups"
+                                        mode="member"
+                                    />
+                                </div>
+                                <div class="group-pane" data-testid="group-pane-admin">
+                                    <div class="pane-head">
+                                        <span class="pane-icon admin"><ShieldAccount :size="18" /></span>
+                                        <div class="pane-titles">
+                                            <span class="pane-title">{{ t('souvera_central', 'Administration der Gruppen') }}</span>
+                                            <span class="pane-sub">{{ t('souvera_central', 'Darf diese Gruppen verwalten') }}</span>
+                                        </div>
+                                    </div>
+                                    <GroupSelector
+                                        v-model="formData.adminGroups"
+                                        :available-groups="availableGroups"
+                                        :is-admin-user="user && (user.id === 'admin' || user.id.startsWith('admin@'))"
+                                        mode="admin"
+                                    />
                                 </div>
                             </div>
-                            <GroupSelector
-                                v-model="formData.groups"
-                                :available-groups="availableGroups"
-                                mode="member"
-                            />
-                        </div>
-                        <div class="group-pane" data-testid="group-pane-admin">
-                            <div class="pane-head">
-                                <span class="pane-icon admin"><ShieldAccount :size="18" /></span>
-                                <div class="pane-titles">
-                                    <span class="pane-title">{{ t('souvera_central', 'Administration der Gruppen') }}</span>
-                                    <span class="pane-sub">{{ t('souvera_central', 'Darf diese Gruppen verwalten') }}</span>
-                                </div>
-                            </div>
-                            <GroupSelector
-                                v-model="formData.adminGroups"
-                                :available-groups="availableGroups"
-                                :is-admin-user="user && (user.id === 'admin' || user.id.startsWith('admin@'))"
-                                mode="admin"
-                            />
-                        </div>
-                    </div>
-                </section>
+                        </section>
                     </div>
                     <!-- /editor-main -->
 
@@ -266,87 +266,87 @@
                             </div>
                         </section>
 
-                <!-- Erweiterte Aktionen (Bento-Grid, nur im Edit-Mode) -->
-                <section v-if="isEditMode" class="editor-section advanced-section" data-testid="advanced-actions">
-                    <div class="section-head">
-                        <Cog :size="20" />
-                        <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
-                    </div>
-                    <div class="action-grid">
-                        <button
-                            v-if="user.id !== 'admin' && !user.id.startsWith('admin@')"
-                            type="button"
-                            class="action-card"
-                            :class="formData.enabled ? 'is-warning' : 'is-success'"
-                            :disabled="togglingStatus"
-                            data-testid="action-card-deactivate"
-                            @click="toggleUserStatus"
-                        >
-                            <span class="action-icon">
-                                <NcLoadingIcon v-if="togglingStatus" :size="22" />
-                                <AccountCancel v-else-if="formData.enabled" :size="22" />
-                                <AccountCheck v-else :size="22" />
-                            </span>
-                            <span class="action-body">
-                                <strong>{{ formData.enabled ? t('souvera_central', 'Benutzer deaktivieren') : t('souvera_central', 'Benutzer aktivieren') }}</strong>
-                                <small>{{ formData.enabled ? t('souvera_central', 'Anmeldung sperren') : t('souvera_central', 'Anmeldung wieder erlauben') }}</small>
-                            </span>
-                        </button>
+                        <!-- Erweiterte Aktionen (Bento-Grid, nur im Edit-Mode) -->
+                        <section v-if="isEditMode" class="editor-section advanced-section" data-testid="advanced-actions">
+                            <div class="section-head">
+                                <Cog :size="20" />
+                                <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
+                            </div>
+                            <div class="action-grid">
+                                <button
+                                    v-if="user.id !== 'admin' && !user.id.startsWith('admin@')"
+                                    type="button"
+                                    class="action-card"
+                                    :class="formData.enabled ? 'is-warning' : 'is-success'"
+                                    :disabled="togglingStatus"
+                                    data-testid="action-card-deactivate"
+                                    @click="toggleUserStatus"
+                                >
+                                    <span class="action-icon">
+                                        <NcLoadingIcon v-if="togglingStatus" :size="22" />
+                                        <AccountCancel v-else-if="formData.enabled" :size="22" />
+                                        <AccountCheck v-else :size="22" />
+                                    </span>
+                                    <span class="action-body">
+                                        <strong>{{ formData.enabled ? t('souvera_central', 'Benutzer deaktivieren') : t('souvera_central', 'Benutzer aktivieren') }}</strong>
+                                        <small>{{ formData.enabled ? t('souvera_central', 'Anmeldung sperren') : t('souvera_central', 'Anmeldung wieder erlauben') }}</small>
+                                    </span>
+                                </button>
 
-                        <button
-                            type="button"
-                            class="action-card"
-                            :disabled="resendingEmail"
-                            data-testid="action-card-resend-welcome"
-                            @click="resendWelcomeEmail"
-                        >
-                            <span class="action-icon">
-                                <NcLoadingIcon v-if="resendingEmail" :size="22" />
-                                <EmailFast v-else :size="22" />
-                            </span>
-                            <span class="action-body">
-                                <strong>{{ t('souvera_central', 'Willkommens-E-Mail senden') }}</strong>
-                                <small>{{ t('souvera_central', 'Zugangsdaten erneut zustellen') }}</small>
-                            </span>
-                        </button>
+                                <button
+                                    type="button"
+                                    class="action-card"
+                                    :disabled="resendingEmail"
+                                    data-testid="action-card-resend-welcome"
+                                    @click="resendWelcomeEmail"
+                                >
+                                    <span class="action-icon">
+                                        <NcLoadingIcon v-if="resendingEmail" :size="22" />
+                                        <EmailFast v-else :size="22" />
+                                    </span>
+                                    <span class="action-body">
+                                        <strong>{{ t('souvera_central', 'Willkommens-E-Mail senden') }}</strong>
+                                        <small>{{ t('souvera_central', 'Zugangsdaten erneut zustellen') }}</small>
+                                    </span>
+                                </button>
 
-                        <button
-                            type="button"
-                            class="action-card is-danger"
-                            :disabled="wipingDevices"
-                            data-testid="action-card-wipe-devices"
-                            @click="wipeDevices"
-                        >
-                            <span class="action-icon">
-                                <NcLoadingIcon v-if="wipingDevices" :size="22" />
-                                <Devices v-else :size="22" />
-                            </span>
-                            <span class="action-body">
-                                <strong>{{ t('souvera_central', 'Alle Geräte trennen') }}</strong>
-                                <small>{{ t('souvera_central', 'Abmelden & lokale Daten löschen') }}</small>
-                            </span>
-                        </button>
+                                <button
+                                    type="button"
+                                    class="action-card is-danger"
+                                    :disabled="wipingDevices"
+                                    data-testid="action-card-wipe-devices"
+                                    @click="wipeDevices"
+                                >
+                                    <span class="action-icon">
+                                        <NcLoadingIcon v-if="wipingDevices" :size="22" />
+                                        <Devices v-else :size="22" />
+                                    </span>
+                                    <span class="action-body">
+                                        <strong>{{ t('souvera_central', 'Alle Geräte trennen') }}</strong>
+                                        <small>{{ t('souvera_central', 'Abmelden & lokale Daten löschen') }}</small>
+                                    </span>
+                                </button>
 
-                        <button
-                            v-if="!isProtected"
-                            type="button"
-                            class="action-card is-danger"
-                            :disabled="deletingUser || isOwnAccount"
-                            :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
-                            data-testid="action-card-delete-account"
-                            @click="deleteUser"
-                        >
-                            <span class="action-icon">
-                                <NcLoadingIcon v-if="deletingUser" :size="22" />
-                                <DeleteForever v-else :size="22" />
-                            </span>
-                            <span class="action-body">
-                                <strong>{{ t('souvera_central', 'Konto löschen') }}</strong>
-                                <small>{{ t('souvera_central', 'Unwiderruflich entfernen') }}</small>
-                            </span>
-                        </button>
-                    </div>
-                </section>
+                                <button
+                                    v-if="!isProtected"
+                                    type="button"
+                                    class="action-card is-danger"
+                                    :disabled="deletingUser || isOwnAccount"
+                                    :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                                    data-testid="action-card-delete-account"
+                                    @click="deleteUser"
+                                >
+                                    <span class="action-icon">
+                                        <NcLoadingIcon v-if="deletingUser" :size="22" />
+                                        <DeleteForever v-else :size="22" />
+                                    </span>
+                                    <span class="action-body">
+                                        <strong>{{ t('souvera_central', 'Konto löschen') }}</strong>
+                                        <small>{{ t('souvera_central', 'Unwiderruflich entfernen') }}</small>
+                                    </span>
+                                </button>
+                            </div>
+                        </section>
                     </div>
                     <!-- /editor-side -->
                 </div>

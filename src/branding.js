@@ -37,7 +37,7 @@
     // Erwähnungen"). Von der spezifischsten zur allgemeinsten Phrase.
     const DASH_RULES = [
         { words: ['Nextcloud Talk', 'Talk'], to: (names.spreed || 'Link'), icon: icons.spreed || null },
-        { words: ['Nextcloud Office', 'Collabora Online', 'Collabora', 'Office'], to: (names.richdocuments || 'Desk'), icon: icons.richdocuments || null },
+        { words: ['Nextcloud Office', 'Collabora Online', 'Collabora', 'Office'], to: (names.richdocuments || 'Desk'), icon: icons.richdocuments || null }
     ]
 
     function reEscape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') }

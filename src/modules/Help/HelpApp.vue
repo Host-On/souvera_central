@@ -3,7 +3,7 @@
         <NcAppNavigation data-testid="help-navigation" :aria-label="t('souvera_central', 'Hilfe')">
             <template #list>
                 <div v-if="loading" class="help-nav-loading" data-testid="help-nav-loading">
-                    <span class="icon-loading" />
+                    <span class="icon-loading" ></span>
                 </div>
                 <template v-else>
                     <template v-for="row in navRows" :key="row.key">
@@ -28,7 +28,7 @@
         <NcAppContent>
             <div class="help-content" data-testid="help-content">
                 <div v-if="loading" class="help-state">
-                    <span class="icon-loading" />
+                    <span class="icon-loading" ></span>
                 </div>
 
                 <div v-else-if="!configured" class="help-empty" data-testid="help-not-configured">
@@ -38,13 +38,17 @@
                 </div>
 
                 <div v-else-if="pageLoading" class="help-state">
-                    <span class="icon-loading" />
+                    <span class="icon-loading" ></span>
                 </div>
 
                 <article v-else-if="pageHtml" class="help-article" data-testid="help-article">
                     <h2 class="help-article-title">{{ pageTitle }}</h2>
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <div class="rich-content" data-testid="help-rich-content" @click="onContentClick" v-html="pageHtml"></div>
+                    <div
+                        class="rich-content"
+                        data-testid="help-rich-content"
+                        @click="onContentClick"
+                        v-html="pageHtml"></div>
                 </article>
 
                 <div v-else class="help-empty" data-testid="help-welcome">
@@ -103,7 +107,7 @@ export default {
         NcAppContent,
         FileDocumentOutline,
         HelpCircleOutline,
-        Close,
+        Close
     },
 
     data() {
@@ -115,7 +119,7 @@ export default {
             pageTitle: '',
             pageHtml: '',
             pageLoading: false,
-            lightbox: { src: '', alt: '' },
+            lightbox: { src: '', alt: '' }
         }
     },
 
@@ -140,7 +144,7 @@ export default {
                 })
             })
             return rows
-        },
+        }
     },
 
     mounted() {
@@ -205,8 +209,8 @@ export default {
                     books: (shelf.books || []).map((book) => ({
                         id: book.id,
                         name: book.name,
-                        contents: [],
-                    })),
+                        contents: []
+                    }))
                 }))
                 this.shelves = shelves
                 if (this.configured) {
@@ -249,8 +253,8 @@ export default {
             } finally {
                 this.pageLoading = false
             }
-        },
-    },
+        }
+    }
 }
 </script>
 

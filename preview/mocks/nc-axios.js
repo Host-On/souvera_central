@@ -27,10 +27,13 @@ const groups = [
 ]
 
 const mailboxes = [
-    { id: 'info', name: 'Info', email: 'info@souvera.eu', memberCount: 4 },
-    { id: 'support', name: 'Support', email: 'support@souvera.eu', memberCount: 3 },
-    { id: 'sales', name: 'Vertrieb', email: 'sales@souvera.eu', memberCount: 2 }
+    { id: 'info', name: 'Info', email: 'info@souvera.eu', emails: ['info@souvera.eu'], memberCount: 4, quota: 10737418240, used: 3221225472 },
+    { id: 'support', name: 'Support', email: 'support@souvera.eu', emails: ['support@souvera.eu'], memberCount: 3, quota: 5368709120, used: 1073741824 },
+    { id: 'sales', name: 'Vertrieb', email: 'sales@souvera.eu', emails: ['sales@souvera.eu'], memberCount: 2, quota: 3221225472, used: 536870912 }
 ]
+
+// Mail-Speicher-Pool (Bytes): 100 GB gesamt, davon verteilt (User + geteilte Postfächer)
+const poolSummary = { max: 107374182400, allocated: 66571993088, available: 40802189312, pool_enabled: true, step_bytes: 1073741824 }
 
 function respond(url) {
     // --- Hilfe / BookStack (Preview-Mock) ---
@@ -45,8 +48,11 @@ function respond(url) {
     if (helpPageMatch) {
         return { data: helpPages[helpPageMatch[1]] || { id: Number(helpPageMatch[1]), name: 'Seite', book_id: 0, html: '<p>Kein Inhalt.</p>' } }
     }
+    if (url.includes('/api/mail-storage')) {
+        return { data: poolSummary }
+    }
     if (url.includes('/api/config')) {
-        return { data: { total_users: 8, used_licenses: 5, max_licenses: 25, max_groups: 20, max_shared_mailboxes: 10, warning_threshold: 0.8, allowed_domains: ['souvera.eu'], scadmin_group: 'scadmin', souvera_group: 'souvera-users' } }
+        return { data: { total_users: 8, used_licenses: 5, max_licenses: 25, max_groups: 20, max_shared_mailboxes: 10, warning_threshold: 0.8, allowed_domains: ['souvera.eu'], scadmin_group: 'scadmin', souvera_group: 'souvera-users', mail_storage_max: poolSummary.max, mail_storage_step: 1073741824 } }
     }
     if (url.includes('/api/stalwart/status')) {
         return { data: { configured: true, available: true, url: 'http://10.20.0.40:8080' } }
@@ -82,7 +88,7 @@ function respond(url) {
         return { data: { groups, total: groups.length } }
     }
     if (url.includes('/api/shared-mailboxes')) {
-        return { data: { mailboxes, total: mailboxes.length } }
+        return { data: { mailboxes, total: mailboxes.length, maxMailboxes: 10, warningThreshold: 0.8, mailStorage: poolSummary } }
     }
     if (url.includes('/api/reseller')) {
         return { data: { support_url: 'https://support.souvera.eu', url: 'https://souvera.eu', name: 'Souvera' } }

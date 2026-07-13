@@ -50,6 +50,9 @@ return [
         // Config API-Route
         ['name' => 'user_api#getConfig', 'url' => '/api/config', 'verb' => 'GET'],
 
+        // Mail-Speicher-Pool (Gesamt/verteilt/verfügbar)
+        ['name' => 'user_api#getMailStorage', 'url' => '/api/mail-storage', 'verb' => 'GET'],
+
         // Settings API-Routen
         ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings_api#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],

@@ -11,6 +11,14 @@
                     <EmailMultiple :size="16" />
                     <span class="license-info">{{ mailboxes.length }} von {{ maxMailboxes }} Postfächer</span>
                 </div>
+                <div
+                    v-if="mailStorage.pool_enabled"
+                    class="pool-status"
+                    data-testid="shared-pool-status"
+                >
+                    <Database :size="16" />
+                    <span>{{ t('souvera_central', 'Mail-Speicher: {available} von {max} frei', { available: formatBytes(mailStorage.available), max: formatBytes(mailStorage.max) }) }}</span>
+                </div>
             </div>
             <button
                 class="primary"
@@ -112,6 +120,7 @@
             :mailbox="selectedMailbox"
             :allowed-domains="allowedDomains"
             :is-edit="showEditModal"
+            :mail-storage="mailStorage"
             @close="closeModal"
             @save="saveMailbox"
         />
@@ -156,6 +165,7 @@ import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import Database from 'vue-material-design-icons/Database.vue'
 
 export default {
     name: 'SharedMailboxesView',
@@ -169,7 +179,8 @@ export default {
         EmailMultiple,
         Plus,
         AlertCircle,
-        OpenInNew
+        OpenInNew,
+        Database
     },
 
     data() {
@@ -180,6 +191,7 @@ export default {
             allowedDomains: [],
             maxMailboxes: 10,
             warningThreshold: 0.8,
+            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 },
             selectedMailbox: null,
             showCreateModal: false,
             showEditModal: false,
@@ -292,6 +304,15 @@ export default {
                 if (data.warningThreshold !== undefined) {
                     this.warningThreshold = data.warningThreshold
                 }
+                if (data.mailStorage) {
+                    this.mailStorage = {
+                        max: data.mailStorage.max || 0,
+                        allocated: data.mailStorage.allocated || 0,
+                        available: data.mailStorage.available || 0,
+                        pool_enabled: !!data.mailStorage.pool_enabled,
+                        step_bytes: data.mailStorage.step_bytes || 1073741824
+                    }
+                }
             } catch (error) {
                 console.error('SharedMailboxesView: Fehler beim Laden der Postfächer', error)
                 this.showToast(this.t('souvera_central', 'Fehler beim Laden der Postfächer'), 'error')
@@ -373,6 +394,22 @@ export default {
             setTimeout(() => {
                 this.toast.show = false
             }, 3000)
+        },
+
+        formatBytes(bytes) {
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unbegrenzt')
+            }
+            const TB = 1024 ** 4
+            const GB = 1024 ** 3
+            const MB = 1024 ** 2
+            if (bytes >= TB) {
+                return `${(bytes / TB).toFixed(bytes % TB === 0 ? 0 : 1)} TB`
+            }
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
         }
     }
 }
@@ -419,6 +456,23 @@ export default {
 
 .license-status .material-design-icon {
     opacity: 0.8;
+}
+
+.pool-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(var(--color-primary-element-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-element-rgb), 0.3);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.pool-status .material-design-icon {
+    color: var(--color-primary-element);
 }
 
 .license-status.license-warning {

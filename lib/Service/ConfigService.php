@@ -34,6 +34,19 @@ class ConfigService {
     }
 
     /**
+     * Gesamter Mail-Speicher-Pool in Bytes (config.php: souvera_central.max_mail_storage).
+     * 0 = kein Pool gesetzt (unbegrenzt, abwärtskompatibel). Wird ausschließlich
+     * vom Hoster per occ gesetzt (nicht in der UI) und in der Central verteilt.
+     */
+    public function getMaxMailStorage(): int {
+        return (int) $this->config->getSystemValue('souvera_central.max_mail_storage', 0);
+    }
+
+    public function setMaxMailStorage(int $bytes): void {
+        $this->config->setSystemValue('souvera_central.max_mail_storage', max(0, $bytes));
+    }
+
+    /**
      * Liste der erlaubten E-Mail-Domains
      *
      * @return array

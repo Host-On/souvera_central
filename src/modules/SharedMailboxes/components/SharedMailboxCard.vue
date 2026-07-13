@@ -16,6 +16,10 @@
                 <span class="stat-label">{{ t('souvera_central', 'Mitglieder') }}</span>
                 <span class="stat-value">{{ memberCount }}</span>
             </div>
+            <div class="stat-row">
+                <span class="stat-label">{{ t('souvera_central', 'Speicherlimit') }}</span>
+                <span class="stat-value" data-testid="shared-card-quota">{{ quotaDisplay }}</span>
+            </div>
         </div>
 
         <div class="card-actions">
@@ -83,6 +87,23 @@ export default {
             }
             const members = this.mailbox.members || []
             return members.length
+        },
+
+        quotaDisplay() {
+            const bytes = this.mailbox.quota || 0
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unbegrenzt')
+            }
+            const TB = 1024 ** 4
+            const GB = 1024 ** 3
+            const MB = 1024 ** 2
+            if (bytes >= TB) {
+                return `${(bytes / TB).toFixed(bytes % TB === 0 ? 0 : 1)} TB`
+            }
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
         }
     },
 

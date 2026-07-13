@@ -64,8 +64,11 @@ class SharedMailboxService {
 
     /**
      * Geteiltes Postfach erstellen.
+     *
+     * @param int|null $quota Speicherlimit in Bytes (null = Config-Default,
+     *                        0 = unbegrenzt). Zählt gegen den Mail-Speicher-Pool.
      */
-    public function create(string $name, string $email, string $description = ''): ?array {
+    public function create(string $name, string $email, string $description = '', ?int $quota = null): ?array {
         $email = strtolower(trim($email));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->logger->warning('SharedMailboxService: Ungültiges Email-Format', ['email' => $email]);
@@ -91,6 +94,9 @@ class SharedMailboxService {
             'domainId' => $domainId,
             'description' => $description !== '' ? $description : $name,
         ];
+        if ($quota !== null) {
+            $object['quotas'] = ['maxDiskQuota' => max(0, $quota)];
+        }
 
         $resp = $this->stalwartService->jmapSingle('x:Account/set', ['create' => ['sm0' => $object]]);
         $created = $resp['created']['sm0'] ?? null;
@@ -143,6 +149,21 @@ class SharedMailboxService {
 
         $resp = $this->stalwartService->jmapSingle('x:Account/set', [
             'update' => [$groupId => ['description' => (string) $updates['description']]],
+        ]);
+        return $resp !== null && array_key_exists($groupId, $resp['updated'] ?? []);
+    }
+
+    /**
+     * Speicherlimit (maxDiskQuota) eines geteilten Postfachs setzen (Bytes).
+     * 0 = unbegrenzt. Patcht gezielt quotas/maxDiskQuota am Group-Konto.
+     */
+    public function setQuota(string $name, int $bytes): bool {
+        $groupId = $this->groupId($name);
+        if ($groupId === null) {
+            return false;
+        }
+        $resp = $this->stalwartService->jmapSingle('x:Account/set', [
+            'update' => [$groupId => ['quotas/maxDiskQuota' => max(0, $bytes)]],
         ]);
         return $resp !== null && array_key_exists($groupId, $resp['updated'] ?? []);
     }
@@ -384,6 +405,8 @@ class SharedMailboxService {
             'email' => $email,
             'emails' => $email !== null ? [$email] : [],
             'description' => $group['description'] ?? null,
+            'quota' => (int) ($group['quotas']['maxDiskQuota'] ?? 0),
+            'used' => (int) ($group['usedDiskQuota'] ?? 0),
             'type' => 'group',
         ];
     }

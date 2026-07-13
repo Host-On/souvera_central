@@ -225,7 +225,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.36.2</span>
+                    <span class="info-value">0.37.0</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
@@ -249,7 +249,6 @@ import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
-import AccountCheck from 'vue-material-design-icons/AccountCheck.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
@@ -267,7 +266,6 @@ export default {
         AccountGroup,
         EmailMultiple,
         KeyVariant,
-        AccountCheck,
         Plus,
         Cog,
         OpenInNew,

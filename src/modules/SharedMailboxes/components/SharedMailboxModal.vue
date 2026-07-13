@@ -58,6 +58,30 @@
                     ></textarea>
                 </div>
 
+                <!-- Speicherlimit (Mail-Speicher-Pool) -->
+                <div class="form-group" data-testid="shared-quota-group">
+                    <label>{{ t('souvera_central', 'Speicherlimit') }}</label>
+                    <div class="quota-row">
+                        <input
+                            v-model.number="form.quotaGB"
+                            type="number"
+                            min="1"
+                            step="1"
+                            :max="poolEnabled ? maxGb : null"
+                            :disabled="form.unlimited"
+                            data-testid="shared-quota-input"
+                        />
+                        <span class="quota-unit">{{ t('souvera_central', 'GB') }}</span>
+                        <label v-if="!poolEnabled" class="unlimited-label" data-testid="shared-quota-unlimited-label">
+                            <input v-model="form.unlimited" type="checkbox" data-testid="shared-quota-unlimited" />
+                            <span>{{ t('souvera_central', 'Unbegrenzt') }}</span>
+                        </label>
+                    </div>
+                    <p v-if="poolEnabled" class="hint" data-testid="shared-quota-pool-hint">
+                        {{ t('souvera_central', 'Im Mail-Speicher-Pool verfügbar: {available}', { available: formatBytes(poolAvailableForThis) }) }}
+                    </p>
+                </div>
+
                 <!-- Error -->
                 <p v-if="error" class="error-message">{{ error }}</p>
 
@@ -101,6 +125,10 @@ export default {
         isEdit: {
             type: Boolean,
             default: false
+        },
+        mailStorage: {
+            type: Object,
+            default: () => ({ max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 })
         }
     },
 
@@ -112,17 +140,44 @@ export default {
                 name: '',
                 emailLocal: '',
                 emailDomain: '',
-                description: ''
+                description: '',
+                quotaGB: 1,
+                unlimited: false
             },
+            currentQuotaBytes: 0,
             saving: false,
             error: null
         }
     },
 
     computed: {
+        GiB() {
+            return 1024 * 1024 * 1024
+        },
+
+        poolEnabled() {
+            return !!this.mailStorage.pool_enabled
+        },
+
+        poolAvailableForThis() {
+            return (this.mailStorage.available || 0) + Math.max(0, this.currentQuotaBytes)
+        },
+
+        maxGb() {
+            return Math.max(1, Math.floor(this.poolAvailableForThis / this.GiB))
+        },
+
+        quotaBytes() {
+            if (this.form.unlimited) {
+                return 0
+            }
+            const gb = Number(this.form.quotaGB)
+            return Number.isFinite(gb) && gb > 0 ? Math.round(gb) * this.GiB : 0
+        },
+
         canSave() {
             if (this.isEdit) {
-                return true // Beschreibung kann immer gespeichert werden
+                return true // Beschreibung/Limit kann immer gespeichert werden
             }
             return this.form.name.trim() && this.form.emailLocal.trim() && this.form.emailDomain
         },
@@ -146,24 +201,58 @@ export default {
                 this.form.emailLocal = local
                 this.form.emailDomain = domain
             }
+            this.currentQuotaBytes = this.mailbox.quota || 0
         } else if (this.allowedDomains.length > 0) {
             this.form.emailDomain = this.allowedDomains[0]
+        }
+        // Stepper/Unbegrenzt aus aktuellem Limit ableiten
+        if (this.currentQuotaBytes > 0) {
+            this.form.unlimited = false
+            this.form.quotaGB = Math.max(1, Math.round(this.currentQuotaBytes / this.GiB))
+        } else {
+            this.form.unlimited = !this.poolEnabled
+            this.form.quotaGB = 1
         }
     },
 
     methods: {
         t,
 
+        formatBytes(bytes) {
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unbegrenzt')
+            }
+            const GB = 1024 * 1024 * 1024
+            const MB = 1024 * 1024
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
+        },
+
         save() {
             if (!this.canSave || this.saving) {
                 return
+            }
+
+            // Client-seitige Pool-Vorabprüfung (Server validiert erneut)
+            if (this.poolEnabled) {
+                if (this.quotaBytes <= 0) {
+                    this.error = this.t('souvera_central', 'Bei aktivem Mail-Speicher-Pool ist „Unbegrenzt" nicht erlaubt.')
+                    return
+                }
+                if (this.quotaBytes > this.poolAvailableForThis) {
+                    this.error = this.t('souvera_central', 'Nicht genügend Mail-Speicher im Pool verfügbar.')
+                    return
+                }
             }
 
             this.error = null
             this.saving = true
 
             const data = {
-                description: this.form.description.trim()
+                description: this.form.description.trim(),
+                quota: this.quotaBytes
             }
 
             if (!this.isEdit) {
@@ -335,6 +424,39 @@ export default {
     font-size: 12px;
     color: var(--color-text-maxcontrast);
     font-style: italic;
+}
+
+.quota-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quota-row input[type='number'] {
+    width: 120px;
+    flex: 0 0 auto;
+}
+
+.quota-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.unlimited-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-main-text);
+    cursor: pointer;
+    margin: 0;
+}
+
+.unlimited-label input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 .error-message {
