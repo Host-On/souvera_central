@@ -47,6 +47,20 @@ class QuotaParser {
     }
 
     /**
+     * Erlaubte Eingabe für den Mail-Speicher-Pool (occ mailstorage:set):
+     * NUR ganze/dezimale Zahl mit Einheit G/GB oder T/TB. Alles andere
+     * (nackte Zahl = Bytes, K/M, KiB/GiB/TiB, Müll) wird abgelehnt.
+     * Zum Entfernen des Pools sind 0/none/unlimited/unbegrenzt erlaubt.
+     */
+    public static function isMailStoragePoolInput(string $input): bool {
+        $s = strtolower(trim($input));
+        if (in_array($s, ['0', 'none', 'unlimited', 'unbegrenzt'], true)) {
+            return true;
+        }
+        return (bool) preg_match('/^[0-9]+(?:[.,][0-9]+)?\s*(g|gb|t|tb)$/', $s);
+    }
+
+    /**
      * Bytes lesbar formatieren (binär). 0 oder weniger => "Unbegrenzt".
      */
     public static function format(int $bytes): string {

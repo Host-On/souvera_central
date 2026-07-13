@@ -45,14 +45,22 @@ class MailStorageSet extends Base {
         $this
             ->setName('souvera_central:mailstorage:set')
             ->setDescription('Setzt den gesamten Mail-Speicher-Pool (config.php), der in der Central-UI verteilt wird. Nur Hoster/CLI.')
-            ->addArgument('size', InputArgument::REQUIRED, 'Gesamt-Mail-Speicher, z. B. 100G, 500G, 1T oder 0/none (Pool entfernen)')
+            ->addArgument('size', InputArgument::REQUIRED, 'Gesamt-Mail-Speicher – NUR in G/GB oder T/TB, z. B. 100G, 500GB, 2T, 2TB (oder 0/none zum Entfernen)')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Downgrade auch unter die bereits verteilte Gesamtmenge erzwingen (nicht empfohlen)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
-        $bytes = QuotaParser::toBytes((string) $input->getArgument('size'));
+        $raw = (string) $input->getArgument('size');
+
+        // Nur G/GB oder T/TB erlauben (nackte Zahl = Bytes, K/M, GiB/TiB usw. ablehnen).
+        if (!QuotaParser::isMailStoragePoolInput($raw)) {
+            $output->writeln('<error>Ungültige Größe: ' . $raw . '. Erlaubt sind nur G/GB oder T/TB, z. B. 100G, 500GB, 2T, 2TB (oder 0/none zum Entfernen).</error>');
+            return 1;
+        }
+
+        $bytes = QuotaParser::toBytes($raw);
         if ($bytes === null) {
-            $output->writeln('<error>Ungültige Größe: ' . $input->getArgument('size') . '. Beispiele: 100G, 500G, 1T, 0 (Pool entfernen).</error>');
+            $output->writeln('<error>Ungültige Größe: ' . $raw . '. Erlaubt sind nur G/GB oder T/TB, z. B. 100G, 500GB, 2T, 2TB (oder 0/none zum Entfernen).</error>');
             return 1;
         }
 
