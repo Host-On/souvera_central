@@ -223,7 +223,7 @@ class UserApiController extends OCSController {
      * Neuen Benutzer erstellen
      */
     #[NoAdminRequired]
-    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = '', bool $isSouveraUser = true): DataResponse {
+    public function create(string $username = '', string $displayName = '', string $email = '', string $password = '', array $groups = [], string $quota = 'default', bool $enabled = true, string $manager = '', bool $isSouveraUser = true, ?int $mailboxQuota = null): DataResponse {
         try {
             // Debug: Alle POST-Daten loggen
             $postData = file_get_contents('php://input');

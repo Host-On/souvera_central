@@ -98,19 +98,45 @@ class StorageService {
     }
 
     /**
+     * Ermittelt in EINEM Durchlauf (User- + geteilte Postfächer):
+     *   - allocated: Summe der maxDiskQuota aller Postfächer mit konkretem Limit
+     *   - unlimited: Anzahl der Postfächer OHNE Limit (0 = unbegrenzt)
+     *
+     * Wichtig: Postfächer ohne Limit belegen real unbegrenzt Speicher, tragen aber
+     * 0 zur verteilten Menge bei. Bei aktivem Pool sind sie daher „nicht erfassbar"
+     * und werden separat als Warnung ausgewiesen (unlimited_count).
+     *
+     * @return array{allocated:int, unlimited:int}
+     */
+    public function getDistribution(): array {
+        $allocated = 0;
+        $unlimited = 0;
+        foreach ($this->stalwart->listMailboxUsage() as $u) {
+            $q = (int) ($u['quota'] ?? 0);
+            if ($q > 0) {
+                $allocated += $q;
+            } else {
+                $unlimited++;
+            }
+        }
+        foreach ($this->stalwart->listSharedMailboxUsage() as $u) {
+            $q = (int) ($u['quota'] ?? 0);
+            if ($q > 0) {
+                $allocated += $q;
+            } else {
+                $unlimited++;
+            }
+        }
+        return ['allocated' => $allocated, 'unlimited' => $unlimited];
+    }
+
+    /**
      * Aktuell verteilte Gesamtmenge = Summe der maxDiskQuota aller
      * User-Postfächer + aller geteilten Postfächer (Group-Konten).
      * Postfächer ohne Limit (0 = unbegrenzt) zählen mit 0.
      */
     public function getAllocatedStorage(): int {
-        $sum = 0;
-        foreach ($this->stalwart->listMailboxUsage() as $u) {
-            $sum += max(0, (int) ($u['quota'] ?? 0));
-        }
-        foreach ($this->stalwart->listSharedMailboxUsage() as $u) {
-            $sum += max(0, (int) ($u['quota'] ?? 0));
-        }
-        return $sum;
+        return $this->getDistribution()['allocated'];
     }
 
     public function getAvailableStorage(): int {
@@ -120,18 +146,52 @@ class StorageService {
     /**
      * Zusammenfassung für die UI.
      *
-     * @return array{max:int, allocated:int, available:int, pool_enabled:bool, step_bytes:int}
+     * @return array{max:int, allocated:int, available:int, pool_enabled:bool, step_bytes:int, default_quota:int, unlimited_count:int}
      */
     public function getSummary(): array {
         $max = $this->getMaxStorage();
-        $allocated = $this->getAllocatedStorage();
+        $dist = $this->getDistribution();
+        $allocated = $dist['allocated'];
         return [
             'max' => $max,
             'allocated' => $allocated,
             'available' => self::available($max, $allocated),
             'pool_enabled' => $max > 0,
             'step_bytes' => self::GIB,
+            // Vorschlags-/Default-Limit für ein neues Postfach: bei aktivem Pool der
+            // kleine Pool-Default, sonst der generelle Postfach-Standard.
+            'default_quota' => $max > 0
+                ? $this->config->getPoolDefaultMailboxQuota()
+                : $this->config->getDefaultMailboxQuota(),
+            // Anzahl unbegrenzter Postfächer – bei aktivem Pool eine Warnung wert.
+            'unlimited_count' => $dist['unlimited'],
         ];
+    }
+
+    /**
+     * Ermittelt das effektive Postfach-Limit für eine NEUE Anlage und validiert es
+     * gegen den Pool. Wird von ALLEN Anlage-/Provisionierungswegen genutzt
+     * (UI-Anlage, createMailbox, sync, occ), damit der Pool nirgends umgangen wird.
+     *
+     * @param int|null $requested Gewünschtes Limit in Bytes; null = kein explizites
+     *                            Limit (Default anwenden).
+     * @return array{quota:int, error:?string} quota = anzuwendendes Limit (Bytes,
+     *         0 = unbegrenzt); error = deutsche Fehlermeldung bei Pool-Verstoß, sonst null.
+     */
+    public function resolveNewMailboxQuota(?int $requested): array {
+        $max = $this->getMaxStorage();
+
+        // Kein Pool -> abwärtskompatibel: gewünschtes Limit oder genereller Standard.
+        if ($max <= 0) {
+            $quota = $requested ?? $this->config->getDefaultMailboxQuota();
+            return ['quota' => max(0, $quota), 'error' => null];
+        }
+
+        // Pool aktiv -> ohne explizites Limit den (kleinen) Pool-Default anwenden.
+        $quota = $requested ?? $this->config->getPoolDefaultMailboxQuota();
+        $quota = max(0, $quota);
+        $error = $this->assertAllocation(0, $quota);
+        return ['quota' => $quota, 'error' => $error];
     }
 
     /**

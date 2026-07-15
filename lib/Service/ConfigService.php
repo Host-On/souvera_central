@@ -47,6 +47,25 @@ class ConfigService {
     }
 
     /**
+     * Standard-Postfach-Speicherlimit (Bytes), das bei AKTIVEM Mail-Speicher-Pool
+     * für neue Postfächer verwendet wird, wenn kein explizites Limit angegeben ist.
+     * Bewusst klein (Standard 1 GiB), damit nicht einige wenige neue Postfächer den
+     * ganzen Pool aufbrauchen. Wird vom Hoster per occ gesetzt
+     * (souvera_central:mailstorage:set … --mailbox-default 1G).
+     *
+     * Hinweis: getDefaultMailboxQuota() (50 GiB) gilt weiterhin, wenn KEIN Pool
+     * gesetzt ist (abwärtskompatibel).
+     */
+    public function getPoolDefaultMailboxQuota(): int {
+        $v = (int) $this->config->getSystemValue('souvera_central.mail_storage_default_quota', StorageService::GIB);
+        return $v > 0 ? $v : StorageService::GIB;
+    }
+
+    public function setPoolDefaultMailboxQuota(int $bytes): void {
+        $this->config->setSystemValue('souvera_central.mail_storage_default_quota', max(1, $bytes));
+    }
+
+    /**
      * Liste der erlaubten E-Mail-Domains
      *
      * @return array

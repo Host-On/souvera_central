@@ -194,8 +194,12 @@ class MailGroupService {
      *                              ohne Angabe wird ein Zufallspasswort verwendet
      *                              (der Benutzer muss dann sein Passwort neu setzen,
      *                              damit es nach Stalwart gespiegelt wird).
+     * @param int|null $quota Disk-Quota in Bytes fürs neue Postfach (0 = unbegrenzt,
+     *                        null = globaler Config-Standard). Der Aufrufer sollte den
+     *                        Wert vorher via StorageService::resolveNewMailboxQuota()
+     *                        gegen den Mail-Speicher-Pool validieren.
      */
-    public function makeSouveraUser(IUser $user, ?string $password = null): bool {
+    public function makeSouveraUser(IUser $user, ?string $password = null, ?int $quota = null): bool {
         $group = $this->ensureGroup();
         if ($group !== null && !$group->inGroup($user)) {
             $group->addUser($user);
@@ -211,7 +215,8 @@ class MailGroupService {
                     $this->stalwart->createPrincipal(
                         $mail,
                         $password ?? bin2hex(random_bytes(24)),
-                        $user->getDisplayName()
+                        $user->getDisplayName(),
+                        $quota
                     );
                 }
             } catch (\Throwable $e) {
