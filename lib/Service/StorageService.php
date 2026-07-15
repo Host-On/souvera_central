@@ -180,18 +180,28 @@ class StorageService {
      */
     public function resolveNewMailboxQuota(?int $requested): array {
         $max = $this->getMaxStorage();
-
-        // Kein Pool -> abwärtskompatibel: gewünschtes Limit oder genereller Standard.
-        if ($max <= 0) {
-            $quota = $requested ?? $this->config->getDefaultMailboxQuota();
-            return ['quota' => max(0, $quota), 'error' => null];
-        }
-
-        // Pool aktiv -> ohne explizites Limit den (kleinen) Pool-Default anwenden.
-        $quota = $requested ?? $this->config->getPoolDefaultMailboxQuota();
-        $quota = max(0, $quota);
-        $error = $this->assertAllocation(0, $quota);
+        $quota = self::resolveQuotaValue(
+            $max,
+            $requested,
+            $this->config->getPoolDefaultMailboxQuota(),
+            $this->config->getDefaultMailboxQuota()
+        );
+        // Bei aktivem Pool hart gegen die Verteilung prüfen (liefert dt. Meldung).
+        $error = $max > 0 ? $this->assertAllocation(0, $quota) : null;
         return ['quota' => $quota, 'error' => $error];
+    }
+
+    /**
+     * Reine Logik: ermittelt das anzuwendende Limit (Bytes) für eine Neu-Anlage.
+     *   - Kein Pool (max<=0): gewünschtes Limit, sonst genereller Standard.
+     *   - Pool aktiv:         gewünschtes Limit, sonst (kleiner) Pool-Default.
+     * Nie negativ.
+     */
+    public static function resolveQuotaValue(int $max, ?int $requested, int $poolDefault, int $generalDefault): int {
+        if ($max <= 0) {
+            return max(0, $requested ?? $generalDefault);
+        }
+        return max(0, $requested ?? $poolDefault);
     }
 
     /**

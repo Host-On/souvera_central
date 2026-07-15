@@ -1,14 +1,14 @@
 <template>
     <div class="settings-container">
         <div class="page-header">
-            <h2>{{ t('souvera_central', 'Einstellungen') }}</h2>
-            <p class="header-subtitle">{{ t('souvera_central', 'Kontoverwaltungseinstellungen') }}</p>
+            <h2>{{ t('souvera_central', 'Settings') }}</h2>
+            <p class="header-subtitle">{{ t('souvera_central', 'Account management settings') }}</p>
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
             <NcLoadingIcon :size="32" />
-            <p>{{ t('souvera_central', 'Lade Einstellungen...') }}</p>
+            <p>{{ t('souvera_central', 'Loading settings...') }}</p>
         </div>
 
         <!-- Settings Content -->
@@ -17,10 +17,10 @@
             <div class="settings-section">
                 <div class="section-header">
                     <Email :size="22" />
-                    <h3>{{ t('souvera_central', 'Willkommens-Email senden') }}</h3>
+                    <h3>{{ t('souvera_central', 'Send welcome email') }}</h3>
                 </div>
                 <p class="section-description">
-                    {{ t('souvera_central', 'Automatisches Versenden von Willkommens-Emails an neue Benutzer') }}
+                    {{ t('souvera_central', 'Automatically send welcome emails to new users') }}
                 </p>
 
                 <div class="settings-group">
@@ -34,8 +34,8 @@
                         <span class="toggle-text">
                             {{
                                 settings.email.send_to_new_users
-                                    ? t('souvera_central', 'Aktiv')
-                                    : t('souvera_central', 'Inaktiv')
+                                    ? t('souvera_central', 'Active')
+                                    : t('souvera_central', 'Inactive')
                             }}
                         </span>
                     </button>
@@ -43,7 +43,7 @@
                         {{
                             t(
                                 'souvera_central',
-                                'Wenn aktiviert, erhalten neue Benutzer automatisch eine Willkommens-Email mit ihren Login-Daten.'
+                                'When enabled, new users automatically receive a welcome email with their login details.'
                             )
                         }}
                     </p>
@@ -54,16 +54,16 @@
             <div class="settings-section">
                 <div class="section-header">
                     <Database :size="22" />
-                    <h3>{{ t('souvera_central', 'Standardeinstellungen') }}</h3>
+                    <h3>{{ t('souvera_central', 'Default settings') }}</h3>
                 </div>
                 <p class="section-description">
-                    {{ t('souvera_central', 'Standard-Werte für neue Benutzer') }}
+                    {{ t('souvera_central', 'Default values for new users') }}
                 </p>
 
                 <div class="settings-group">
                     <label class="field-label">
                         <Database :size="16" />
-                        {{ t('souvera_central', 'Standard Speicherkontingent') }}
+                        {{ t('souvera_central', 'Default storage quota') }}
                     </label>
 
                     <!-- Quota Grid -->
@@ -91,24 +91,24 @@
             <div class="settings-section" data-testid="mail-storage-section">
                 <div class="section-header">
                     <Database :size="22" />
-                    <h3>{{ t('souvera_central', 'Mail-Speicher-Pool') }}</h3>
+                    <h3>{{ t('souvera_central', 'Mail storage pool') }}</h3>
                 </div>
                 <p class="section-description">
-                    {{ t('souvera_central', 'Gesamter E-Mail-Speicher, der auf Souvera-User und geteilte Postfächer verteilt wird. Wird vom Hoster per Kommandozeile festgelegt (nicht mit dem Nextcloud-Dateispeicher zu verwechseln).') }}
+                    {{ t('souvera_central', 'Total email storage distributed across Souvera users and shared mailboxes. Set by the hoster via the command line (not to be confused with Nextcloud file storage).') }}
                 </p>
 
                 <div v-if="mailStorage.pool_enabled" class="settings-group">
                     <div class="pool-stats" data-testid="mail-storage-stats">
                         <div class="pool-stat">
-                            <span class="pool-stat-label">{{ t('souvera_central', 'Gesamt') }}</span>
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Total') }}</span>
                             <span class="pool-stat-value" data-testid="mail-storage-total">{{ formatBytes(mailStorage.max) }}</span>
                         </div>
                         <div class="pool-stat">
-                            <span class="pool-stat-label">{{ t('souvera_central', 'Verteilt') }}</span>
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Distributed') }}</span>
                             <span class="pool-stat-value" data-testid="mail-storage-allocated">{{ formatBytes(mailStorage.allocated) }}</span>
                         </div>
                         <div class="pool-stat">
-                            <span class="pool-stat-label">{{ t('souvera_central', 'Verfügbar') }}</span>
+                            <span class="pool-stat-label">{{ t('souvera_central', 'Available') }}</span>
                             <span class="pool-stat-value available" data-testid="mail-storage-available">{{ formatBytes(mailStorage.available) }}</span>
                         </div>
                     </div>
@@ -120,12 +120,20 @@
                         ></div>
                     </div>
                     <p class="setting-hint">
-                        {{ t('souvera_central', 'Änderbar nur per Kommandozeile: occ souvera_central:mailstorage:set 100G') }}
+                        {{ t('souvera_central', 'Changeable only via the command line: occ souvera_central:mailstorage:set 100G') }}
+                    </p>
+                    <p
+                        v-if="mailStorage.unlimited_count > 0"
+                        class="pool-unlimited-warning"
+                        data-testid="mail-storage-unlimited-warning"
+                    >
+                        <AlertCircleOutline :size="16" />
+                        {{ t('souvera_central', '{count} mailbox(es) without a limit ("Unlimited") – these cannot be accounted for in the pool and may exceed it.', { count: mailStorage.unlimited_count }) }}
                     </p>
                 </div>
                 <div v-else class="settings-group">
                     <p class="pool-empty" data-testid="mail-storage-empty">
-                        {{ t('souvera_central', 'Kein Mail-Speicher-Pool gesetzt (unbegrenzt). Der Hoster kann ihn per „occ souvera_central:mailstorage:set 100G" aktivieren.') }}
+                        {{ t('souvera_central', 'No mail storage pool set (unlimited). The hoster can enable it via "occ souvera_central:mailstorage:set 100G".') }}
                     </p>
                 </div>
             </div>
@@ -137,7 +145,7 @@
                     <h3>{{ t('souvera_central', 'Souvera Shield') }}</h3>
                 </div>
                 <p class="section-description">
-                    {{ t('souvera_central', 'Benachrichtigungs-Einstellungen für Souvera Shield.') }}
+                    {{ t('souvera_central', 'Notification settings for Souvera Shield.') }}
                 </p>
 
                 <div class="settings-group">
@@ -148,7 +156,7 @@
                             data-testid="shield-desktop-checkbox"
                             @change="saveSettings"
                         />
-                        <span>{{ t('souvera_central', 'Desktop-Benachrichtigungen erhalten') }}</span>
+                        <span>{{ t('souvera_central', 'Receive desktop notifications') }}</span>
                     </label>
 
                     <label class="checkbox-label" data-testid="shield-summary-label">
@@ -158,12 +166,12 @@
                             data-testid="shield-summary-checkbox"
                             @change="saveSettings"
                         />
-                        <span>{{ t('souvera_central', 'Tägliche Zusammenfassung per E-Mail erhalten') }}</span>
+                        <span>{{ t('souvera_central', 'Receive a daily summary by email') }}</span>
                     </label>
 
                     <div v-if="settings.shield.daily_summary" class="spam-score-field" data-testid="shield-spam-score">
                         <label class="field-label">
-                            {{ t('souvera_central', 'Mindest-Spam-Score für Benachrichtigung') }}
+                            {{ t('souvera_central', 'Minimum spam score for notification') }}
                         </label>
                         <div class="slider-row">
                             <input
@@ -187,7 +195,7 @@
                             <span>10</span>
                         </div>
                         <p class="setting-hint">
-                            {{ t('souvera_central', 'Nur Nachrichten ab diesem Spam-Score lösen eine Benachrichtigung aus (0 = alle, 10 = nur sehr wahrscheinlicher Spam).') }}
+                            {{ t('souvera_central', 'Only messages at or above this spam score trigger a notification (0 = all, 10 = only very likely spam).') }}
                         </p>
                     </div>
                 </div>
@@ -196,12 +204,12 @@
             <!-- Save Indicator -->
             <div v-if="saving" class="save-indicator">
                 <NcLoadingIcon :size="16" />
-                <span>{{ t('souvera_central', 'Speichere...') }}</span>
+                <span>{{ t('souvera_central', 'Saving...') }}</span>
             </div>
 
             <div v-if="saveSuccess" class="save-indicator success">
                 <Check :size="16" />
-                <span>{{ t('souvera_central', 'Gespeichert') }}</span>
+                <span>{{ t('souvera_central', 'Saved') }}</span>
             </div>
         </div>
     </div>
@@ -218,6 +226,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import Database from 'vue-material-design-icons/Database.vue'
 import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 
 export default {
     name: 'Settings',
@@ -229,7 +238,8 @@ export default {
         Close,
         Database,
         InfinityIcon,
-        ShieldCheck
+        ShieldCheck,
+        AlertCircleOutline
     },
 
     data() {
@@ -238,7 +248,7 @@ export default {
             saving: false,
             saveSuccess: false,
             customQuota: '',
-            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 },
+            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 },
             settings: {
                 email: {
                     send_to_new_users: false
@@ -253,8 +263,8 @@ export default {
                 }
             },
             quotaOptions: [
-                { value: 'default', label: this.t('souvera_central', 'Standard'), icon: 'icon-quota' },
-                { value: 'none', label: this.t('souvera_central', 'Unbegrenzt'), icon: 'icon-category-disabled' },
+                { value: 'default', label: this.t('souvera_central', 'Default'), icon: 'icon-quota' },
+                { value: 'none', label: this.t('souvera_central', 'Unlimited'), icon: 'icon-category-disabled' },
                 { value: '1 GB', label: '1 GB', icon: 'icon-quota' },
                 { value: '5 GB', label: '5 GB', icon: 'icon-quota' },
                 { value: '10 GB', label: '10 GB', icon: 'icon-quota' },
@@ -297,16 +307,18 @@ export default {
                     allocated: data.allocated || 0,
                     available: data.available || 0,
                     pool_enabled: !!data.pool_enabled,
-                    step_bytes: data.step_bytes || 1073741824
+                    step_bytes: data.step_bytes || 1073741824,
+                    default_quota: data.default_quota || 0,
+                    unlimited_count: data.unlimited_count || 0
                 }
             } catch (error) {
-                this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824 }
+                this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 }
             }
         },
 
         formatBytes(bytes) {
             if (!bytes || bytes <= 0) {
-                return this.t('souvera_central', 'Unbegrenzt')
+                return this.t('souvera_central', 'Unlimited')
             }
             const TB = 1024 ** 4
             const GB = 1024 ** 3
@@ -360,7 +372,7 @@ export default {
                 // Emit event für andere Komponenten
                 this.$emit('settings-updated', this.settings)
             } catch (error) {
-                alert(this.t('souvera_central', 'Fehler beim Speichern der Einstellungen'))
+                alert(this.t('souvera_central', 'Error saving the settings'))
             } finally {
                 this.saving = false
             }
@@ -830,6 +842,28 @@ export default {
     font-size: 13px;
     color: var(--color-text-lighter);
     font-style: italic;
+}
+
+.pool-unlimited-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--color-warning, #e9a13b);
+    background: color-mix(in srgb, var(--color-warning, #e9a13b) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning, #e9a13b) 45%, transparent);
+    color: var(--color-main-text);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.pool-unlimited-warning :deep(svg) {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    color: var(--color-warning, #e9a13b);
 }
 
 /* Save Indicator */

@@ -2,7 +2,7 @@
     <div class="pagination">
         <div class="pagination-info">
             {{
-                t('souvera_central', 'Zeige {from} bis {to} von {total}', {
+                t('souvera_central', 'Show {from} to {to} of {total}', {
                     from: fromItem,
                     to: toItem,
                     total: total
@@ -15,7 +15,7 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === 1"
-                :title="t('souvera_central', 'Erste Seite')"
+                :title="t('souvera_central', 'First page')"
                 @click="goToPage(1)"
             >
                 <ChevronDoubleLeft :size="18" />
@@ -25,7 +25,7 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === 1"
-                :title="t('souvera_central', 'Vorherige Seite')"
+                :title="t('souvera_central', 'Previous page')"
                 @click="goToPage(currentPage - 1)"
             >
                 <ChevronLeft :size="18" />
@@ -47,7 +47,7 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === totalPages"
-                :title="t('souvera_central', 'Nächste Seite')"
+                :title="t('souvera_central', 'Next page')"
                 @click="goToPage(currentPage + 1)"
             >
                 <ChevronRight :size="18" />
@@ -57,7 +57,7 @@
             <button
                 class="pagination-button"
                 :disabled="currentPage === totalPages"
-                :title="t('souvera_central', 'Letzte Seite')"
+                :title="t('souvera_central', 'Last page')"
                 @click="goToPage(totalPages)"
             >
                 <ChevronDoubleRight :size="18" />
@@ -66,7 +66,7 @@
 
         <div class="per-page-selector">
             <label>
-                {{ t('souvera_central', 'Pro Seite') }}:
+                {{ t('souvera_central', 'Per page') }}:
                 <select v-model.number="selectedPerPage" @change="handlePerPageChange">
                     <option :value="10">10</option>
                     <option :value="20">20</option>

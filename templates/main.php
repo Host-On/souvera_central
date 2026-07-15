@@ -21,7 +21,7 @@ $userId = $_['userId'] ?? '';
     <div id="app-content">
         <div class="loading-container">
             <div class="icon-loading"></div>
-            <p><?php p($l->t('Lade Souvera Central...')); ?></p>
+            <p><?php p($l->t('Loading Souvera Central...')); ?></p>
         </div>
     </div>
 </div>

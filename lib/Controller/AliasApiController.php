@@ -386,7 +386,13 @@ class AliasApiController extends OCSController {
                 ]);
             }
 
-            $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName());
+            // Mail-Speicher-Pool beim Anlegen eines neuen Postfachs hart erzwingen.
+            $resolved = $this->storageService->resolveNewMailboxQuota(null);
+            if ($resolved['error'] !== null) {
+                return new DataResponse(['error' => $resolved['error']], Http::STATUS_CONFLICT);
+            }
+
+            $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName(), $resolved['quota']);
             if (!$ok) {
                 return new DataResponse(['error' => 'Postfach konnte nicht angelegt werden'], Http::STATUS_INTERNAL_SERVER_ERROR);
             }
@@ -425,6 +431,7 @@ class AliasApiController extends OCSController {
             $noMail = 0;
             $errors = 0;
             $grouped = 0;
+            $poolBlocked = 0;
 
             // Mail-Gruppe sicherstellen (für smail-Sichtbarkeit)
             $this->mailGroupService->ensureGroup();
@@ -462,7 +469,13 @@ class AliasApiController extends OCSController {
                         continue;
                     }
                     try {
-                        $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName());
+                        // Mail-Speicher-Pool auch beim Backfill hart erzwingen.
+                        $resolvedSync = $this->storageService->resolveNewMailboxQuota(null);
+                        if ($resolvedSync['error'] !== null) {
+                            $poolBlocked++;
+                            continue;
+                        }
+                        $ok = $this->stalwartService->createPrincipal($mail, bin2hex(random_bytes(24)), $user->getDisplayName(), $resolvedSync['quota']);
                         if ($ok) {
                             $created++;
                             if ($this->mailGroupService->addUser($user)) {
@@ -485,6 +498,7 @@ class AliasApiController extends OCSController {
                 'noMail' => $noMail,
                 'errors' => $errors,
                 'grouped' => $grouped,
+                'poolBlocked' => $poolBlocked,
                 'mailGroup' => $this->mailGroupService->getInfo(),
             ]);
         } catch (\Exception $e) {

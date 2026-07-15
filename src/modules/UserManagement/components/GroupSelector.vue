@@ -14,7 +14,7 @@
                 <button
                     v-if="!(isAdminUser && mode === 'admin' && groupId === 'admin')"
                     class="pill-remove"
-                    :title="t('souvera_central', 'Entfernen')"
+                    :title="t('souvera_central', 'Remove')"
                     @click="removeGroup(groupId)"
                 >
                     <Close :size="14" />
@@ -22,7 +22,7 @@
                 <span
                     v-else
                     class="pill-locked"
-                    :title="t('souvera_central', 'Standard-Administrator kann nicht aus Admin-Gruppe entfernt werden')"
+                    :title="t('souvera_central', 'The default administrator cannot be removed from the admin group')"
                 >
                     <Lock :size="14" />
                 </span>
@@ -35,8 +35,8 @@
             <span class="empty-text">
                 {{
                     mode === 'admin'
-                        ? t('souvera_central', 'Keine Admin-Gruppen ausgewählt')
-                        : t('souvera_central', 'Keine Gruppen ausgewählt')
+                        ? t('souvera_central', 'No admin groups selected')
+                        : t('souvera_central', 'No groups selected')
                 }}
             </span>
         </div>
@@ -47,8 +47,8 @@
                 <Plus :size="16" />
                 {{
                     mode === 'admin'
-                        ? t('souvera_central', 'Admin-Gruppe hinzufügen')
-                        : t('souvera_central', 'Gruppe hinzufügen')
+                        ? t('souvera_central', 'Add admin group')
+                        : t('souvera_central', 'Add group')
                 }}
             </button>
 
@@ -61,7 +61,7 @@
                         v-model="searchQuery"
                         type="text"
                         class="search-input"
-                        :placeholder="t('souvera_central', 'Gruppen suchen...')"
+                        :placeholder="t('souvera_central', 'Search groups...')"
                         @keydown.down.prevent="navigateDown"
                         @keydown.up.prevent="navigateUp"
                         @keydown.enter.prevent="selectHighlighted"
@@ -73,11 +73,11 @@
                 <div class="dropdown-bulk-actions">
                     <button type="button" class="bulk-action-btn" @click="selectAll">
                         <Check :size="16" />
-                        {{ t('souvera_central', 'Alle auswählen') }}
+                        {{ t('souvera_central', 'Select all') }}
                     </button>
                     <button type="button" class="bulk-action-btn" @click="deselectAll">
                         <Close :size="16" />
-                        {{ t('souvera_central', 'Alle abwählen') }}
+                        {{ t('souvera_central', 'Deselect all') }}
                     </button>
                 </div>
 
@@ -98,13 +98,13 @@
                             <span class="group-id">{{ group.id }}</span>
                         </div>
                         <span v-if="group.userCount !== undefined" class="group-count">
-                            {{ group.userCount }} {{ t('souvera_central', 'Mitglieder') }}
+                            {{ group.userCount }} {{ t('souvera_central', 'Members') }}
                         </span>
                     </div>
 
                     <div v-if="filteredGroups.length === 0" class="dropdown-empty">
                         <Magnify :size="20" />
-                        <p>{{ t('souvera_central', 'Keine Gruppen gefunden') }}</p>
+                        <p>{{ t('souvera_central', 'No groups found') }}</p>
                     </div>
                 </div>
             </div>

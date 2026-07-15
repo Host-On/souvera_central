@@ -5,10 +5,10 @@
             <div class="header-left">
                 <button class="back-button" @click="$emit('close')">
                     <ArrowLeft :size="18" />
-                    {{ t('souvera_central', 'Zurück zur Übersicht') }}
+                    {{ t('souvera_central', 'Back to overview') }}
                 </button>
                 <h2>
-                    {{ isEditMode ? t('souvera_central', 'Gruppe bearbeiten') : t('souvera_central', 'Neue Gruppe') }}
+                    {{ isEditMode ? t('souvera_central', 'Edit group') : t('souvera_central', 'New group') }}
                 </h2>
             </div>
         </div>
@@ -19,7 +19,7 @@
                 <!-- Gruppen-ID -->
                 <div class="form-group">
                     <label for="groupId" class="required">
-                        {{ t('souvera_central', 'Gruppen-ID') }}
+                        {{ t('souvera_central', 'Group ID') }}
                     </label>
                     <input
                         id="groupId"
@@ -35,7 +35,7 @@
                         {{
                             t(
                                 'souvera_central',
-                                'Eindeutige Gruppen-ID, kann später nicht geändert werden. Nur Buchstaben, Zahlen, _ und - erlaubt.'
+                                'Unique group ID, cannot be changed later. Only letters, numbers, _ and - are allowed.'
                             )
                         }}
                     </p>
@@ -44,7 +44,7 @@
                 <!-- Anzeigename -->
                 <div class="form-group">
                     <label for="displayName" class="required">
-                        {{ t('souvera_central', 'Anzeigename') }}
+                        {{ t('souvera_central', 'Display name') }}
                     </label>
                     <input
                         id="displayName"
@@ -59,7 +59,7 @@
                         {{
                             t(
                                 'souvera_central',
-                                'Freundlicher Name der Gruppe, wie er in der Benutzeroberfläche angezeigt wird'
+                                'Friendly name of the group as shown in the user interface'
                             )
                         }}
                     </p>
@@ -68,17 +68,17 @@
                 <!-- Mitglieder-Verwaltung (nur im Edit-Modus) -->
                 <div v-if="isEditMode" class="form-group">
                     <label for="members">
-                        {{ t('souvera_central', 'Mitglieder') }}
+                        {{ t('souvera_central', 'Members') }}
                         <span class="member-count">({{ selectedMembers.length }})</span>
                     </label>
-                    <p class="help-text">{{ t('souvera_central', 'Benutzer dieser Gruppe zuweisen') }}</p>
+                    <p class="help-text">{{ t('souvera_central', 'Assign user to this group') }}</p>
 
                     <!-- Search für Mitglieder -->
                     <div class="member-search">
                         <input
                             v-model="memberSearchQuery"
                             type="text"
-                            :placeholder="t('souvera_central', 'Benutzer suchen...')"
+                            :placeholder="t('souvera_central', 'Search users...')"
                             class="search-input"
                         />
                     </div>
@@ -86,7 +86,7 @@
                     <!-- Loading State -->
                     <div v-if="loadingUsers" class="members-loading">
                         <NcLoadingIcon :size="16" />
-                        {{ t('souvera_central', 'Lade Benutzer...') }}
+                        {{ t('souvera_central', 'Loading users...') }}
                     </div>
 
                     <!-- Members Selector -->
@@ -111,7 +111,7 @@
                                     :title="
                                         t(
                                             'souvera_central',
-                                            'Standard-Administrator kann nicht aus Admin-Gruppe entfernt werden'
+                                            'The default administrator cannot be removed from the admin group'
                                         )
                                     "
                                 >
@@ -120,7 +120,7 @@
                             </label>
                         </div>
                         <div v-if="filteredUsers.length === 0" class="no-users-found">
-                            {{ t('souvera_central', 'Keine Benutzer gefunden') }}
+                            {{ t('souvera_central', 'No users found') }}
                         </div>
                     </div>
                 </div>
@@ -129,12 +129,12 @@
                 <div v-if="isProtected" class="info-box warning">
                     <Lock :size="20" />
                     <div class="info-content">
-                        <strong>{{ t('souvera_central', 'Systemgruppe') }}</strong>
+                        <strong>{{ t('souvera_central', 'System group') }}</strong>
                         <p>
                             {{
                                 t(
                                     'souvera_central',
-                                    'Diese Gruppe ist eine Systemgruppe und kann nicht gelöscht werden.'
+                                    'This group is a system group and cannot be deleted.'
                                 )
                             }}
                         </p>
@@ -144,16 +144,16 @@
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <button type="button" class="secondary" @click="$emit('close')">
-                        {{ t('souvera_central', 'Abbrechen') }}
+                        {{ t('souvera_central', 'Cancel') }}
                     </button>
                     <button type="submit" class="primary" :disabled="!isFormValid || saving">
                         <NcLoadingIcon v-if="saving" :size="16" />
                         <template v-if="isEditMode">
-                            {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
+                            {{ saving ? t('souvera_central', 'Saving...') : t('souvera_central', 'Save') }}
                         </template>
                         <template v-else>
                             {{
-                                saving ? t('souvera_central', 'Erstellt...') : t('souvera_central', 'Gruppe erstellen')
+                                saving ? t('souvera_central', 'Creating...') : t('souvera_central', 'Create group')
                             }}
                         </template>
                     </button>
@@ -301,17 +301,17 @@ export default {
             this.errors.groupId = null
 
             if (!this.formData.groupId) {
-                this.errors.groupId = this.t('souvera_central', 'Gruppen-ID ist erforderlich')
+                this.errors.groupId = this.t('souvera_central', 'Group ID is required')
                 return
             }
 
             if (this.formData.groupId.length < 3) {
-                this.errors.groupId = this.t('souvera_central', 'Gruppen-ID muss mindestens 3 Zeichen lang sein')
+                this.errors.groupId = this.t('souvera_central', 'Group ID must be at least 3 characters long')
                 return
             }
 
             if (!/^[a-zA-Z0-9_-]+$/.test(this.formData.groupId)) {
-                this.errors.groupId = this.t('souvera_central', 'Nur Buchstaben, Zahlen, _ und - erlaubt')
+                this.errors.groupId = this.t('souvera_central', 'Only letters, numbers, _ and - are allowed')
             }
         },
 
@@ -319,7 +319,7 @@ export default {
             this.errors.displayName = null
 
             if (!this.formData.displayName) {
-                this.errors.displayName = this.t('souvera_central', 'Anzeigename ist erforderlich')
+                this.errors.displayName = this.t('souvera_central', 'Display name is required')
             }
         },
 
@@ -421,7 +421,7 @@ export default {
                 console.error('GroupEditor: Error beim Speichern:', error)
                 console.log('Error Response:', error.response)
 
-                let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
+                let errorMessage = this.t('souvera_central', 'Error while saving')
 
                 // Prüfe Error.message (von checkOCSError() oder anderen Error-Quellen)
                 if (error.message && !error.message.includes('Network Error')) {
@@ -442,9 +442,9 @@ export default {
                     // Zeige Fehler-Modal
                     this.confirmModal = {
                         isOpen: true,
-                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        title: this.t('souvera_central', 'Error while saving'),
                         message: errorMessage,
-                        details: this.t('souvera_central', 'Bitte verwenden Sie eine andere Gruppen-ID.'),
+                        details: this.t('souvera_central', 'Please use a different group ID.'),
                         type: 'danger',
                         confirmText: this.t('souvera_central', 'OK'),
                         cancelText: '',
@@ -462,7 +462,7 @@ export default {
                     // Zeige generischen Fehler-Modal
                     this.confirmModal = {
                         isOpen: true,
-                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        title: this.t('souvera_central', 'Error while saving'),
                         message: errorMessage,
                         details: '',
                         type: 'danger',

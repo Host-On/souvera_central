@@ -5,13 +5,13 @@
             <div class="header-left">
                 <button class="back-button" @click="$emit('close')">
                     <ArrowLeft :size="18" />
-                    {{ t('souvera_central', 'Zurück zur Übersicht') }}
+                    {{ t('souvera_central', 'Back to overview') }}
                 </button>
                 <h2>
                     {{
                         isEditMode
-                            ? t('souvera_central', 'Benutzer bearbeiten')
-                            : t('souvera_central', 'Neuer Benutzer')
+                            ? t('souvera_central', 'Edit user')
+                            : t('souvera_central', 'New user')
                     }}
                 </h2>
             </div>
@@ -26,13 +26,13 @@
                         <section class="ed-card">
                             <div class="section-head">
                                 <Account :size="20" />
-                                <h3>{{ t('souvera_central', 'Basisdaten') }}</h3>
+                                <h3>{{ t('souvera_central', 'Basic data') }}</h3>
                             </div>
                             <div class="base-grid">
                                 <!-- Anzeigename -->
                                 <div class="form-group">
                                     <label for="displayName" class="required">
-                                        {{ t('souvera_central', 'Anzeigename') }}
+                                        {{ t('souvera_central', 'Display name') }}
                                     </label>
                                     <input
                                         id="displayName"
@@ -48,7 +48,7 @@
                                 <!-- E-Mail -->
                                 <div class="form-group">
                                     <label for="email" class="required">
-                                        {{ t('souvera_central', 'E-Mail') }}
+                                        {{ t('souvera_central', 'Email') }}
                                     </label>
 
                                     <!-- Email mit Domain Dropdown wenn Domains konfiguriert sind -->
@@ -71,7 +71,7 @@
                                             required
                                             @change="updateFullEmail"
                                         >
-                                            <option value="">{{ t('souvera_central', 'Domain wählen...') }}</option>
+                                            <option value="">{{ t('souvera_central', 'Choose domain...') }}</option>
                                             <option v-for="domain in allowedDomains" :key="domain" :value="domain">
                                                 {{ domain }}
                                             </option>
@@ -96,10 +96,10 @@
                                         class="success-message"
                                     >
                                         <Check :size="16" />
-                                        {{ t('souvera_central', 'E-Mail-Adresse ist gültig') }}
+                                        {{ t('souvera_central', 'Email address is valid') }}
                                     </p>
                                     <p v-if="isEditMode" class="help-text">
-                                        {{ t('souvera_central', 'E-Mail-Adresse kann nach der Erstellung nicht geändert werden') }}
+                                        {{ t('souvera_central', 'The email address cannot be changed after creation') }}
                                     </p>
                                 </div>
 
@@ -109,7 +109,7 @@
                                 <!-- Passwort -->
                                 <div class="form-group">
                                     <label for="password" :class="{ required: !isEditMode }">
-                                        {{ t('souvera_central', 'Passwort') }}
+                                        {{ t('souvera_central', 'Password') }}
                                     </label>
                                     <input
                                         id="password"
@@ -123,27 +123,66 @@
                                     <p v-else class="help-text">
                                         {{
                                             isEditMode
-                                                ? t('souvera_central', 'Mindestens 10 Zeichen. Leer lassen, um Passwort nicht zu ändern.')
-                                                : t('souvera_central', 'Mindestens 10 Zeichen')
+                                                ? t('souvera_central', 'At least 10 characters. Leave empty to keep the password unchanged.')
+                                                : t('souvera_central', 'At least 10 characters')
                                         }}
                                     </p>
                                 </div>
 
-                                <!-- Speicherplatz Quota -->
+                                <!-- Nextcloud-Dateispeicher (NICHT das Mail-Postfach) -->
                                 <div class="form-group">
                                     <label for="quota">
-                                        {{ t('souvera_central', 'Kontingent') }}
+                                        {{ t('souvera_central', 'Nextcloud file storage') }}
                                     </label>
                                     <select id="quota" v-model="formData.quota">
-                                        <option value="default">{{ t('souvera_central', 'Standard') }}</option>
+                                        <option value="default">{{ t('souvera_central', 'Default') }}</option>
                                         <option value="1 GB">1 GB</option>
                                         <option value="5 GB">5 GB</option>
                                         <option value="10 GB">10 GB</option>
                                         <option value="50 GB">50 GB</option>
                                         <option value="100 GB">100 GB</option>
-                                        <option value="none">{{ t('souvera_central', 'Unbegrenzt') }}</option>
+                                        <option value="none">{{ t('souvera_central', 'Unlimited') }}</option>
                                     </select>
-                                    <p class="help-text">{{ t('souvera_central', 'Standard Speicherkontingent') }}</p>
+                                    <p class="help-text">{{ t('souvera_central', 'Storage quota for files in Nextcloud (not the email mailbox)') }}</p>
+                                </div>
+
+                                <!-- Postfach-Speicherlimit (Mail-Speicher-Pool) – nur beim Anlegen eines Souvera Users -->
+                                <div
+                                    v-if="!isEditMode && formData.isSouveraUser"
+                                    class="form-group"
+                                    data-testid="mailbox-quota-group"
+                                >
+                                    <label>{{ t('souvera_central', 'Mailbox storage limit') }}</label>
+                                    <div class="mailbox-quota-row">
+                                        <input
+                                            v-model.number="mailboxQuotaGB"
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            :max="poolEnabled ? mailboxMaxGb : null"
+                                            :disabled="mailboxUnlimited"
+                                            data-testid="mailbox-quota-input"
+                                        />
+                                        <span class="quota-unit">{{ t('souvera_central', 'GB') }}</span>
+                                        <label
+                                            v-if="!poolEnabled"
+                                            class="unlimited-inline"
+                                            data-testid="mailbox-quota-unlimited-label"
+                                        >
+                                            <input
+                                                v-model="mailboxUnlimited"
+                                                type="checkbox"
+                                                data-testid="mailbox-quota-unlimited"
+                                            />
+                                            <span>{{ t('souvera_central', 'Unlimited') }}</span>
+                                        </label>
+                                    </div>
+                                    <p v-if="poolEnabled" class="help-text" data-testid="mailbox-quota-pool-hint">
+                                        {{ t('souvera_central', 'Available in the mail storage pool: {available}', { available: formatBytes(mailStorage.available) }) }}
+                                    </p>
+                                    <p v-else class="help-text">
+                                        {{ t('souvera_central', 'Storage limit for the email mailbox') }}
+                                    </p>
                                 </div>
 
                                 <!-- Manager -->
@@ -152,7 +191,7 @@
                                         {{ t('souvera_central', 'Manager') }}
                                     </label>
                                     <ManagerSelector v-model="formData.manager" :initial-manager="initialManagerData" />
-                                    <p class="help-text">{{ t('souvera_central', 'Manager festlegen') }}</p>
+                                    <p class="help-text">{{ t('souvera_central', 'Set manager') }}</p>
                                 </div>
 
                                 <!-- Aktiv/Deaktiviert (nur Anzeige, Änderung über Button unten) -->
@@ -162,11 +201,11 @@
                                         <CheckCircle v-if="formData.enabled" :size="20" class="status-icon status-active" />
                                         <CloseCircle v-else :size="20" class="status-icon status-inactive" />
                                         <span :class="['status-text', formData.enabled ? 'status-active' : 'status-inactive']">
-                                            {{ formData.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                                            {{ formData.enabled ? t('souvera_central', 'Active') : t('souvera_central', 'Inactive') }}
                                         </span>
                                     </div>
                                     <p class="help-text">
-                                        {{ t('souvera_central', 'Status kann über „Erweiterte Aktionen" geändert werden') }}
+                                        {{ t('souvera_central', 'Status can be changed via "Advanced actions"') }}
                                     </p>
                                 </div>
                             </div>
@@ -186,7 +225,7 @@
                         <section class="editor-section groups-section" data-testid="groups-section">
                             <div class="section-head">
                                 <AccountGroup :size="20" />
-                                <h3>{{ t('souvera_central', 'Gruppenzugehörigkeit') }}</h3>
+                                <h3>{{ t('souvera_central', 'Group membership') }}</h3>
                                 <span class="section-hint">{{ t('souvera_central', 'Optional') }}</span>
                             </div>
                             <div class="groups-grid">
@@ -194,8 +233,8 @@
                                     <div class="pane-head">
                                         <span class="pane-icon member"><AccountGroup :size="18" /></span>
                                         <div class="pane-titles">
-                                            <span class="pane-title">{{ t('souvera_central', 'Mitglied der Gruppen') }}</span>
-                                            <span class="pane-sub">{{ t('souvera_central', 'Zugriff auf Gruppen-Ressourcen') }}</span>
+                                            <span class="pane-title">{{ t('souvera_central', 'Member of the groups') }}</span>
+                                            <span class="pane-sub">{{ t('souvera_central', 'Access to group resources') }}</span>
                                         </div>
                                     </div>
                                     <GroupSelector
@@ -208,8 +247,8 @@
                                     <div class="pane-head">
                                         <span class="pane-icon admin"><ShieldAccount :size="18" /></span>
                                         <div class="pane-titles">
-                                            <span class="pane-title">{{ t('souvera_central', 'Administration der Gruppen') }}</span>
-                                            <span class="pane-sub">{{ t('souvera_central', 'Darf diese Gruppen verwalten') }}</span>
+                                            <span class="pane-title">{{ t('souvera_central', 'Group administration') }}</span>
+                                            <span class="pane-sub">{{ t('souvera_central', 'May manage these groups') }}</span>
                                         </div>
                                     </div>
                                     <GroupSelector
@@ -229,10 +268,10 @@
                         <section class="ed-card" data-testid="user-type-group">
                             <div class="section-head">
                                 <Email :size="20" />
-                                <h3>{{ t('souvera_central', 'Benutzer-Typ') }}</h3>
+                                <h3>{{ t('souvera_central', 'User type') }}</h3>
                             </div>
                             <p class="help-text">
-                                {{ t('souvera_central', 'Souvera User belegen eine Lizenz und erhalten ein Mail-Postfach. Nextcloud User sind unlizenziert und ohne Postfach.') }}
+                                {{ t('souvera_central', 'Souvera Users use a license and receive a mailbox. Nextcloud Users are unlicensed and without a mailbox.') }}
                             </p>
                             <div class="user-type-options">
                                 <label class="user-type-option" :class="{ selected: formData.isSouveraUser }" data-testid="user-type-souvera-option">
@@ -246,7 +285,7 @@
                                     <Email :size="22" />
                                     <span class="user-type-text">
                                         <strong>{{ t('souvera_central', 'Souvera User') }}</strong>
-                                        <small>{{ t('souvera_central', 'Lizenziert · mit Postfach') }}</small>
+                                        <small>{{ t('souvera_central', 'Licensed · with mailbox') }}</small>
                                     </span>
                                 </label>
                                 <label class="user-type-option" :class="{ selected: !formData.isSouveraUser }" data-testid="user-type-nextcloud-option">
@@ -260,7 +299,7 @@
                                     <Account :size="22" />
                                     <span class="user-type-text">
                                         <strong>{{ t('souvera_central', 'Nextcloud User') }}</strong>
-                                        <small>{{ t('souvera_central', 'Unlizenziert · ohne Postfach') }}</small>
+                                        <small>{{ t('souvera_central', 'Unlicensed · without mailbox') }}</small>
                                     </span>
                                 </label>
                             </div>
@@ -270,7 +309,7 @@
                         <section v-if="isEditMode" class="editor-section advanced-section" data-testid="advanced-actions">
                             <div class="section-head">
                                 <Cog :size="20" />
-                                <h3>{{ t('souvera_central', 'Erweiterte Aktionen') }}</h3>
+                                <h3>{{ t('souvera_central', 'Advanced actions') }}</h3>
                             </div>
                             <div class="action-grid">
                                 <button
@@ -288,8 +327,8 @@
                                         <AccountCheck v-else :size="22" />
                                     </span>
                                     <span class="action-body">
-                                        <strong>{{ formData.enabled ? t('souvera_central', 'Benutzer deaktivieren') : t('souvera_central', 'Benutzer aktivieren') }}</strong>
-                                        <small>{{ formData.enabled ? t('souvera_central', 'Anmeldung sperren') : t('souvera_central', 'Anmeldung wieder erlauben') }}</small>
+                                        <strong>{{ formData.enabled ? t('souvera_central', 'Deactivate user') : t('souvera_central', 'Activate user') }}</strong>
+                                        <small>{{ formData.enabled ? t('souvera_central', 'Block sign-in') : t('souvera_central', 'Allow sign-in again') }}</small>
                                     </span>
                                 </button>
 
@@ -305,8 +344,8 @@
                                         <EmailFast v-else :size="22" />
                                     </span>
                                     <span class="action-body">
-                                        <strong>{{ t('souvera_central', 'Willkommens-E-Mail senden') }}</strong>
-                                        <small>{{ t('souvera_central', 'Zugangsdaten erneut zustellen') }}</small>
+                                        <strong>{{ t('souvera_central', 'Send welcome email') }}</strong>
+                                        <small>{{ t('souvera_central', 'Resend access credentials') }}</small>
                                     </span>
                                 </button>
 
@@ -322,8 +361,8 @@
                                         <Devices v-else :size="22" />
                                     </span>
                                     <span class="action-body">
-                                        <strong>{{ t('souvera_central', 'Alle Geräte trennen') }}</strong>
-                                        <small>{{ t('souvera_central', 'Abmelden & lokale Daten löschen') }}</small>
+                                        <strong>{{ t('souvera_central', 'Disconnect all devices') }}</strong>
+                                        <small>{{ t('souvera_central', 'Log out & delete local data') }}</small>
                                     </span>
                                 </button>
 
@@ -332,7 +371,7 @@
                                     type="button"
                                     class="action-card is-danger"
                                     :disabled="deletingUser || isOwnAccount"
-                                    :title="isOwnAccount ? t('souvera_central', 'Sie können Ihr eigenes Konto nicht löschen') : ''"
+                                    :title="isOwnAccount ? t('souvera_central', 'You cannot delete your own account') : ''"
                                     data-testid="action-card-delete-account"
                                     @click="deleteUser"
                                 >
@@ -341,8 +380,8 @@
                                         <DeleteForever v-else :size="22" />
                                     </span>
                                     <span class="action-body">
-                                        <strong>{{ t('souvera_central', 'Konto löschen') }}</strong>
-                                        <small>{{ t('souvera_central', 'Unwiderruflich entfernen') }}</small>
+                                        <strong>{{ t('souvera_central', 'Delete account') }}</strong>
+                                        <small>{{ t('souvera_central', 'Remove permanently') }}</small>
                                     </span>
                                 </button>
                             </div>
@@ -355,18 +394,18 @@
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <button type="button" class="secondary" @click="$emit('close')">
-                        {{ t('souvera_central', 'Abbrechen') }}
+                        {{ t('souvera_central', 'Cancel') }}
                     </button>
                     <button type="submit" class="primary" :disabled="!isFormValid || saving">
                         <NcLoadingIcon v-if="saving" :size="16" />
                         <template v-if="isEditMode">
-                            {{ saving ? t('souvera_central', 'Speichert...') : t('souvera_central', 'Speichern') }}
+                            {{ saving ? t('souvera_central', 'Saving...') : t('souvera_central', 'Save') }}
                         </template>
                         <template v-else>
                             {{
                                 saving
-                                    ? t('souvera_central', 'Erstellt...')
-                                    : t('souvera_central', 'Benutzer erstellen')
+                                    ? t('souvera_central', 'Creating...')
+                                    : t('souvera_central', 'Create user')
                             }}
                         </template>
                     </button>
@@ -484,6 +523,9 @@ export default {
             deletingUser: false,
             initialManagerData: null,
             currentUserId: null,
+            mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 },
+            mailboxQuotaGB: 1,
+            mailboxUnlimited: false,
             groupsExpanded: false,
             settings: {
                 defaults: {
@@ -530,6 +572,26 @@ export default {
 
         isProtected() {
             return this.isEditMode && this.user && this.user.isProtected === true
+        },
+
+        GiB() {
+            return 1024 * 1024 * 1024
+        },
+
+        poolEnabled() {
+            return !!this.mailStorage.pool_enabled
+        },
+
+        mailboxMaxGb() {
+            return Math.max(1, Math.floor((this.mailStorage.available || 0) / this.GiB))
+        },
+
+        mailboxQuotaBytes() {
+            if (this.mailboxUnlimited) {
+                return 0
+            }
+            const gb = Number(this.mailboxQuotaGB)
+            return Number.isFinite(gb) && gb > 0 ? Math.round(gb) * this.GiB : 0
         }
     },
 
@@ -569,6 +631,9 @@ export default {
             this.loadSettings().then(() => {
                 this.formData.quota = this.settings.defaults.quota
             })
+
+            // Mail-Speicher-Pool laden (für Postfach-Limit-Feld)
+            this.loadMailStorage()
 
             // Erste Domain vorauswählen
             if (this.allowedDomains.length > 0) {
@@ -636,6 +701,47 @@ export default {
             }
         },
 
+        async loadMailStorage() {
+            try {
+                const url = generateUrl('/apps/souvera_central/api/mail-storage')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.mailStorage = {
+                    max: data.max || 0,
+                    allocated: data.allocated || 0,
+                    available: data.available || 0,
+                    pool_enabled: !!data.pool_enabled,
+                    step_bytes: data.step_bytes || 1073741824,
+                    default_quota: data.default_quota || 0,
+                    unlimited_count: data.unlimited_count || 0
+                }
+            } catch (error) {
+                this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 }
+            } finally {
+                // Postfach-Limit-Feld aus dem Default vorbelegen
+                const def = this.mailStorage.default_quota || 0
+                if (this.mailStorage.pool_enabled) {
+                    this.mailboxUnlimited = false
+                    this.mailboxQuotaGB = Math.max(1, Math.round((def || this.GiB) / this.GiB))
+                } else {
+                    this.mailboxUnlimited = def <= 0
+                    this.mailboxQuotaGB = def > 0 ? Math.max(1, Math.round(def / this.GiB)) : 1
+                }
+            }
+        },
+
+        formatBytes(bytes) {
+            if (!bytes || bytes <= 0) {
+                return this.t('souvera_central', 'Unlimited')
+            }
+            const GB = 1024 * 1024 * 1024
+            const MB = 1024 * 1024
+            if (bytes >= GB) {
+                return `${(bytes / GB).toFixed(bytes % GB === 0 ? 0 : 1)} GB`
+            }
+            return `${Math.round(bytes / MB)} MB`
+        },
+
         updateFullEmail() {
             if (this.emailLocalPart && this.emailDomain) {
                 this.formData.email = `${this.emailLocalPart}@${this.emailDomain}`
@@ -649,7 +755,7 @@ export default {
             this.errors.displayName = null
 
             if (!this.formData.displayName) {
-                this.errors.displayName = this.t('souvera_central', 'Anzeigename ist erforderlich')
+                this.errors.displayName = this.t('souvera_central', 'Display name is required')
             }
         },
 
@@ -657,13 +763,13 @@ export default {
             this.errors.email = null
 
             if (!this.formData.email) {
-                this.errors.email = this.t('souvera_central', 'E-Mail ist erforderlich')
+                this.errors.email = this.t('souvera_central', 'Email is required')
                 return
             }
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
             if (!emailRegex.test(this.formData.email)) {
-                this.errors.email = this.t('souvera_central', 'Ungültige E-Mail-Adresse')
+                this.errors.email = this.t('souvera_central', 'Invalid email address')
             }
         },
 
@@ -682,7 +788,7 @@ export default {
                 const domain = this.formData.email.split('@')[1]
                 // TODO: Gegen Nextcloud Config oder externe API validieren
             } catch (error) {
-                this.errors.email = this.t('souvera_central', 'Domain-Validierung fehlgeschlagen')
+                this.errors.email = this.t('souvera_central', 'Domain validation failed')
             } finally {
                 this.validating.email = false
             }
@@ -692,12 +798,12 @@ export default {
             this.errors.password = null
 
             if (!this.formData.password && !this.isEditMode) {
-                this.errors.password = this.t('souvera_central', 'Passwort ist erforderlich')
+                this.errors.password = this.t('souvera_central', 'Password is required')
                 return
             }
 
             if (this.formData.password && this.formData.password.length < 10) {
-                this.errors.password = this.t('souvera_central', 'Passwort muss mindestens 10 Zeichen lang sein')
+                this.errors.password = this.t('souvera_central', 'Password must be at least 10 characters long')
             }
         },
 
@@ -755,6 +861,11 @@ export default {
                         isSouveraUser: this.formData.isSouveraUser
                     }
 
+                    // Postfach-Speicherlimit (Mail-Speicher-Pool) nur für Souvera User mitschicken
+                    if (this.formData.isSouveraUser) {
+                        payload.mailboxQuota = this.mailboxQuotaBytes
+                    }
+
                     const createResponse = await axios.post(url, payload)
                     this.checkOCSError(createResponse)
 
@@ -779,7 +890,7 @@ export default {
                 console.error('UserEditor: Error beim Speichern:', error)
                 console.log('Error Response:', error.response)
 
-                let errorMessage = this.t('souvera_central', 'Fehler beim Speichern')
+                let errorMessage = this.t('souvera_central', 'Error while saving')
 
                 // Prüfe Error.message (von checkOCSError() oder anderen Error-Quellen)
                 if (error.message && !error.message.includes('Network Error')) {
@@ -800,9 +911,9 @@ export default {
                     // Zusätzlich: Zeige Fehler-Modal
                     this.confirmModal = {
                         isOpen: true,
-                        title: this.t('souvera_central', 'Fehler beim Speichern'),
+                        title: this.t('souvera_central', 'Error while saving'),
                         message: errorMessage,
-                        details: this.t('souvera_central', 'Bitte verwenden Sie eine andere E-Mail-Adresse.'),
+                        details: this.t('souvera_central', 'Please use a different email address.'),
                         type: 'danger',
                         confirmText: this.t('souvera_central', 'OK'),
                         cancelText: '',
@@ -851,18 +962,18 @@ export default {
         resendWelcomeEmail() {
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Willkommens-Email versenden?'),
+                title: this.t('souvera_central', 'Send welcome email?'),
                 message: this.t(
                     'souvera_central',
-                    'Möchten Sie die Willkommens-Email an "{user}" wirklich erneut versenden?',
+                    'Do you really want to resend the welcome email to "{user}"?',
                     { user: this.formData.displayName }
                 ),
-                details: this.t('souvera_central', 'Die E-Mail wird an: {email} gesendet', {
+                details: this.t('souvera_central', 'The email will be sent to: {email}', {
                     email: this.formData.email
                 }),
                 type: 'info',
-                confirmText: this.t('souvera_central', 'Email senden'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Send email'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 onConfirm: async () => {
                     this.resendingEmail = true
 
@@ -876,9 +987,9 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Email versendet!'),
-                            message: this.t('souvera_central', 'Die Willkommens-Email wurde erfolgreich versendet.'),
-                            details: this.t('souvera_central', 'Die E-Mail wurde an {email} gesendet', {
+                            title: this.t('souvera_central', 'Email sent!'),
+                            message: this.t('souvera_central', 'The welcome email was sent successfully.'),
+                            details: this.t('souvera_central', 'The email was sent to {email}', {
                                 email: this.formData.email
                             }),
                             type: 'success',
@@ -892,12 +1003,12 @@ export default {
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
-                            this.t('souvera_central', 'Fehler beim Versenden der E-Mail')
+                            this.t('souvera_central', 'Error sending the email')
 
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler beim Versenden'),
+                            title: this.t('souvera_central', 'Error while sending'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',
@@ -921,23 +1032,23 @@ export default {
             this.confirmModal = {
                 isOpen: true,
                 title: this.formData.enabled
-                    ? this.t('souvera_central', 'Benutzer deaktivieren?')
-                    : this.t('souvera_central', 'Benutzer aktivieren?'),
-                message: this.t('souvera_central', 'Möchten Sie den Benutzer "{user}" wirklich {action}?', {
+                    ? this.t('souvera_central', 'Deactivate user?')
+                    : this.t('souvera_central', 'Activate user?'),
+                message: this.t('souvera_central', 'Do you really want to {action} the user "{user}"?', {
                     user: this.formData.displayName,
                     action: action
                 }),
                 details: this.formData.enabled
                     ? this.t(
                         'souvera_central',
-                        'Der Benutzer kann sich nicht mehr anmelden, bis er wieder aktiviert wird.'
+                        'The user can no longer sign in until reactivated.'
                     )
-                    : this.t('souvera_central', 'Der Benutzer kann sich wieder anmelden.'),
+                    : this.t('souvera_central', 'The user can sign in again.'),
                 type: this.formData.enabled ? 'warning' : 'info',
                 confirmText: this.formData.enabled
-                    ? this.t('souvera_central', 'Deaktivieren')
-                    : this.t('souvera_central', 'Aktivieren'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                    ? this.t('souvera_central', 'Deactivate')
+                    : this.t('souvera_central', 'Activate'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 onConfirm: async () => {
                     this.togglingStatus = true
 
@@ -956,8 +1067,8 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Status geändert!'),
-                            message: this.t('souvera_central', 'Der Benutzer wurde erfolgreich {action}.', {
+                            title: this.t('souvera_central', 'Status changed!'),
+                            message: this.t('souvera_central', 'The user was successfully {action}.', {
                                 action: actionPast
                             }),
                             details: '',
@@ -972,12 +1083,12 @@ export default {
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
-                            this.t('souvera_central', 'Fehler beim Ändern des Status')
+                            this.t('souvera_central', 'Error changing the status')
 
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler'),
+                            title: this.t('souvera_central', 'Error'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',
@@ -997,19 +1108,19 @@ export default {
         wipeDevices() {
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Alle Geräte trennen?'),
+                title: this.t('souvera_central', 'Disconnect all devices?'),
                 message: this.t(
                     'souvera_central',
-                    'Möchten Sie wirklich ALLE Geräte von "{user}" trennen und lokale Daten löschen?',
+                    'Do you really want to disconnect ALL devices of "{user}" and delete local data?',
                     { user: this.formData.displayName }
                 ),
                 details: this.t(
                     'souvera_central',
-                    'WARNUNG: Der Benutzer wird auf allen Geräten abgemeldet und muss sich überall neu anmelden. Diese Aktion kann nicht rückgängig gemacht werden!'
+                    'WARNING: The user will be signed out on all devices and must sign in again everywhere. This action cannot be undone!'
                 ),
                 type: 'danger',
-                confirmText: this.t('souvera_central', 'Ja, alle Geräte trennen'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Yes, disconnect all devices'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 onConfirm: async () => {
                     this.wipingDevices = true
 
@@ -1023,11 +1134,11 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Geräte getrennt!'),
-                            message: this.t('souvera_central', 'Alle Geräte wurden erfolgreich getrennt.'),
+                            title: this.t('souvera_central', 'Devices disconnected!'),
+                            message: this.t('souvera_central', 'All devices were disconnected successfully.'),
                             details: this.t(
                                 'souvera_central',
-                                'Der Benutzer "{user}" wurde auf allen Geräten abgemeldet.',
+                                'The user "{user}" was signed out on all devices.',
                                 { user: this.formData.displayName }
                             ),
                             type: 'success',
@@ -1041,12 +1152,12 @@ export default {
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
-                            this.t('souvera_central', 'Fehler beim Trennen der Geräte')
+                            this.t('souvera_central', 'Error disconnecting the devices')
 
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler'),
+                            title: this.t('souvera_central', 'Error'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',
@@ -1071,25 +1182,25 @@ export default {
             const mbSizeText = (this.user && this.user.mailboxUsedText) ? this.user.mailboxUsedText : ''
             const delMessage = withMailbox
                 ? (mbSizeText
-                    ? this.t('souvera_central', 'Möchten Sie das Konto „{user}" wirklich löschen? Das Postfach und ALLE E-Mails (ca. {size}) werden dabei unwiderruflich aus Stalwart (S3) gelöscht.', { user: this.formData.displayName, size: mbSizeText })
-                    : this.t('souvera_central', 'Möchten Sie das Konto „{user}" wirklich löschen? Das Postfach und ALLE E-Mails werden dabei unwiderruflich aus Stalwart (S3) gelöscht.', { user: this.formData.displayName }))
-                : this.t('souvera_central', 'Möchten Sie das Konto "{user}" wirklich unwiderruflich löschen?', { user: this.formData.displayName })
+                    ? this.t('souvera_central', 'Do you really want to delete the account "{user}"? The mailbox and ALL emails (approx. {size}) will be irrevocably deleted from Stalwart (S3).', { user: this.formData.displayName, size: mbSizeText })
+                    : this.t('souvera_central', 'Do you really want to delete the account "{user}"? The mailbox and ALL emails will be irrevocably deleted from Stalwart (S3).', { user: this.formData.displayName }))
+                : this.t('souvera_central', 'Do you really want to permanently delete the account "{user}"?', { user: this.formData.displayName })
             const delDetails = withMailbox
                 ? (mbSizeText
-                    ? this.t('souvera_central', 'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs (ca. {size}) werden dauerhaft von Stalwart/S3 entfernt.', { size: mbSizeText })
-                    : this.t('souvera_central', 'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs werden dauerhaft von Stalwart/S3 entfernt.'))
-                : this.t('souvera_central', 'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.')
+                    ? this.t('souvera_central', 'This action can NOT be undone. All emails, folders and attachments of this mailbox (approx. {size}) will be permanently removed from Stalwart/S3.', { size: mbSizeText })
+                    : this.t('souvera_central', 'This action can NOT be undone. All emails, folders and attachments of this mailbox will be permanently removed from Stalwart/S3.'))
+                : this.t('souvera_central', 'WARNING: This action cannot be undone! All of the user\'s data will be permanently deleted.')
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Konto löschen?'),
+                title: this.t('souvera_central', 'Delete account?'),
                 message: delMessage,
                 details: delDetails,
                 type: 'danger',
-                confirmText: this.t('souvera_central', 'Ja, Konto löschen'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Yes, delete account'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 requireText: withMailbox ? this.user.id : '',
                 requireLabel: withMailbox
-                    ? this.t('souvera_central', 'Zur Bestätigung den Benutzernamen „{user}" eingeben:', { user: this.user.id })
+                    ? this.t('souvera_central', 'Type the username "{user}" to confirm:', { user: this.user.id })
                     : '',
                 onConfirm: async () => {
                     this.deletingUser = true
@@ -1103,9 +1214,9 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Konto gelöscht!'),
-                            message: this.t('souvera_central', 'Das Konto wurde erfolgreich gelöscht.'),
-                            details: this.t('souvera_central', 'Der Benutzer "{user}" wurde dauerhaft entfernt.', {
+                            title: this.t('souvera_central', 'Account deleted!'),
+                            message: this.t('souvera_central', 'The account was deleted successfully.'),
+                            details: this.t('souvera_central', 'The user "{user}" was permanently removed.', {
                                 user: this.formData.displayName
                             }),
                             type: 'success',
@@ -1122,12 +1233,12 @@ export default {
                         const errorMessage =
                             error.response?.data?.ocs?.data?.error ||
                             error.response?.data?.error ||
-                            this.t('souvera_central', 'Fehler beim Löschen des Benutzers')
+                            this.t('souvera_central', 'Error deleting the user')
 
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler'),
+                            title: this.t('souvera_central', 'Error'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',
@@ -1429,6 +1540,63 @@ export default {
     font-size: 14px;
     color: var(--color-text-maxcontrast);
     font-weight: 500;
+}
+
+/* Postfach-Speicherlimit (Mail-Speicher-Pool) */
+.mailbox-quota-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mailbox-quota-row input[type='number'] {
+    width: 120px;
+    flex: 0 0 auto;
+    padding: var(--sc-control-padding-y) var(--sc-control-padding-x);
+    border: var(--sc-control-border-width) solid var(--color-border);
+    border-radius: var(--sc-control-radius);
+    height: var(--sc-control-height);
+    box-sizing: border-box;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mailbox-quota-row input[type='number']:focus {
+    outline: none;
+    border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring);
+}
+
+.mailbox-quota-row input[type='number']:disabled {
+    background: var(--color-background-dark);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quota-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-main-text);
+}
+
+.unlimited-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-main-text);
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+.unlimited-inline input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 .error-message {

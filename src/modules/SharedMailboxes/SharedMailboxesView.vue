@@ -3,7 +3,7 @@
         <!-- Header -->
         <div class="view-header">
             <div class="header-left">
-                <h2>{{ t('souvera_central', 'Geteilte Postfächer') }}</h2>
+                <h2>{{ t('souvera_central', 'Shared mailboxes') }}</h2>
                 <div
                     class="license-status"
                     :class="{ 'license-warning': isMailboxWarning, 'license-critical': isMailboxLimitReached }"
@@ -17,17 +17,17 @@
                     data-testid="shared-pool-status"
                 >
                     <Database :size="16" />
-                    <span>{{ t('souvera_central', 'Mail-Speicher: {available} von {max} frei', { available: formatBytes(mailStorage.available), max: formatBytes(mailStorage.max) }) }}</span>
+                    <span>{{ t('souvera_central', 'Mail storage: {available} of {max} free', { available: formatBytes(mailStorage.available), max: formatBytes(mailStorage.max) }) }}</span>
                 </div>
             </div>
             <button
                 class="primary"
                 :disabled="isMailboxLimitReached"
-                :title="isMailboxLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
+                :title="isMailboxLimitReached ? t('souvera_central', 'Limit reached') : ''"
                 @click="showCreateModal = true"
             >
                 <Plus :size="18" />
-                {{ t('souvera_central', 'Neues Postfach') }}
+                {{ t('souvera_central', 'New mailbox') }}
             </button>
         </div>
 
@@ -36,12 +36,12 @@
             <div class="warning-content">
                 <AlertCircle :size="36" class="warning-icon" />
                 <div class="warning-text">
-                    <h3>{{ t('souvera_central', 'Limit erreicht!') }}</h3>
+                    <h3>{{ t('souvera_central', 'Limit reached!') }}</h3>
                     <p>
                         {{
                             t(
                                 'souvera_central',
-                                'Sie haben {count} von {total} geteilten Postfächern erstellt. Es können keine weiteren Postfächer erstellt werden.',
+                                'You have created {count} of {total} shared mailboxes. No further mailboxes can be created.',
                                 { count: mailboxes.length, total: maxMailboxes }
                             )
                         }}
@@ -49,7 +49,7 @@
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button">
                     <OpenInNew :size="16" />
-                    {{ t('souvera_central', 'Limit erweitern') }}
+                    {{ t('souvera_central', 'Extend limit') }}
                 </a>
             </div>
         </div>
@@ -59,12 +59,12 @@
             <div class="warning-content">
                 <AlertCircle :size="36" class="warning-icon" />
                 <div class="warning-text">
-                    <h3>{{ t('souvera_central', 'Limit bald erreicht') }}</h3>
+                    <h3>{{ t('souvera_central', 'Limit almost reached') }}</h3>
                     <p>
                         {{
                             t(
                                 'souvera_central',
-                                'Sie haben {count} von {total} geteilten Postfächern erstellt ({percentage}%).',
+                                'You have created {count} of {total} shared mailboxes ({percentage}%).',
                                 { count: mailboxes.length, total: maxMailboxes, percentage: mailboxPercentage }
                             )
                         }}
@@ -72,7 +72,7 @@
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button secondary">
                     <OpenInNew :size="16" />
-                    {{ t('souvera_central', 'Kontakt') }}
+                    {{ t('souvera_central', 'Contact') }}
                 </a>
             </div>
         </div>
@@ -80,13 +80,13 @@
         <!-- Stalwart Status Warning -->
         <div v-if="!stalwartAvailable && !loading" class="stalwart-warning">
             <AlertCircle :size="18" />
-            <span>{{ t('souvera_central', 'Mail-Server nicht erreichbar. Shared Mailbox Verwaltung nicht verfügbar.') }}</span>
+            <span>{{ t('souvera_central', 'Mail server not reachable. Shared mailbox management not available.') }}</span>
         </div>
 
         <!-- Loading -->
         <div v-if="loading" class="loading-container">
             <NcLoadingIcon :size="32" />
-            <span>{{ t('souvera_central', 'Lade Postfächer...') }}</span>
+            <span>{{ t('souvera_central', 'Loading mailboxes...') }}</span>
         </div>
 
         <!-- Empty State -->
@@ -94,11 +94,11 @@
             <div class="empty-icon">
                 <EmailMultiple :size="48" />
             </div>
-            <h3>{{ t('souvera_central', 'Keine geteilten Postfächer') }}</h3>
-            <p>{{ t('souvera_central', 'Erstellen Sie ein geteiltes Postfach für Ihr Team.') }}</p>
+            <h3>{{ t('souvera_central', 'No shared mailboxes') }}</h3>
+            <p>{{ t('souvera_central', 'Create a shared mailbox for your team.') }}</p>
             <button class="primary" @click="showCreateModal = true">
                 <Plus :size="18" />
-                {{ t('souvera_central', 'Erstes Postfach erstellen') }}
+                {{ t('souvera_central', 'Create first mailbox') }}
             </button>
         </div>
 
@@ -136,10 +136,10 @@
         <!-- Delete Confirmation -->
         <ConfirmDialog
             v-if="showDeleteConfirm"
-            :title="t('souvera_central', 'Postfach löschen')"
-            :message="t('souvera_central', 'Möchten Sie das Postfach \'{name}\' wirklich löschen?', { name: selectedMailbox?.description || selectedMailbox?.name })"
-            :confirm-text="t('souvera_central', 'Löschen')"
-            :cancel-text="t('souvera_central', 'Abbrechen')"
+            :title="t('souvera_central', 'Delete mailbox')"
+            :message="t('souvera_central', 'Do you really want to delete the mailbox \'{name}\'?', { name: selectedMailbox?.description || selectedMailbox?.name })"
+            :confirm-text="t('souvera_central', 'Delete')"
+            :cancel-text="t('souvera_central', 'Cancel')"
             danger
             @confirm="deleteMailbox"
             @cancel="showDeleteConfirm = false"
@@ -315,7 +315,7 @@ export default {
                 }
             } catch (error) {
                 console.error('SharedMailboxesView: Fehler beim Laden der Postfächer', error)
-                this.showToast(this.t('souvera_central', 'Fehler beim Laden der Postfächer'), 'error')
+                this.showToast(this.t('souvera_central', 'Error loading the mailboxes'), 'error')
             }
         },
 
@@ -348,12 +348,12 @@ export default {
                         id: this.selectedMailbox.name
                     })
                     await axios.put(url, mailboxData)
-                    this.showToast(this.t('souvera_central', 'Postfach aktualisiert'))
+                    this.showToast(this.t('souvera_central', 'Mailbox updated'))
                 } else {
                     // Create
                     const url = generateUrl('/apps/souvera_central/api/shared-mailboxes')
                     await axios.post(url, mailboxData)
-                    this.showToast(this.t('souvera_central', 'Postfach erstellt'))
+                    this.showToast(this.t('souvera_central', 'Mailbox created'))
                 }
 
                 this.closeModal()
@@ -363,7 +363,7 @@ export default {
                 console.error('SharedMailboxesView: Fehler beim Speichern', error)
                 const errorMsg = error.response?.data?.ocs?.data?.error ||
                     error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Speichern')
+                    this.t('souvera_central', 'Error while saving')
                 this.showToast(errorMsg, 'error')
             }
         },
@@ -375,7 +375,7 @@ export default {
                 })
                 await axios.delete(url)
 
-                this.showToast(this.t('souvera_central', 'Postfach gelöscht'))
+                this.showToast(this.t('souvera_central', 'Mailbox deleted'))
                 this.showDeleteConfirm = false
                 this.selectedMailbox = null
                 await this.loadMailboxes()
@@ -384,7 +384,7 @@ export default {
                 console.error('SharedMailboxesView: Fehler beim Löschen', error)
                 const errorMsg = error.response?.data?.ocs?.data?.error ||
                     error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Löschen')
+                    this.t('souvera_central', 'Error while deleting')
                 this.showToast(errorMsg, 'error')
             }
         },
@@ -398,7 +398,7 @@ export default {
 
         formatBytes(bytes) {
             if (!bytes || bytes <= 0) {
-                return this.t('souvera_central', 'Unbegrenzt')
+                return this.t('souvera_central', 'Unlimited')
             }
             const TB = 1024 ** 4
             const GB = 1024 ** 3

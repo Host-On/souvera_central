@@ -12,7 +12,7 @@
             <!-- Header -->
             <div class="page-header">
                 <div class="header-content">
-                    <h2>{{ t('souvera_central', 'Gruppenverwaltung') }}</h2>
+                    <h2>{{ t('souvera_central', 'Group management') }}</h2>
                     <div
                         class="license-status"
                         :class="{ 'license-warning': isGroupWarning, 'license-critical': isGroupLimitReached }"
@@ -24,11 +24,11 @@
                 <button
                     class="primary"
                     :disabled="isGroupLimitReached"
-                    :title="isGroupLimitReached ? t('souvera_central', 'Limit erreicht') : ''"
+                    :title="isGroupLimitReached ? t('souvera_central', 'Limit reached') : ''"
                     @click="createNewGroup"
                 >
                     <Plus :size="20" />
-                    {{ t('souvera_central', 'Neue Gruppe') }}
+                    {{ t('souvera_central', 'New group') }}
                 </button>
             </div>
 
@@ -37,12 +37,12 @@
                 <div class="warning-content">
                     <AlertOctagon class="warning-icon" :size="48" />
                     <div class="warning-text">
-                        <h3>{{ t('souvera_central', 'Gruppenlimit erreicht!') }}</h3>
+                        <h3>{{ t('souvera_central', 'Group limit reached!') }}</h3>
                         <p>
                             {{
                                 t(
                                     'souvera_central',
-                                    'Sie haben {count} von {total} Gruppen erstellt. Es können keine weiteren Gruppen erstellt werden.',
+                                    'You have created {count} of {total} groups. No further groups can be created.',
                                     { count: totalGroups, total: maxGroups }
                                 )
                             }}
@@ -50,7 +50,7 @@
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button">
                         <OpenInNew :size="18" />
-                        {{ t('souvera_central', 'Limit erweitern') }}
+                        {{ t('souvera_central', 'Extend limit') }}
                     </a>
                 </div>
             </div>
@@ -60,12 +60,12 @@
                 <div class="warning-content">
                     <AlertCircle class="warning-icon" :size="40" />
                     <div class="warning-text">
-                        <h3>{{ t('souvera_central', 'Gruppenlimit bald erreicht') }}</h3>
+                        <h3>{{ t('souvera_central', 'Group limit almost reached') }}</h3>
                         <p>
                             {{
                                 t(
                                     'souvera_central',
-                                    'Sie haben {count} von {total} Gruppen erstellt ({percentage}%).',
+                                    'You have created {count} of {total} groups ({percentage}%).',
                                     { count: totalGroups, total: maxGroups, percentage: groupPercentage }
                                 )
                             }}
@@ -73,7 +73,7 @@
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button secondary">
                         <OpenInNew :size="18" />
-                        {{ t('souvera_central', 'Kontakt') }}
+                        {{ t('souvera_central', 'Contact') }}
                     </a>
                 </div>
             </div>
@@ -82,7 +82,7 @@
             <div class="search-bar">
                 <SearchField
                     v-model="searchQuery"
-                    :placeholder="t('souvera_central', 'Suche nach Gruppenname...')"
+                    :placeholder="t('souvera_central', 'Search by group name...')"
                     @search="handleSearch"
                 />
             </div>
@@ -90,7 +90,7 @@
             <!-- Loading State -->
             <div v-if="loading" class="loading-state">
                 <NcLoadingIcon :size="32" />
-                <p>{{ t('souvera_central', 'Lade Gruppen...') }}</p>
+                <p>{{ t('souvera_central', 'Loading groups...') }}</p>
             </div>
 
             <!-- Groups Table -->
@@ -99,10 +99,10 @@
                     <table class="groups-table">
                         <thead>
                             <tr>
-                                <th class="group-column">{{ t('souvera_central', 'Gruppenname') }}</th>
-                                <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
-                                <th class="members-column">{{ t('souvera_central', 'Mitglieder') }}</th>
-                                <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
+                                <th class="group-column">{{ t('souvera_central', 'Group name') }}</th>
+                                <th class="displayname-column">{{ t('souvera_central', 'Display name') }}</th>
+                                <th class="members-column">{{ t('souvera_central', 'Members') }}</th>
+                                <th class="actions-column">{{ t('souvera_central', 'Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -117,7 +117,7 @@
                                         <span
                                             v-if="group.isProtected"
                                             class="protected-badge"
-                                            :title="t('souvera_central', 'Systemgruppe')"
+                                            :title="t('souvera_central', 'System group')"
                                         >
                                             <ShieldLock :size="14" />
                                         </span>
@@ -134,7 +134,7 @@
                                     <div class="group-actions">
                                         <button
                                             class="action-edit"
-                                            :title="t('souvera_central', 'Bearbeiten')"
+                                            :title="t('souvera_central', 'Edit')"
                                             @click="editGroup(group)"
                                         >
                                             <Pencil :size="18" />
@@ -143,8 +143,8 @@
                                             class="action-delete"
                                             :title="
                                                 group.isProtected
-                                                    ? t('souvera_central', 'Systemgruppe kann nicht gelöscht werden')
-                                                    : t('souvera_central', 'Löschen')
+                                                    ? t('souvera_central', 'System group cannot be deleted')
+                                                    : t('souvera_central', 'Delete')
                                             "
                                             :disabled="group.isProtected"
                                             @click="deleteGroup(group)"
@@ -171,10 +171,10 @@
             <!-- Empty State -->
             <div v-else class="empty-state">
                 <AccountGroup class="empty-icon" :size="64" />
-                <h3 v-if="searchQuery">{{ t('souvera_central', 'Keine Gruppen gefunden') }}</h3>
-                <h3 v-else>{{ t('souvera_central', 'Noch keine Gruppen') }}</h3>
-                <p v-if="searchQuery">{{ t('souvera_central', 'Versuchen Sie einen anderen Suchbegriff.') }}</p>
-                <p v-else>{{ t('souvera_central', 'Erstellen Sie Ihre erste Gruppe um zu starten.') }}</p>
+                <h3 v-if="searchQuery">{{ t('souvera_central', 'No groups found') }}</h3>
+                <h3 v-else>{{ t('souvera_central', 'No groups yet') }}</h3>
+                <p v-if="searchQuery">{{ t('souvera_central', 'Try a different search term.') }}</p>
+                <p v-else>{{ t('souvera_central', 'Create your first group to get started.') }}</p>
             </div>
         </div>
 
@@ -387,7 +387,7 @@ export default {
                 this.selectedGroup = data
                 this.showEditor = true
             } catch (error) {
-                this.showError(error, this.t('souvera_central', 'Fehler beim Laden der Gruppe'))
+                this.showError(error, this.t('souvera_central', 'Error loading the group'))
             }
         },
 
@@ -439,7 +439,7 @@ export default {
                 // Emit total group count to parent (für Dashboard)
                 this.$emit('groups-loaded', this.totalGroups)
             } catch (error) {
-                this.showError(error, this.t('souvera_central', 'Fehler beim Laden der Gruppen'))
+                this.showError(error, this.t('souvera_central', 'Error loading the groups'))
             } finally {
                 this.loading = false
             }
@@ -528,9 +528,9 @@ export default {
             if (group.isProtected) {
                 this.confirmModal = {
                     isOpen: true,
-                    title: this.t('souvera_central', 'Systemgruppe'),
-                    message: this.t('souvera_central', 'Systemgruppen können nicht gelöscht werden'),
-                    details: this.t('souvera_central', 'Die Gruppe "{group}" ist eine geschützte Systemgruppe.', {
+                    title: this.t('souvera_central', 'System group'),
+                    message: this.t('souvera_central', 'System groups cannot be deleted'),
+                    details: this.t('souvera_central', 'The group "{group}" is a protected system group.', {
                         group: group.displayName
                     }),
                     type: 'warning',
@@ -545,14 +545,14 @@ export default {
 
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Gruppe löschen?'),
-                message: this.t('souvera_central', 'Möchten Sie die Gruppe "{group}" wirklich löschen?', {
+                title: this.t('souvera_central', 'Delete group?'),
+                message: this.t('souvera_central', 'Do you really want to delete the group "{group}"?', {
                     group: group.displayName
                 }),
-                details: this.t('souvera_central', 'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden!'),
+                details: this.t('souvera_central', 'WARNING: This action cannot be undone!'),
                 type: 'danger',
-                confirmText: this.t('souvera_central', 'Ja, Gruppe löschen'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Yes, delete group'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 onConfirm: async () => {
                     try {
                         const url = generateUrl('/apps/souvera_central/api/groups/manage/{id}', { id: group.id })
@@ -561,9 +561,9 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Gruppe gelöscht!'),
-                            message: this.t('souvera_central', 'Die Gruppe wurde erfolgreich gelöscht.'),
-                            details: this.t('souvera_central', '"{group}" wurde entfernt.', {
+                            title: this.t('souvera_central', 'Group deleted!'),
+                            message: this.t('souvera_central', 'The group was deleted successfully.'),
+                            details: this.t('souvera_central', '"{group}" was removed.', {
                                 group: group.displayName
                             }),
                             type: 'success',
@@ -577,13 +577,13 @@ export default {
                     } catch (error) {
                         const errorMessage = this.getErrorMessage(
                             error,
-                            this.t('souvera_central', 'Fehler beim Löschen')
+                            this.t('souvera_central', 'Error while deleting')
                         )
 
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler beim Löschen'),
+                            title: this.t('souvera_central', 'Error while deleting'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',

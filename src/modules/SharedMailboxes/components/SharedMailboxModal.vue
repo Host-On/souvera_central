@@ -2,7 +2,7 @@
     <div class="modal-overlay" @click.self="$emit('close')">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>{{ isEdit ? t('souvera_central', 'Postfach bearbeiten') : t('souvera_central', 'Neues Postfach erstellen') }}</h3>
+                <h3>{{ isEdit ? t('souvera_central', 'Edit mailbox') : t('souvera_central', 'Create new mailbox') }}</h3>
                 <button class="close-button" @click="$emit('close')">
                     <Close :size="20" />
                 </button>
@@ -16,16 +16,16 @@
                         id="mailbox-name"
                         v-model="form.name"
                         type="text"
-                        :placeholder="t('souvera_central', 'z.B. Support Team')"
+                        :placeholder="t('souvera_central', 'e.g. Support Team')"
                         :disabled="isEdit"
                         required
                     />
-                    <p v-if="isEdit" class="hint">{{ t('souvera_central', 'Der Name kann nach Erstellung nicht mehr geändert werden.') }}</p>
+                    <p v-if="isEdit" class="hint">{{ t('souvera_central', 'The name cannot be changed after creation.') }}</p>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
-                    <label>{{ t('souvera_central', 'Email-Adresse') }} *</label>
+                    <label>{{ t('souvera_central', 'Email address') }} *</label>
                     <div class="email-input-group">
                         <input
                             v-model="form.emailLocal"
@@ -44,23 +44,23 @@
                             </option>
                         </select>
                     </div>
-                    <p v-if="isEdit" class="hint">{{ t('souvera_central', 'Die Email-Adresse kann nach Erstellung nicht mehr geändert werden.') }}</p>
+                    <p v-if="isEdit" class="hint">{{ t('souvera_central', 'The email address cannot be changed after creation.') }}</p>
                 </div>
 
                 <!-- Description -->
                 <div class="form-group">
-                    <label for="mailbox-description">{{ t('souvera_central', 'Beschreibung') }}</label>
+                    <label for="mailbox-description">{{ t('souvera_central', 'Description') }}</label>
                     <textarea
                         id="mailbox-description"
                         v-model="form.description"
-                        :placeholder="t('souvera_central', 'Optionale Beschreibung für das Postfach...')"
+                        :placeholder="t('souvera_central', 'Optional description for the mailbox...')"
                         rows="3"
                     ></textarea>
                 </div>
 
                 <!-- Speicherlimit (Mail-Speicher-Pool) -->
                 <div class="form-group" data-testid="shared-quota-group">
-                    <label>{{ t('souvera_central', 'Speicherlimit') }}</label>
+                    <label>{{ t('souvera_central', 'Storage limit') }}</label>
                     <div class="quota-row">
                         <input
                             v-model.number="form.quotaGB"
@@ -74,11 +74,11 @@
                         <span class="quota-unit">{{ t('souvera_central', 'GB') }}</span>
                         <label v-if="!poolEnabled" class="unlimited-label" data-testid="shared-quota-unlimited-label">
                             <input v-model="form.unlimited" type="checkbox" data-testid="shared-quota-unlimited" />
-                            <span>{{ t('souvera_central', 'Unbegrenzt') }}</span>
+                            <span>{{ t('souvera_central', 'Unlimited') }}</span>
                         </label>
                     </div>
                     <p v-if="poolEnabled" class="hint" data-testid="shared-quota-pool-hint">
-                        {{ t('souvera_central', 'Im Mail-Speicher-Pool verfügbar: {available}', { available: formatBytes(poolAvailableForThis) }) }}
+                        {{ t('souvera_central', 'Available in the mail storage pool: {available}', { available: formatBytes(poolAvailableForThis) }) }}
                     </p>
                 </div>
 
@@ -88,11 +88,11 @@
                 <!-- Actions -->
                 <div class="modal-actions">
                     <button type="button" class="cancel-button" @click="$emit('close')">
-                        {{ t('souvera_central', 'Abbrechen') }}
+                        {{ t('souvera_central', 'Cancel') }}
                     </button>
                     <button type="submit" class="save-button" :disabled="!canSave || saving">
                         <NcLoadingIcon v-if="saving" :size="18" />
-                        {{ isEdit ? t('souvera_central', 'Speichern') : t('souvera_central', 'Erstellen') }}
+                        {{ isEdit ? t('souvera_central', 'Save') : t('souvera_central', 'Create') }}
                     </button>
                 </div>
             </form>
@@ -220,7 +220,7 @@ export default {
 
         formatBytes(bytes) {
             if (!bytes || bytes <= 0) {
-                return this.t('souvera_central', 'Unbegrenzt')
+                return this.t('souvera_central', 'Unlimited')
             }
             const GB = 1024 * 1024 * 1024
             const MB = 1024 * 1024
@@ -238,11 +238,11 @@ export default {
             // Client-seitige Pool-Vorabprüfung (Server validiert erneut)
             if (this.poolEnabled) {
                 if (this.quotaBytes <= 0) {
-                    this.error = this.t('souvera_central', 'Bei aktivem Mail-Speicher-Pool ist „Unbegrenzt" nicht erlaubt.')
+                    this.error = this.t('souvera_central', '"Unlimited" is not allowed while a mail storage pool is active.')
                     return
                 }
                 if (this.quotaBytes > this.poolAvailableForThis) {
-                    this.error = this.t('souvera_central', 'Nicht genügend Mail-Speicher im Pool verfügbar.')
+                    this.error = this.t('souvera_central', 'Not enough mail storage available in the pool.')
                     return
                 }
             }

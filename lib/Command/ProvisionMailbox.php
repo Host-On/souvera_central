@@ -22,6 +22,7 @@ use OC\Core\Command\Base;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\MailGroupService;
 use OCA\SouveraCentral\Service\StalwartService;
+use OCA\SouveraCentral\Service\StorageService;
 use OCP\IUserManager;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,6 +35,7 @@ class ProvisionMailbox extends Base {
         private ConfigService $config,
         private MailGroupService $mailGroup,
         private IUserManager $userManager,
+        private StorageService $storage,
     ) {
         parent::__construct();
     }
@@ -79,9 +81,22 @@ class ProvisionMailbox extends Base {
 
         $displayName = $input->getOption('display-name');
         $quotaOpt = $input->getOption('quota');
-        $quota = ($quotaOpt === null || $quotaOpt === '') ? null : max(0, (int) $quotaOpt);
+        $requestedQuota = ($quotaOpt === null || $quotaOpt === '') ? null : max(0, (int) $quotaOpt);
 
         $existed = $this->stalwart->principalExists($email);
+
+        // Mail-Speicher-Pool nur beim NEU-Anlegen auflösen + hart erzwingen. Ein
+        // bestehendes Postfach (nur Passwort-Reset) belastet den Pool nicht erneut.
+        $quota = null;
+        if (!$existed) {
+            $resolved = $this->storage->resolveNewMailboxQuota($requestedQuota);
+            if ($resolved['error'] !== null) {
+                $output->writeln('<error>' . $resolved['error'] . '</error>');
+                return 1;
+            }
+            $quota = $resolved['quota'];
+        }
+
         $ok = $this->stalwart->createPrincipal($email, $password, $displayName ?: null, $quota);
         if (!$ok) {
             $output->writeln('<error>Postfach konnte nicht angelegt/aktualisiert werden: ' . $email . '</error>');

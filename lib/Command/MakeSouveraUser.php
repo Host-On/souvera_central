@@ -23,6 +23,7 @@ use OC\Core\Command\Base;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\LicenseService;
 use OCA\SouveraCentral\Service\MailGroupService;
+use OCA\SouveraCentral\Service\StorageService;
 use OCP\IGroupManager;
 use OCP\IUserManager;
 use Symfony\Component\Console\Input\InputArgument;
@@ -37,6 +38,7 @@ class MakeSouveraUser extends Base {
         private ConfigService $config,
         private MailGroupService $mailGroup,
         private LicenseService $license,
+        private StorageService $storage,
     ) {
         parent::__construct();
     }
@@ -81,7 +83,14 @@ class MakeSouveraUser extends Base {
         $generated = false;
         $password = $this->resolvePassword($input, $generated); // null => Zufallspasswort in makeSouveraUser
 
-        $ok = $this->mailGroup->makeSouveraUser($user, $password);
+        // Mail-Speicher-Pool auflösen + erzwingen (mit --force überspringbar).
+        $resolved = $this->storage->resolveNewMailboxQuota(null);
+        if ($resolved['error'] !== null && !$force) {
+            $output->writeln('<error>' . $resolved['error'] . ' Mit --force überschreiben.</error>');
+            return 1;
+        }
+
+        $ok = $this->mailGroup->makeSouveraUser($user, $password, $resolved['quota']);
 
         $output->writeln('<info>✓ ' . $uid . ' ist jetzt ein Souvera User (souvera-users).</info>');
         if (!$ok) {

@@ -14,7 +14,7 @@
             <!-- Header mit Lizenz-Info -->
             <div class="page-header">
                 <div class="header-content">
-                    <h2>{{ t('souvera_central', 'Benutzerverwaltung') }}</h2>
+                    <h2>{{ t('souvera_central', 'User management') }}</h2>
                     <div
                         class="license-status"
                         :class="{ 'license-warning': isLicenseWarning, 'license-critical': isLicenseLimitReached }"
@@ -26,11 +26,11 @@
                 <button
                     class="primary"
                     :disabled="isLicenseLimitReached"
-                    :title="isLicenseLimitReached ? t('souvera_central', 'Lizenzlimit erreicht') : ''"
+                    :title="isLicenseLimitReached ? t('souvera_central', 'License limit reached') : ''"
                     @click="createNewUser"
                 >
                     <Plus :size="20" />
-                    {{ t('souvera_central', 'Neuer Benutzer') }}
+                    {{ t('souvera_central', 'New user') }}
                 </button>
             </div>
 
@@ -39,12 +39,12 @@
                 <div class="warning-content">
                     <AlertOctagon class="warning-icon" :size="48" />
                     <div class="warning-text">
-                        <h3>{{ t('souvera_central', 'Lizenzlimit erreicht!') }}</h3>
+                        <h3>{{ t('souvera_central', 'License limit reached!') }}</h3>
                         <p>
                             {{
                                 t(
                                     'souvera_central',
-                                    'Sie haben {count} von {total} Lizenzen genutzt. Es können keine weiteren Benutzer erstellt werden.',
+                                    'You have used {count} of {total} licenses. No further users can be created.',
                                     { count: usedLicenses, total: maxLicenses }
                                 )
                             }}
@@ -52,7 +52,7 @@
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button">
                         <OpenInNew :size="18" />
-                        {{ t('souvera_central', 'Lizenzen erweitern') }}
+                        {{ t('souvera_central', 'Extend licenses') }}
                     </a>
                 </div>
             </div>
@@ -62,12 +62,12 @@
                 <div class="warning-content">
                     <AlertCircle class="warning-icon" :size="40" />
                     <div class="warning-text">
-                        <h3>{{ t('souvera_central', 'Lizenzlimit bald erreicht') }}</h3>
+                        <h3>{{ t('souvera_central', 'License limit almost reached') }}</h3>
                         <p>
                             {{
                                 t(
                                     'souvera_central',
-                                    'Sie haben {count} von {total} Lizenzen genutzt ({percentage}%). Erweitern Sie rechtzeitig Ihre Lizenzen.',
+                                    'You have used {count} of {total} licenses ({percentage}%). Extend your licenses in time.',
                                     { count: usedLicenses, total: maxLicenses, percentage: licensePercentage }
                                 )
                             }}
@@ -75,7 +75,7 @@
                     </div>
                     <a :href="contactUrl" target="_blank" class="contact-button secondary">
                         <OpenInNew :size="18" />
-                        {{ t('souvera_central', 'Kontakt') }}
+                        {{ t('souvera_central', 'Contact') }}
                     </a>
                 </div>
             </div>
@@ -84,7 +84,7 @@
             <div class="search-bar">
                 <SearchField
                     v-model="searchQuery"
-                    :placeholder="t('souvera_central', 'Suche nach Benutzername, Name oder E-Mail...')"
+                    :placeholder="t('souvera_central', 'Search by username, name or email...')"
                     @search="handleSearch"
                 />
             </div>
@@ -92,7 +92,7 @@
             <!-- Loading State -->
             <div v-if="loading" class="loading-state">
                 <NcLoadingIcon :size="32" />
-                <p>{{ t('souvera_central', 'Lade Benutzer...') }}</p>
+                <p>{{ t('souvera_central', 'Loading users...') }}</p>
             </div>
 
             <!-- User Table -->
@@ -101,13 +101,13 @@
                     <table class="users-table">
                         <thead>
                             <tr>
-                                <th class="user-column">{{ t('souvera_central', 'Benutzername') }}</th>
-                                <th class="displayname-column">{{ t('souvera_central', 'Anzeigename') }}</th>
-                                <th class="type-column">{{ t('souvera_central', 'Typ') }}</th>
-                                <th class="quota-column">{{ t('souvera_central', 'NC-Speicher') }}</th>
-                                <th class="mailbox-usage-column">{{ t('souvera_central', 'Postfach (E-Mail)') }}</th>
+                                <th class="user-column">{{ t('souvera_central', 'Username') }}</th>
+                                <th class="displayname-column">{{ t('souvera_central', 'Display name') }}</th>
+                                <th class="type-column">{{ t('souvera_central', 'Type') }}</th>
+                                <th class="quota-column">{{ t('souvera_central', 'NC storage') }}</th>
+                                <th class="mailbox-usage-column">{{ t('souvera_central', 'Mailbox (email)') }}</th>
                                 <th class="status-column">{{ t('souvera_central', 'Status') }}</th>
-                                <th class="actions-column">{{ t('souvera_central', 'Aktionen') }}</th>
+                                <th class="actions-column">{{ t('souvera_central', 'Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,13 +120,13 @@
                                             v-if="stalwartConfigured && hasMailbox(user)"
                                             class="mailbox-indicator has-mailbox"
                                             :size="16"
-                                            :title="t('souvera_central', 'Stalwart-Postfach vorhanden')"
+                                            :title="t('souvera_central', 'Stalwart mailbox available')"
                                         />
                                         <EmailRemoveOutline
                                             v-else-if="stalwartConfigured"
                                             class="mailbox-indicator no-mailbox"
                                             :size="16"
-                                            :title="t('souvera_central', 'Kein Stalwart-Postfach')"
+                                            :title="t('souvera_central', 'No Stalwart mailbox')"
                                         />
                                     </div>
                                 </td>
@@ -178,7 +178,7 @@
                                         <CheckCircle v-if="user.enabled" :size="16" />
                                         <CloseCircle v-else :size="16" />
                                         <span class="status-text">
-                                            {{ user.enabled ? t('souvera_central', 'Aktiv') : t('souvera_central', 'Inaktiv') }}
+                                            {{ user.enabled ? t('souvera_central', 'Active') : t('souvera_central', 'Inactive') }}
                                         </span>
                                     </div>
                                 </td>
@@ -187,7 +187,7 @@
                                         <button
                                             v-if="!isSouveraUser(user)"
                                             class="action-mailbox"
-                                            :title="t('souvera_central', 'Zum Souvera User machen')"
+                                            :title="t('souvera_central', 'Make Souvera User')"
                                             :disabled="upgradingUser === user.id"
                                             :data-testid="'upgrade-souvera-' + user.id"
                                             @click.stop="upgradeToSouveraUser(user)"
@@ -197,7 +197,7 @@
                                         <button
                                             v-if="isSouveraUser(user) && !isSouveraAdmin(user)"
                                             class="action-makeadmin"
-                                            :title="t('souvera_central', 'Zum Souvera-Admin machen')"
+                                            :title="t('souvera_central', 'Make Souvera Admin')"
                                             :disabled="updatingAdmin === user.id"
                                             :data-testid="'make-admin-' + user.id"
                                             @click.stop="makeAdmin(user)"
@@ -207,7 +207,7 @@
                                         <button
                                             v-if="isSouveraAdmin(user) && currentUserId && user.id !== currentUserId"
                                             class="action-removeadmin"
-                                            :title="t('souvera_central', 'Souvera-Admin-Rechte entfernen')"
+                                            :title="t('souvera_central', 'Remove Souvera Admin rights')"
                                             :disabled="updatingAdmin === user.id"
                                             :data-testid="'remove-admin-' + user.id"
                                             @click.stop="removeAdmin(user)"
@@ -216,7 +216,7 @@
                                         </button>
                                         <button
                                             class="action-edit"
-                                            :title="t('souvera_central', 'Bearbeiten')"
+                                            :title="t('souvera_central', 'Edit')"
                                             :data-testid="'edit-user-' + user.id"
                                             @click.stop="editUser(user)"
                                         >
@@ -225,7 +225,7 @@
                                         <button
                                             v-if="user.id !== currentUserId && user.id !== 'admin' && !user.id.startsWith('admin@') && !user.isProtected"
                                             class="action-delete"
-                                            :title="t('souvera_central', 'Löschen')"
+                                            :title="t('souvera_central', 'Delete')"
                                             @click.stop="deleteUser(user)"
                                         >
                                             <Delete :size="18" />
@@ -250,10 +250,10 @@
             <!-- Empty State -->
             <div v-else class="empty-state">
                 <Account class="empty-icon" :size="64" />
-                <h3 v-if="searchQuery">{{ t('souvera_central', 'Keine Benutzer gefunden') }}</h3>
-                <h3 v-else>{{ t('souvera_central', 'Noch keine Benutzer') }}</h3>
-                <p v-if="searchQuery">{{ t('souvera_central', 'Versuchen Sie einen anderen Suchbegriff.') }}</p>
-                <p v-else>{{ t('souvera_central', 'Erstellen Sie Ihren ersten Benutzer um zu starten.') }}</p>
+                <h3 v-if="searchQuery">{{ t('souvera_central', 'No users found') }}</h3>
+                <h3 v-else>{{ t('souvera_central', 'No users yet') }}</h3>
+                <p v-if="searchQuery">{{ t('souvera_central', 'Try a different search term.') }}</p>
+                <p v-else>{{ t('souvera_central', 'Create your first user to get started.') }}</p>
             </div>
         </div>
 
@@ -650,8 +650,8 @@ export default {
                     || error.response?.data?.message
                 this.confirmModal = {
                     isOpen: true,
-                    title: this.t('souvera_central', 'Aktion nicht möglich'),
-                    message: msg || this.t('souvera_central', 'Der Benutzer konnte nicht zum Souvera-Admin gemacht werden.'),
+                    title: this.t('souvera_central', 'Action not possible'),
+                    message: msg || this.t('souvera_central', 'The user could not be made a Souvera Admin.'),
                     details: '',
                     type: 'warning',
                     confirmText: this.t('souvera_central', 'OK'),
@@ -666,16 +666,16 @@ export default {
         removeAdmin(user) {
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Admin-Rechte entfernen?'),
+                title: this.t('souvera_central', 'Remove admin rights?'),
                 message: this.t(
                     'souvera_central',
-                    'Möchten Sie "{user}" die Souvera-Administrator-Rechte wirklich entziehen?',
+                    'Do you really want to revoke the Souvera Administrator rights from "{user}"?',
                     { user: user.displayName }
                 ),
-                details: this.t('souvera_central', 'Der Souvera-User-Status (Postfach) bleibt erhalten.'),
+                details: this.t('souvera_central', 'The Souvera User status (mailbox) is retained.'),
                 type: 'warning',
-                confirmText: this.t('souvera_central', 'Ja, Rechte entfernen'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Yes, remove rights'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 onConfirm: async () => {
                     this.updatingAdmin = user.id
                     try {
@@ -691,8 +691,8 @@ export default {
                             || error.response?.data?.message
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Aktion nicht möglich'),
-                            message: msg || this.t('souvera_central', 'Die Administrator-Rechte konnten nicht entfernt werden.'),
+                            title: this.t('souvera_central', 'Action not possible'),
+                            message: msg || this.t('souvera_central', 'The administrator rights could not be removed.'),
                             details: '',
                             type: 'danger',
                             confirmText: this.t('souvera_central', 'OK'),
@@ -722,10 +722,10 @@ export default {
                     || error.response?.data?.message
                 this.confirmModal = {
                     isOpen: true,
-                    title: this.t('souvera_central', 'Upgrade nicht möglich'),
+                    title: this.t('souvera_central', 'Upgrade not possible'),
                     message: status === 409
-                        ? (msg || this.t('souvera_central', 'Lizenzlimit erreicht.'))
-                        : this.t('souvera_central', 'Der Benutzer konnte nicht zum Souvera User gemacht werden.'),
+                        ? (msg || this.t('souvera_central', 'License limit reached.'))
+                        : this.t('souvera_central', 'The user could not be made a Souvera User.'),
                     details: '',
                     type: 'warning',
                     confirmText: this.t('souvera_central', 'OK'),
@@ -759,7 +759,7 @@ export default {
                 alert(
                     this.t(
                         'souvera_central',
-                        'Lizenzlimit erreicht. Es können keine weiteren Benutzer erstellt werden.'
+                        'License limit reached. No further users can be created.'
                     )
                 )
                 return
@@ -820,8 +820,8 @@ export default {
             if (user.id === 'admin' || user.id.startsWith('admin@')) {
                 this.confirmModal = {
                     isOpen: true,
-                    title: this.t('souvera_central', 'Aktion nicht möglich'),
-                    message: this.t('souvera_central', 'Der Administrator-Account kann nicht gelöscht werden.'),
+                    title: this.t('souvera_central', 'Action not possible'),
+                    message: this.t('souvera_central', 'The administrator account cannot be deleted.'),
                     type: 'warning',
                     confirmText: this.t('souvera_central', 'OK'),
                     onConfirm: () => {
@@ -836,34 +836,34 @@ export default {
             const mbSize = this.formatBytes(mbUsed)
             this.confirmModal = {
                 isOpen: true,
-                title: this.t('souvera_central', 'Benutzer löschen?'),
+                title: this.t('souvera_central', 'Delete user?'),
                 message: withMailbox
                     ? this.t(
                         'souvera_central',
-                        'Möchten Sie den Benutzer „{user}" wirklich löschen? Das Postfach und ALLE E-Mails (ca. {size}) werden dabei unwiderruflich aus Stalwart (S3) gelöscht.',
+                        'Do you really want to delete the user "{user}"? The mailbox and ALL emails (approx. {size}) will be irrevocably deleted from Stalwart (S3).',
                         { user: user.displayName, size: mbSize }
                     )
                     : this.t(
                         'souvera_central',
-                        'Möchten Sie den Benutzer "{user}" wirklich unwiderruflich löschen?',
+                        'Do you really want to permanently delete the user "{user}"?',
                         { user: user.displayName }
                     ),
                 details: withMailbox
                     ? this.t(
                         'souvera_central',
-                        'Diese Aktion kann NICHT rückgängig gemacht werden. Alle E-Mails, Ordner und Anhänge dieses Postfachs (ca. {size}) werden dauerhaft von Stalwart/S3 entfernt.',
+                        'This action can NOT be undone. All emails, folders and attachments of this mailbox (approx. {size}) will be permanently removed from Stalwart/S3.',
                         { size: mbSize }
                     )
                     : this.t(
                         'souvera_central',
-                        'WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden! Alle Daten des Benutzers werden dauerhaft gelöscht.'
+                        'WARNING: This action cannot be undone! All of the user\'s data will be permanently deleted.'
                     ),
                 type: 'danger',
-                confirmText: this.t('souvera_central', 'Ja, Benutzer löschen'),
-                cancelText: this.t('souvera_central', 'Abbrechen'),
+                confirmText: this.t('souvera_central', 'Yes, delete user'),
+                cancelText: this.t('souvera_central', 'Cancel'),
                 requireText: withMailbox ? user.id : '',
                 requireLabel: withMailbox
-                    ? this.t('souvera_central', 'Zur Bestätigung den Benutzernamen „{user}" eingeben:', { user: user.id })
+                    ? this.t('souvera_central', 'Type the username "{user}" to confirm:', { user: user.id })
                     : '',
                 onConfirm: async () => {
                     try {
@@ -873,9 +873,9 @@ export default {
                         // Success Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Benutzer gelöscht!'),
-                            message: this.t('souvera_central', 'Der Benutzer wurde erfolgreich gelöscht.'),
-                            details: this.t('souvera_central', '"{user}" wurde dauerhaft entfernt.', {
+                            title: this.t('souvera_central', 'User deleted!'),
+                            message: this.t('souvera_central', 'The user was deleted successfully.'),
+                            details: this.t('souvera_central', '"{user}" was permanently removed.', {
                                 user: user.displayName
                             }),
                             type: 'success',
@@ -887,7 +887,7 @@ export default {
                             }
                         }
                     } catch (error) {
-                        let errorMessage = this.t('souvera_central', 'Fehler beim Löschen')
+                        let errorMessage = this.t('souvera_central', 'Error while deleting')
                         if (error.response?.data?.ocs?.data?.error) {
                             errorMessage = error.response.data.ocs.data.error
                         } else if (error.response?.data?.error) {
@@ -897,7 +897,7 @@ export default {
                         // Error Modal
                         this.confirmModal = {
                             isOpen: true,
-                            title: this.t('souvera_central', 'Fehler beim Löschen'),
+                            title: this.t('souvera_central', 'Error while deleting'),
                             message: errorMessage,
                             details: '',
                             type: 'danger',

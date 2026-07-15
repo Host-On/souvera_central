@@ -292,6 +292,19 @@ class UserApiController extends OCSController {
                 }
             }
 
+            // Mail-Speicher-Pool: Postfach-Limit für neuen Souvera User auflösen und
+            // hart erzwingen (GB-Schritt, kein „Unbegrenzt" bei aktivem Pool, Pool nicht
+            // sprengen). Passiert VOR dem Anlegen des NC-Users, damit bei Pool-Verstoß
+            // kein verwaister Benutzer zurückbleibt.
+            $resolvedMailboxQuota = null;
+            if ($isSouveraUser) {
+                $resolved = $this->storageService->resolveNewMailboxQuota($mailboxQuota);
+                if ($resolved['error'] !== null) {
+                    return new DataResponse(['error' => $resolved['error']], Http::STATUS_CONFLICT);
+                }
+                $resolvedMailboxQuota = $resolved['quota'];
+            }
+
             // User erstellen
             $user = $this->userManager->createUser($username, $password);
 
@@ -330,7 +343,7 @@ class UserApiController extends OCSController {
             // Benutzer-Typ anwenden: "Souvera User" (lizenziert: souvera-users + Postfach
             // mit dem Klartext-Passwort) oder "Nextcloud User" (unlizenziert, kein Postfach).
             if ($isSouveraUser) {
-                $this->mailGroupService->makeSouveraUser($user, $password);
+                $this->mailGroupService->makeSouveraUser($user, $password, $resolvedMailboxQuota);
             } else {
                 $this->mailGroupService->makeNextcloudUser($user);
             }
@@ -488,7 +501,12 @@ class UserApiController extends OCSController {
                             Http::STATUS_CONFLICT
                         );
                     }
-                    $this->mailGroupService->makeSouveraUser($user, !empty($password) ? $password : null);
+                    // Mail-Speicher-Pool beim Hochstufen (= neues Postfach) hart erzwingen.
+                    $resolvedUpgrade = $this->storageService->resolveNewMailboxQuota(null);
+                    if ($resolvedUpgrade['error'] !== null) {
+                        return new DataResponse(['error' => $resolvedUpgrade['error']], Http::STATUS_CONFLICT);
+                    }
+                    $this->mailGroupService->makeSouveraUser($user, !empty($password) ? $password : null, $resolvedUpgrade['quota']);
                 } elseif (!$isSouveraUser && $alreadySouvera) {
                     $this->mailGroupService->makeNextcloudUser($user);
                 }

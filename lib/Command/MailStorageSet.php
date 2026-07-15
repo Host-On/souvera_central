@@ -46,6 +46,7 @@ class MailStorageSet extends Base {
             ->setName('souvera_central:mailstorage:set')
             ->setDescription('Setzt den gesamten Mail-Speicher-Pool (config.php), der in der Central-UI verteilt wird. Nur Hoster/CLI.')
             ->addArgument('size', InputArgument::REQUIRED, 'Gesamt-Mail-Speicher – NUR in G/GB oder T/TB, z. B. 100G, 500GB, 2T, 2TB (oder 0/none zum Entfernen)')
+            ->addOption('mailbox-default', null, InputOption::VALUE_REQUIRED, 'Standard-Postfach-Limit bei aktivem Pool (z. B. 1G), das neuen Postfächern ohne explizites Limit zugewiesen wird')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Downgrade auch unter die bereits verteilte Gesamtmenge erzwingen (nicht empfohlen)');
     }
 
@@ -82,6 +83,22 @@ class MailStorageSet extends Base {
         }
 
         $this->config->setMaxMailStorage($bytes);
+
+        // Optional: Standard-Postfach-Limit bei aktivem Pool setzen.
+        $mailboxDefaultOpt = $input->getOption('mailbox-default');
+        if ($mailboxDefaultOpt !== null && $mailboxDefaultOpt !== '') {
+            if (!QuotaParser::isMailStoragePoolInput((string) $mailboxDefaultOpt)) {
+                $output->writeln('<error>Ungültiges --mailbox-default: ' . $mailboxDefaultOpt . '. Erlaubt sind nur G/GB oder T/TB, z. B. 1G, 5GB.</error>');
+                return 1;
+            }
+            $defBytes = QuotaParser::toBytes((string) $mailboxDefaultOpt);
+            if ($defBytes === null || $defBytes <= 0) {
+                $output->writeln('<error>Ungültiges --mailbox-default: ' . $mailboxDefaultOpt . '. Muss größer als 0 sein.</error>');
+                return 1;
+            }
+            $this->config->setPoolDefaultMailboxQuota($defBytes);
+            $output->writeln('<info>✓ Standard-Postfach-Limit (Pool) gesetzt: ' . QuotaParser::format($defBytes) . '</info>');
+        }
 
         if ($bytes <= 0) {
             $output->writeln('<info>✓ Mail-Speicher-Pool entfernt (unbegrenzt).</info>');

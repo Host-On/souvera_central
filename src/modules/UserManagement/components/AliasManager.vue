@@ -2,9 +2,9 @@
     <div class="alias-manager">
         <!-- Header -->
         <div class="alias-header">
-            <h4>{{ t('souvera_central', 'Email-Aliase') }}</h4>
+            <h4>{{ t('souvera_central', 'Email aliases') }}</h4>
             <span class="alias-count" :class="{ 'warning': isAliasWarning, 'limit-reached': isLimitReached }">
-                {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Alias(e)') }}
+                {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Alias(es)') }}
             </span>
         </div>
 
@@ -15,7 +15,7 @@
                 {{
                     t(
                         'souvera_central',
-                        'Alias-Limit erreicht! Es können keine weiteren Aliase hinzugefügt werden.'
+                        'Alias limit reached! No further aliases can be added.'
                     )
                 }}
             </span>
@@ -28,7 +28,7 @@
                 {{
                     t(
                         'souvera_central',
-                        'Alias-Limit bald erreicht ({percentage}%).',
+                        'Alias limit almost reached ({percentage}%).',
                         { percentage: aliasPercentage }
                     )
                 }}
@@ -38,13 +38,13 @@
         <!-- Stalwart Status Warning -->
         <div v-if="!stalwartAvailable && !loading" class="stalwart-warning">
             <AlertCircle :size="16" />
-            <span>{{ t('souvera_central', 'Mail-Server nicht erreichbar. Alias-Verwaltung nicht verfügbar.') }}</span>
+            <span>{{ t('souvera_central', 'Mail server not reachable. Alias management not available.') }}</span>
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="alias-loading">
             <NcLoadingIcon :size="20" />
-            <span>{{ t('souvera_central', 'Lade Aliase...') }}</span>
+            <span>{{ t('souvera_central', 'Loading aliases...') }}</span>
         </div>
 
         <!-- Alias List -->
@@ -59,7 +59,7 @@
                     ></div>
                 </div>
                 <span class="alias-usage-label">
-                    {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Aliase') }}
+                    {{ aliases.length }} / {{ maxAliases }} {{ t('souvera_central', 'Aliases') }}
                 </span>
             </div>
 
@@ -68,14 +68,14 @@
                 <div class="alias-info">
                     <Email :size="16" />
                     <span class="alias-email">{{ primaryEmail }}</span>
-                    <span class="primary-badge">{{ t('souvera_central', 'Primär') }}</span>
+                    <span class="primary-badge">{{ t('souvera_central', 'Primary') }}</span>
                 </div>
             </div>
 
             <!-- Postfach-Speicherlimit (Quota) -->
             <div class="mailbox-quota" data-testid="mailbox-quota-section">
                 <div class="quota-label-row">
-                    <span class="quota-label">{{ t('souvera_central', 'Postfach-Speicherlimit') }}</span>
+                    <span class="quota-label">{{ t('souvera_central', 'Mailbox storage limit') }}</span>
                     <span class="quota-current">{{ quotaDisplay }}</span>
                 </div>
                 <div class="quota-control-row">
@@ -103,7 +103,7 @@
                             :disabled="quotaSaving"
                             data-testid="mailbox-quota-unlimited"
                         />
-                        <span>{{ t('souvera_central', 'Unbegrenzt') }}</span>
+                        <span>{{ t('souvera_central', 'Unlimited') }}</span>
                     </label>
                     <button
                         type="button"
@@ -113,11 +113,11 @@
                         @click="saveQuota"
                     >
                         <NcLoadingIcon v-if="quotaSaving" :size="16" />
-                        {{ quotaSaving ? t('souvera_central', 'Speichert…') : t('souvera_central', 'Limit setzen') }}
+                        {{ quotaSaving ? t('souvera_central', 'Saving…') : t('souvera_central', 'Set limit') }}
                     </button>
                 </div>
                 <p v-if="poolEnabled" class="quota-pool-hint" data-testid="mailbox-quota-pool-hint">
-                    {{ t('souvera_central', 'Für dieses Postfach im Pool verfügbar: {available}', { available: formatBytes(poolAvailableForThis) }) }}
+                    {{ t('souvera_central', 'Available for this mailbox in the pool: {available}', { available: formatBytes(poolAvailableForThis) }) }}
                 </p>
                 <p v-if="quotaSuccess" class="success-message" data-testid="mailbox-quota-success">{{ quotaSuccess }}</p>
                 <p v-if="quotaError" class="error-message" data-testid="mailbox-quota-error">{{ quotaError }}</p>
@@ -133,7 +133,7 @@
                     type="button"
                     class="alias-remove"
                     :disabled="removingAlias === alias"
-                    :title="t('souvera_central', 'Alias entfernen')"
+                    :title="t('souvera_central', 'Remove alias')"
                     @click="removeAlias(alias)"
                 >
                     <NcLoadingIcon v-if="removingAlias === alias" :size="16" />
@@ -144,7 +144,7 @@
             <!-- Kein Alias Hinweis -->
             <div v-if="aliases.length === 0" class="no-aliases">
                 <InformationOutline :size="16" />
-                <span>{{ t('souvera_central', 'Keine zusätzlichen Aliase konfiguriert.') }}</span>
+                <span>{{ t('souvera_central', 'No additional aliases configured.') }}</span>
             </div>
 
             <!-- Neuen Alias hinzufügen -->
@@ -155,7 +155,7 @@
                         type="text"
                         class="add-alias-input"
                         :class="{ error: aliasError }"
-                        :placeholder="t('souvera_central', 'neuer-alias')"
+                        :placeholder="t('souvera_central', 'new-alias')"
                         :disabled="addingAlias"
                         data-testid="alias-add-input-local"
                         @keyup.enter="addAlias"
@@ -180,7 +180,7 @@
                     >
                         <NcLoadingIcon v-if="addingAlias" :size="16" />
                         <Plus v-else :size="16" />
-                        {{ t('souvera_central', 'Hinzufügen') }}
+                        {{ t('souvera_central', 'Add') }}
                     </button>
                 </div>
                 <p v-if="aliasError" class="error-message">{{ aliasError }}</p>
@@ -422,7 +422,7 @@ export default {
 
         formatBytes(bytes) {
             if (!bytes || bytes <= 0) {
-                return this.t('souvera_central', 'Unbegrenzt')
+                return this.t('souvera_central', 'Unlimited')
             }
             const GB = 1024 * 1024 * 1024
             const MB = 1024 * 1024
@@ -441,11 +441,11 @@ export default {
             // Client-seitige Vorabprüfung gegen den Pool (Server validiert erneut)
             if (this.poolEnabled) {
                 if (targetBytes <= 0) {
-                    this.quotaError = this.t('souvera_central', 'Bei aktivem Mail-Speicher-Pool ist „Unbegrenzt" nicht erlaubt.')
+                    this.quotaError = this.t('souvera_central', '"Unlimited" is not allowed while a mail storage pool is active.')
                     return
                 }
                 if (targetBytes > this.poolAvailableForThis) {
-                    this.quotaError = this.t('souvera_central', 'Nicht genügend Mail-Speicher im Pool verfügbar.')
+                    this.quotaError = this.t('souvera_central', 'Not enough mail storage available in the pool.')
                     return
                 }
             }
@@ -469,7 +469,7 @@ export default {
                 if (data.success) {
                     this.currentQuotaBytes = data.quota ?? targetBytes
                     this.syncQuotaControls()
-                    this.quotaSuccess = this.t('souvera_central', 'Speicherlimit aktualisiert')
+                    this.quotaSuccess = this.t('souvera_central', 'Storage limit updated')
                     // Pool-Anzeige aktualisieren
                     await this.loadMailStorage()
                     setTimeout(() => {
@@ -483,7 +483,7 @@ export default {
                     error.response?.data?.ocs?.data?.error ||
                     error.response?.data?.error ||
                     error.message ||
-                    this.t('souvera_central', 'Fehler beim Setzen des Limits')
+                    this.t('souvera_central', 'Error setting the limit')
             } finally {
                 this.quotaSaving = false
             }
@@ -517,7 +517,7 @@ export default {
                 if (data.success) {
                     this.aliases = data.aliases || []
                     this.newAliasLocalPart = ''
-                    this.aliasSuccess = this.t('souvera_central', 'Alias erfolgreich hinzugefügt')
+                    this.aliasSuccess = this.t('souvera_central', 'Alias added successfully')
 
                     setTimeout(() => {
                         this.aliasSuccess = null
@@ -529,7 +529,7 @@ export default {
             } catch (error) {
                 console.error('AliasManager: Fehler beim Hinzufügen', error)
 
-                let errorMessage = this.t('souvera_central', 'Fehler beim Hinzufügen des Alias')
+                let errorMessage = this.t('souvera_central', 'Error while adding the alias')
 
                 if (error.response?.data?.ocs?.data?.error) {
                     errorMessage = error.response.data.ocs.data.error
@@ -571,7 +571,7 @@ export default {
 
                 if (data.success) {
                     this.aliases = data.aliases || []
-                    this.aliasSuccess = this.t('souvera_central', 'Alias erfolgreich entfernt')
+                    this.aliasSuccess = this.t('souvera_central', 'Alias removed successfully')
 
                     setTimeout(() => {
                         this.aliasSuccess = null
@@ -583,7 +583,7 @@ export default {
             } catch (error) {
                 console.error('AliasManager: Fehler beim Entfernen', error)
 
-                let errorMessage = this.t('souvera_central', 'Fehler beim Entfernen des Alias')
+                let errorMessage = this.t('souvera_central', 'Error while removing the alias')
 
                 if (error.response?.data?.ocs?.data?.error) {
                     errorMessage = error.response.data.ocs.data.error

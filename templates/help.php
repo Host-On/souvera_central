@@ -13,7 +13,7 @@ style('souvera_central', 'main');
     <div id="app-content">
         <div class="loading-container">
             <div class="icon-loading"></div>
-            <p><?php p($l->t('Lade Hilfe...')); ?></p>
+            <p><?php p($l->t('Loading help...')); ?></p>
         </div>
     </div>
 </div>

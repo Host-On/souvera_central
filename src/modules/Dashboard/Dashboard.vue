@@ -2,7 +2,7 @@
     <div class="dashboard-container">
         <div class="dashboard-header">
             <h2>{{ t('souvera_central', 'Dashboard') }}</h2>
-            <p class="subtitle">{{ t('souvera_central', 'Übersicht Ihrer Souvera Central Installation') }}</p>
+            <p class="subtitle">{{ t('souvera_central', 'Overview of your Souvera Central installation') }}</p>
         </div>
 
         <!-- KRITISCHES WARNING: Lizenzlimit erreicht -->
@@ -10,12 +10,12 @@
             <div class="warning-content">
                 <AlertOctagon class="warning-icon" :size="52" />
                 <div class="warning-text">
-                    <h3>{{ t('souvera_central', 'Lizenzlimit erreicht!') }}</h3>
+                    <h3>{{ t('souvera_central', 'License limit reached!') }}</h3>
                     <p>
                         {{
                             t(
                                 'souvera_central',
-                                'Sie haben {count} von {total} Lizenzen genutzt. Es können keine weiteren Benutzer erstellt werden.',
+                                'You have used {count} of {total} licenses. No further users can be created.',
                                 { count: usedLicenses, total: maxLicenses }
                             )
                         }}
@@ -23,7 +23,7 @@
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button">
                     <OpenInNew :size="18" />
-                    {{ t('souvera_central', 'Lizenzen erweitern') }}
+                    {{ t('souvera_central', 'Extend licenses') }}
                 </a>
             </div>
         </div>
@@ -33,12 +33,12 @@
             <div class="warning-content">
                 <AlertCircle class="warning-icon" :size="40" />
                 <div class="warning-text">
-                    <h3>{{ t('souvera_central', 'Lizenzlimit bald erreicht') }}</h3>
+                    <h3>{{ t('souvera_central', 'License limit almost reached') }}</h3>
                     <p>
                         {{
                             t(
                                 'souvera_central',
-                                'Sie haben {count} von {total} Lizenzen genutzt ({percentage}%). Erweitern Sie rechtzeitig Ihre Lizenzen.',
+                                'You have used {count} of {total} licenses ({percentage}%). Extend your licenses in time.',
                                 { count: usedLicenses, total: maxLicenses, percentage: licensePercentage }
                             )
                         }}
@@ -46,7 +46,7 @@
                 </div>
                 <a :href="contactUrl" target="_blank" class="contact-button secondary">
                     <OpenInNew :size="18" />
-                    {{ t('souvera_central', 'Kontakt') }}
+                    {{ t('souvera_central', 'Contact') }}
                 </a>
             </div>
         </div>
@@ -58,7 +58,7 @@
                 <div class="stat-icon"><AccountMultiple :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ totalUsers }}</div>
-                    <div class="stat-label">{{ t('souvera_central', 'Benutzer') }}</div>
+                    <div class="stat-label">{{ t('souvera_central', 'User') }}</div>
                 </div>
             </div>
 
@@ -70,12 +70,12 @@
                 <div class="stat-icon"><AccountGroup :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ groupCount }} / {{ maxGroups }}</div>
-                    <div class="stat-label">{{ t('souvera_central', 'Gruppen') }}</div>
+                    <div class="stat-label">{{ t('souvera_central', 'Groups') }}</div>
                     <div v-if="isGroupLimitReached" class="stat-critical-text">
-                        {{ t('souvera_central', 'Limit erreicht!') }}
+                        {{ t('souvera_central', 'Limit reached!') }}
                     </div>
                     <div v-else-if="isGroupWarning" class="stat-warning-text">
-                        {{ t('souvera_central', 'Bald erreicht ({percentage}%)', { percentage: groupPercentage }) }}
+                        {{ t('souvera_central', 'Almost reached ({percentage}%)', { percentage: groupPercentage }) }}
                     </div>
                 </div>
             </div>
@@ -88,12 +88,12 @@
                 <div class="stat-icon"><EmailMultiple :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ sharedMailboxCount }} / {{ maxSharedMailboxes }}</div>
-                    <div class="stat-label">{{ t('souvera_central', 'Geteilte Postfächer') }}</div>
+                    <div class="stat-label">{{ t('souvera_central', 'Shared mailboxes') }}</div>
                     <div v-if="isMailboxLimitReached" class="stat-critical-text">
-                        {{ t('souvera_central', 'Limit erreicht!') }}
+                        {{ t('souvera_central', 'Limit reached!') }}
                     </div>
                     <div v-else-if="isMailboxWarning" class="stat-warning-text">
-                        {{ t('souvera_central', 'Bald erreicht ({percentage}%)', { percentage: mailboxPercentage }) }}
+                        {{ t('souvera_central', 'Almost reached ({percentage}%)', { percentage: mailboxPercentage }) }}
                     </div>
                 </div>
             </div>
@@ -106,12 +106,12 @@
                 <div class="stat-icon"><KeyVariant :size="40" /></div>
                 <div class="stat-content">
                     <div class="stat-value">{{ usedLicenses }} / {{ maxLicenses }}</div>
-                    <div class="stat-label">{{ t('souvera_central', 'Lizenzen genutzt') }}</div>
+                    <div class="stat-label">{{ t('souvera_central', 'Licenses used') }}</div>
                     <div v-if="isLicenseLimitReached" class="stat-critical-text">
-                        {{ t('souvera_central', 'Limit erreicht!') }}
+                        {{ t('souvera_central', 'Limit reached!') }}
                     </div>
                     <div v-else-if="isLicenseWarning" class="stat-warning-text">
-                        {{ t('souvera_central', 'Bald erreicht ({percentage}%)', { percentage: licensePercentage }) }}
+                        {{ t('souvera_central', 'Almost reached ({percentage}%)', { percentage: licensePercentage }) }}
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <h3>{{ t('souvera_central', 'Schnellaktionen') }}</h3>
+            <h3>{{ t('souvera_central', 'Quick actions') }}</h3>
             <div class="actions-grid">
                 <button
                     class="action-card"
@@ -127,29 +127,29 @@
                     data-testid="action-create-user"
                     @click="$emit('navigate', 'users')">
                     <Plus :size="22" />
-                    <span class="action-label">{{ t('souvera_central', 'Benutzer erstellen') }}</span>
+                    <span class="action-label">{{ t('souvera_central', 'Create user') }}</span>
                 </button>
 
                 <button class="action-card" data-testid="action-create-group" @click="$emit('navigate', 'groups')">
                     <Plus :size="22" />
-                    <span class="action-label">{{ t('souvera_central', 'Gruppe erstellen') }}</span>
+                    <span class="action-label">{{ t('souvera_central', 'Create group') }}</span>
                 </button>
 
                 <button class="action-card" data-testid="action-manage-users" @click="$emit('navigate', 'users')">
                     <AccountMultiple :size="22" />
-                    <span class="action-label">{{ t('souvera_central', 'Benutzer verwalten') }}</span>
+                    <span class="action-label">{{ t('souvera_central', 'Manage users') }}</span>
                 </button>
 
                 <button class="action-card" data-testid="action-settings" @click="$emit('navigate', 'settings')">
                     <Cog :size="22" />
-                    <span class="action-label">{{ t('souvera_central', 'Einstellungen') }}</span>
+                    <span class="action-label">{{ t('souvera_central', 'Settings') }}</span>
                 </button>
             </div>
         </div>
 
         <!-- Stalwart Mailserver (Admin) -->
         <div class="stalwart-section" data-testid="stalwart-section">
-            <h3>{{ t('souvera_central', 'Stalwart Mailserver') }}</h3>
+            <h3>{{ t('souvera_central', 'Stalwart mail server') }}</h3>
             <div class="stalwart-card">
                 <div class="stalwart-status">
                     <ServerNetwork :size="32" class="stalwart-server-icon" />
@@ -160,7 +160,7 @@
                         </div>
                         <div v-if="stalwartStatus.url" class="stalwart-url">{{ stalwartStatus.url }}</div>
                         <div v-else class="stalwart-url muted">
-                            {{ t('souvera_central', 'Keine Verbindungsdaten in config.php hinterlegt') }}
+                            {{ t('souvera_central', 'No connection details stored in config.php') }}
                         </div>
                     </div>
                 </div>
@@ -171,7 +171,7 @@
                         data-testid="stalwart-sync-button"
                         @click="syncMailboxes">
                         <Sync :size="18" :class="{ spinning: syncing }" />
-                        {{ syncing ? t('souvera_central', 'Synchronisiere…') : t('souvera_central', 'Postfächer synchronisieren') }}
+                        {{ syncing ? t('souvera_central', 'Synchronizing…') : t('souvera_central', 'Synchronize mailboxes') }}
                     </button>
                 </div>
             </div>
@@ -186,7 +186,7 @@
                     {{
                         t(
                             'souvera_central',
-                            '{created} angelegt · {skipped} übersprungen · {noMail} ohne Mail · {errors} Fehler',
+                            '{created} created · {skipped} skipped · {noMail} without mail · {errors} errors',
                             syncResult
                         )
                     }}
@@ -204,14 +204,14 @@
                     <div class="mailgroup-headline">
                         <span class="mailgroup-name" data-testid="stalwart-mailgroup-name">{{ mailGroup.displayName || mailGroup.id }}</span>
                         <span class="mailgroup-badge" :class="{ 'badge-warn': !mailGroup.exists }">
-                            {{ mailGroup.members }} {{ t('souvera_central', 'Mitglied(er)') }}
+                            {{ mailGroup.members }} {{ t('souvera_central', 'Member(s)') }}
                         </span>
                     </div>
                     <p class="mailgroup-hint">
                         {{
                             t(
                                 'souvera_central',
-                                'Benutzer mit Postfach werden automatisch dieser Gruppe zugeordnet. Beschränken Sie die Mail-App (smail) in den App-Einstellungen auf diese Gruppe, damit Benutzer ohne Postfach sie nicht sehen.'
+                                'Users with a mailbox are automatically added to this group. Restrict the Mail app (smail) to this group in the app settings so that users without a mailbox do not see it.'
                             )
                         }}
                     </p>
@@ -221,19 +221,19 @@
 
         <!-- System Info -->
         <div class="system-info">
-            <h3>{{ t('souvera_central', 'System-Information') }}</h3>
+            <h3>{{ t('souvera_central', 'System information') }}</h3>
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
                     <span class="info-value">0.37.0</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">{{ t('souvera_central', 'Erlaubte Domains') }}:</span>
+                    <span class="info-label">{{ t('souvera_central', 'Allowed domains') }}:</span>
                     <span class="info-value">{{ allowedDomains.length }} {{ t('souvera_central', 'Domain(s)') }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">{{ t('souvera_central', 'Verfügbare Lizenzen') }}:</span>
-                    <span class="info-value">{{ availableLicenses }} {{ t('souvera_central', 'von') }} {{ maxLicenses }}</span>
+                    <span class="info-label">{{ t('souvera_central', 'Available licenses') }}:</span>
+                    <span class="info-value">{{ availableLicenses }} {{ t('souvera_central', 'of') }} {{ maxLicenses }}</span>
                 </div>
             </div>
         </div>
@@ -345,10 +345,10 @@ export default {
             return this.stalwartStatus.available ? 'dot-ok' : 'dot-error'
         },
         stalwartStateLabel() {
-            if (!this.stalwartStatus.configured) return t('souvera_central', 'Nicht konfiguriert')
+            if (!this.stalwartStatus.configured) return t('souvera_central', 'Not configured')
             return this.stalwartStatus.available
-                ? t('souvera_central', 'Verbunden')
-                : t('souvera_central', 'Nicht erreichbar')
+                ? t('souvera_central', 'Connected')
+                : t('souvera_central', 'Not reachable')
         }
     },
 
@@ -435,7 +435,7 @@ export default {
             } catch (error) {
                 this.syncError =
                     error.response?.data?.error ||
-                    t('souvera_central', 'Synchronisierung fehlgeschlagen. Ist Stalwart erreichbar?')
+                    t('souvera_central', 'Synchronization failed. Is Stalwart reachable?')
             } finally {
                 this.syncing = false
             }

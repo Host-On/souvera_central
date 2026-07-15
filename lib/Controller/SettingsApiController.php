@@ -159,15 +159,8 @@ class SettingsApiController extends OCSController {
                 }
             }
 
-            // Instanzweite App-Umbenennung (immer aktiv, kein Schalter)
-            if ($branding !== null) {
-                if (isset($branding['talk_name'])) {
-                    $this->config->setAppValue('souvera_central', 'settings.branding.talk_name', trim((string) $branding['talk_name']));
-                }
-                if (isset($branding['office_name'])) {
-                    $this->config->setAppValue('souvera_central', 'settings.branding.office_name', trim((string) $branding['office_name']));
-                }
-            }
+            // Instanzweite App-Umbenennung (Talk -> "Link", Office/Collabora -> "Desk")
+            // ist bewusst FEST und nicht über die UI editierbar (siehe ConfigService).
 
             // Aktualisierte Einstellungen zurückgeben
             return $this->getSettings();

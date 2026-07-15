@@ -5,7 +5,7 @@
                 ref="searchInput"
                 v-model="searchQuery"
                 type="text"
-                :placeholder="t('souvera_central', 'Manager suchen...')"
+                :placeholder="t('souvera_central', 'Search manager...')"
                 class="manager-input"
                 @input="handleSearch"
                 @focus="showDropdown = true"
@@ -40,7 +40,7 @@
                     class="dropdown-item empty"
                 >
                     <InformationOutline :size="16" />
-                    {{ t('souvera_central', 'Keine Benutzer gefunden') }}
+                    {{ t('souvera_central', 'No users found') }}
                 </div>
             </div>
         </div>

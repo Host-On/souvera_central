@@ -13,11 +13,11 @@
 
         <div class="card-body">
             <div class="stat-row">
-                <span class="stat-label">{{ t('souvera_central', 'Mitglieder') }}</span>
+                <span class="stat-label">{{ t('souvera_central', 'Members') }}</span>
                 <span class="stat-value">{{ memberCount }}</span>
             </div>
             <div class="stat-row">
-                <span class="stat-label">{{ t('souvera_central', 'Speicherlimit') }}</span>
+                <span class="stat-label">{{ t('souvera_central', 'Storage limit') }}</span>
                 <span class="stat-value" data-testid="shared-card-quota">{{ quotaDisplay }}</span>
             </div>
         </div>
@@ -25,22 +25,22 @@
         <div class="card-actions">
             <button
                 class="action-button"
-                :title="t('souvera_central', 'Mitglieder verwalten')"
+                :title="t('souvera_central', 'Manage members')"
                 @click="$emit('manage-members', mailbox)"
             >
                 <AccountMultiple :size="16" />
-                {{ t('souvera_central', 'Mitglieder') }}
+                {{ t('souvera_central', 'Members') }}
             </button>
             <button
                 class="action-button"
-                :title="t('souvera_central', 'Bearbeiten')"
+                :title="t('souvera_central', 'Edit')"
                 @click="$emit('edit', mailbox)"
             >
                 <Pencil :size="16" />
             </button>
             <button
                 class="action-button danger"
-                :title="t('souvera_central', 'Löschen')"
+                :title="t('souvera_central', 'Delete')"
                 @click="$emit('delete', mailbox)"
             >
                 <Delete :size="16" />
@@ -92,7 +92,7 @@ export default {
         quotaDisplay() {
             const bytes = this.mailbox.quota || 0
             if (!bytes || bytes <= 0) {
-                return this.t('souvera_central', 'Unbegrenzt')
+                return this.t('souvera_central', 'Unlimited')
             }
             const TB = 1024 ** 4
             const GB = 1024 ** 3

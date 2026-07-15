@@ -10,7 +10,7 @@
         <button
             v-if="searchQuery"
             class="clear-button"
-            :title="t('souvera_central', 'Suche löschen')"
+            :title="t('souvera_central', 'Clear search')"
             @click="clearSearch"
         >
             <Close :size="16" />

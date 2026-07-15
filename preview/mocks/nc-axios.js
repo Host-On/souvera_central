@@ -33,7 +33,7 @@ const mailboxes = [
 ]
 
 // Mail-Speicher-Pool (Bytes): 100 GB gesamt, davon verteilt (User + geteilte Postfächer)
-const poolSummary = { max: 107374182400, allocated: 66571993088, available: 40802189312, pool_enabled: true, step_bytes: 1073741824 }
+const poolSummary = { max: 107374182400, allocated: 66571993088, available: 40802189312, pool_enabled: true, step_bytes: 1073741824, default_quota: 1073741824, unlimited_count: 2 }
 
 function respond(url) {
     // --- Hilfe / BookStack (Preview-Mock) ---

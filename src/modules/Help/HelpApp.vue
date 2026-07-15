@@ -1,6 +1,6 @@
 <template>
     <NcContent app-name="souvera_central">
-        <NcAppNavigation data-testid="help-navigation" :aria-label="t('souvera_central', 'Hilfe')">
+        <NcAppNavigation data-testid="help-navigation" :aria-label="t('souvera_central', 'Help')">
             <template #list>
                 <div v-if="loading" class="help-nav-loading" data-testid="help-nav-loading">
                     <span class="icon-loading" ></span>
@@ -33,8 +33,8 @@
 
                 <div v-else-if="!configured" class="help-empty" data-testid="help-not-configured">
                     <HelpCircleOutline :size="64" class="help-empty__icon" />
-                    <h2 class="help-empty__title">{{ t('souvera_central', 'Hilfe noch nicht verfügbar') }}</h2>
-                    <p class="help-empty__desc">{{ t('souvera_central', 'Die Dokumentation ist derzeit nicht erreichbar. Bitte wenden Sie sich an Ihren Administrator.') }}</p>
+                    <h2 class="help-empty__title">{{ t('souvera_central', 'Help not available yet') }}</h2>
+                    <p class="help-empty__desc">{{ t('souvera_central', 'The documentation is currently unavailable. Please contact your administrator.') }}</p>
                 </div>
 
                 <div v-else-if="pageLoading" class="help-state">
@@ -53,8 +53,8 @@
 
                 <div v-else class="help-empty" data-testid="help-welcome">
                     <HelpCircleOutline :size="64" class="help-empty__icon" />
-                    <h2 class="help-empty__title">{{ t('souvera_central', 'Hilfe & Dokumentation') }}</h2>
-                    <p class="help-empty__desc">{{ t('souvera_central', 'Wählen Sie links ein Thema, um die Anleitung zu öffnen.') }}</p>
+                    <h2 class="help-empty__title">{{ t('souvera_central', 'Help & documentation') }}</h2>
+                    <p class="help-empty__desc">{{ t('souvera_central', 'Select a topic on the left to open the guide.') }}</p>
                 </div>
 
                 <div
@@ -67,7 +67,7 @@
                     <button
                         class="help-lightbox__close"
                         data-testid="help-image-modal-close"
-                        :aria-label="t('souvera_central', 'Schließen')"
+                        :aria-label="t('souvera_central', 'Close')"
                         @click.stop="closeLightbox">
                         <Close :size="28" />
                     </button>

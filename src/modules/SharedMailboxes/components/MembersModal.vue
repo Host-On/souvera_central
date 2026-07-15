@@ -2,7 +2,7 @@
     <div class="modal-overlay" @click.self="$emit('close')">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>{{ t('souvera_central', 'Mitglieder verwalten') }}</h3>
+                <h3>{{ t('souvera_central', 'Manage members') }}</h3>
                 <span class="mailbox-name">{{ mailbox.description || mailbox.name }}</span>
                 <button class="close-button" @click="$emit('close')">
                     <Close :size="20" />
@@ -12,13 +12,13 @@
             <div class="modal-body">
                 <!-- Add Member -->
                 <div class="add-member-section">
-                    <label>{{ t('souvera_central', 'Mitglied hinzufügen') }}</label>
+                    <label>{{ t('souvera_central', 'Add member') }}</label>
                     <div class="add-member-form">
                         <div class="search-container">
                             <input
                                 v-model="searchQuery"
                                 type="text"
-                                :placeholder="t('souvera_central', 'Benutzer suchen...')"
+                                :placeholder="t('souvera_central', 'Search users...')"
                                 @input="searchUsers"
                             />
                             <!-- Search Results Dropdown -->
@@ -45,21 +45,21 @@
                         </button>
                     </div>
                     <p v-if="searchQuery.length >= 2 && searchResults.length === 0 && !adding" class="hint-text">
-                        {{ t('souvera_central', 'Keine Benutzer gefunden') }}
+                        {{ t('souvera_central', 'No users found') }}
                     </p>
                     <p v-else-if="searchQuery.length > 0 && searchQuery.length < 2" class="hint-text">
-                        {{ t('souvera_central', 'Mind. 2 Zeichen eingeben...') }}
+                        {{ t('souvera_central', 'Enter at least 2 characters...') }}
                     </p>
                     <p v-if="error" class="error-message">{{ error }}</p>
                 </div>
 
                 <!-- Members List -->
                 <div class="members-section">
-                    <label>{{ t('souvera_central', 'Aktuelle Mitglieder') }} ({{ members.length }})</label>
+                    <label>{{ t('souvera_central', 'Current members') }} ({{ members.length }})</label>
 
                     <div class="send-as-hint" data-testid="send-as-hint">
                         <InformationOutline :size="16" />
-                        <span>{{ t('souvera_central', 'Mitglieder können E-Mails dieses Postfachs empfangen UND im Namen des Postfachs senden („Senden als").') }}</span>
+                        <span>{{ t('souvera_central', 'Members can receive emails for this mailbox AND send in the name of the mailbox ("send as").') }}</span>
                     </div>
 
                     <div v-if="loading" class="loading">
@@ -67,7 +67,7 @@
                     </div>
 
                     <div v-else-if="members.length === 0" class="no-members">
-                        {{ t('souvera_central', 'Keine Mitglieder') }}
+                        {{ t('souvera_central', 'No members') }}
                     </div>
 
                     <div v-else class="members-list">
@@ -79,7 +79,7 @@
                             <button
                                 class="remove-button"
                                 :disabled="removingMember === member"
-                                :title="t('souvera_central', 'Entfernen')"
+                                :title="t('souvera_central', 'Remove')"
                                 @click="removeMember(member)"
                             >
                                 <NcLoadingIcon v-if="removingMember === member" :size="16" />
@@ -92,7 +92,7 @@
 
             <div class="modal-footer">
                 <button class="done-button" @click="$emit('close')">
-                    {{ t('souvera_central', 'Fertig') }}
+                    {{ t('souvera_central', 'Done') }}
                 </button>
             </div>
         </div>
@@ -235,7 +235,7 @@ export default {
                 console.error('MembersModal: Fehler beim Hinzufügen', error)
                 this.error = error.response?.data?.ocs?.data?.error ||
                     error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Hinzufügen')
+                    this.t('souvera_central', 'Error while adding')
             } finally {
                 this.adding = false
             }
@@ -263,7 +263,7 @@ export default {
                 console.error('MembersModal: Fehler beim Entfernen', error)
                 this.error = error.response?.data?.ocs?.data?.error ||
                     error.response?.data?.error ||
-                    this.t('souvera_central', 'Fehler beim Entfernen')
+                    this.t('souvera_central', 'Error while removing')
             } finally {
                 this.removingMember = null
             }

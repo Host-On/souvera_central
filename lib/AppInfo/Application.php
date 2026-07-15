@@ -98,7 +98,7 @@ class Application extends App implements IBootstrap {
                         'type' => 'settings',
                         'href' => $urlGenerator->linkToRoute('souvera_central.help.index'),
                         'icon' => $urlGenerator->imagePath(self::APP_ID, 'help.svg'),
-                        'name' => $l10n->t('Hilfe'),
+                        'name' => $l10n->t('Help'),
                     ];
                 });
             }

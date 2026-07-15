@@ -120,25 +120,25 @@ export default {
                 },
                 {
                     id: 'users',
-                    label: t('souvera_central', 'Benutzerverwaltung'),
+                    label: t('souvera_central', 'User management'),
                     icon: markRaw(AccountMultiple),
                     url: generateUrl('/apps/souvera_central/users')
                 },
                 {
                     id: 'groups',
-                    label: t('souvera_central', 'Gruppenverwaltung'),
+                    label: t('souvera_central', 'Group management'),
                     icon: markRaw(AccountGroup),
                     url: generateUrl('/apps/souvera_central/groups')
                 },
                 {
                     id: 'shared-mailboxes',
-                    label: t('souvera_central', 'Geteilte Postfächer'),
+                    label: t('souvera_central', 'Shared mailboxes'),
                     icon: markRaw(EmailMultiple),
                     url: generateUrl('/apps/souvera_central/shared-mailboxes')
                 },
                 {
                     id: 'settings',
-                    label: t('souvera_central', 'Einstellungen'),
+                    label: t('souvera_central', 'Settings'),
                     icon: markRaw(Cog),
                     url: generateUrl('/apps/souvera_central/settings')
                 }
