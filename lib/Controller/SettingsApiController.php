@@ -11,6 +11,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
+use OCA\SouveraCentral\Service\ConfigService;
 use OCP\IRequest;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
@@ -60,6 +61,14 @@ class SettingsApiController extends OCSController {
                     'daily_summary' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0'),
                     'min_spam_score' => (float) $this->config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5'),
                 ],
+                // Globale Mail-Signatur: EINE Vorlage, von souvera_mail via /api/mail-settings
+                // abgefragt; optional serverseitig via Stalwart Sieve erzwungen.
+                'signature' => [
+                    'enabled' => (bool) $this->config->getAppValue('souvera_central', 'settings.mail_signature.enabled', '0'),
+                    'template' => $this->config->getAppValue('souvera_central', 'settings.mail_signature.template', ''),
+                    'server_side' => (bool) $this->config->getAppValue('souvera_central', 'settings.mail_signature.server_side', '0'),
+                    'variables' => ConfigService::SIGNATURE_VARIABLES,
+                ],
             ];
 
             return new DataResponse($settings);
@@ -75,7 +84,7 @@ class SettingsApiController extends OCSController {
      * Einstellungen speichern
      */
     #[NoAdminRequired]
-    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null): DataResponse {
+    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null, array $signature = null): DataResponse {
         try {
             // Visibility Settings
             if ($visibility !== null) {
@@ -161,6 +170,20 @@ class SettingsApiController extends OCSController {
 
             // Instanzweite App-Umbenennung (Talk -> "Link", Office/Collabora -> "Desk")
             // ist bewusst FEST und nicht über die UI editierbar (siehe ConfigService).
+
+            // Globale Mail-Signatur (EINE Vorlage; wird von souvera_mail und optional
+            // serverseitig via Stalwart Sieve verwendet)
+            if ($signature !== null) {
+                if (isset($signature['enabled'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.mail_signature.enabled', $signature['enabled'] ? '1' : '0');
+                }
+                if (array_key_exists('template', $signature)) {
+                    $this->config->setAppValue('souvera_central', 'settings.mail_signature.template', (string) $signature['template']);
+                }
+                if (isset($signature['server_side'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.mail_signature.server_side', $signature['server_side'] ? '1' : '0');
+                }
+            }
 
             // Aktualisierte Einstellungen zurückgeben
             return $this->getSettings();

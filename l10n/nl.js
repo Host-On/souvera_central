@@ -338,6 +338,15 @@ OC.L10N.register(
     "Limit" : "Limiet",
     "Shared" : "Gedeeld",
     "Loading..." : "Laden...",
-    "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management." : "Alle mailboxen die meetellen voor de pool, inclusief systeemmailboxen (bijv. postmaster@) die niet onder Gebruikersbeheer worden vermeld."
+    "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management." : "Alle mailboxen die meetellen voor de pool, inclusief systeemmailboxen (bijv. postmaster@) die niet onder Gebruikersbeheer worden vermeld.",
+    "Mail signature" : "Mailhandtekening",
+    "One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients." : "Eén globale handtekening, centraal beheerd. Wordt gebruikt door Souvera Mail en optioneel serverzijdig afgedwongen voor alle SMTP-clients.",
+    "Enable global mail signature" : "Globale mailhandtekening inschakelen",
+    "Signature (HTML allowed)" : "Handtekening (HTML toegestaan)",
+    "Available variables (click to insert):" : "Beschikbare variabelen (klik om in te voegen):",
+    "Preview" : "Voorbeeld",
+    "Enforce server-side for all SMTP clients (Stalwart)" : "Serverzijdig afdwingen voor alle SMTP-clients (Stalwart)",
+    "Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6)." : "Serverzijdig staat AAN: Souvera Mail voegt de handtekening NIET toe (Stalwart doet dit). Implementeer het Sieve-script via: occ souvera_central:mailsignature:sieve (vereist Stalwart ≥ 0.16.6).",
+    "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it." : "Serverzijdig staat UIT: alleen Souvera Mail toont de gepersonaliseerde handtekening; andere SMTP-clients (Thunderbird, Outlook, mobiel) krijgen deze niet."
 },
 "nplurals=2; plural=(n != 1);");

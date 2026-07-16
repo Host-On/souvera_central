@@ -57,6 +57,7 @@ return [
         // Settings API-Routen
         ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings_api#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
+        ['name' => 'mail_settings_api#getMailSettings', 'url' => '/api/mail-settings', 'verb' => 'GET'],
 
         // Reseller API-Route
         ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],

@@ -109,8 +109,11 @@ function respond(url) {
     if (url.includes('/api/reseller')) {
         return { data: { support_url: 'https://support.souvera.eu', url: 'https://souvera.eu', name: 'Souvera' } }
     }
+    if (url.includes('/api/mail-settings')) {
+        return { data: { signature_enabled: true, signature_template: '<p>%first_name% %last_name%<br>%email%</p>', signature_format: 'html', server_side: false, variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'] } }
+    }
     if (url.includes('/api/settings')) {
-        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 } } }
+        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 }, signature: { enabled: true, template: '<p>%first_name% %last_name%<br>%email%</p>', server_side: false, variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'] } } }
     }
     return { data: {} }
 }

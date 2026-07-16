@@ -342,6 +342,62 @@ class ConfigService {
     }
 
     // ============================================================================
+    // Globale Mail-Signatur (zentral in Central verwaltet; von souvera_mail via
+    // GET /api/mail-settings abgefragt, optional serverseitig via Stalwart Sieve).
+    // EINE Signatur/Vorlage – gilt für Webmail UND (optional) serverseitig.
+    // ============================================================================
+
+    /** Unterstützte Platzhalter, die souvera_mail bzw. das Sieve-Script ersetzen. */
+    public const SIGNATURE_VARIABLES = ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'];
+
+    public function isMailSignatureEnabled(): bool {
+        return $this->config->getAppValue('souvera_central', 'settings.mail_signature.enabled', '0') === '1';
+    }
+
+    public function setMailSignatureEnabled(bool $enabled): void {
+        $this->config->setAppValue('souvera_central', 'settings.mail_signature.enabled', $enabled ? '1' : '0');
+    }
+
+    public function getMailSignatureTemplate(): string {
+        return $this->config->getAppValue('souvera_central', 'settings.mail_signature.template', '');
+    }
+
+    public function setMailSignatureTemplate(string $html): void {
+        $this->config->setAppValue('souvera_central', 'settings.mail_signature.template', $html);
+    }
+
+    /**
+     * true  = serverseitig via Stalwart erzwingen (gilt für ALLE SMTP-Clients);
+     *         souvera_mail hängt dann NICHTS an (Doppel-Signatur vermeiden).
+     * false = nur Webmail (souvera_mail) rendert die Signatur personalisiert.
+     */
+    public function isMailSignatureServerSide(): bool {
+        return $this->config->getAppValue('souvera_central', 'settings.mail_signature.server_side', '0') === '1';
+    }
+
+    public function setMailSignatureServerSide(bool $serverSide): void {
+        $this->config->setAppValue('souvera_central', 'settings.mail_signature.server_side', $serverSide ? '1' : '0');
+    }
+
+    /**
+     * Vollständiger Signatur-Vertrag für die API / souvera_mail.
+     *
+     * souvera_mail-Logik: wenn signature_enabled && !server_side -> Vorlage
+     * personalisiert rendern; wenn server_side -> NICHTS anhängen (Stalwart macht es).
+     *
+     * @return array{signature_enabled:bool, signature_template:string, signature_format:string, server_side:bool, variables:list<string>}
+     */
+    public function getMailSignatureSettings(): array {
+        return [
+            'signature_enabled' => $this->isMailSignatureEnabled(),
+            'signature_template' => $this->getMailSignatureTemplate(),
+            'signature_format' => 'html',
+            'server_side' => $this->isMailSignatureServerSide(),
+            'variables' => self::SIGNATURE_VARIABLES,
+        ];
+    }
+
+    // ============================================================================
     // Mail-Gruppe (Sichtbarkeit der Mail-App / smail steuern)
     // ============================================================================
 

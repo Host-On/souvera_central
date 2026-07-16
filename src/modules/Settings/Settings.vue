@@ -242,6 +242,74 @@
                 </div>
             </div>
 
+            <!-- Mail signature -->
+            <div class="settings-section" data-testid="signature-settings-section">
+                <div class="section-header">
+                    <Email :size="22" />
+                    <h3>{{ t('souvera_central', 'Mail signature') }}</h3>
+                </div>
+                <p class="section-description">
+                    {{ t('souvera_central', 'One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients.') }}
+                </p>
+
+                <div class="settings-group">
+                    <label class="checkbox-label" data-testid="signature-enabled-label">
+                        <input
+                            v-model="settings.signature.enabled"
+                            type="checkbox"
+                            data-testid="signature-enabled-checkbox"
+                            @change="saveSettings"
+                        />
+                        <span>{{ t('souvera_central', 'Enable global mail signature') }}</span>
+                    </label>
+
+                    <div v-if="settings.signature.enabled" class="signature-editor" data-testid="signature-editor">
+                        <label class="field-label">{{ t('souvera_central', 'Signature (HTML allowed)') }}</label>
+                        <textarea
+                            v-model="settings.signature.template"
+                            class="signature-textarea"
+                            rows="7"
+                            data-testid="signature-template-input"
+                            :placeholder="signaturePlaceholder"
+                            @blur="saveSettings"
+                        ></textarea>
+
+                        <div class="signature-variables" data-testid="signature-variables">
+                            <span class="var-hint">{{ t('souvera_central', 'Available variables (click to insert):') }}</span>
+                            <button
+                                v-for="v in settings.signature.variables"
+                                :key="v"
+                                type="button"
+                                class="var-chip"
+                                :data-testid="'signature-var-' + v"
+                                @click="insertVariable(v)"
+                            >{{ v }}</button>
+                        </div>
+
+                        <div class="signature-preview-wrap">
+                            <label class="field-label">{{ t('souvera_central', 'Preview') }}</label>
+                            <!-- eslint-disable-next-line vue/no-v-html -->
+                            <div class="signature-preview" data-testid="signature-preview" v-html="signaturePreview"></div>
+                        </div>
+
+                        <label class="checkbox-label" data-testid="signature-serverside-label">
+                            <input
+                                v-model="settings.signature.server_side"
+                                type="checkbox"
+                                data-testid="signature-serverside-checkbox"
+                                @change="saveSettings"
+                            />
+                            <span>{{ t('souvera_central', 'Enforce server-side for all SMTP clients (Stalwart)') }}</span>
+                        </label>
+                        <p class="setting-hint">
+                            {{ settings.signature.server_side
+                                ? t('souvera_central', 'Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6).')
+                                : t('souvera_central', 'Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it.') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Save Indicator -->
             <div v-if="saving" class="save-indicator">
                 <NcLoadingIcon :size="16" />
@@ -304,6 +372,12 @@ export default {
                     desktop_notifications: false,
                     daily_summary: false,
                     min_spam_score: 2.5
+                },
+                signature: {
+                    enabled: false,
+                    template: '',
+                    server_side: false,
+                    variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%']
                 }
             },
             quotaOptions: [
@@ -330,6 +404,22 @@ export default {
             if (this.poolPercent >= 90) return 'is-full'
             if (this.poolPercent >= 75) return 'is-warn'
             return ''
+        },
+
+        signaturePlaceholder() {
+            return '<p>%first_name% %last_name%<br>%email%</p>\n<p><a href="https://%domain%">%domain%</a></p>'
+        },
+
+        signaturePreview() {
+            const tpl = this.settings.signature.template || ''
+            const sample = {
+                '%name%': 'Michael Grassegger',
+                '%email%': 'michael@grassegger.eu',
+                '%first_name%': 'Michael',
+                '%last_name%': 'Grassegger',
+                '%domain%': 'grassegger.eu'
+            }
+            return tpl.replace(/%name%|%email%|%first_name%|%last_name%|%domain%/g, (m) => sample[m] || m)
         }
     },
 
@@ -397,6 +487,11 @@ export default {
             return `${Math.round(bytes / MB)} MB`
         },
 
+        insertVariable(v) {
+            this.settings.signature.template = (this.settings.signature.template || '') + v
+            this.saveSettings()
+        },
+
         async loadSettings() {
             try {
                 this.loading = true
@@ -410,7 +505,15 @@ export default {
                     this.settings = {
                         email: data.email || this.settings.email,
                         defaults: data.defaults || this.settings.defaults,
-                        shield: data.shield || this.settings.shield
+                        shield: data.shield || this.settings.shield,
+                        signature: {
+                            enabled: data.signature ? !!data.signature.enabled : this.settings.signature.enabled,
+                            template: data.signature ? (data.signature.template || '') : this.settings.signature.template,
+                            server_side: data.signature ? !!data.signature.server_side : this.settings.signature.server_side,
+                            variables: (data.signature && Array.isArray(data.signature.variables) && data.signature.variables.length)
+                                ? data.signature.variables
+                                : this.settings.signature.variables
+                        }
                     }
                 }
             } catch (error) {
@@ -1018,6 +1121,81 @@ export default {
     font-style: italic;
     color: var(--color-text-maxcontrast);
     background: var(--color-background-hover);
+}
+
+/* Mail-Signatur-Editor */
+.signature-editor {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.signature-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    font-family: var(--font-face-monospace, monospace);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.signature-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary-element);
+    box-shadow: var(--sc-focus-ring, 0 0 0 2px rgba(0, 130, 201, 0.25));
+}
+
+.signature-variables {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.var-hint {
+    font-size: 12px;
+    color: var(--color-text-maxcontrast);
+    margin-right: 4px;
+}
+
+.var-chip {
+    padding: 3px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-background-dark);
+    color: var(--color-primary-element);
+    font-family: var(--font-face-monospace, monospace);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.var-chip:hover {
+    background: var(--color-primary-element-light, rgba(0, 130, 201, 0.12));
+    border-color: var(--color-primary-element);
+}
+
+.signature-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.signature-preview {
+    min-height: 40px;
+    padding: 12px;
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    background: var(--color-main-background);
+    color: var(--color-main-text);
+    font-size: 14px;
+    overflow-wrap: anywhere;
 }
 
 /* Save Indicator */
