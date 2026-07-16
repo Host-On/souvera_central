@@ -48,6 +48,7 @@
         <command>OCA\SouveraCentral\Command\LicensesSet</command>
         <command>OCA\SouveraCentral\Command\MailStorageSet</command>
         <command>OCA\SouveraCentral\Command\MailSignatureSieve</command>
+        <command>OCA\SouveraCentral\Command\SystemMailboxNormalize</command>
         <command>OCA\SouveraCentral\Command\StalwartStatus</command>
         <command>OCA\SouveraCentral\Command\MailboxList</command>
         <command>OCA\SouveraCentral\Command\MailboxGet</command>

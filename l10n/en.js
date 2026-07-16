@@ -338,7 +338,6 @@ OC.L10N.register(
     "Limit" : "Limit",
     "Shared" : "Shared",
     "Loading..." : "Loading...",
-    "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management." : "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management.",
     "Mail signature" : "Mail signature",
     "One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients." : "One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients.",
     "Enable global mail signature" : "Enable global mail signature",
@@ -347,6 +346,7 @@ OC.L10N.register(
     "Preview" : "Preview",
     "Enforce server-side for all SMTP clients (Stalwart)" : "Enforce server-side for all SMTP clients (Stalwart)",
     "Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6)." : "Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6).",
-    "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it." : "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it."
+    "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it." : "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it.",
+    "All Souvera user and shared mailboxes counted towards the pool. Internal system mailboxes (e.g. postmaster@) are excluded." : "All Souvera user and shared mailboxes counted towards the pool. Internal system mailboxes (e.g. postmaster@) are excluded."
 },
 "nplurals=2; plural=(n != 1);");

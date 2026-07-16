@@ -98,51 +98,57 @@ class StorageService {
     }
 
     /**
-     * Ermittelt in EINEM Durchlauf (User- + geteilte Postfächer):
-     *   - allocated: Summe der maxDiskQuota aller Postfächer mit konkretem Limit
+     * Aggregierte Pool-Kennzahlen:
+     *   - allocated: Summe der maxDiskQuota aller gezählten Postfächer
      *   - unlimited: Anzahl der Postfächer OHNE Limit (0 = unbegrenzt)
-     *
-     * Wichtig: Postfächer ohne Limit belegen real unbegrenzt Speicher, tragen aber
-     * 0 zur verteilten Menge bei. Bei aktivem Pool sind sie daher „nicht erfassbar"
-     * und werden separat als Warnung ausgewiesen (unlimited_count).
+     * Interne System-Postfächer sind ausgeschlossen (siehe getDistributionDetail).
      *
      * @return array{allocated:int, unlimited:int}
      */
     public function getDistribution(): array {
-        $allocated = 0;
-        $unlimited = 0;
-        foreach ($this->stalwart->listMailboxUsage() as $u) {
-            $q = (int) ($u['quota'] ?? 0);
-            if ($q > 0) {
-                $allocated += $q;
-            } else {
-                $unlimited++;
+        $d = $this->getDistributionDetail();
+        return ['allocated' => $d['allocated'], 'unlimited' => $d['unlimited']];
+    }
+
+    /** Prüft, ob eine Adresse ein internes System-Postfach ist (Local-Part-Vergleich). */
+    public static function isSystemMailbox(string $email, array $localParts): bool {
+        $email = strtolower(trim($email));
+        $at = strpos($email, '@');
+        $local = $at === false ? $email : substr($email, 0, $at);
+        foreach ($localParts as $p) {
+            if ($local === strtolower(trim((string) $p))) {
+                return true;
             }
         }
-        foreach ($this->stalwart->listSharedMailboxUsage() as $u) {
-            $q = (int) ($u['quota'] ?? 0);
-            if ($q > 0) {
-                $allocated += $q;
-            } else {
-                $unlimited++;
+        return false;
+    }
+
+    /** Entfernt interne System-Postfächer aus einer Usage-Map (email => …). */
+    private function filterSystemMailboxes(array $usage): array {
+        $parts = $this->config->getSystemMailboxLocalParts();
+        $out = [];
+        foreach ($usage as $email => $u) {
+            if (!self::isSystemMailbox((string) $email, $parts)) {
+                $out[$email] = $u;
             }
         }
-        return ['allocated' => $allocated, 'unlimited' => $unlimited];
+        return $out;
     }
 
     /**
      * Detaillierte Aufschlüsselung der Pool-Verteilung: JEDES gezählte Postfach
      * (User- + geteilte Postfächer) mit Adresse, Limit, Belegung und Typ.
-     * Macht transparent, WOHER die verteilte Menge kommt – insbesondere
-     * System-/Dienst-Postfächer wie postmaster@, die NICHT in der Nutzerliste
-     * erscheinen, aber dennoch Pool-Speicher belegen.
+     *
+     * Interne System-/Dienst-Postfächer (z. B. postmaster@, mailer-daemon@) werden
+     * BEWUSST AUSGESCHLOSSEN – sie gehören nicht dem Kunden, werden ihm nicht
+     * angezeigt und zählen NICHT in den Pool (siehe filterSystemMailboxes()).
      *
      * @return array{items: list<array{email:string,quota:int,used:int,type:string}>, allocated:int, unlimited:int}
      */
     public function getDistributionDetail(): array {
         return self::summarizeDistribution(
-            $this->stalwart->listMailboxUsage(),
-            $this->stalwart->listSharedMailboxUsage()
+            $this->filterSystemMailboxes($this->stalwart->listMailboxUsage()),
+            $this->filterSystemMailboxes($this->stalwart->listSharedMailboxUsage())
         );
     }
 

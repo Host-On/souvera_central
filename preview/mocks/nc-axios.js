@@ -33,14 +33,13 @@ const mailboxes = [
 ]
 
 // Mail-Speicher-Pool (Bytes): 100 GB gesamt, davon verteilt (User + geteilte Postfächer)
-const poolSummary = { max: 107374182400, allocated: 66571993088, available: 40802189312, pool_enabled: true, step_bytes: 1073741824, default_quota: 1073741824, unlimited_count: 2 }
+const poolSummary = { max: 107374182400, allocated: 12884901888, available: 94489280512, pool_enabled: true, step_bytes: 1073741824, default_quota: 1073741824, unlimited_count: 2 }
 
-// Detaillierte Verteilung (macht das versteckte 50-GB-Systempostfach postmaster@ sichtbar)
+// Detaillierte Verteilung – interne System-Postfächer (postmaster@) sind AUSGESCHLOSSEN
 const poolDistribution = {
-    allocated: 66571993088,
+    allocated: 12884901888,
     unlimited: 2,
     items: [
-        { email: 'postmaster@souvera.eu', quota: 53687091200, used: 1073741824, type: 'user' },
         { email: 'michael@souvera.eu', quota: 10737418240, used: 0, type: 'user' },
         { email: 'team@souvera.eu', quota: 2147483648, used: 536870912, type: 'shared' },
         { email: 'archive@souvera.eu', quota: 0, used: 0, type: 'shared' },

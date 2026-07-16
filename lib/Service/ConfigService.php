@@ -66,6 +66,37 @@ class ConfigService {
     }
 
     /**
+     * Lokale Teile (vor dem @) interner System-/Dienst-Postfächer. Diese werden
+     * dem Kunden NICHT angezeigt und zählen NICHT in den Mail-Speicher-Pool.
+     * Hoster-konfigurierbar via systemValue souvera_central.system_mailboxes
+     * (kommagetrennt). Default: postmaster, mailer-daemon.
+     *
+     * @return list<string> lowercase
+     */
+    public function getSystemMailboxLocalParts(): array {
+        $raw = (string) $this->config->getSystemValue('souvera_central.system_mailboxes', 'postmaster,mailer-daemon');
+        $parts = array_values(array_filter(array_map(static function ($p) {
+            return strtolower(trim($p));
+        }, explode(',', $raw)), static function ($p) {
+            return $p !== '';
+        }));
+        return $parts ?: ['postmaster', 'mailer-daemon'];
+    }
+
+    /**
+     * Zielgröße interner System-Postfächer (Bytes). Diese Postfächer brauchen
+     * nur wenig Platz (Default 1 GiB) und sind vom Pool ausgenommen.
+     */
+    public function getSystemMailboxQuota(): int {
+        $v = (int) $this->config->getSystemValue('souvera_central.system_mailbox_quota', StorageService::GIB);
+        return $v > 0 ? $v : StorageService::GIB;
+    }
+
+    public function setSystemMailboxQuota(int $bytes): void {
+        $this->config->setSystemValue('souvera_central.system_mailbox_quota', max(1, $bytes));
+    }
+
+    /**
      * Liste der erlaubten E-Mail-Domains
      *
      * @return array

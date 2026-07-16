@@ -338,7 +338,6 @@ OC.L10N.register(
     "Limit" : "Limit",
     "Shared" : "Geteilt",
     "Loading..." : "Lädt...",
-    "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management." : "Alle Postfächer, die zum Pool zählen – inklusive System-Postfächern (z. B. postmaster@), die nicht unter „Benutzerverwaltung\" gelistet sind.",
     "Mail signature" : "Mail-Signatur",
     "One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients." : "Eine globale Signatur, zentral verwaltet. Wird von Souvera Mail genutzt und optional serverseitig für alle SMTP-Clients erzwungen.",
     "Enable global mail signature" : "Globale Mail-Signatur aktivieren",
@@ -347,6 +346,7 @@ OC.L10N.register(
     "Preview" : "Vorschau",
     "Enforce server-side for all SMTP clients (Stalwart)" : "Serverseitig für alle SMTP-Clients erzwingen (Stalwart)",
     "Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6)." : "Serverseitig ist AN: Souvera Mail hängt die Signatur NICHT an (Stalwart fügt sie hinzu). Sieve-Script bereitstellen mit: occ souvera_central:mailsignature:sieve (benötigt Stalwart ≥ 0.16.6).",
-    "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it." : "Serverseitig ist AUS: nur Souvera Mail rendert die personalisierte Signatur; andere SMTP-Clients (Thunderbird, Outlook, mobil) erhalten sie nicht."
+    "Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it." : "Serverseitig ist AUS: nur Souvera Mail rendert die personalisierte Signatur; andere SMTP-Clients (Thunderbird, Outlook, mobil) erhalten sie nicht.",
+    "All Souvera user and shared mailboxes counted towards the pool. Internal system mailboxes (e.g. postmaster@) are excluded." : "Alle Souvera-User- und geteilten Postfächer, die zum Pool zählen. Interne System-Postfächer (z. B. postmaster@) sind ausgenommen."
 },
 "nplurals=2; plural=(n != 1);");

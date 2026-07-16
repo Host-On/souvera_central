@@ -168,7 +168,7 @@
                             </tbody>
                         </table>
                         <p class="pool-detail-hint">
-                            {{ t('souvera_central', 'All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management.') }}
+                            {{ t('souvera_central', 'All Souvera user and shared mailboxes counted towards the pool. Internal system mailboxes (e.g. postmaster@) are excluded.') }}
                         </p>
                     </div>
                 </div>
