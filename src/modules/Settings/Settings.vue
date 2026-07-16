@@ -306,6 +306,14 @@
                                 ? t('souvera_central', 'Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6).')
                                 : t('souvera_central', 'Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it.') }}
                         </p>
+                        <p
+                            v-if="signatureDeployMessage"
+                            class="signature-deploy-status"
+                            :class="'is-' + signatureDeployMessage.type"
+                            data-testid="signature-deploy-status"
+                        >
+                            {{ signatureDeployMessage.text }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -361,6 +369,7 @@ export default {
             distributionOpen: false,
             distributionLoading: false,
             distributionItems: [],
+            signatureDeploy: null,
             settings: {
                 email: {
                     send_to_new_users: false
@@ -420,6 +429,28 @@ export default {
                 '%domain%': 'grassegger.eu'
             }
             return tpl.replace(/%name%|%email%|%first_name%|%last_name%|%domain%/g, (m) => sample[m] || m)
+        },
+
+        // Menschlich lesbarer Status des serverseitigen Signatur-Deployments (nach dem Speichern)
+        signatureDeployMessage() {
+            const d = this.signatureDeploy
+            if (!d) return null
+            if (d.error === 'stalwart_unavailable') {
+                return { type: 'warn', text: this.t('souvera_central', 'Could not reach Stalwart — the server-side signature was not deployed yet.') }
+            }
+            if (d.error) {
+                return { type: 'error', text: this.t('souvera_central', 'Server-side signature deployment failed: {error}').replace('{error}', String(d.error)) }
+            }
+            if (d.action === 'remove' && d.ok) {
+                return { type: 'ok', text: this.t('souvera_central', 'Server-side signature removed from Stalwart.') }
+            }
+            if (d.action === 'deploy' && d.deployed && d.wired) {
+                return { type: 'ok', text: this.t('souvera_central', 'Signature deployed to Stalwart and active for all SMTP clients.') }
+            }
+            if (d.action === 'deploy' && d.deployed && !d.wired && d.existing_script) {
+                return { type: 'warn', text: this.t('souvera_central', 'Signature script deployed, but the SMTP DATA stage already runs another script ("{script}"). Please include it manually.').replace('{script}', String(d.existing_script)) }
+            }
+            return null
         }
     },
 
@@ -529,7 +560,12 @@ export default {
                 this.saveSuccess = false
 
                 const url = generateUrl('/apps/souvera_central/api/settings')
-                await axios.put(url, this.settings)
+                const response = await axios.put(url, this.settings)
+
+                // Serverseitiges Signatur-Deployment-Ergebnis (falls Stalwart-Sync lief)
+                this.signatureDeploy = (response && response.data && response.data.signature_deploy)
+                    ? response.data.signature_deploy
+                    : null
 
                 // Success-Feedback anzeigen
                 this.saveSuccess = true
@@ -1129,6 +1165,29 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.signature-deploy-status {
+    margin: 8px 0 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+}
+.signature-deploy-status.is-ok {
+    background: rgba(var(--color-success-rgb), 0.1);
+    border-left-color: var(--color-success);
+    color: var(--color-main-text);
+}
+.signature-deploy-status.is-warn {
+    background: rgba(var(--color-warning-rgb), 0.12);
+    border-left-color: var(--color-warning);
+    color: var(--color-main-text);
+}
+.signature-deploy-status.is-error {
+    background: rgba(var(--color-error-rgb), 0.1);
+    border-left-color: var(--color-error);
+    color: var(--color-main-text);
 }
 
 .signature-textarea {

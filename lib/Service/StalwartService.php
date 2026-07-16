@@ -26,6 +26,9 @@ class StalwartService {
     private const CAP_CORE = 'urn:ietf:params:jmap:core';
     private const CAP_STALWART = 'urn:stalwart:jmap';
 
+    /** Name des Stalwart-System-Sieve-Scripts für die globale Mail-Signatur. */
+    public const SIGNATURE_SCRIPT_NAME = 'souvera-signature';
+
     private ConfigService $configService;
     private LoggerInterface $logger;
 
@@ -721,6 +724,224 @@ class StalwartService {
      */
     public function getLastError(): ?array {
         return $this->lastError;
+    }
+
+    // ============================================================================
+    // Sieve-System-Script (globale Mail-Signatur, serverseitig)
+    // ============================================================================
+
+    /**
+     * ID des System-Sieve-Scripts mit dem angegebenen Namen (oder null).
+     */
+    public function findSieveSystemScriptId(string $name): ?string {
+        $resp = $this->jmapSingle('x:SieveSystemScript/query', ['filter' => ['name' => $name]]);
+        $id = $resp['ids'][0] ?? null;
+        return $id !== null ? (string) $id : null;
+    }
+
+    /**
+     * Globale Signatur als Stalwart-System-Sieve-Script deployen (idempotent:
+     * create ODER update, isActive=true) und – sofern gefahrlos möglich – in die
+     * SMTP-DATA-Stage einhängen. Ein dort bereits eingetragenes FREMDES Script
+     * wird NICHT überschrieben (existing_script gesetzt, wired=false).
+     *
+     * @return array{deployed:bool, wired:bool, script_id:?string, existing_script:?string, error:?string}
+     */
+    public function deploySignatureScript(string $contents, ?string $description = null): array {
+        $result = ['deployed' => false, 'wired' => false, 'script_id' => null, 'existing_script' => null, 'error' => null];
+
+        $object = [
+            'name' => self::SIGNATURE_SCRIPT_NAME,
+            'contents' => $contents,
+            'isActive' => true,
+        ];
+        if ($description !== null && $description !== '') {
+            $object['description'] = $description;
+        }
+
+        $scriptId = $this->findSieveSystemScriptId(self::SIGNATURE_SCRIPT_NAME);
+        if ($scriptId === null) {
+            $resp = $this->jmapSingle('x:SieveSystemScript/set', ['create' => ['nc0' => $object]]);
+            $created = $resp['created']['nc0'] ?? null;
+            if (!is_array($created)) {
+                $this->lastError = ['stage' => 'sieve:create', 'notCreated' => $resp['notCreated'] ?? null];
+                $result['error'] = 'Sieve-System-Script konnte nicht angelegt werden.';
+                return $result;
+            }
+            $scriptId = isset($created['id']) ? (string) $created['id'] : null;
+        } else {
+            $resp = $this->jmapSingle('x:SieveSystemScript/set', ['update' => [$scriptId => $object]]);
+            if ($resp === null || !array_key_exists($scriptId, $resp['updated'] ?? [])) {
+                $this->lastError = ['stage' => 'sieve:update', 'notUpdated' => $resp['notUpdated'] ?? null];
+                $result['error'] = 'Sieve-System-Script konnte nicht aktualisiert werden.';
+                return $result;
+            }
+        }
+
+        $result['deployed'] = true;
+        $result['script_id'] = $scriptId;
+        $this->logger->info('StalwartService: Signatur-Sieve-Script deployed', ['id' => $scriptId]);
+
+        $wire = $this->wireDataStageScript(self::SIGNATURE_SCRIPT_NAME);
+        $result['wired'] = $wire['wired'];
+        $result['existing_script'] = $wire['existing_script'];
+        return $result;
+    }
+
+    /**
+     * Entfernt das Signatur-Sieve-Script wieder: hängt es aus der DATA-Stage aus
+     * (nur wenn DORT unser Script steht) und löscht das Script-Objekt (idempotent).
+     *
+     * @return array{removed:bool, unwired:bool, existing_script:?string, error:?string}
+     */
+    public function removeSignatureScript(): array {
+        $result = ['removed' => false, 'unwired' => false, 'existing_script' => null, 'error' => null];
+
+        $unwire = $this->unwireDataStageScript(self::SIGNATURE_SCRIPT_NAME);
+        $result['unwired'] = $unwire['unwired'];
+        $result['existing_script'] = $unwire['existing_script'];
+
+        $scriptId = $this->findSieveSystemScriptId(self::SIGNATURE_SCRIPT_NAME);
+        if ($scriptId === null) {
+            $result['removed'] = true; // bereits weg
+            return $result;
+        }
+
+        $resp = $this->jmapSingle('x:SieveSystemScript/set', ['destroy' => [$scriptId]]);
+        if ($resp === null) {
+            $this->lastError = ['stage' => 'sieve:destroy'];
+            $result['error'] = 'Sieve-System-Script konnte nicht gelöscht werden.';
+            return $result;
+        }
+        $result['removed'] = in_array($scriptId, $resp['destroyed'] ?? [], true);
+        if ($result['removed']) {
+            $this->logger->info('StalwartService: Signatur-Sieve-Script entfernt', ['id' => $scriptId]);
+        }
+        return $result;
+    }
+
+    /**
+     * Status des serverseitigen Signatur-Deployments (für Report/Diagnose).
+     *
+     * @return array{deployed:bool, active:bool, wired:bool, data_stage_script:?string}
+     */
+    public function getSignatureDeploymentStatus(): array {
+        $status = ['deployed' => false, 'active' => false, 'wired' => false, 'data_stage_script' => null];
+
+        $id = $this->findSieveSystemScriptId(self::SIGNATURE_SCRIPT_NAME);
+        if ($id !== null) {
+            $status['deployed'] = true;
+            $got = $this->jmapSingle('x:SieveSystemScript/get', ['ids' => [$id]]);
+            $obj = $got['list'][0] ?? null;
+            if (is_array($obj)) {
+                $status['active'] = (bool) ($obj['isActive'] ?? false);
+            }
+        }
+
+        $current = $this->currentDataStageScript();
+        $status['data_stage_script'] = $current;
+        $status['wired'] = $current === self::SIGNATURE_SCRIPT_NAME;
+        return $status;
+    }
+
+    /**
+     * Aktuell in der SMTP-DATA-Stage referenziertes Script (Name) oder null.
+     * Liefert '__complex__' bei bedingtem/variablem Ausdruck.
+     */
+    public function currentDataStageScript(): ?string {
+        $obj = $this->getDataStageSingleton();
+        if ($obj === null) {
+            return null;
+        }
+        return $this->scriptExpressionName($obj['script'] ?? null);
+    }
+
+    /** DATA-Stage-Singleton laden (inkl. id). */
+    private function getDataStageSingleton(): ?array {
+        $resp = $this->jmapSingle('x:MtaStageData/get', ['ids' => null]);
+        $obj = $resp['list'][0] ?? null;
+        return is_array($obj) ? $obj : null;
+    }
+
+    /**
+     * Hängt das Script in die DATA-Stage ein – aber NUR, wenn dort nichts bzw.
+     * bereits unser Script steht. Ein fremdes/komplexes Script bleibt unangetastet.
+     *
+     * @return array{wired:bool, existing_script:?string}
+     */
+    private function wireDataStageScript(string $scriptName): array {
+        $obj = $this->getDataStageSingleton();
+        if ($obj === null || !isset($obj['id'])) {
+            return ['wired' => false, 'existing_script' => '__unknown__'];
+        }
+        $current = $this->scriptExpressionName($obj['script'] ?? null);
+        if ($current !== null && $current !== $scriptName) {
+            return ['wired' => false, 'existing_script' => $current];
+        }
+        $id = (string) $obj['id'];
+        $resp = $this->jmapSingle('x:MtaStageData/set', [
+            'update' => [$id => ['script' => (object) ['else' => "'" . $scriptName . "'"]]],
+        ]);
+        $ok = $resp !== null && array_key_exists($id, $resp['updated'] ?? []);
+        return ['wired' => $ok, 'existing_script' => null];
+    }
+
+    /**
+     * Entfernt unser Script aus der DATA-Stage (Ausdruck -> false). Steht dort
+     * ein fremdes Script, bleibt es unangetastet.
+     *
+     * @return array{unwired:bool, existing_script:?string}
+     */
+    private function unwireDataStageScript(string $scriptName): array {
+        $obj = $this->getDataStageSingleton();
+        if ($obj === null || !isset($obj['id'])) {
+            return ['unwired' => false, 'existing_script' => '__unknown__'];
+        }
+        $current = $this->scriptExpressionName($obj['script'] ?? null);
+        if ($current !== $scriptName) {
+            return ['unwired' => false, 'existing_script' => $current];
+        }
+        $id = (string) $obj['id'];
+        $resp = $this->jmapSingle('x:MtaStageData/set', [
+            'update' => [$id => ['script' => (object) ['else' => 'false']]],
+        ]);
+        $ok = $resp !== null && array_key_exists($id, $resp['updated'] ?? []);
+        return ['unwired' => $ok, 'existing_script' => null];
+    }
+
+    /**
+     * Extrahiert aus einem Stalwart-Expression-Wert den referenzierten Script-Namen.
+     *   {else:"'name'"} / "'name'"  -> "name"
+     *   {else:"false"} / "" / null  -> null (kein Script)
+     *   match[...] / Variablen       -> "__complex__"
+     */
+    private function scriptExpressionName(mixed $expr): ?string {
+        $else = null;
+        if (is_string($expr)) {
+            $else = $expr;
+        } elseif (is_array($expr)) {
+            if (!empty($expr['match'])) {
+                return '__complex__';
+            }
+            $else = $expr['else'] ?? null;
+        } elseif (is_object($expr)) {
+            $arr = (array) $expr;
+            if (!empty($arr['match'])) {
+                return '__complex__';
+            }
+            $else = $arr['else'] ?? null;
+        }
+        if (!is_string($else)) {
+            return null;
+        }
+        $else = trim($else);
+        if ($else === '' || $else === 'false') {
+            return null;
+        }
+        if (preg_match("/^'([^']+)'$/", $else, $m)) {
+            return $m[1];
+        }
+        return '__complex__';
     }
 
     // ============================================================================

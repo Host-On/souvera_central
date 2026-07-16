@@ -112,7 +112,7 @@ function respond(url) {
         return { data: { signature_enabled: true, signature_template: '<p>%first_name% %last_name%<br>%email%</p>', signature_format: 'html', server_side: false, variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'] } }
     }
     if (url.includes('/api/settings')) {
-        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 }, signature: { enabled: true, template: '<p>%first_name% %last_name%<br>%email%</p>', server_side: false, variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'] } } }
+        return { data: { visibility: { manager: true, groups: true, storage_location: false, last_login: true, email: true, backend: false }, sorting: { groups: 'displayName' }, email: { send_to_new_users: false }, defaults: { quota: 'default' }, shield: { desktop_notifications: true, daily_summary: true, min_spam_score: 2.5 }, signature: { enabled: true, template: '<p>%first_name% %last_name%<br>%email%</p>', server_side: false, variables: ['%name%', '%email%', '%first_name%', '%last_name%', '%domain%'] }, signature_deploy: { action: 'deploy', ok: true, deployed: true, wired: true, removed: false, existing_script: null, error: null } } }
     }
     return { data: {} }
 }

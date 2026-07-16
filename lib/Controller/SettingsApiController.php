@@ -12,6 +12,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\MailSignatureDeployService;
 use OCP\IRequest;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
@@ -24,7 +25,8 @@ class SettingsApiController extends OCSController {
         string $appName,
         IRequest $request,
         IConfig $config,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        private MailSignatureDeployService $signatureDeploy,
     ) {
         parent::__construct($appName, $request);
         $this->config = $config;
@@ -173,6 +175,7 @@ class SettingsApiController extends OCSController {
 
             // Globale Mail-Signatur (EINE Vorlage; wird von souvera_mail und optional
             // serverseitig via Stalwart Sieve verwendet)
+            $signatureDeploy = null;
             if ($signature !== null) {
                 if (isset($signature['enabled'])) {
                     $this->config->setAppValue('souvera_central', 'settings.mail_signature.enabled', $signature['enabled'] ? '1' : '0');
@@ -183,10 +186,28 @@ class SettingsApiController extends OCSController {
                 if (isset($signature['server_side'])) {
                     $this->config->setAppValue('souvera_central', 'settings.mail_signature.server_side', $signature['server_side'] ? '1' : '0');
                 }
+
+                // Serverseitige Signatur automatisch mit Stalwart abgleichen (deploy/remove).
+                // Nicht blockierend: Fehler werden geloggt + im Response gemeldet, sperren
+                // aber nicht das Speichern der Einstellungen.
+                try {
+                    $signatureDeploy = $this->signatureDeploy->sync();
+                } catch (\Throwable $e) {
+                    $this->logger->error('SettingsApiController: Signatur-Deployment fehlgeschlagen', ['exception' => $e->getMessage()]);
+                    $signatureDeploy = ['action' => 'sync', 'ok' => false, 'error' => $e->getMessage()];
+                }
             }
 
-            // Aktualisierte Einstellungen zurückgeben
-            return $this->getSettings();
+            // Aktualisierte Einstellungen (+ optionalen Deploy-Status) zurückgeben
+            $response = $this->getSettings();
+            if ($signatureDeploy !== null) {
+                $data = $response->getData();
+                if (is_array($data)) {
+                    $data['signature_deploy'] = $signatureDeploy;
+                    $response->setData($data);
+                }
+            }
+            return $response;
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
