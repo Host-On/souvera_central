@@ -947,6 +947,23 @@ class UserApiController extends OCSController {
     }
 
     /**
+     * Detaillierte Aufschlüsselung der Pool-Verteilung (jedes gezählte Postfach).
+     * Macht transparent, warum „verteilt" höher sein kann als die sichtbaren
+     * Nutzer-Postfächer (z. B. System-Postfach postmaster@).
+     */
+    #[NoAdminRequired]
+    public function getMailStorageDistribution(): DataResponse {
+        try {
+            return new DataResponse($this->storageService->getDistributionDetail());
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
      * Debug-Endpoint für Troubleshooting
      */
     #[NoAdminRequired]

@@ -329,7 +329,15 @@
         "{count} mailbox(es) without a limit (\"Unlimited\") – these cannot be accounted for in the pool and may exceed it.": "{count} mailbox(es) without a limit (\"Unlimited\") – these cannot be accounted for in the pool and may exceed it.",
         "{created} created · {skipped} skipped · {noMail} without mail · {errors} errors": "{created} created · {skipped} skipped · {noMail} without mail · {errors} errors",
         "Changeable only via the command line: occ souvera_central:mailstorage:set 100G": "Changeable only via the command line: occ souvera_central:mailstorage:set 100G",
-        "Overview of your Souvera Central installation": "Overview of your Souvera Central installation"
+        "Overview of your Souvera Central installation": "Overview of your Souvera Central installation",
+        "Show distribution": "Show distribution",
+        "Hide distribution": "Hide distribution",
+        "Mailbox": "Mailbox",
+        "Used": "Used",
+        "Limit": "Limit",
+        "Shared": "Shared",
+        "Loading...": "Loading...",
+        "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management.": "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management."
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

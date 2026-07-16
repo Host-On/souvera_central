@@ -131,6 +131,56 @@ class StorageService {
     }
 
     /**
+     * Detaillierte Aufschlüsselung der Pool-Verteilung: JEDES gezählte Postfach
+     * (User- + geteilte Postfächer) mit Adresse, Limit, Belegung und Typ.
+     * Macht transparent, WOHER die verteilte Menge kommt – insbesondere
+     * System-/Dienst-Postfächer wie postmaster@, die NICHT in der Nutzerliste
+     * erscheinen, aber dennoch Pool-Speicher belegen.
+     *
+     * @return array{items: list<array{email:string,quota:int,used:int,type:string}>, allocated:int, unlimited:int}
+     */
+    public function getDistributionDetail(): array {
+        return self::summarizeDistribution(
+            $this->stalwart->listMailboxUsage(),
+            $this->stalwart->listSharedMailboxUsage()
+        );
+    }
+
+    /**
+     * Reine Logik (unit-testbar): baut die Aufschlüsselung aus roher Nutzung.
+     * Sortiert absteigend nach Limit. Konsistent mit getDistribution().
+     *
+     * @param array<string,array{used?:int,quota?:int}> $userUsage
+     * @param array<string,array{used?:int,quota?:int}> $sharedUsage
+     * @return array{items: list<array{email:string,quota:int,used:int,type:string}>, allocated:int, unlimited:int}
+     */
+    public static function summarizeDistribution(array $userUsage, array $sharedUsage): array {
+        $items = [];
+        $allocated = 0;
+        $unlimited = 0;
+        foreach ([['user', $userUsage], ['shared', $sharedUsage]] as [$type, $list]) {
+            foreach ($list as $email => $u) {
+                $q = max(0, (int) ($u['quota'] ?? 0));
+                $items[] = [
+                    'email' => (string) $email,
+                    'quota' => $q,
+                    'used' => max(0, (int) ($u['used'] ?? 0)),
+                    'type' => $type,
+                ];
+                if ($q > 0) {
+                    $allocated += $q;
+                } else {
+                    $unlimited++;
+                }
+            }
+        }
+        usort($items, static function (array $a, array $b): int {
+            return $b['quota'] <=> $a['quota'] ?: strcmp($a['email'], $b['email']);
+        });
+        return ['items' => $items, 'allocated' => $allocated, 'unlimited' => $unlimited];
+    }
+
+    /**
      * Aktuell verteilte Gesamtmenge = Summe der maxDiskQuota aller
      * User-Postfächer + aller geteilten Postfächer (Group-Konten).
      * Postfächer ohne Limit (0 = unbegrenzt) zählen mit 0.

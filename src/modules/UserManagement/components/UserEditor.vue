@@ -718,14 +718,15 @@ export default {
             } catch (error) {
                 this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 }
             } finally {
-                // Postfach-Limit-Feld aus dem Default vorbelegen
+                // Postfach-Limit-Feld vorbelegen – NIE still auf „Unbegrenzt" defaulten.
+                // „Unbegrenzt" muss der Admin bewusst aktivieren (nur wenn kein Pool aktiv).
                 const def = this.mailStorage.default_quota || 0
                 if (this.mailStorage.pool_enabled) {
                     this.mailboxUnlimited = false
                     this.mailboxQuotaGB = Math.max(1, Math.round((def || this.GiB) / this.GiB))
                 } else {
-                    this.mailboxUnlimited = def <= 0
-                    this.mailboxQuotaGB = def > 0 ? Math.max(1, Math.round(def / this.GiB)) : 1
+                    this.mailboxUnlimited = false
+                    this.mailboxQuotaGB = def > 0 ? Math.max(1, Math.round(def / this.GiB)) : 10
                 }
             }
         },

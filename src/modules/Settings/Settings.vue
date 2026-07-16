@@ -130,6 +130,47 @@
                         <AlertCircleOutline :size="16" />
                         {{ t('souvera_central', '{count} mailbox(es) without a limit ("Unlimited") – these cannot be accounted for in the pool and may exceed it.', { count: mailStorage.unlimited_count }) }}
                     </p>
+
+                    <button
+                        type="button"
+                        class="pool-detail-toggle"
+                        data-testid="mail-storage-detail-toggle"
+                        @click="toggleDistribution"
+                    >
+                        {{ distributionOpen ? t('souvera_central', 'Hide distribution') : t('souvera_central', 'Show distribution') }}
+                    </button>
+                    <div v-if="distributionOpen" class="pool-detail" data-testid="mail-storage-distribution">
+                        <p v-if="distributionLoading" class="pool-detail-loading">{{ t('souvera_central', 'Loading...') }}</p>
+                        <table v-else class="pool-detail-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('souvera_central', 'Mailbox') }}</th>
+                                    <th>{{ t('souvera_central', 'Type') }}</th>
+                                    <th class="num">{{ t('souvera_central', 'Used') }}</th>
+                                    <th class="num">{{ t('souvera_central', 'Limit') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="item in distributionItems"
+                                    :key="item.email"
+                                    data-testid="mail-storage-dist-row"
+                                >
+                                    <td class="mono">{{ item.email }}</td>
+                                    <td>
+                                        <span class="dist-badge" :class="item.type">
+                                            {{ item.type === 'shared' ? t('souvera_central', 'Shared') : t('souvera_central', 'User') }}
+                                        </span>
+                                    </td>
+                                    <td class="num">{{ formatBytes(item.used) }}</td>
+                                    <td class="num">{{ item.quota > 0 ? formatBytes(item.quota) : t('souvera_central', 'Unlimited') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="pool-detail-hint">
+                            {{ t('souvera_central', 'All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management.') }}
+                        </p>
+                    </div>
                 </div>
                 <div v-else class="settings-group">
                     <p class="pool-empty" data-testid="mail-storage-empty">
@@ -249,6 +290,9 @@ export default {
             saveSuccess: false,
             customQuota: '',
             mailStorage: { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 },
+            distributionOpen: false,
+            distributionLoading: false,
+            distributionItems: [],
             settings: {
                 email: {
                     send_to_new_users: false
@@ -313,6 +357,27 @@ export default {
                 }
             } catch (error) {
                 this.mailStorage = { max: 0, allocated: 0, available: 0, pool_enabled: false, step_bytes: 1073741824, default_quota: 0, unlimited_count: 0 }
+            }
+        },
+
+        async toggleDistribution() {
+            this.distributionOpen = !this.distributionOpen
+            if (this.distributionOpen && this.distributionItems.length === 0) {
+                await this.loadDistribution()
+            }
+        },
+
+        async loadDistribution() {
+            this.distributionLoading = true
+            try {
+                const url = generateUrl('/apps/souvera_central/api/mail-storage/distribution')
+                const response = await axios.get(url)
+                const data = response.data.ocs?.data || response.data.data || response.data || {}
+                this.distributionItems = Array.isArray(data.items) ? data.items : []
+            } catch (error) {
+                this.distributionItems = []
+            } finally {
+                this.distributionLoading = false
             }
         },
 
@@ -864,6 +929,95 @@ export default {
     flex: 0 0 auto;
     margin-top: 1px;
     color: var(--color-warning, #e9a13b);
+}
+
+.pool-detail-toggle {
+    margin-top: 12px;
+    background: transparent;
+    border: none;
+    padding: 4px 0;
+    color: var(--color-primary-element);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.pool-detail-toggle:hover {
+    opacity: 0.8;
+}
+
+.pool-detail {
+    margin-top: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pool-detail-loading {
+    margin: 0;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+}
+
+.pool-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pool-detail-table th,
+.pool-detail-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.pool-detail-table th {
+    background: var(--color-background-dark);
+    font-weight: 600;
+    color: var(--color-text-maxcontrast);
+}
+
+.pool-detail-table tr:last-child td {
+    border-bottom: none;
+}
+
+.pool-detail-table .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.pool-detail-table .mono {
+    font-family: var(--font-face-monospace, monospace);
+    word-break: break-all;
+}
+
+.dist-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--color-primary-element-light, rgba(0, 130, 201, 0.12));
+    color: var(--color-primary-element);
+}
+
+.dist-badge.shared {
+    background: color-mix(in srgb, var(--color-success, #46ba61) 16%, transparent);
+    color: var(--color-success, #2d7d3f);
+}
+
+.pool-detail-hint {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--color-text-maxcontrast);
+    background: var(--color-background-hover);
 }
 
 /* Save Indicator */

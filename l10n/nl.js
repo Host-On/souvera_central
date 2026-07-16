@@ -330,6 +330,14 @@ OC.L10N.register(
     "{count} mailbox(es) without a limit (\"Unlimited\") – these cannot be accounted for in the pool and may exceed it." : "{count} mailbox(en) zonder limiet (\"Onbeperkt\") – deze kunnen niet in de pool worden meegeteld en kunnen deze overschrijden.",
     "{created} created · {skipped} skipped · {noMail} without mail · {errors} errors" : "{created} aangemaakt · {skipped} overgeslagen · {noMail} zonder mail · {errors} fouten",
     "Changeable only via the command line: occ souvera_central:mailstorage:set 100G" : "Alleen wijzigbaar via de opdrachtregel: occ souvera_central:mailstorage:set 100G",
-    "Overview of your Souvera Central installation" : "Overzicht van je Souvera Central-installatie"
+    "Overview of your Souvera Central installation" : "Overzicht van je Souvera Central-installatie",
+    "Show distribution" : "Verdeling tonen",
+    "Hide distribution" : "Verdeling verbergen",
+    "Mailbox" : "Mailbox",
+    "Used" : "Gebruikt",
+    "Limit" : "Limiet",
+    "Shared" : "Gedeeld",
+    "Loading..." : "Laden...",
+    "All mailboxes counted towards the pool, including system mailboxes (e.g. postmaster@) that are not listed under User management." : "Alle mailboxen die meetellen voor de pool, inclusief systeemmailboxen (bijv. postmaster@) die niet onder Gebruikersbeheer worden vermeld."
 },
 "nplurals=2; plural=(n != 1);");

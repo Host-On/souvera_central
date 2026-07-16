@@ -52,6 +52,7 @@ return [
 
         // Mail-Speicher-Pool (Gesamt/verteilt/verfügbar)
         ['name' => 'user_api#getMailStorage', 'url' => '/api/mail-storage', 'verb' => 'GET'],
+        ['name' => 'user_api#getMailStorageDistribution', 'url' => '/api/mail-storage/distribution', 'verb' => 'GET'],
 
         // Settings API-Routen
         ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
