@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.39.0</version>
+    <version>0.40.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -75,6 +75,10 @@
         <command>OCA\SouveraCentral\Command\PostmasterPasswordShow</command>
         <command>OCA\SouveraCentral\Command\PostmasterPasswordDelete</command>
         <command>OCA\SouveraCentral\Command\HelpCacheClear</command>
+        <command>OCA\SouveraCentral\Command\ExternalEnable</command>
+        <command>OCA\SouveraCentral\Command\ExternalDisable</command>
+        <command>OCA\SouveraCentral\Command\ExternalStatus</command>
+        <command>OCA\SouveraCentral\Command\ExternalConfigure</command>
     </commands>
 
     <!--
