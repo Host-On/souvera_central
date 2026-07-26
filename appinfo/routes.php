@@ -97,4 +97,4 @@ return [
         ['name' => 'help_api#page', 'url' => '/api/help/pages/{id}', 'verb' => 'GET'],
         ['name' => 'status#devops', 'url' => '/api/status/devops', 'verb' => 'GET'],
     ],
-    [
+];
