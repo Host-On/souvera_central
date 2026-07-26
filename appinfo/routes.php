@@ -97,8 +97,3 @@ return [
         ['name' => 'help_api#page', 'url' => '/api/help/pages/{id}', 'verb' => 'GET'],
     ],
     [
-        'name' => 'webhook#update',
-        'url' => '/devops/update',
-        'verb' => 'POST',
-    ],
-];

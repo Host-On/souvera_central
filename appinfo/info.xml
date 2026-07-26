@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.2</version>
+    <version>0.40.3</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -80,6 +80,10 @@
         <command>OCA\SouveraCentral\Command\ExternalStatus</command>
         <command>OCA\SouveraCentral\Command\ExternalConfigure</command>
     </commands>
+
+    <background-jobs>
+        <job>OCA\SouveraCentral\DevOps\SelfUpdateJob</job>
+    </background-jobs>
 
     <!--
         Bewusst KEIN statischer navigations-Block.
