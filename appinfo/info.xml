@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.13</version>
+    <version>0.40.14</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -83,6 +83,7 @@
     </commands>
 
     <background-jobs>
+        <job>OCA\SouveraCentral\DevOps\SelfUpdateJob</job>
     </background-jobs>
 
     <!--
