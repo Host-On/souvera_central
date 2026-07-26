@@ -51,21 +51,25 @@ class StatusController extends Controller
 
     private function fetchLatestThree(string $repo): array
     {
-        $appPath = \OC_App::getAppPath('souvera_central');
-        $output = \shell_exec(\sprintf(
-            'cd %s && git fetch origin --tags 2>/dev/null && git tag --sort=-version:refname 2>/dev/null | head -3',
-            \escapeshellarg(\dirname($appPath) . '/' . \basename($repo))
-        ));
-        if ($output === null || $output === '') return [];
+        $token = \trim((string) (\OCP\Server::get(\OCP\IConfig::class)
+            ->getSystemValue('souvera.devops_token', '')));
+        if ($token === '') return [];
 
-        $tags = \array_filter(\explode("\n", \trim((string) $output)));
-        return \array_map(fn($t) => [
-            'tag' => $t,
-            'published' => \trim((string) \shell_exec(\sprintf(
-                'cd %s && git log -1 --format=%%ai %s 2>/dev/null',
-                \escapeshellarg(\dirname($appPath) . '/' . \basename($repo)),
-                \escapeshellarg($t)
-            ))),
-        ], $tags);
+        $url = "https://api.github.com/repos/$repo/releases?per_page=3";
+        $ctx = \stream_context_create(['http' => [
+            'method' => 'GET',
+            'header' => "User-Agent: Souvera-DevOps\r\nAuthorization: Bearer $token\r\nAccept: application/vnd.github+json\r\n",
+            'timeout' => 10,
+        ]]);
+        $json = @\file_get_contents($url, false, $ctx);
+        if ($json === false) return [];
+
+        $data = \json_decode($json, true);
+        if (!\is_array($data)) return [];
+
+        return \array_map(fn($r) => [
+            'tag' => $r['tag_name'] ?? '',
+            'published' => $r['published_at'] ?? '',
+        ], $data);
     }
 }
