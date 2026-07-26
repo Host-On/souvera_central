@@ -95,5 +95,6 @@ return [
         ['name' => 'help_api#tree', 'url' => '/api/help/tree', 'verb' => 'GET'],
         ['name' => 'help_api#book', 'url' => '/api/help/books/{id}', 'verb' => 'GET'],
         ['name' => 'help_api#page', 'url' => '/api/help/pages/{id}', 'verb' => 'GET'],
+        ['name' => 'status#devops', 'url' => '/api/status/devops', 'verb' => 'GET'],
     ],
     [
