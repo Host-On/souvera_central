@@ -51,18 +51,21 @@ class StatusController extends Controller
 
     private function fetchLatestThree(string $repo): array
     {
-        $json = \shell_exec(\sprintf(
-            'gh release list -R %s -L 3 --json tagName,publishedAt 2>/dev/null',
-            \escapeshellarg($repo)
+        $appPath = \OC_App::getAppPath('souvera_central');
+        $output = \shell_exec(\sprintf(
+            'cd %s && git fetch origin --tags 2>/dev/null && git tag --sort=-version:refname 2>/dev/null | head -3',
+            \escapeshellarg(\dirname($appPath) . '/' . \basename($repo))
         ));
-        if ($json === null || $json === '') return [];
+        if ($output === null || $output === '') return [];
 
-        $data = \json_decode($json, true);
-        if (!\is_array($data)) return [];
-
-        return \array_map(fn($r) => [
-            'tag' => $r['tagName'] ?? '',
-            'published' => $r['publishedAt'] ?? '',
-        ], $data);
+        $tags = \array_filter(\explode("\n", \trim((string) $output)));
+        return \array_map(fn($t) => [
+            'tag' => $t,
+            'published' => \trim((string) \shell_exec(\sprintf(
+                'cd %s && git log -1 --format=%%ai %s 2>/dev/null',
+                \escapeshellarg(\dirname($appPath) . '/' . \basename($repo)),
+                \escapeshellarg($t)
+            ))),
+        ], $tags);
     }
 }
