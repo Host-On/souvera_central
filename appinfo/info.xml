@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.4</version>
+    <version>0.40.5</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -79,6 +79,7 @@
         <command>OCA\SouveraCentral\Command\ExternalDisable</command>
         <command>OCA\SouveraCentral\Command\ExternalStatus</command>
         <command>OCA\SouveraCentral\Command\ExternalConfigure</command>
+		<command>OCA\SouveraCentral\Command\DevopsChannel</command>
     </commands>
 
     <background-jobs>
