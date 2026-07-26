@@ -51,23 +51,18 @@ class StatusController extends Controller
 
     private function fetchLatestThree(string $repo): array
     {
-        $url = "https://api.github.com/repos/$repo/releases?per_page=3";
-        $ctx = \stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'header' => "User-Agent: Souvera-DevOps\r\nAccept: application/vnd.github+json\r\n",
-                'timeout' => 10,
-            ],
-        ]);
-        $json = @\file_get_contents($url, false, $ctx);
-        if ($json === false) return [];
+        $json = \shell_exec(\sprintf(
+            'gh release list -R %s -L 3 --json tagName,publishedAt 2>/dev/null',
+            \escapeshellarg($repo)
+        ));
+        if ($json === null || $json === '') return [];
 
         $data = \json_decode($json, true);
         if (!\is_array($data)) return [];
 
         return \array_map(fn($r) => [
-            'tag' => $r['tag_name'] ?? '',
-            'published' => $r['published_at'] ?? '',
+            'tag' => $r['tagName'] ?? '',
+            'published' => $r['publishedAt'] ?? '',
         ], $data);
     }
 }
