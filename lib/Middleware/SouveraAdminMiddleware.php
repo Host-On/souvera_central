@@ -17,6 +17,7 @@ namespace OCA\SouveraCentral\Middleware;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Controller\MailSettingsApiController;
+use OCA\SouveraCentral\Controller\StatusController;
 use OCA\SouveraCentral\Exception\NotSouveraAdminException;
 use OCA\SouveraCentral\Service\PermissionService;
 use OCP\AppFramework\Controller;
@@ -42,6 +43,10 @@ class SouveraAdminMiddleware extends Middleware {
         // Read-only Mail-Einstellungen (globale Signatur) dürfen von JEDEM
         // angemeldeten Souvera-User (z. B. via souvera_mail) gelesen werden.
         if ($controller instanceof MailSettingsApiController) {
+            return;
+        }
+        // DevOps-Status ist öffentlich lesbar (kein Admin-Login nötig)
+        if ($controller instanceof StatusController) {
             return;
         }
         if ($this->permission->isSouveraAdmin()) {
