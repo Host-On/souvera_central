@@ -29,9 +29,16 @@ class SelfUpdateJob extends TimedJob
                 \OCP\Server::get(LoggerInterface::class)->info(
                     'souvera_central self-update: ' . json_encode($result)
                 );
+            } elseif (!empty($result['error'])) {
+                \OCP\Server::get(LoggerInterface::class)->warning(
+                    'souvera_central self-update error: ' . json_encode($result)
+                );
             }
         } catch (\Throwable $e) {
-            // Retry next cycle — never crash cron
+            \OCP\Server::get(LoggerInterface::class)->error(
+                'souvera_central self-update exception: ' . $e->getMessage(),
+                ['exception' => $e]
+            );
         }
     }
 }
