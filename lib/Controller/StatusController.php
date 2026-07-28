@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Controller;
 
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -14,8 +15,11 @@ use OCP\IRequest;
 
 class StatusController extends Controller
 {
-    public function __construct(IRequest $request, private IConfig $config)
-    {
+    public function __construct(
+        IRequest $request,
+        private IConfig $config,
+        private IAppManager $appManager,
+    ) {
         parent::__construct('souvera_central', $request);
     }
 
@@ -28,7 +32,7 @@ class StatusController extends Controller
         $result = [];
 
         foreach ($apps as $appId) {
-            $version = \OC_App::getAppVersion($appId);
+            $version = $this->appManager->getAppVersion($appId);
             $channel = trim((string) $this->config->getAppValue($appId, 'devops.channel', 'stable'));
             $lastCheck = (int) $this->config->getAppValue($appId, 'devops.last_check', '0');
 
