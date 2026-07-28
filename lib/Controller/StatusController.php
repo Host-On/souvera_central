@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IConfig;
 use OCP\IRequest;
@@ -16,10 +19,9 @@ class StatusController extends Controller
         parent::__construct('souvera_central', $request);
     }
 
-    /**
-     * @NoCSRFRequired
-     * @NoAdminRequired
-     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
     public function devops(): DataResponse
     {
         $apps = ['souvera_mail', 'souvera_central', 'souvera_shield'];
