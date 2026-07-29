@@ -62,6 +62,17 @@ class SettingsApiController extends OCSController {
                     'desktop_notifications' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.desktop_notifications', '0'),
                     'daily_summary' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0'),
                     'min_spam_score' => (float) $this->config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5'),
+                    'suspicious_login' => [
+                        'detection_enabled' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.detection_enabled', '1'),
+                        'grace_period_days' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.grace_period_days', '14'),
+                        'score_threshold' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.score_threshold', '20'),
+                        'notify_high_severity' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.notify_high_severity', '1'),
+                        'notify_critical_severity' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.notify_critical_severity', '1'),
+                        'retention_days' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.retention_days', '90'),
+                        'retention_resolved_days' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.retention_resolved_days', '30'),
+                        'auto_resolve_after_days' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.auto_resolve_after_days', '30'),
+                        'max_events_per_hour' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.max_events_per_hour', '10'),
+                    ],
                 ],
                 // Globale Mail-Signatur: EINE Vorlage, von souvera_mail via /api/mail-settings
                 // abgefragt; optional serverseitig via Stalwart Sieve erzwungen.
@@ -167,6 +178,44 @@ class SettingsApiController extends OCSController {
                         );
                     }
                     $this->config->setAppValue('souvera_central', 'settings.shield.min_spam_score', (string) $score);
+                }
+
+                // Suspicious Login Detection settings
+                if (isset($shield['suspicious_login']) && is_array($shield['suspicious_login'])) {
+                    $sl = $shield['suspicious_login'];
+                    if (isset($sl['detection_enabled'])) {
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.detection_enabled', $sl['detection_enabled'] ? '1' : '0');
+                    }
+                    if (isset($sl['grace_period_days'])) {
+                        $days = max(1, min(90, (int)$sl['grace_period_days']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.grace_period_days', (string)$days);
+                    }
+                    if (isset($sl['score_threshold'])) {
+                        $threshold = max(0, min(100, (int)$sl['score_threshold']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.score_threshold', (string)$threshold);
+                    }
+                    if (isset($sl['notify_high_severity'])) {
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.notify_high_severity', $sl['notify_high_severity'] ? '1' : '0');
+                    }
+                    if (isset($sl['notify_critical_severity'])) {
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.notify_critical_severity', $sl['notify_critical_severity'] ? '1' : '0');
+                    }
+                    if (isset($sl['retention_days'])) {
+                        $days = max(7, min(365, (int)$sl['retention_days']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.retention_days', (string)$days);
+                    }
+                    if (isset($sl['retention_resolved_days'])) {
+                        $days = max(1, min(365, (int)$sl['retention_resolved_days']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.retention_resolved_days', (string)$days);
+                    }
+                    if (isset($sl['auto_resolve_after_days'])) {
+                        $days = max(1, min(90, (int)$sl['auto_resolve_after_days']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.auto_resolve_after_days', (string)$days);
+                    }
+                    if (isset($sl['max_events_per_hour'])) {
+                        $max = max(1, min(100, (int)$sl['max_events_per_hour']));
+                        $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.max_events_per_hour', (string)$max);
+                    }
                 }
             }
 
