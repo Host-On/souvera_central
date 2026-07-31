@@ -59,6 +59,15 @@ class Application extends App implements IBootstrap {
     }
 
     public function boot(IBootContext $context): void {
+        // Self-update background jobs for all managed apps. Must run
+        // independently of any user session (cron executes without one).
+        // JobList::add() is idempotent per class+argument.
+        $context->injectFn(function (\OCP\BackgroundJob\IJobList $jobList): void {
+            foreach (['souvera_central', 'souvera_mail', 'souvera_shield'] as $appId) {
+                $jobList->add(\OCA\SouveraCentral\DevOps\SelfUpdateJob::class, ['app' => $appId]);
+            }
+        });
+
         $context->injectFn(function (
             IUserSession $userSession,
             INavigationManager $navigationManager,
