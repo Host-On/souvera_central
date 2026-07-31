@@ -82,6 +82,11 @@ class SettingsApiController extends OCSController {
                     'server_side' => (bool) $this->config->getAppValue('souvera_central', 'settings.mail_signature.server_side', '0'),
                     'variables' => ConfigService::SIGNATURE_VARIABLES,
                 ],
+                'archive' => [
+                    'enabled' => (bool) $this->config->getAppValue('souvera_central', 'archive.enabled', '0'),
+                    'retention_years' => (int) $this->config->getAppValue('souvera_central', 'archive.retention_years', '10'),
+                    'auto_delete' => (bool) $this->config->getAppValue('souvera_central', 'archive.auto_delete', '0'),
+                ],
             ];
 
             return new DataResponse($settings);
@@ -97,7 +102,7 @@ class SettingsApiController extends OCSController {
      * Einstellungen speichern
      */
     #[NoAdminRequired]
-    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null, array $signature = null): DataResponse {
+    public function updateSettings(array $visibility = null, array $sorting = null, array $email = null, array $defaults = null, array $shield = null, array $signature = null, array $archive = null): DataResponse {
         try {
             // Visibility Settings
             if ($visibility !== null) {
@@ -216,6 +221,20 @@ class SettingsApiController extends OCSController {
                         $max = max(1, min(100, (int)$sl['max_events_per_hour']));
                         $this->config->setAppValue('souvera_central', 'settings.shield.suspicious_login.max_events_per_hour', (string)$max);
                     }
+                }
+            }
+
+            // Archive Settings (§2.2 ARCHIVE_PLAN)
+            if ($archive !== null) {
+                if (isset($archive['enabled'])) {
+                    $this->config->setAppValue('souvera_central', 'archive.enabled', $archive['enabled'] ? '1' : '0');
+                }
+                if (isset($archive['retention_years'])) {
+                    $years = max(6, min(15, (int)$archive['retention_years']));
+                    $this->config->setAppValue('souvera_central', 'archive.retention_years', (string)$years);
+                }
+                if (isset($archive['auto_delete'])) {
+                    $this->config->setAppValue('souvera_central', 'archive.auto_delete', $archive['auto_delete'] ? '1' : '0');
                 }
             }
 

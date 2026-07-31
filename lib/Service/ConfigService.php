@@ -720,4 +720,35 @@ class ConfigService {
             ],
         ];
     }
+
+    /** @see ARCHIVE_PLAN §2.2a */
+    public function getArchiveEnabled(): bool
+    {
+        return $this->config->getAppValue('souvera_central', 'archive.enabled', '0') === '1';
+    }
+
+    public function getArchiveRetentionYears(): int
+    {
+        return (int) $this->config->getAppValue('souvera_central', 'archive.retention_years', '10');
+    }
+
+    public function getArchiveAutoDelete(): bool
+    {
+        return $this->config->getAppValue('souvera_central', 'archive.auto_delete', '0') === '1';
+    }
+
+    public function getArchiveS3Bucket(): ?string
+    {
+        return $this->getSystemValue('souvera_central.archive_s3_bucket', null);
+    }
+
+    public function getArchiveCmApiUrl(): ?string
+    {
+        return $this->getSystemValue('souvera_central.cm_api_url', null);
+    }
+
+    public function getArchiveCmApiKey(): ?string
+    {
+        return $this->getSystemValue('souvera_central.cm_api_key', null);
+    }
 }
