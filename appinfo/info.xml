@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.27</version>
+    <version>0.40.28</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -51,6 +51,7 @@
         <command>OCA\SouveraCentral\Command\QuotaDefault</command>
         <command>OCA\SouveraCentral\Command\SouveraReport</command>
         <command>OCA\SouveraCentral\Command\SouveraUsersCount</command>
+        <command>OCA\SouveraCentral\Command\SelfUpdate</command>
         <command>OCA\SouveraCentral\Command\LicensesSet</command>
         <command>OCA\SouveraCentral\Command\MailStorageSet</command>
         <command>OCA\SouveraCentral\Command\MailSignatureSieve</command>
