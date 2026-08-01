@@ -64,7 +64,10 @@ class ChangelogService
         }
 
         $payload = $this->fetchFromCloudManager($appId);
-        if ($payload === null) {
+        // Strict shape check: a malformed-but-valid JSON body (missing or
+        // non-array `entries`) must NOT be cached as "empty" — treat it
+        // like a fetch failure so the stale cache survives.
+        if ($payload === null || !isset($payload['entries']) || !is_array($payload['entries'])) {
             // Stale cache is better than nothing — network failures must
             // not break the viewer.
             if ($cached !== null) {

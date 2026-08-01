@@ -96,7 +96,7 @@ export default {
             apps: [],
             activeApp: 'souvera_mail',
             loading: true,
-            error: '',
+            error: ''
         }
     },
 
@@ -109,7 +109,7 @@ export default {
         },
         activeLabel() {
             return this.activeChangelog?.app_label ?? this.activeApp
-        },
+        }
     },
 
     mounted() {
@@ -117,6 +117,8 @@ export default {
     },
 
     methods: {
+        t,
+
         async load() {
             this.loading = true
             this.error = ''
@@ -133,8 +135,8 @@ export default {
 
         selectApp(appId) {
             this.activeApp = appId
-        },
-    },
+        }
+    }
 }
 </script>
 

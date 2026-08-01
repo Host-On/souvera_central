@@ -6,6 +6,12 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.38] — 2026-08-01 (Changelog-Viewer-Fixes)
+
+Render-Fix: Übersetzungsfunktion `t` im ViewModel exponiert (Reparatur des
+`_ctx.t`-Render-Fehlers); strikte Payload-Validierung — ungültige
+CloudManager-Antworten überschreiben den Stale-Cache nicht mehr.
+
 ## [0.40.37] — 2026-08-01 (Changelog-Viewer)
 
 Neue Seite `/apps/souvera_central/changelogs`: zeigt die Changelogs von
