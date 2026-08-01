@@ -113,7 +113,7 @@ export default {
 <style scoped>
 .changelog {
     padding: 24px;
-    max-width: 860px;
+    width: 100%;
 }
 
 .changelog-state {

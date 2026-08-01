@@ -6,6 +6,11 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.44] — 2026-08-01 (Changelog: volle Content-Breite)
+
+Der Changelog-Viewer nutzt die gesamte verfügbare Content-Breite (kein
+max-width mehr).
+
 ## [0.40.43] — 2026-08-01 (Release-Zusammenfassung: 2026-07-11 bis 2026-08-01)
 
 Alle Änderungen der letzten drei Wochen, gebündelt in der aktuellen Version.
