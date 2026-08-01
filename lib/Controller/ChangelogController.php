@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Controller;
 
 use OCA\SouveraCentral\Service\ChangelogService;
+use OCA\SouveraCentral\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
+use OCP\Util;
 
 /**
- * Public changelog viewer for the Souvera apps.
+ * Changelog viewer for the Souvera apps.
  *
- * GET /api/v1/changelogs/{appId} — no authentication required.
- * Sources are the per-repo CHANGELOG.md files on GitHub (public).
+ * The DATA is fetched from the public CloudManager endpoints
+ * (https://cm.host-on.network/api/v1/changelogs/{app}) — this controller
+ * only renders the viewer page and serves the normalized payload to its
+ * own frontend. Accessible to Souvera users AND Souvera admins (same
+ * gate as the help page).
  */
 class ChangelogController extends Controller
 {
@@ -24,20 +30,45 @@ class ChangelogController extends Controller
         string $appName,
         IRequest $request,
         private ChangelogService $changelogService,
+        private PermissionService $permission,
     ) {
         parent::__construct($appName, $request);
     }
 
-    #[PublicPage]
     #[NoCSRFRequired]
-    public function get(string $appId): JSONResponse
+    #[NoAdminRequired]
+    public function index(): TemplateResponse
     {
-        if (!$this->changelogService->isKnownApp($appId)) {
+        if (!$this->permission->canSeeHelp()) {
+            $response = new TemplateResponse(
+                'core',
+                '403',
+                ['message' => 'Kein Zugriff auf die Souvera-Changelogs.'],
+                TemplateResponse::RENDER_AS_GUEST
+            );
+            $response->setStatus(Http::STATUS_FORBIDDEN);
+            return $response;
+        }
+
+        Util::addScript($this->appName, $this->appName . '-changelog');
+        Util::addStyle($this->appName, 'main');
+
+        return new TemplateResponse($this->appName, 'changelog', []);
+    }
+
+    /**
+     * Internal JSON feed for the viewer frontend.
+     */
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
+    public function all(): JSONResponse
+    {
+        if (!$this->permission->canSeeHelp()) {
             return new JSONResponse(
-                ['error' => 'Unknown app', 'app_id' => $appId],
-                Http::STATUS_NOT_FOUND
+                ['message' => 'Kein Zugriff auf die Souvera-Changelogs.'],
+                Http::STATUS_FORBIDDEN
             );
         }
-        return new JSONResponse($this->changelogService->getChangelog($appId));
+        return new JSONResponse($this->changelogService->getAll());
     }
 }

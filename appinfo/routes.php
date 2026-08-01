@@ -92,9 +92,10 @@ return [
 
         // Hilfe-Seite (Souvera-User + Souvera-Admins) + BookStack-Doku-Proxy
         ['name' => 'status#devops', 'url' => '/api/status/devops', 'verb' => 'GET'],
-        // Öffentlicher Changelog-Viewer (kein Auth): CHANGELOG.md der
-        // verwalteten Apps als JSON.
-        ['name' => 'changelog#get', 'url' => '/api/v1/changelogs/{appId}', 'verb' => 'GET'],
+        // Changelog-Viewer: Seite + interner JSON-Feed (Daten kommen aus
+        // den öffentlichen CloudManager-Endpunkten, s. ChangelogService).
+        ['name' => 'changelog#index', 'url' => '/changelogs', 'verb' => 'GET'],
+        ['name' => 'changelog#all', 'url' => '/api/changelogs', 'verb' => 'GET'],
         ['name' => 'help#index', 'url' => '/help', 'verb' => 'GET'],
         ['name' => 'help_api#tree', 'url' => '/api/help/tree', 'verb' => 'GET'],
         ['name' => 'help_api#book', 'url' => '/api/help/books/{id}', 'verb' => 'GET'],

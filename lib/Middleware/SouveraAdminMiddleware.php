@@ -50,7 +50,8 @@ class SouveraAdminMiddleware extends Middleware {
         if ($controller instanceof StatusController) {
             return;
         }
-        // Changelog-Viewer ist öffentlich (kein Auth)
+        // Changelog-Viewer hat dieselbe gelockerte Prüfung wie die
+        // Hilfe-Seite (canSeeHelp) und prüft die Berechtigung selbst.
         if ($controller instanceof ChangelogController) {
             return;
         }

@@ -6,6 +6,16 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.37] — 2026-08-01 (Changelog-Viewer)
+
+Neue Seite `/apps/souvera_central/changelogs`: zeigt die Changelogs von
+Souvera Mail / Central / Shield. Die Daten kommen aus den ÖFFENTLICHEN
+CloudManager-Endpunkten (`https://cm.host-on.network/api/v1/changelogs/{app}`,
+kein Auth) — vermittelt über einen internen JSON-Feed (`/api/changelogs`,
+10-Minuten-Cache, Stale-Fallback). Base-URL per App-Config änderbar
+(`occ config:app:set souvera_central changelog_base_url --value …`).
+Zugriff wie die Hilfe-Seite (Souvera-User + Admins).
+
 ## [0.40.36] — 2026-08-01 (Changelog-Cache-Fix)
 
 Der Changelog-Cache nutzt die korrekte `ISimpleFolder`-Schnittstelle —

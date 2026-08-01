@@ -6,29 +6,32 @@ namespace OCA\SouveraCentral\Service;
 
 use OCP\Files\IAppData;
 use OCP\Files\NotFoundException;
-use OCP\Files\NotPermittedException;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
 /**
- * Public changelog API for the Souvera apps.
+ * Changelog viewer data source.
  *
- * Fetches the canonical `CHANGELOG.md` of each app repository (public
- * GitHub, main branch), parses the `## [X.Y.Z] — YYYY-MM-DD (Title)`
- * sections and serves them as JSON. Results are cached in appdata for
- * CACHE_TTL seconds; on fetch failure a stale cache is served as
- * fallback, otherwise an empty `entries` list.
+ * Fetches the changelogs of the Souvera apps from the PUBLIC CloudManager
+ * endpoints (no auth):
+ *   GET {base}/souvera_mail | souvera_central | souvera_shield
+ * Response shape (provided by CloudManager):
+ *   {"app_id": "...", "app_label": "...", "entries": [{version, date, title, body}]}
+ *
+ * Results are validated, normalized and cached in appdata for CACHE_TTL
+ * seconds; on fetch failure a stale cache is served as fallback, otherwise
+ * an empty `entries` list. The base URL is operator-configurable:
+ *   occ config:app:set souvera_central changelog_base_url --value https://...
  */
 class ChangelogService
 {
     private const CACHE_TTL = 600;
-    private const BRANCH = 'main';
 
     private const APPS = [
-        'souvera_mail' => ['repo' => 'PhiGi87/souvera_mail', 'label' => 'Souvera Mail'],
-        'souvera_central' => ['repo' => 'PhiGi87/souvera_central', 'label' => 'Souvera Central'],
-        'souvera_shield' => ['repo' => 'PhiGi87/souvera_shield', 'label' => 'Souvera Shield'],
+        'souvera_mail' => 'Souvera Mail',
+        'souvera_central' => 'Souvera Central',
+        'souvera_shield' => 'Souvera Shield',
     ];
 
     public function __construct(
@@ -45,6 +48,8 @@ class ChangelogService
     }
 
     /**
+     * Changelog for one app, served from the CloudManager endpoint.
+     *
      * @return array{app_id: string, app_label: string, entries: list<array{version: string, date: string, title: string, body: string}>}|null
      */
     public function getChangelog(string $appId): ?array
@@ -52,49 +57,77 @@ class ChangelogService
         if (!isset(self::APPS[$appId])) {
             return null;
         }
-        $spec = self::APPS[$appId];
 
         $cached = $this->readCache($appId);
         if ($cached !== null && $cached['ts'] > time() - self::CACHE_TTL) {
-            return $this->buildResponse($appId, $spec, $cached['entries']);
+            return $this->buildResponse($appId, $cached['entries']);
         }
 
-        $markdown = $this->fetchMarkdown($spec['repo']);
-        if ($markdown === null) {
+        $payload = $this->fetchFromCloudManager($appId);
+        if ($payload === null) {
             // Stale cache is better than nothing — network failures must
-            // not break the public endpoint.
+            // not break the viewer.
             if ($cached !== null) {
-                return $this->buildResponse($appId, $spec, $cached['entries']);
+                return $this->buildResponse($appId, $cached['entries']);
             }
-            $this->logger->warning('Changelog: fetch failed for ' . $appId);
-            return $this->buildResponse($appId, $spec, []);
+            $this->logger->warning('Changelog: CloudManager fetch failed for ' . $appId);
+            return $this->buildResponse($appId, []);
         }
 
-        $entries = $this->parseMarkdown($markdown);
+        $entries = $this->normalizeEntries($payload);
         $this->writeCache($appId, $entries);
-        return $this->buildResponse($appId, $spec, $entries);
+        return $this->buildResponse($appId, $entries);
     }
 
     /**
-     * @param array{repo: string, label: string} $spec
+     * Changelogs of all managed apps (viewer page payload).
+     *
+     * @return list<array{app_id: string, app_label: string, entries: list<array{version: string, date: string, title: string, body: string}>}>
+     */
+    public function getAll(): array
+    {
+        $result = [];
+        foreach (array_keys(self::APPS) as $appId) {
+            $changelog = $this->getChangelog($appId);
+            if ($changelog !== null) {
+                $result[] = $changelog;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * @param list<array{version: string, date: string, title: string, body: string}> $entries
      * @return array{app_id: string, app_label: string, entries: array}
      */
-    private function buildResponse(string $appId, array $spec, array $entries): array
+    private function buildResponse(string $appId, array $entries): array
     {
         return [
             'app_id' => $appId,
-            'app_label' => $spec['label'],
+            'app_label' => self::APPS[$appId],
             'entries' => $entries,
         ];
     }
 
-    private function fetchMarkdown(string $repo): ?string
+    private function getBaseUrl(): string
+    {
+        $configured = trim((string) $this->config->getAppValue(
+            'souvera_central',
+            'changelog_base_url',
+            'https://cm.host-on.network/api/v1/changelogs'
+        ));
+        return rtrim($configured, '/');
+    }
+
+    /**
+     * @return array{app_id: string, app_label: string, entries: array}|null
+     */
+    private function fetchFromCloudManager(string $appId): ?array
     {
         try {
             $client = $this->clientService->newClient();
             $response = $client->get(
-                'https://raw.githubusercontent.com/' . $repo . '/' . self::BRANCH . '/CHANGELOG.md',
+                $this->getBaseUrl() . '/' . $appId,
                 [
                     'timeout' => 10,
                     'connect_timeout' => 5,
@@ -102,74 +135,49 @@ class ChangelogService
                 ]
             );
             if ($response->getStatusCode() >= 400) {
-                $this->logger->warning('Changelog: HTTP ' . $response->getStatusCode() . ' for ' . $repo);
+                $this->logger->warning('Changelog: CloudManager HTTP ' . $response->getStatusCode() . ' for ' . $appId);
                 return null;
             }
-            $body = (string) $response->getBody();
-            return $body === '' ? null : $body;
+            $data = json_decode((string) $response->getBody(), true);
+            return is_array($data) ? $data : null;
         } catch (\Throwable $e) {
-            $this->logger->warning('Changelog: fetch threw for ' . $repo . ': ' . $e->getMessage());
+            $this->logger->warning('Changelog: CloudManager fetch threw for ' . $appId . ': ' . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * Parse the canonical changelog format:
-     *   ## [1.2.3] — 2026-08-01 (Short title)
-     *   <body lines until the next ## heading>
-     *
-     * Headings without a version/date pair (e.g. `## [Unreleased]`) act
-     * as section separators and do not produce an entry.
+     * Validate + normalize the CloudManager entries payload; drops any
+     * malformed entry (defensive — the endpoint is external).
      *
      * @return list<array{version: string, date: string, title: string, body: string}>
      */
-    private function parseMarkdown(string $markdown): array
+    private function normalizeEntries(array $payload): array
     {
-        $lines = preg_split('/\r\n|\r|\n/', $markdown);
-        $entries = [];
-        $current = null;
-
-        foreach ($lines as $line) {
-            if (preg_match('/^##\s*\[([^\]]+)\]\s*(?:—|-)\s*(\d{4}-\d{2}-\d{2})\s*(?:\(([^)]*)\))?/i', $line, $m)) {
-                if ($current !== null) {
-                    $entries[] = $current;
-                }
-                $current = [
-                    'version' => trim($m[1]),
-                    'date' => $m[2],
-                    'title' => trim($m[3] ?? ''),
-                    'body' => '',
-                ];
+        $entries = $payload['entries'] ?? [];
+        if (!is_array($entries)) {
+            return [];
+        }
+        $result = [];
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) {
                 continue;
             }
-            if ($current === null) {
+            $version = isset($entry['version']) ? (string) $entry['version'] : '';
+            $date = isset($entry['date']) ? (string) $entry['date'] : '';
+            $title = isset($entry['title']) ? (string) $entry['title'] : '';
+            $body = isset($entry['body']) ? (string) $entry['body'] : '';
+            if ($version === '') {
                 continue;
             }
-            if (preg_match('/^##\s/', $line)) {
-                // Next heading (without date) ends the current entry.
-                $entries[] = $current;
-                $current = null;
-                continue;
-            }
-            $current['body'] .= ($current['body'] === '' ? '' : "\n") . $line;
+            $result[] = [
+                'version' => $version,
+                'date' => $date,
+                'title' => $title,
+                'body' => $body,
+            ];
         }
-        if ($current !== null) {
-            $entries[] = $current;
-        }
-
-        foreach ($entries as &$entry) {
-            $entry['body'] = trim($entry['body']);
-            if ($entry['title'] === '') {
-                // Fall back to the first body line as the title.
-                $firstLine = strtok($entry['body'], "\n");
-                $entry['title'] = $firstLine !== false && $firstLine !== '' ? trim($firstLine) : 'Release';
-                $entry['body'] = ltrim(substr($entry['body'], strlen($firstLine !== false ? $firstLine : '')));
-                $entry['body'] = trim($entry['body']);
-            }
-        }
-        unset($entry);
-
-        return $entries;
+        return $result;
     }
 
     /**
