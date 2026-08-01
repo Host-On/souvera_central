@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\Middleware;
 
+use OCA\SouveraCentral\Controller\ChangelogController;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Controller\MailSettingsApiController;
@@ -47,6 +48,10 @@ class SouveraAdminMiddleware extends Middleware {
         }
         // DevOps-Status ist öffentlich lesbar (kein Admin-Login nötig)
         if ($controller instanceof StatusController) {
+            return;
+        }
+        // Changelog-Viewer ist öffentlich (kein Auth)
+        if ($controller instanceof ChangelogController) {
             return;
         }
         if ($this->permission->isSouveraAdmin()) {
