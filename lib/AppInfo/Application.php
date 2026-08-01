@@ -61,10 +61,19 @@ class Application extends App implements IBootstrap {
     public function boot(IBootContext $context): void {
         // Self-update background jobs for all managed apps. Must run
         // independently of any user session (cron executes without one).
-        // JobList::add() is idempotent per class+argument.
+        // JobList::add() is idempotent per class+argument. The whole block
+        // is failure-tolerant: a job-registration hiccup must never take
+        // down the app boot (symptom: "Lade Souvera Central…" forever).
         $context->injectFn(function (\OCP\BackgroundJob\IJobList $jobList): void {
             foreach (['souvera_central', 'souvera_mail', 'souvera_shield'] as $appId) {
-                $jobList->add(\OCA\SouveraCentral\DevOps\SelfUpdateJob::class, ['app' => $appId]);
+                try {
+                    $jobList->add(\OCA\SouveraCentral\DevOps\SelfUpdateJob::class, ['app' => $appId]);
+                } catch (\Throwable $e) {
+                    \OCP\Server::get(\Psr\Log\LoggerInterface::class)->error(
+                        'souvera_central: SelfUpdateJob registration failed for ' . $appId . ': ' . $e->getMessage(),
+                        ['app' => 'souvera_central', 'exception' => $e]
+                    );
+                }
             }
         });
 
