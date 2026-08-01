@@ -42,7 +42,7 @@ class SelfUpdate extends Command {
                 $this->appId = $appId;
                 $output->writeln('checking ' . $appId . ' …');
                 $config = \OCP\Server::get(\OCP\IConfig::class);
-                // Explicit manual run: always check, ignore the 3h throttle.
+                // Explicit manual run: always check, ignore the 24h throttle.
                 $config->setAppValue($appId, 'devops.last_check', '0');
                 $result = $this->checkAndUpdate();
                 $output->writeln($appId . ': ' . json_encode($result, JSON_UNESCAPED_SLASHES));
