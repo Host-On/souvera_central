@@ -6,6 +6,14 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.42] — 2026-08-01 (Changelog: Route-Autorisierung zentralisiert)
+
+Client-Route-Guard in eine zentrale `authorizeRoute()` überführt — gilt jetzt
+für Initial-Route, Navigation UND Browser-Back/Forward; Nicht-Admins können
+Admin-Ansichten nicht mehr clientseitig mounten. Dashboard/Admin-Daten werden
+vor dem Admin-Flag-Read nicht mehr geladen (Initial-Route leer bis
+Autorisierung steht).
+
 ## [0.40.41] — 2026-08-01 (Changelog: Berechtigungs-Feinschliff)
 
 Nicht-Admins (Souvera-User) sehen in der Central nur den Changelog-

@@ -106,7 +106,7 @@ export default {
 
     data() {
         return {
-            currentRoute: 'dashboard',
+            currentRoute: '',
             currentPath: '',
             isSouveraAdmin: false,
             totalUsers: 0,
@@ -183,9 +183,14 @@ export default {
     },
 
     mounted() {
-        this.loadConfig()
-        this.loadStats()
         this.initializeRouting()
+
+        // Admin-only data loads — never fetch them for non-admins (the
+        // mount of admin views is prevented by the route guard).
+        if (this.isSouveraAdmin) {
+            this.loadConfig()
+            this.loadStats()
+        }
 
         window.addEventListener('route-changed', this.handleRouteChanged)
     },
@@ -206,13 +211,24 @@ export default {
             // only get the changelog view — admin routes/APIs stay 403 server-side.
             this.isSouveraAdmin = appElement?.getAttribute('data-is-souvera-admin') === '1'
 
-            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
-            this.currentRoute = this.isSouveraAdmin || adminOnlyRoutes.indexOf(initialRoute) === -1
-                ? initialRoute
-                : 'changelogs'
+            this.currentRoute = this.authorizeRoute(initialRoute)
             this.updateCurrentPath()
 
             window.addEventListener('popstate', this.handlePopState)
+        },
+
+        /**
+         * Central route authorization: non-admins are restricted to the
+         * changelog view. Used by initializeRouting, handleNavigation and
+         * handlePopState so no path (click, URL, Back/Forward) can mount
+         * an admin view client-side.
+         */
+        authorizeRoute(route) {
+            if (this.isSouveraAdmin) {
+                return route
+            }
+            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
+            return adminOnlyRoutes.indexOf(route) !== -1 ? 'changelogs' : route
         },
 
         updateCurrentPath() {
@@ -223,17 +239,14 @@ export default {
             const path = window.location.pathname
             const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|changelogs)/)
 
-            this.currentRoute = match && match[1] ? match[1] : 'dashboard'
+            this.currentRoute = this.authorizeRoute(match && match[1] ? match[1] : 'changelogs')
             this.updateCurrentPath()
         },
 
         handleNavigation(route, url) {
-            // Non-admins only have the changelog view — admin routes are
-            // 403 server-side, so keep the client from mounting them.
-            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
-            if (!this.isSouveraAdmin && adminOnlyRoutes.indexOf(route) !== -1) {
-                route = 'changelogs'
-                url = generateUrl('/apps/souvera_central/changelogs')
+            route = this.authorizeRoute(route)
+            if (!this.isSouveraAdmin && url) {
+                url = generateUrl('/apps/souvera_central/' + route)
             }
 
             this.currentRoute = route
