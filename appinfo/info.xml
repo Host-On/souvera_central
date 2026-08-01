@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.26</version>
+    <version>0.40.27</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -31,6 +31,12 @@
     </dependencies>
 
     <repair-steps>
+        <pre-update>
+            <!-- v0.40.27: `occ app:update souvera_central` pulls the
+                 newest GitHub releases for all managed apps BEFORE the
+                 migration machinery runs — no manual git pull needed. -->
+            <step>OCA\SouveraCentral\Repair\SelfUpdateNowStep</step>
+        </pre-update>
         <post-migration>
             <step>OCA\SouveraCentral\Repair\InstallBrandingTheme</step>
             <step>OCA\SouveraCentral\Repair\EnsureHelpGroupAccess</step>
