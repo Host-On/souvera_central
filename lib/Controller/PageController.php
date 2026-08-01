@@ -75,6 +75,12 @@ class PageController extends Controller {
         return $this->renderPage('settings');
     }
 
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
+    public function changelogs(): TemplateResponse {
+        return $this->renderPage('changelogs');
+    }
+
     /**
      * Helper: Rendert die Seite mit Initial-Route und optionalen Daten
      */

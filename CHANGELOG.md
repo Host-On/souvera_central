@@ -6,6 +6,15 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.40] — 2026-08-01 (Changelog in der Central-Navigation)
+
+Der Changelog-Viewer ist jetzt ein vollwertiger Menüpunkt der Central-Haupt-App
+(„Changelog"): neue Ansicht unter `/apps/souvera_central/changelogs` mit
+Tabs für Souvera Mail / Central / Shield. Daten weiterhin aus den öffentlichen
+CloudManager-Endpunkten (`cm.host-on.network/api/v1/changelogs/{app}`, kein
+Auth), vermittelt über `/api/changelogs` mit 10-Min-Cache. Zugriff für
+Souvera-User und Admins (canSeeHelp).
+
 ## [0.40.38] — 2026-08-01 (Changelog-Viewer-Fixes)
 
 Render-Fix: Übersetzungsfunktion `t` im ViewModel exponiert (Reparatur des

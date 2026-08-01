@@ -18,6 +18,7 @@ use OCA\SouveraCentral\Controller\ChangelogController;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Controller\MailSettingsApiController;
+use OCA\SouveraCentral\Controller\PageController;
 use OCA\SouveraCentral\Controller\StatusController;
 use OCA\SouveraCentral\Exception\NotSouveraAdminException;
 use OCA\SouveraCentral\Service\PermissionService;
@@ -54,6 +55,14 @@ class SouveraAdminMiddleware extends Middleware {
         // Hilfe-Seite (canSeeHelp) und prüft die Berechtigung selbst.
         if ($controller instanceof ChangelogController) {
             return;
+        }
+        // Die Changelog-Seite ist Teil der Haupt-App (PageController);
+        // für NUR diese Methode gilt das gelockerte canSeeHelp-Gate.
+        if ($controller instanceof PageController && $methodName === 'changelogs') {
+            if ($this->permission->canSeeHelp()) {
+                return;
+            }
+            throw new NotSouveraAdminException();
         }
         if ($this->permission->isSouveraAdmin()) {
             return;

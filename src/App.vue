@@ -55,6 +55,9 @@
                     v-else-if="currentRoute === 'settings'"
                     :max-licenses="maxLicenses"
                     :allowed-domains="allowedDomains" />
+
+                <!-- Changelog -->
+                <ChangelogView v-else-if="currentRoute === 'changelogs'" :key="routeKey" />
             </div>
         </NcAppContent>
     </NcContent>
@@ -76,12 +79,14 @@ import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
+import History from 'vue-material-design-icons/History.vue'
 
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
 import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
 import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.vue'
 import Settings from './modules/Settings/Settings.vue'
+import ChangelogView from './modules/Changelog/ChangelogView.vue'
 
 export default {
     name: 'App',
@@ -95,7 +100,8 @@ export default {
         UserManagement,
         GroupManagement,
         SharedMailboxesView,
-        Settings
+        Settings,
+        ChangelogView
     },
 
     data() {
@@ -141,6 +147,12 @@ export default {
                     label: t('souvera_central', 'Settings'),
                     icon: markRaw(Cog),
                     url: generateUrl('/apps/souvera_central/settings')
+                },
+                {
+                    id: 'changelogs',
+                    label: t('souvera_central', 'Changelog'),
+                    icon: markRaw(History),
+                    url: generateUrl('/apps/souvera_central/changelogs')
                 }
             ]
         }

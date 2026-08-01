@@ -11,18 +11,17 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
-use OCP\Util;
 
 /**
- * Changelog viewer for the Souvera apps.
+ * Internal JSON feed for the changelog viewer.
  *
- * The DATA is fetched from the public CloudManager endpoints
- * (https://cm.host-on.network/api/v1/changelogs/{app}) — this controller
- * only renders the viewer page and serves the normalized payload to its
- * own frontend. Accessible to Souvera users AND Souvera admins (same
- * gate as the help page).
+ * The viewer PAGE lives in the main Central app (PageController /
+ * `page#changelogs`); this controller only serves the normalized data
+ * to the frontend. The data itself is fetched from the PUBLIC
+ * CloudManager endpoints (https://cm.host-on.network/api/v1/changelogs/
+ * {app}) — see ChangelogService. Accessible to Souvera users AND
+ * Souvera admins (same gate as the help page).
  */
 class ChangelogController extends Controller
 {
@@ -35,30 +34,6 @@ class ChangelogController extends Controller
         parent::__construct($appName, $request);
     }
 
-    #[NoCSRFRequired]
-    #[NoAdminRequired]
-    public function index(): TemplateResponse
-    {
-        if (!$this->permission->canSeeHelp()) {
-            $response = new TemplateResponse(
-                'core',
-                '403',
-                ['message' => 'Kein Zugriff auf die Souvera-Changelogs.'],
-                TemplateResponse::RENDER_AS_GUEST
-            );
-            $response->setStatus(Http::STATUS_FORBIDDEN);
-            return $response;
-        }
-
-        Util::addScript($this->appName, $this->appName . '-changelog');
-        Util::addStyle($this->appName, 'main');
-
-        return new TemplateResponse($this->appName, 'changelog', []);
-    }
-
-    /**
-     * Internal JSON feed for the viewer frontend.
-     */
     #[NoCSRFRequired]
     #[NoAdminRequired]
     public function all(): JSONResponse

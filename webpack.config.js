@@ -15,8 +15,7 @@ module.exports = (env, argv) => {
         entry: {
             main: path.join(__dirname, 'src', 'main.js'),
             branding: path.join(__dirname, 'src', 'branding.js'),
-            help: path.join(__dirname, 'src', 'help-main.js'),
-            changelog: path.join(__dirname, 'src', 'changelog-main.js')
+            help: path.join(__dirname, 'src', 'help-main.js')
         },
         output: {
             path: path.resolve(__dirname, 'js'),
