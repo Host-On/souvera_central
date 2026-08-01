@@ -3,7 +3,7 @@
         <NcAppNavigation data-testid="souvera-navigation" :aria-label="t('souvera_central', 'Souvera Central Navigation')">
             <template #list>
                 <NcAppNavigationItem
-                    v-for="item in navigationItems"
+                    v-for="item in visibleNavigationItems"
                     :key="item.id"
                     :name="item.label"
                     :active="currentRoute === item.id"
@@ -108,6 +108,7 @@ export default {
         return {
             currentRoute: 'dashboard',
             currentPath: '',
+            isSouveraAdmin: false,
             totalUsers: 0,
             usedLicenses: 0,
             groupCount: 0,
@@ -122,31 +123,36 @@ export default {
                     id: 'dashboard',
                     label: t('souvera_central', 'Dashboard'),
                     icon: markRaw(ViewDashboard),
-                    url: generateUrl('/apps/souvera_central/dashboard')
+                    url: generateUrl('/apps/souvera_central/dashboard'),
+                    adminOnly: true
                 },
                 {
                     id: 'users',
                     label: t('souvera_central', 'User management'),
                     icon: markRaw(AccountMultiple),
-                    url: generateUrl('/apps/souvera_central/users')
+                    url: generateUrl('/apps/souvera_central/users'),
+                    adminOnly: true
                 },
                 {
                     id: 'groups',
                     label: t('souvera_central', 'Group management'),
                     icon: markRaw(AccountGroup),
-                    url: generateUrl('/apps/souvera_central/groups')
+                    url: generateUrl('/apps/souvera_central/groups'),
+                    adminOnly: true
                 },
                 {
                     id: 'shared-mailboxes',
                     label: t('souvera_central', 'Shared mailboxes'),
                     icon: markRaw(EmailMultiple),
-                    url: generateUrl('/apps/souvera_central/shared-mailboxes')
+                    url: generateUrl('/apps/souvera_central/shared-mailboxes'),
+                    adminOnly: true
                 },
                 {
                     id: 'settings',
                     label: t('souvera_central', 'Settings'),
                     icon: markRaw(Cog),
-                    url: generateUrl('/apps/souvera_central/settings')
+                    url: generateUrl('/apps/souvera_central/settings'),
+                    adminOnly: true
                 },
                 {
                     id: 'changelogs',
@@ -161,6 +167,12 @@ export default {
     computed: {
         routeKey() {
             return this.currentPath
+        },
+        visibleNavigationItems() {
+            if (this.isSouveraAdmin) {
+                return this.navigationItems
+            }
+            return this.navigationItems.filter((item) => !item.adminOnly)
         }
     },
 
@@ -190,7 +202,14 @@ export default {
             const appElement = document.getElementById('app-souvera-user-management')
             const initialRoute = appElement?.getAttribute('data-initial-route') || 'dashboard'
 
-            this.currentRoute = initialRoute
+            // Server-derived admin flag (data-is-souvera-admin). Non-admins
+            // only get the changelog view — admin routes/APIs stay 403 server-side.
+            this.isSouveraAdmin = appElement?.getAttribute('data-is-souvera-admin') === '1'
+
+            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
+            this.currentRoute = this.isSouveraAdmin || adminOnlyRoutes.indexOf(initialRoute) === -1
+                ? initialRoute
+                : 'changelogs'
             this.updateCurrentPath()
 
             window.addEventListener('popstate', this.handlePopState)
@@ -202,13 +221,21 @@ export default {
 
         handlePopState() {
             const path = window.location.pathname
-            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings)/)
+            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|changelogs)/)
 
             this.currentRoute = match && match[1] ? match[1] : 'dashboard'
             this.updateCurrentPath()
         },
 
         handleNavigation(route, url) {
+            // Non-admins only have the changelog view — admin routes are
+            // 403 server-side, so keep the client from mounting them.
+            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
+            if (!this.isSouveraAdmin && adminOnlyRoutes.indexOf(route) !== -1) {
+                route = 'changelogs'
+                url = generateUrl('/apps/souvera_central/changelogs')
+            }
+
             this.currentRoute = route
             this.updateCurrentPath()
 

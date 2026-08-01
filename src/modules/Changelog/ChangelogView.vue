@@ -25,7 +25,7 @@
                 </button>
             </div>
 
-            <div class="changelog-panel" data-testid="changelog-panel">
+            <div class="changelog-panel" role="tabpanel" data-testid="changelog-panel">
                 <header class="changelog-header">
                     <h2 class="changelog-header__title">{{ activeLabel }}</h2>
                     <p v-if="entries.length === 0" class="changelog-header__empty">
@@ -59,7 +59,7 @@ export default {
     name: 'ChangelogView',
 
     components: {
-        AlertCircleOutline,
+        AlertCircleOutline
     },
 
     data() {

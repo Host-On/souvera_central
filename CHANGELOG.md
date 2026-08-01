@@ -6,6 +6,13 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.41] — 2026-08-01 (Changelog: Berechtigungs-Feinschliff)
+
+Nicht-Admins (Souvera-User) sehen in der Central nur den Changelog-
+Menüpunkt — Admin-Ansichten/APIs bleiben serverseitig 403; das Admin-Flag
+kommt server-seitig aus `data-is-souvera-admin`. Plus: Browser-Back/Forward
+für `/changelogs` korrigiert, ARIA-tabpanel, Lint-Fixes.
+
 ## [0.40.40] — 2026-08-01 (Changelog in der Central-Navigation)
 
 Der Changelog-Viewer ist jetzt ein vollwertiger Menüpunkt der Central-Haupt-App

@@ -12,12 +12,14 @@ style('souvera_central', 'main');
 $initialRoute = $_['initialRoute'] ?? 'dashboard';
 $action = $_['action'] ?? '';
 $userId = $_['userId'] ?? '';
+$isSouveraAdmin = !empty($_['isSouveraAdmin']);
 ?>
 
 <div id="app-souvera-user-management"
      data-initial-route="<?php p($initialRoute); ?>"
      data-action="<?php p($action); ?>"
-     data-user-id="<?php p($userId); ?>">
+     data-user-id="<?php p($userId); ?>"
+     data-is-souvera-admin="<?php echo $isSouveraAdmin ? '1' : '0'; ?>">
     <div id="app-content">
         <div class="loading-container">
             <div class="icon-loading"></div>

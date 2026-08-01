@@ -22,7 +22,8 @@ use OCP\Util;
 class PageController extends Controller {
     public function __construct(
         string $appName,
-        IRequest $request
+        IRequest $request,
+        private \OCA\SouveraCentral\Service\PermissionService $permission,
     ) {
         parent::__construct($appName, $request);
     }
@@ -89,7 +90,8 @@ class PageController extends Controller {
         Util::addStyle($this->appName, 'main');
 
         $templateData = array_merge([
-            'initialRoute' => $initialRoute
+            'initialRoute' => $initialRoute,
+            'isSouveraAdmin' => $this->permission->isSouveraAdmin(),
         ], $additionalData);
 
         return new TemplateResponse($this->appName, 'main', $templateData);
