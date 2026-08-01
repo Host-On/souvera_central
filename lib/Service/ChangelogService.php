@@ -199,24 +199,21 @@ class ChangelogService
     {
         try {
             $folder = $this->getCacheFolder();
-            $file = $folder->newFile($appId . '.json');
+            $file = $folder->fileExists($appId . '.json')
+                ? $folder->getFile($appId . '.json')
+                : $folder->newFile($appId . '.json');
             $file->putContent(json_encode(['ts' => time(), 'entries' => $entries], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         } catch (\Throwable $e) {
             $this->logger->warning('Changelog: cache write failed: ' . $e->getMessage());
         }
     }
 
-    private function getCacheFolder(): \OCP\Files\Folder
+    private function getCacheFolder(): \OCP\Files\SimpleFS\ISimpleFolder
     {
-        $folder = null;
         try {
-            $folder = $this->appData->getFolder('changelogs');
+            return $this->appData->getFolder('changelogs');
         } catch (NotFoundException $e) {
-            $folder = $this->appData->newFolder('changelogs');
+            return $this->appData->newFolder('changelogs');
         }
-        if (!$folder instanceof \OCP\Files\Folder) {
-            throw new \RuntimeException('appdata changelogs folder is not a folder');
-        }
-        return $folder;
     }
 }

@@ -6,6 +6,20 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.36] — 2026-08-01 (Changelog-Cache-Fix)
+
+Der Changelog-Cache nutzt die korrekte `ISimpleFolder`-Schnittstelle —
+zuvor deaktivierte ein Typ-Fehler das Caching und jede öffentliche
+Request traf GitHub direkt.
+
+## [0.40.35] — 2026-08-01 (Öffentlicher Changelog-Viewer)
+
+Neue öffentliche API `GET /api/v1/changelogs/{appId}` (ohne Auth) für
+Souvera Mail / Central / Shield: parst die jeweilige `CHANGELOG.md` von
+GitHub (main-Branch), 10-Minuten-Cache im AppData, Stale-Cache-Fallback
+bei Netzwerkfehlern, 404 für unbekannte Apps. Antwort: `{app_id,
+app_label, entries: [{version, date, title, body}]}`.
+
 ## [0.40.34] — 2026-08-01 (Wartungsfenster-Länge 1h)
 
 Das stable-Kanal-Wartungsfenster ist exakt 1 Stunde lang
