@@ -239,7 +239,7 @@ export default {
             const path = window.location.pathname
             const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|changelogs)/)
 
-            this.currentRoute = this.authorizeRoute(match && match[1] ? match[1] : 'changelogs')
+            this.currentRoute = this.authorizeRoute(match && match[1] ? match[1] : 'dashboard')
             this.updateCurrentPath()
         },
 

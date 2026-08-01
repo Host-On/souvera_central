@@ -6,6 +6,12 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ## [Unreleased]
 
+## [0.40.43] — 2026-08-01 (Changelog: PopState-Regression)
+
+Browser-Back zur Central-Wurzel (`/apps/souvera_central/`) zeigt für Admins
+wieder das Dashboard (Fallback-`dashboard` statt `changelogs`); Nicht-Admins
+werden weiterhin von `authorizeRoute()` auf den Changelog umgeleitet.
+
 ## [0.40.42] — 2026-08-01 (Changelog: Route-Autorisierung zentralisiert)
 
 Client-Route-Guard in eine zentrale `authorizeRoute()` überführt — gilt jetzt
