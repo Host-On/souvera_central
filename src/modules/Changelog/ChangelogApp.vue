@@ -88,7 +88,7 @@ export default {
         EmailOutline,
         Server,
         ShieldOutline,
-        AlertCircleOutline,
+        AlertCircleOutline
     },
 
     data() {
