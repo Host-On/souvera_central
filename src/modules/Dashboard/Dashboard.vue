@@ -292,7 +292,7 @@ export default {
 
     data() {
         return {
-            resellerInfo: { support_url: null, url: null, name: null },
+            resellerInfo: { support_url: null, url: 'https://host-on.network', name: 'Host-ON' },
             stalwartStatus: { configured: false, available: false, url: null },
             mailGroup: { id: 'souvera-users', displayName: 'Souvera Users', exists: false, members: 0, enabled: true },
             syncing: false,
@@ -354,7 +354,6 @@ export default {
     },
 
     mounted() {
-        this.loadResellerInfo()
         this.loadStalwartStatus()
         this.loadMailGroup()
         const el = document.getElementById('app-souvera-user-management')
@@ -363,20 +362,6 @@ export default {
 
     methods: {
         t,
-
-        async loadResellerInfo() {
-            try {
-                const url = generateUrl('/apps/souvera_central/api/reseller')
-                const response = await axios.get(url)
-                if (response.data?.ocs?.data) {
-                    this.resellerInfo = response.data.ocs.data
-                } else if (response.data) {
-                    this.resellerInfo = response.data
-                }
-            } catch (error) {
-                // Fallback ist in contactUrl implementiert
-            }
-        },
 
         async loadMailGroup() {
             try {

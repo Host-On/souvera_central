@@ -149,10 +149,11 @@ class StalwartService {
         if ($ok) {
             $this->logger->info('StalwartService: JMAP-Mail-Capability aktiviert', ['email' => $email]);
         } else {
-            $err = $resp['notUpdated'][$accountId] ?? $resp;
+            $err = $resp['notUpdated'][$accountId] ?? null;
             $this->logger->error('StalwartService: JMAP-Mail-Capability fehlgeschlagen', [
                 'email' => $email, 'accountId' => $accountId,
-                'resp' => json_encode($err, JSON_UNESCAPED_SLASHES),
+                'notUpdated' => json_encode($err, JSON_UNESCAPED_SLASHES),
+                'fullResp' => json_encode($resp, JSON_UNESCAPED_SLASHES),
             ]);
         }
         return $ok;
