@@ -78,7 +78,11 @@ class StalwartService {
         }
 
         if ($this->principalExists($email)) {
-            return $this->setPassword($email, $password);
+            $ok = $this->setPassword($email, $password);
+            // JMAP Mail capability must be ensured regardless of password
+            // change success (OIDC auth means passwords rarely change).
+            $this->ensureJmapMailCapability($email);
+            return $ok;
         }
 
         $domainId = $this->resolveDomainId($parts['domain']);
@@ -120,6 +124,35 @@ class StalwartService {
 
         $this->logger->info('StalwartService: Postfach angelegt', ['email' => $email]);
         return true;
+    }
+
+    /**
+     * Stellt sicher, dass ein bestehender Stalwart-Account die
+     * urn:ietf:params:jmap:mail Capability hat. Idempotent —
+     * wenn sie schon gesetzt ist, passiert nichts.
+     */
+    public function ensureJmapMailCapability(string $email): bool {
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) {
+            return false;
+        }
+        if (isset($account['capabilities']['urn:ietf:params:jmap:mail'])) {
+            return true; // already has it
+        }
+        $accountId = (string) $account['id'];
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => [
+                'capabilities' => ['urn:ietf:params:jmap:mail' => (object) []],
+            ]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        if ($ok) {
+            $this->logger->info('StalwartService: JMAP-Mail-Capability aktiviert', ['email' => $email]);
+        } else {
+            $this->logger->warning('StalwartService: JMAP-Mail-Capability fehlgeschlagen', [
+                'email' => $email, 'notUpdated' => $resp['notUpdated'] ?? null]);
+        }
+        return $ok;
     }
 
     /**

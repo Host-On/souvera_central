@@ -461,7 +461,9 @@ class AliasApiController extends OCSController {
                         continue;
                     }
                     if (isset($existing[$mail]) || $this->stalwartService->principalExists($mail)) {
-                        // Bestandspostfach: Mail-Gruppen-Mitgliedschaft nachziehen
+                        // Bestandspostfach: JMAP-Mail-Capability nachrüsten
+                        // + Mail-Gruppen-Mitgliedschaft nachziehen
+                        $this->stalwartService->ensureJmapMailCapability($mail);
                         if ($this->mailGroupService->addUser($user)) {
                             $grouped++;
                         }
