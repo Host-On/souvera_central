@@ -225,7 +225,7 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Version') }}:</span>
-                    <span class="info-value">0.40.0</span>
+                    <span class="info-value">{{ appVersion }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{{ t('souvera_central', 'Allowed domains') }}:</span>
@@ -297,7 +297,8 @@ export default {
             mailGroup: { id: 'souvera-users', displayName: 'Souvera Users', exists: false, members: 0, enabled: true },
             syncing: false,
             syncResult: null,
-            syncError: null
+            syncError: null,
+            appVersion: '...'
         }
     },
 
@@ -356,6 +357,8 @@ export default {
         this.loadResellerInfo()
         this.loadStalwartStatus()
         this.loadMailGroup()
+        const el = document.getElementById('app-souvera-user-management')
+        this.appVersion = el?.getAttribute('data-app-version') || '?.?.?'
     },
 
     methods: {
