@@ -28,7 +28,10 @@ class StatusController extends Controller
     #[NoAdminRequired]
     public function devops(): DataResponse
     {
-        $apps = ['souvera_mail', 'souvera_central', 'souvera_shield', 'souvera_archive'];
+        $apps = ['souvera_mail', 'souvera_central', 'souvera_shield'];
+        if ($this->appManager->isInstalled('souvera_archive')) {
+            $apps[] = 'souvera_archive';
+        }
         $result = [];
 
         foreach ($apps as $appId) {
