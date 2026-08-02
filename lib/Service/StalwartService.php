@@ -100,6 +100,7 @@ class StalwartService {
             'domainId' => $domainId,
             'credentials' => (object) ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
+            'capabilities' => ['urn:ietf:params:jmap:mail' => (object) []],
         ];
         if ($effectiveQuota > 0) {
             $object['quotas'] = ['maxDiskQuota' => $effectiveQuota];
@@ -152,8 +153,13 @@ class StalwartService {
         }
 
         $accountId = (string) $account['id'];
+        // Ensure email capability for JMAP Mail (existing accounts may lack it).
+        $update = ['credentials' => (object) $credentials];
+        if (!isset($account['capabilities']['urn:ietf:params:jmap:mail'])) {
+            $update['capabilities'] = ['urn:ietf:params:jmap:mail' => (object) []];
+        }
         $resp = $this->jmapSingle('x:Account/set', [
-            'update' => [$accountId => ['credentials' => (object) $credentials]],
+            'update' => [$accountId => $update],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
         if ($ok) {
