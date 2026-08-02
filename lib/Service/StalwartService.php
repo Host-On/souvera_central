@@ -101,14 +101,14 @@ class StalwartService {
             'domainId' => $domainId,
             'credentials' => (object) ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
-            'permissions' => \array_fill_keys([
+            'permissions' => [
                 'jmapMailboxGet',
                 'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
                 'jmapEmailUpdate', 'jmapEmailDestroy',
                 'jmapEmailSubmissionCreate',
                 'jmapBlobGet', 'jmapBlobUpload',
                 'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
-            ], true),
+            ],
         ];
         if ($effectiveQuota > 0) {
             $object['quotas'] = ['maxDiskQuota' => $effectiveQuota];
@@ -137,23 +137,23 @@ class StalwartService {
         $account = $this->getAccount($email, 'User');
         if ($account === null) return false;
         $existingPerms = $account['permissions'] ?? [];
-        if (isset($existingPerms['jmapEmailGet'])) return true;
+        if (!empty($existingPerms) && \in_array('jmapEmailGet', $existingPerms, true)) return true;
 
         $accountId = (string) $account['id'];
         $resp = $this->jmapSingle('x:Account/set', [
             'update' => [$accountId => [
-                'permissions' => \array_fill_keys([
+                'permissions' => [
                     'jmapMailboxGet',
                     'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
                     'jmapEmailUpdate', 'jmapEmailDestroy',
                     'jmapEmailSubmissionCreate',
                     'jmapBlobGet', 'jmapBlobUpload',
                     'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
-                ], true),
+                ],
             ]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
-        $this->logger->info('StalwartService: JMAP permissions ' . ($ok ? 'aktiviert' : 'fehlgeschlagen'), [
+        $this->logger->error('StalwartService: JMAP permissions ' . ($ok ? 'OK' : 'FAILED'), [
             'email' => $email, 'ok' => $ok,
             'resp' => json_encode($resp, JSON_UNESCAPED_SLASHES),
         ]);
