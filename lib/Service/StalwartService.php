@@ -153,10 +153,14 @@ class StalwartService {
             ]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
-        $this->logger->error('StalwartService: JMAP permissions ' . ($ok ? 'OK' : 'FAILED'), [
-            'email' => $email, 'ok' => $ok,
-            'resp' => json_encode($resp, JSON_UNESCAPED_SLASHES),
-        ]);
+        $msg = 'StalwartService: JMAP permissions ' . ($ok ? 'OK' : 'FAILED')
+            . ' for ' . $email
+            . ' — resp=' . \json_encode($resp, JSON_UNESCAPED_SLASHES);
+        if ($ok) {
+            $this->logger->info($msg);
+        } else {
+            $this->logger->error($msg);
+        }
         return $ok;
     }
 
