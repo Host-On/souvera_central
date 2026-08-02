@@ -137,7 +137,7 @@ class StalwartService {
             return false;
         }
         if (isset($account['capabilities']['urn:ietf:params:jmap:mail'])) {
-            return true; // already has it
+            return true;
         }
         $accountId = (string) $account['id'];
         $resp = $this->jmapSingle('x:Account/set', [
@@ -149,8 +149,11 @@ class StalwartService {
         if ($ok) {
             $this->logger->info('StalwartService: JMAP-Mail-Capability aktiviert', ['email' => $email]);
         } else {
-            $this->logger->warning('StalwartService: JMAP-Mail-Capability fehlgeschlagen', [
-                'email' => $email, 'notUpdated' => $resp['notUpdated'] ?? null]);
+            $err = $resp['notUpdated'][$accountId] ?? $resp;
+            $this->logger->error('StalwartService: JMAP-Mail-Capability fehlgeschlagen', [
+                'email' => $email, 'accountId' => $accountId,
+                'resp' => json_encode($err, JSON_UNESCAPED_SLASHES),
+            ]);
         }
         return $ok;
     }

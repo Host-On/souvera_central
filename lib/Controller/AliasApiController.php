@@ -432,6 +432,7 @@ class AliasApiController extends OCSController {
             $errors = 0;
             $grouped = 0;
             $poolBlocked = 0;
+            $capUpdated = 0;
 
             // Mail-Gruppe sicherstellen (für smail-Sichtbarkeit)
             $this->mailGroupService->ensureGroup();
@@ -463,7 +464,9 @@ class AliasApiController extends OCSController {
                     if (isset($existing[$mail]) || $this->stalwartService->principalExists($mail)) {
                         // Bestandspostfach: JMAP-Mail-Capability nachrüsten
                         // + Mail-Gruppen-Mitgliedschaft nachziehen
-                        $this->stalwartService->ensureJmapMailCapability($mail);
+                        if ($this->stalwartService->ensureJmapMailCapability($mail)) {
+                            $capUpdated++;
+                        }
                         if ($this->mailGroupService->addUser($user)) {
                             $grouped++;
                         }
@@ -501,6 +504,7 @@ class AliasApiController extends OCSController {
                 'errors' => $errors,
                 'grouped' => $grouped,
                 'poolBlocked' => $poolBlocked,
+                'capUpdated' => $capUpdated,
                 'mailGroup' => $this->mailGroupService->getInfo(),
             ]);
         } catch (\Exception $e) {
