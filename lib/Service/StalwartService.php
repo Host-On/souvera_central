@@ -101,14 +101,14 @@ class StalwartService {
             'domainId' => $domainId,
             'credentials' => (object) ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
-            'permissions' => [
+            'permissions' => ['@type' => 'Replace'] + \array_fill_keys([
                 'jmapMailboxGet',
                 'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
                 'jmapEmailUpdate', 'jmapEmailDestroy',
                 'jmapEmailSubmissionCreate',
                 'jmapBlobGet', 'jmapBlobUpload',
                 'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
-            ],
+            ], true),
         ];
         if ($effectiveQuota > 0) {
             $object['quotas'] = ['maxDiskQuota' => $effectiveQuota];
@@ -140,16 +140,17 @@ class StalwartService {
         if (!empty($existingPerms) && \in_array('jmapEmailGet', $existingPerms, true)) return true;
 
         $accountId = (string) $account['id'];
+        $permArray = [
+            'jmapMailboxGet',
+            'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
+            'jmapEmailUpdate', 'jmapEmailDestroy',
+            'jmapEmailSubmissionCreate',
+            'jmapBlobGet', 'jmapBlobUpload',
+            'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
+        ];
         $resp = $this->jmapSingle('x:Account/set', [
             'update' => [$accountId => [
-                'permissions' => [
-                    'jmapMailboxGet',
-                    'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
-                    'jmapEmailUpdate', 'jmapEmailDestroy',
-                    'jmapEmailSubmissionCreate',
-                    'jmapBlobGet', 'jmapBlobUpload',
-                    'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
-                ],
+                'permissions' => ['@type' => 'Replace'] + \array_fill_keys($permArray, true),
             ]],
         ]);
         $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
