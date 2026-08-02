@@ -40,6 +40,17 @@ class StatusController extends Controller
             $releases = $this->fetchReleases($appId);
             $branchHead = ($channel === 'dev') ? $this->fetchBranchHead($appId, $branch) : null;
 
+            // On dev channel, prepend the branch HEAD as a synthetic
+            // "release" so the CM's SouveraDevopsPanel (which only reads
+            // releases[0].tag) shows the current branch version instead
+            // of the last GitHub release.
+            if ($branchHead !== null && $branchHead['version'] !== null) {
+                \array_unshift($releases, [
+                    'tag' => 'v' . $branchHead['version'],
+                    'published' => $branchHead['message'] ?? '',
+                ]);
+            }
+
             $result[$appId] = [
                 'installed' => $version,
                 'channel' => $channel,
