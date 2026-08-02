@@ -78,6 +78,7 @@ class StalwartService {
         }
 
         if ($this->principalExists($email)) {
+            $this->ensureJmapPermissions($email);
             return $this->setPassword($email, $password);
         }
 
@@ -100,6 +101,14 @@ class StalwartService {
             'domainId' => $domainId,
             'credentials' => (object) ['0' => ['@type' => 'Password', 'secret' => $password]],
             'description' => $displayName ?: $parts['local'],
+            'permissions' => \array_fill_keys([
+                'jmapMailboxGet',
+                'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
+                'jmapEmailUpdate', 'jmapEmailDestroy',
+                'jmapEmailSubmissionCreate',
+                'jmapBlobGet', 'jmapBlobUpload',
+                'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
+            ], true),
         ];
         if ($effectiveQuota > 0) {
             $object['quotas'] = ['maxDiskQuota' => $effectiveQuota];
@@ -119,6 +128,36 @@ class StalwartService {
 
         $this->logger->info('StalwartService: Postfach angelegt', ['email' => $email]);
         return true;
+    }
+
+    /**
+     * Stellt sicher, dass ein bestehender Account die JMAP-Mail-Permissions hat.
+     */
+    public function ensureJmapPermissions(string $email): bool {
+        $account = $this->getAccount($email, 'User');
+        if ($account === null) return false;
+        $existingPerms = $account['permissions'] ?? [];
+        if (isset($existingPerms['jmapEmailGet'])) return true;
+
+        $accountId = (string) $account['id'];
+        $resp = $this->jmapSingle('x:Account/set', [
+            'update' => [$accountId => [
+                'permissions' => \array_fill_keys([
+                    'jmapMailboxGet',
+                    'jmapEmailGet', 'jmapEmailQuery', 'jmapEmailCreate',
+                    'jmapEmailUpdate', 'jmapEmailDestroy',
+                    'jmapEmailSubmissionCreate',
+                    'jmapBlobGet', 'jmapBlobUpload',
+                    'jmapPushSubscriptionCreate', 'jmapPushSubscriptionGet',
+                ], true),
+            ]],
+        ]);
+        $ok = $resp !== null && array_key_exists($accountId, $resp['updated'] ?? []);
+        $this->logger->info('StalwartService: JMAP permissions ' . ($ok ? 'aktiviert' : 'fehlgeschlagen'), [
+            'email' => $email, 'ok' => $ok,
+            'resp' => json_encode($resp, JSON_UNESCAPED_SLASHES),
+        ]);
+        return $ok;
     }
 
     /**

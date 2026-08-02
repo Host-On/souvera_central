@@ -461,6 +461,7 @@ class AliasApiController extends OCSController {
                         continue;
                     }
                     if (isset($existing[$mail]) || $this->stalwartService->principalExists($mail)) {
+                        $this->stalwartService->ensureJmapPermissions($mail);
                         if ($this->mailGroupService->addUser($user)) {
                             $grouped++;
                         }
