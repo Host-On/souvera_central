@@ -37,7 +37,7 @@ class SelfUpdate extends Command {
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $ok = true;
-        foreach (['souvera_mail', 'souvera_central', 'souvera_shield'] as $appId) {
+        foreach (['souvera_mail', 'souvera_central', 'souvera_shield', 'souvera_archive'] as $appId) {
             try {
                 $this->appId = $appId;
                 $output->writeln('checking ' . $appId . ' …');

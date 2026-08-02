@@ -335,6 +335,7 @@ trait SelfUpdateTrait
             'souvera_mail' => 'PhiGi87/souvera_mail',
             'souvera_central' => 'PhiGi87/souvera_central',
             'souvera_shield' => 'PhiGi87/souvera_shield',
+            'souvera_archive' => 'PhiGi87/souvera_mailarchiv',
             default => '',
         };
     }

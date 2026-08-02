@@ -28,7 +28,7 @@ class StatusController extends Controller
     #[NoAdminRequired]
     public function devops(): DataResponse
     {
-        $apps = ['souvera_mail', 'souvera_central', 'souvera_shield'];
+        $apps = ['souvera_mail', 'souvera_central', 'souvera_shield', 'souvera_archive'];
         $result = [];
 
         foreach ($apps as $appId) {
@@ -143,6 +143,7 @@ class StatusController extends Controller
             'souvera_mail' => 'PhiGi87/souvera_mail',
             'souvera_central' => 'PhiGi87/souvera_central',
             'souvera_shield' => 'PhiGi87/souvera_shield',
+            'souvera_archive' => 'PhiGi87/souvera_mailarchiv',
             default => '',
         };
     }
