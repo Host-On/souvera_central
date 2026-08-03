@@ -31,7 +31,7 @@ class ArchiveStatusService
 			return ['enabled' => false];
 		}
 
-		$cache = $this->cacheFactory->createDistributed('souvera_archive');
+		$cache = $this->cacheFactory->createDistributed('souvera_mailarchiv');
 		$tenantId = $this->config->getSystemValue('souvera_central.tenant_id', 'default');
 		$cached = $cache->get("archive_status_{$tenantId}");
 		if ($cached !== null) {

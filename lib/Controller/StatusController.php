@@ -29,8 +29,8 @@ class StatusController extends Controller
     public function devops(): DataResponse
     {
         $apps = ['souvera_mail', 'souvera_central', 'souvera_shield'];
-        if ($this->appManager->isInstalled('souvera_archive')) {
-            $apps[] = 'souvera_archive';
+        if ($this->appManager->isInstalled('souvera_mailarchiv')) {
+            $apps[] = 'souvera_mailarchiv';
         }
         $result = [];
 
@@ -146,7 +146,7 @@ class StatusController extends Controller
             'souvera_mail' => 'PhiGi87/souvera_mail',
             'souvera_central' => 'PhiGi87/souvera_central',
             'souvera_shield' => 'PhiGi87/souvera_shield',
-            'souvera_archive' => 'PhiGi87/souvera_mailarchiv',
+            'souvera_mailarchiv' => 'PhiGi87/souvera_mailarchiv',
             default => '',
         };
     }

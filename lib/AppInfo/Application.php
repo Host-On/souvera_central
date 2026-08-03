@@ -65,7 +65,7 @@ class Application extends App implements IBootstrap {
         // is failure-tolerant: a job-registration hiccup must never take
         // down the app boot (symptom: "Lade Souvera Central…" forever).
         $context->injectFn(function (\OCP\BackgroundJob\IJobList $jobList): void {
-            foreach (['souvera_central', 'souvera_mail', 'souvera_shield', 'souvera_archive'] as $appId) {
+            foreach (['souvera_central', 'souvera_mail', 'souvera_shield', 'souvera_mailarchiv'] as $appId) {
                 try {
                     $jobList->add(\OCA\SouveraCentral\DevOps\SelfUpdateJob::class, ['app' => $appId]);
                 } catch (\Throwable $e) {

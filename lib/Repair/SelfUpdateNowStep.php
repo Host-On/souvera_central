@@ -37,7 +37,7 @@ class SelfUpdateNowStep implements IRepairStep {
         $logger = \OCP\Server::get(LoggerInterface::class);
         $config = \OCP\Server::get(\OCP\IConfig::class);
 
-        foreach (['souvera_central', 'souvera_mail', 'souvera_shield', 'souvera_archive'] as $appId) {
+        foreach (['souvera_central', 'souvera_mail', 'souvera_shield', 'souvera_mailarchiv'] as $appId) {
             try {
                 $this->appId = $appId;
                 // The stable channel checks once per 24h inside the maintenance window; an explicit
