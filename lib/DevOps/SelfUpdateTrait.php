@@ -239,9 +239,14 @@ trait SelfUpdateTrait
         if (is_dir($backupDir)) {
             $this->rmdirRecursive($backupDir);
         }
-        if (!rename($appPath, $backupDir)) {
+        // Use copy+delete instead of rename — rename() fails on NFS,
+        // containers with open file handles, or cross-device mounts.
+        try {
+            $this->copyRecursive($appPath, $backupDir);
+            $this->rmdirRecursive($appPath);
+        } catch (\Throwable $e) {
             $this->rmdirRecursive($extractDir);
-            return ['error' => 'Cannot move current app to backup'];
+            return ['error' => 'Cannot move current app to backup: ' . $e->getMessage()];
         }
         // EXDEV-safe install: the extract dir lives on the local filesystem
         // (/tmp), the app dir on NFS — rename() across mounts fails with
@@ -250,7 +255,9 @@ trait SelfUpdateTrait
             $this->copyRecursive($sourceDir, $appPath);
         } catch (\Throwable $e) {
             // Restore backup.
-            rename($backupDir, $appPath);
+            $this->rmdirRecursive($appPath);
+            $this->copyRecursive($backupDir, $appPath);
+            $this->rmdirRecursive($backupDir);
             $this->rmdirRecursive($extractDir);
             return ['error' => 'Cannot copy extracted app into place: ' . $e->getMessage()];
         }
@@ -260,7 +267,8 @@ trait SelfUpdateTrait
         if (!empty($enableResult['error'])) {
             // Rollback: restore backup, remove broken new version.
             $this->rmdirRecursive($appPath);
-            rename($backupDir, $appPath);
+            $this->copyRecursive($backupDir, $appPath);
+            $this->rmdirRecursive($backupDir);
             $this->rmdirRecursive($extractDir);
             return $enableResult;
         }
