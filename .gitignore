@@ -8,7 +8,6 @@ preview/*.chunk.js
 *~
 .idea/
 .vscode/
-claude.md
 features.md
 chat.md
 
@@ -19,7 +18,6 @@ chat.md
 /playwright/.cache/
 /playwright/.auth/
 
-.claude/
 .playwright-mcp/
 server.css
 tests/
