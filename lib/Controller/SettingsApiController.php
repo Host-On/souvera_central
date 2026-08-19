@@ -62,6 +62,8 @@ class SettingsApiController extends OCSController {
                     'desktop_notifications' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.desktop_notifications', '0'),
                     'daily_summary' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0'),
                     'min_spam_score' => (float) $this->config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5'),
+                    'report_hour' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.report_hour', '6'),
+                    'pmg_report_disable' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.pmg_report_disable', '1'),
                     'suspicious_login' => [
                         'detection_enabled' => (bool) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.detection_enabled', '1'),
                         'grace_period_days' => (int) $this->config->getAppValue('souvera_central', 'settings.shield.suspicious_login.grace_period_days', '14'),

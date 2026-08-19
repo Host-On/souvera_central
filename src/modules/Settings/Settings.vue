@@ -239,6 +239,32 @@
                             {{ t('souvera_central', 'Only messages at or above this spam score trigger a notification (0 = all, 10 = only very likely spam).') }}
                         </p>
                     </div>
+
+                    <label class="checkbox-label" data-testid="shield-pmg-report-label">
+                        <input
+                            v-model="settings.shield.pmg_report_disable"
+                            type="checkbox"
+                            data-testid="shield-pmg-report-checkbox"
+                            @change="saveSettings"
+                        />
+                        <span>{{ t('souvera_central', 'Disable the PMG built-in spam report (Souvera sends its own daily report)') }}</span>
+                    </label>
+
+                    <div class="field-row" data-testid="shield-report-hour">
+                        <label class="field-label">
+                            {{ t('souvera_central', 'Daily report time') }}
+                        </label>
+                        <select
+                            v-model.number="settings.shield.report_hour"
+                            class="native-select"
+                            data-testid="shield-report-hour-select"
+                            @change="saveSettings">
+                            <option v-for="h in 24" :key="h - 1" :value="h - 1">
+                                {{ String(h - 1).padStart(2, '0') }}:00
+                            </option>
+                        </select>
+                    </div>
+
                 </div>
             </div>
 
@@ -380,7 +406,9 @@ export default {
                 shield: {
                     desktop_notifications: false,
                     daily_summary: false,
-                    min_spam_score: 2.5
+                    min_spam_score: 2.5,
+                    report_hour: 6,
+                    pmg_report_disable: true
                 },
                 signature: {
                     enabled: false,
@@ -609,6 +637,8 @@ export default {
 </script>
 
 <style scoped>
+.field-row { margin-top: 14px; }
+.field-row .native-select { margin-top: 6px; min-width: 120px; padding: 6px 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-main-background); color: var(--color-main-text); }
 .settings-container {
     padding: 30px;
     max-width: none;
