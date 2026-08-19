@@ -186,6 +186,19 @@ class SettingsApiController extends OCSController {
                     }
                     $this->config->setAppValue('souvera_central', 'settings.shield.min_spam_score', (string) $score);
                 }
+                if (array_key_exists('report_hour', $shield)) {
+                    $hour = (int) $shield['report_hour'];
+                    if ($hour < 0 || $hour > 23) {
+                        return new DataResponse(
+                            ['error' => 'Ungültige Sendezeit. Erlaubt: 0 bis 23.'],
+                            Http::STATUS_BAD_REQUEST
+                        );
+                    }
+                    $this->config->setAppValue('souvera_central', 'settings.shield.report_hour', (string) $hour);
+                }
+                if (isset($shield['pmg_report_disable'])) {
+                    $this->config->setAppValue('souvera_central', 'settings.shield.pmg_report_disable', $shield['pmg_report_disable'] ? '1' : '0');
+                }
 
                 // Suspicious Login Detection settings
                 if (isset($shield['suspicious_login']) && is_array($shield['suspicious_login'])) {

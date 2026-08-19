@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.63] — 2026-08
+
+### Fixed
+
+- Shield settings: "Daily report time" and the PMG report switch are now
+  actually persisted (the PUT handler was missing both fields) and are
+  translated in the German JS translations (l10n/de.js, l10n/de_DE.js).
+
 ## [0.40.62] — 2026-08
 
 ### Fixed
