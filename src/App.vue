@@ -296,6 +296,8 @@ export default {
         },
 
         async loadStats() {
+            // Jede Zähler-Quelle unabhängig laden: schlägt der User-Endpoint
+            // fehl, dürfen Gruppen und Postfächer trotzdem geladen werden.
             try {
                 const url = generateUrl('/apps/souvera_central/api/users')
                 const response = await axios.get(url, {
@@ -311,18 +313,18 @@ export default {
                 this.totalUsers = data.total || users.length
                 // Lizenzzahlen kommen ausschließlich aus /api/config (LicenseService),
                 // hier NICHT überschreiben/schätzen.
-
-                await this.loadGroupCount()
-                await this.loadSharedMailboxCount()
-                this.statsLoaded = true
             } catch (error) {
-                console.error('[SouveraCentral] loadStats failed:', error?.response?.status, error?.response?.data || error)
+                console.error('[SouveraCentral] loadStats users failed:', error?.response?.status, error?.response?.data || error)
             }
+
+            await this.loadGroupCount()
+            await this.loadSharedMailboxCount()
+            this.statsLoaded = true
         },
 
         async loadGroupCount() {
             try {
-                const url = generateUrl('/apps/souvera_central/api/groups')
+                const url = generateUrl('/apps/souvera_central/api/groups/manage')
                 const response = await axios.get(url)
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.groupCount = data.total || (data.groups || []).length

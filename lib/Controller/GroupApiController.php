@@ -74,13 +74,22 @@ class GroupApiController extends OCSController {
         try {
             // Alle Gruppen durchsuchen
             $searchTerm = trim($search);
-            $allGroups = $this->groupManager->search($searchTerm);
-            if (count($allGroups) === 0 && $searchTerm === '') {
+            $allGroups = [];
+            $attempts = [fn (): array => $this->groupManager->search($searchTerm)];
+            if ($searchTerm === '') {
                 // Fallback für Backends (z. B. LDAP), die bei leerem Suchbegriff
-                // keine Ergebnisse liefern.
-                $allGroups = array_values($this->groupManager->search('*'));
-            } else {
-                $allGroups = array_values($allGroups);
+                // nichts liefern oder werfen.
+                $attempts[] = fn (): array => $this->groupManager->search('*');
+            }
+            foreach ($attempts as $attempt) {
+                try {
+                    $allGroups = array_values($attempt());
+                } catch (\Throwable $e) {
+                    continue;
+                }
+                if (count($allGroups) > 0) {
+                    break;
+                }
             }
 
             $allGroupsData = [];

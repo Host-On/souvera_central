@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.40.64] — 2026-08
+
+### Fixed
+
+- Dashboard: the user/group count helpers are now actually defined (the
+  v0.40.62 edit introduced calls without the method definitions, which
+  made /api/users, /api/config and /api/groups fail). Group and shared
+  mailbox counters now load independently of the user request, and the
+  group counter uses the same proven endpoint as the group module.
+
 ## [0.40.63] — 2026-08
 
 ### Fixed

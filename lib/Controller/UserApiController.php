@@ -1051,6 +1051,60 @@ class UserApiController extends OCSController {
     }
 
     /**
+     * Robustes "alle Benutzer auflisten": manche Backends (z. B. LDAP)
+     * liefern bei leerem Suchbegriff nichts (oder werfen sogar). Deshalb
+     * wird eine Fallback-Kette probiert, bis ein Backend Ergebnisse liefert.
+     *
+     * @return list<\OCP\IUser>
+     */
+    private function searchAllUsers(string $searchTerm): array {
+        $attempts = [
+            fn (): array => $this->userManager->search($searchTerm),
+            fn (): array => $this->userManager->searchDisplayName($searchTerm),
+        ];
+        if ($searchTerm === '') {
+            // Nur bei "alle anzeigen" sinnvoll: Wildcard als letzter Versuch.
+            $attempts[] = fn (): array => $this->userManager->search('*');
+        }
+        foreach ($attempts as $attempt) {
+            try {
+                $users = array_values($attempt());
+            } catch (\Throwable $e) {
+                continue; // Backend wirft (z. B. LDAP nicht erreichbar) — nächsten Versuch probieren
+            }
+            if (count($users) > 0) {
+                return $users;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Robustes "alle Gruppen auflisten" (gleiche Fallback-Strategie).
+     *
+     * @return list<\OCP\IGroup>
+     */
+    private function searchAllGroups(string $searchTerm): array {
+        $attempts = [
+            fn (): array => $this->groupManager->search($searchTerm),
+        ];
+        if ($searchTerm === '') {
+            $attempts[] = fn (): array => $this->groupManager->search('*');
+        }
+        foreach ($attempts as $attempt) {
+            try {
+                $groups = array_values($attempt());
+            } catch (\Throwable $e) {
+                continue; // Backend wirft — nächsten Versuch probieren
+            }
+            if (count($groups) > 0) {
+                return $groups;
+            }
+        }
+        return [];
+    }
+
+    /**
      * Tatsächliche Benutzeranzahl ermitteln (alle Benutzer inkl. Admin)
      *
      * @return int Anzahl aller Benutzer
