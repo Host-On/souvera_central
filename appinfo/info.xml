@@ -19,12 +19,12 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.59</version>
+    <version>0.40.60</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
     <category>organization</category>
-    <bugs>https://github.com/souvera/souvera_central/issues</bugs>
+    <bugs>https://github.com/Host-On/souvera_central/issues</bugs>
 
     <dependencies>
         <nextcloud min-version="30" max-version="34"/>
