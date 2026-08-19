@@ -118,6 +118,7 @@ export default {
             maxSharedMailboxes: 10,
             warningThreshold: 0.8,
             allowedDomains: [],
+            statsLoaded: false,
             navigationItems: [
                 {
                     id: 'dashboard',
@@ -177,8 +178,13 @@ export default {
     },
 
     watch: {
-        currentRoute() {
+        currentRoute(route) {
             this.updateCurrentPath()
+            // Self-healing: Stats neu laden, sobald das Dashboard (wieder)
+            // angezeigt wird — deckt z. B. fehlgeschlagene Erstladungen ab.
+            if (route === 'dashboard' && this.isSouveraAdmin && this.statsLoaded) {
+                this.loadStats()
+            }
         }
     },
 
@@ -285,7 +291,7 @@ export default {
                 this.warningThreshold = config.warning_threshold || 0.8
                 this.allowedDomains = config.allowed_domains || []
             } catch (error) {
-                // Error handling
+                console.error('[SouveraCentral] loadConfig failed:', error?.response?.status, error?.response?.data || error)
             }
         },
 
@@ -308,8 +314,9 @@ export default {
 
                 await this.loadGroupCount()
                 await this.loadSharedMailboxCount()
+                this.statsLoaded = true
             } catch (error) {
-                // Error handling
+                console.error('[SouveraCentral] loadStats failed:', error?.response?.status, error?.response?.data || error)
             }
         },
 
@@ -320,6 +327,7 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.groupCount = data.total || (data.groups || []).length
             } catch (error) {
+                console.error('[SouveraCentral] loadGroupCount failed:', error?.response?.status, error?.response?.data || error)
                 this.groupCount = 0
             }
         },
@@ -331,6 +339,7 @@ export default {
                 const data = response.data.ocs?.data || response.data.data || response.data
                 this.sharedMailboxCount = data.total || (data.mailboxes || []).length
             } catch (error) {
+                console.error('[SouveraCentral] loadSharedMailboxCount failed:', error?.response?.status, error?.response?.data || error)
                 this.sharedMailboxCount = 0
             }
         }

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.62] — 2026-08
+
+### Fixed
+
+- Dashboard-Zähler (Benutzer/Gruppen) robust gemacht: Backend listet alle
+  Benutzer/Gruppen mit Fallback-Kette für Backends, die bei leerem
+  Suchbegriff nichts liefern (z. B. LDAP). Frontend lädt die Zähler beim
+  Dashboard-Aufruf neu und loggt Fehler statt sie still zu verschlucken.
+
 ## [0.40.61] — 2026-08
 
 ### Added

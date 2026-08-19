@@ -70,7 +70,7 @@ class UserApiController extends OCSController {
         try {
             // Alle Benutzer durchsuchen (Nextcloud UserManager hat keine native Pagination)
             $searchTerm = trim($search);
-            $allUsers = $this->userManager->search($searchTerm);
+            $allUsers = $this->searchAllUsers($searchTerm);
             $souveraGid = $this->configService->getMailGroupId();
             $adminGid = $this->configService->getScadminGroupId();
 
@@ -993,7 +993,7 @@ class UserApiController extends OCSController {
     #[NoAdminRequired]
     public function listGroups(): DataResponse {
         try {
-            $allGroups = $this->groupManager->search('');
+            $allGroups = $this->searchAllGroups('');
             $groups = [];
 
             foreach ($allGroups as $group) {
@@ -1056,7 +1056,7 @@ class UserApiController extends OCSController {
      * @return int Anzahl aller Benutzer
      */
     private function getTotalUserCount(): int {
-        $allUsers = $this->userManager->search('');
+        $allUsers = $this->searchAllUsers('');
         $count = 0;
         foreach ($allUsers as $user) {
             if ($this->configService->isHiddenUser($user->getUID())) {
