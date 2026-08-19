@@ -1,0 +1,176 @@
+# Souvera – Zentraler Provider-Token (Central als Hub)
+
+Souvera **Central** ist die Zentrale. Gemeinsame Zugangsdaten werden **einmal**
+zentral in Central hinterlegt und von dort an die anderen Souvera-Apps
+(**Shield**, **Mail**) ausgegeben – sie müssen **nicht** in jeder App gespeichert
+werden.
+
+Aktuell zentral verwaltet:
+- der API-Token für **`provider.tools`** (`ProviderTokenService`)
+- der **BookStack**-API-Token (`BookStackTokenService`) – für die Central-Hilfe
+  und ebenfalls für Shield/Mail abrufbar.
+- das **Postmaster-App-Passwort** (`PostmasterCredentialService`) – das beim Deploy
+  erzeugte App-Passwort des `postmaster@`-Postfachs.
+
+---
+
+## 1. Token setzen (Hoster, via occ)
+
+Der Token wird **verschlüsselt** abgelegt (Nextcloud `OCP\Security\ICrypto`,
+gebunden an das Instanz-`secret` aus `config.php`). Klartext liegt nie in der DB.
+
+```bash
+# Empfohlen: über STDIN (keine Shell-History)
+printf '%s' 'DEIN_PROVIDER_TOOLS_TOKEN' | sudo -u www-data php occ souvera:provider-token:set --stdin
+
+# Alternativ interaktiv (verdeckte Eingabe)
+sudo -u www-data php occ souvera:provider-token:set
+
+# Status prüfen (maskiert)
+sudo -u www-data php occ souvera:provider-token:show
+sudo -u www-data php occ souvera:provider-token:show --reveal   # Klartext (Debug)
+sudo -u www-data php occ souvera:provider-token:show --output=json
+
+# Entfernen
+sudo -u www-data php occ souvera:provider-token:delete
+```
+
+---
+
+## 2. Token abrufen (aus Shield / Mail)
+
+**Voraussetzung:** `souvera_central` ist installiert **und aktiviert**. Dadurch ist
+der Namespace `OCA\SouveraCentral\` autoloadbar und der Service über den
+DI-Container abrufbar.
+
+```php
+use OCA\SouveraCentral\Service\ProviderTokenService;
+
+/** In einem Controller/Service der anderen App: */
+$token = \OCP\Server::get(ProviderTokenService::class)->getToken();
+// string  -> Token im Klartext (entschlüsselt)
+// null    -> nicht gesetzt oder nicht entschlüsselbar
+```
+
+Per Constructor-Injection (sauberer, falls die andere App Central als harte
+Abhängigkeit voraussetzt):
+
+```php
+public function __construct(
+    private \OCA\SouveraCentral\Service\ProviderTokenService $providerToken,
+) {}
+
+$token = $this->providerToken->getToken();
+```
+
+### Defensive Nutzung (empfohlen)
+
+```php
+$svc = null;
+if (\OCP\Server::get(\OCP\App\IAppManager::class)->isEnabledForUser('souvera_central')) {
+    try {
+        $svc = \OCP\Server::get(\OCA\SouveraCentral\Service\ProviderTokenService::class);
+    } catch (\Throwable $e) {
+        $svc = null; // Central (noch) nicht verfügbar
+    }
+}
+$token = $svc?->getToken();
+if ($token === null) {
+    // Fallback / klare Fehlermeldung: "provider.tools-Token in Souvera Central hinterlegen"
+}
+```
+
+---
+
+## 3. Öffentliche Service-API (Contract)
+
+`OCA\SouveraCentral\Service\ProviderTokenService`
+
+| Methode | Rückgabe | Beschreibung |
+|---|---|---|
+| `hasToken()` | `bool` | Ist ein Token hinterlegt? |
+| `getToken()` | `?string` | Entschlüsselter Token oder `null`. |
+| `getMaskedToken()` | `?string` | Maskiert (nur letzte 4 Zeichen), nie Klartext. |
+| `getSetAt()` | `?string` | ISO-8601-Zeitpunkt des letzten Setzens. |
+| `setToken(string)` | `void` | Verschlüsselt speichern (wirft bei leer). I. d. R. via occ. |
+| `clearToken()` | `void` | Token entfernen. |
+| Konstante `PROVIDER` | `'provider.tools'` | Provider-Kennung. |
+
+**Nur lesen** aus Shield/Mail (`getToken`). Das Setzen/Löschen erfolgt zentral
+durch den Hoster in Central (occ).
+
+---
+
+## 4. Hinweise
+
+- **Instanz-Secret-Wechsel:** Ändert sich `secret` in `config.php`, ist der Token
+  nicht mehr entschlüsselbar → `getToken()` liefert `null`; einmal neu setzen.
+- **Erweiterbarkeit:** Weitere gemeinsame Credentials können analog als eigene
+  Service-Methoden/Keys ergänzt werden – Central bleibt die einzige Quelle.
+
+---
+
+## 5. BookStack-Token (zweite zentrale Zugangsdaten)
+
+Der BookStack-API-Token wird **identisch** verwaltet (verschlüsselt via `ICrypto`,
+gebunden an das Instanz-`secret`). Die BookStack-**URL** wird nicht konfiguriert
+(fester Default `https://doku.souvera.eu`) – zentral verwaltet wird nur der Token.
+
+**Setzen/Status/Löschen (Hoster, via occ):**
+
+```bash
+printf '%s' '<TOKEN_ID>:<TOKEN_SECRET>' | occ souvera:bookstack-token:set --stdin
+occ souvera:bookstack-token:show            # maskiert
+occ souvera:bookstack-token:show --reveal   # Klartext (Debug)
+occ souvera:bookstack-token:delete
+```
+
+**Abrufen (aus Shield / Mail):**
+
+```php
+use OCA\SouveraCentral\Service\BookStackTokenService;
+
+$token = \OCP\Server::get(BookStackTokenService::class)->getToken();
+// string  -> "<TOKEN_ID>:<TOKEN_SECRET>" (entschlüsselt)
+// null    -> nicht gesetzt oder nicht entschlüsselbar
+```
+
+Service-API `OCA\SouveraCentral\Service\BookStackTokenService` (Contract identisch
+zu `ProviderTokenService`): `hasToken()`, `getToken()`, `getMaskedToken()`,
+`getSetAt()`, `setToken(string)`, `clearToken()`, Konstante `PROVIDER = 'bookstack'`.
+**Nur lesen** aus Shield/Mail; Setzen/Löschen erfolgt zentral in Central (occ).
+
+---
+
+## 6. Postmaster-App-Passwort (dritte zentrale Zugangsdaten)
+
+Das beim Deploy erzeugte **App-Passwort des `postmaster@`-Postfachs** wird
+**identisch** verwaltet (verschlüsselt via `ICrypto`, gebunden an das Instanz-`secret`).
+Es wird **nur** das Passwort gespeichert – keine Adresse.
+
+**Setzen/Status/Löschen (Hoster/Deploy, via occ):**
+
+```bash
+# Empfohlen: über STDIN (keine Shell-History) – so setzt es das Deploy-Skript
+printf '%s' "$POSTMASTER_APP_PASSWORD" | occ souvera:postmaster-password:set --stdin
+
+occ souvera:postmaster-password:show            # maskiert
+occ souvera:postmaster-password:show --reveal   # Klartext (Debug)
+occ souvera:postmaster-password:show --output=json
+occ souvera:postmaster-password:delete
+```
+
+**Abrufen (aus anderen Souvera-Apps):**
+
+```php
+use OCA\SouveraCentral\Service\PostmasterCredentialService;
+
+$password = \OCP\Server::get(PostmasterCredentialService::class)->getPassword();
+// string  -> App-Passwort im Klartext (entschlüsselt)
+// null    -> nicht gesetzt oder nicht entschlüsselbar
+```
+
+Service-API `OCA\SouveraCentral\Service\PostmasterCredentialService` (Contract analog
+zu `ProviderTokenService`): `hasPassword()`, `getPassword()`, `getMaskedPassword()`,
+`getSetAt()`, `setPassword(string)`, `clearPassword()`, Konstante `CREDENTIAL = 'postmaster'`.
+**Nur lesen** aus anderen Apps; Setzen/Löschen erfolgt zentral in Central (occ, i. d. R. beim Deploy).

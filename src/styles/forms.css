@@ -1,0 +1,57 @@
+/**
+ * Souvera Central – einheitliches Formular-Design-System
+ *
+ * Tokens leiten sich aus den Nextcloud-Theme-Variablen ab und passen sich
+ * dadurch automatisch an Light-/Dark-Theme an. Sie sorgen dafür, dass
+ * Text-Inputs, Selects, Textareas und Buttons exakt gleiche Höhen, Radien,
+ * Rahmen und Fokus-Zustände haben (Hauptproblem: uneinheitliche Höhen).
+ */
+:root {
+    --sc-control-height: 44px;
+    --sc-control-padding-x: 16px;
+    --sc-control-padding-y: 10px;
+    --sc-control-radius: var(--border-radius-large, 8px);
+    --sc-control-border-width: 1.5px;
+    --sc-field-gap: 24px;
+    --sc-section-gap: 40px;
+    --sc-focus-ring: 0 0 0 3px rgba(var(--color-primary-element-rgb, 0, 130, 201), 0.25);
+    /* Custom Select-Caret (ersetzt den hässlichen Browser-Pfeil) */
+    --sc-caret: url("data:image/svg+xml;charset=US-ASCII,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L6 9L11 4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/**
+ * Robuste Höhen-Normalisierung – erzwingt EINHEITLICHE Control-Höhen auch in der
+ * LIVE-Nextcloud, wo das globale Server-Formular-CSS (input/select) unsere scoped
+ * Styles überschreibt (Selects wurden dort höher als Text-Inputs gerendert).
+ * ID-Selektor (#app-...) + !important schlägt das NC-Global-CSS deterministisch.
+ * Range/Checkbox/Radio/Textarea sind bewusst ausgenommen.
+ */
+#app-souvera-user-management input[type="text"],
+#app-souvera-user-management input[type="email"],
+#app-souvera-user-management input[type="password"],
+#app-souvera-user-management input[type="search"],
+#app-souvera-user-management input[type="number"],
+#app-souvera-user-management input[type="tel"],
+#app-souvera-user-management input[type="url"],
+#app-souvera-user-management select {
+    height: var(--sc-control-height) !important;
+    min-height: var(--sc-control-height) !important;
+    max-height: var(--sc-control-height) !important;
+    padding-top: var(--sc-control-padding-y) !important;
+    padding-bottom: var(--sc-control-padding-y) !important;
+    padding-left: var(--sc-control-padding-x) !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    line-height: 1.4 !important;
+    font-size: 14px !important;
+    vertical-align: middle !important;
+    border-width: var(--sc-control-border-width) !important;
+    border-style: solid !important;
+}
+
+#app-souvera-user-management select {
+    padding-right: 40px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}

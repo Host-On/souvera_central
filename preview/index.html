@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Souvera Central – Nextcloud 34 Preview</title>
+    <style>
+        /* ===== Nextcloud 34 – Default Light Theme Tokens ===== */
+        :root {
+            --color-main-background: #ffffff;
+            --color-main-background-rgb: 255, 255, 255;
+            --color-main-background-translucent: rgba(255, 255, 255, 0.97);
+            --color-main-background-blur: rgba(255, 255, 255, 0.8);
+            --filter-background-blur: blur(25px);
+
+            --color-background-hover: #f5f5f5;
+            --color-background-dark: #ededed;
+            --color-background-darker: #dbdbdb;
+
+            --color-main-text: #222222;
+            --color-text-maxcontrast: #6b6b6b;
+            --color-text-maxcontrast-background-blur: #595959;
+            --color-text-light: #222222;
+            --color-text-lighter: #767676;
+
+            --color-primary: #00679e;
+            --color-primary-text: #ffffff;
+            --color-primary-hover: #3287b5;
+            --color-primary-element: #00679e;
+            --color-primary-element-rgb: 0, 103, 158;
+            --color-primary-element-hover: #3287b5;
+            --color-primary-element-text: #ffffff;
+            --color-primary-element-text-dark: #ededed;
+            --color-primary-element-light: #dbeaf2;
+            --color-primary-element-light-hover: #caddeb;
+            --color-primary-element-light-text: #00578a;
+
+            --color-error: #c91c1c;
+            --color-error-rgb: 201, 28, 28;
+            --color-error-hover: #d63939;
+            --color-error-text: #b31c1c;
+            --color-warning: #eca700;
+            --color-warning-rgb: 236, 167, 0;
+            --color-warning-hover: #efb320;
+            --color-warning-text: #a37200;
+            --color-success: #2d7b41;
+            --color-success-rgb: 45, 123, 65;
+            --color-success-hover: #46a049;
+            --color-success-text: #2d7b41;
+            --color-favorite: #a08b00;
+
+            --color-border: #ededed;
+            --color-border-dark: #dbdbdb;
+            --color-border-maxcontrast: #949494;
+
+            --color-box-shadow-rgb: 77, 77, 77;
+            --color-box-shadow: rgba(var(--color-box-shadow-rgb), 0.5);
+
+            --border-radius: 8px;
+            --border-radius-small: 4px;
+            --border-radius-element: 8px;
+            --border-radius-large: 12px;
+            --border-radius-rounded: 28px;
+            --border-radius-pill: 100px;
+            --border-radius-container: 16px;
+            --border-radius-container-large: 20px;
+
+            --default-font-size: 15px;
+            --font-face: system-ui, -apple-system, "Segoe UI", Roboto, Oxygen-Sans, Cantarell, Ubuntu, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+            --font-weight-heading: 700;
+            --default-line-height: 1.5;
+
+            --default-clickable-area: 44px;
+            --clickable-area-small: 24px;
+            --default-grid-baseline: 4px;
+
+            --header-height: 50px;
+            --body-container-margin: 8px;
+            --body-container-radius: var(--border-radius-container);
+            --body-height: calc(100vh - var(--header-height) - var(--body-container-margin));
+
+            --animation-quick: 100ms;
+            --animation-slow: 300ms;
+        }
+
+        /* ===== Nextcloud 34 – Dark Theme Tokens (body.theme-dark) ===== */
+        body.theme-dark {
+            --color-main-background: #171717;
+            --color-main-background-rgb: 23, 23, 23;
+            --color-main-background-translucent: rgba(23, 23, 23, 0.97);
+            --color-main-background-blur: rgba(23, 23, 23, 0.8);
+
+            --color-background-hover: #2e2e2e;
+            --color-background-dark: #383838;
+            --color-background-darker: #4d4d4d;
+
+            --color-main-text: #ededed;
+            --color-text-maxcontrast: #949494;
+            --color-text-maxcontrast-background-blur: #a5a5a5;
+            --color-text-light: #ededed;
+            --color-text-lighter: #b3b3b3;
+
+            --color-primary-element: #4595c6;
+            --color-primary-element-rgb: 69, 149, 198;
+            --color-primary-element-hover: #5ba3cf;
+            --color-primary-element-text: #ffffff;
+            --color-primary-element-light: #2b3b45;
+            --color-primary-element-light-hover: #36495a;
+            --color-primary-element-light-text: #9bc3dd;
+
+            --color-error: #db4b4b;
+            --color-error-rgb: 219, 75, 75;
+            --color-error-hover: #e26e6e;
+            --color-error-text: #e57373;
+            --color-warning: #eca700;
+            --color-warning-rgb: 236, 167, 0;
+            --color-warning-hover: #efb320;
+            --color-warning-text: #d9a441;
+            --color-success: #4cb04f;
+            --color-success-rgb: 76, 176, 79;
+            --color-success-hover: #5cbd5f;
+            --color-success-text: #6fbf73;
+
+            --color-border: #2e2e2e;
+            --color-border-dark: #383838;
+            --color-border-maxcontrast: #6b6b6b;
+
+            --color-box-shadow-rgb: 0, 0, 0;
+            --color-box-shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        body.theme-dark {
+            background-color: #0a0a0a;
+            background-image: linear-gradient(160deg, #0d2230 0%, #08161f 100%);
+        }
+        body.theme-dark #nc-header { background-color: #1a1a1a; }
+
+        * { box-sizing: border-box; }
+
+        /* ===== Simuliertes Nextcloud-34-Server-Formular-CSS (Preview ≈ Live) =====
+           NC gibt Formularelementen global eine min-height (--default-clickable-area)
+           und eigenes Padding/Border. Native Selects rendern dabei etwas höher als
+           Text-Inputs -> genau die live gemeldete Höhen-Ungleichheit. Diese Regeln
+           machen die Preview realistisch; unsere forms.css (#app-... !important)
+           normalisiert alle Controls wieder auf exakt 44px. */
+        #app-souvera-user-management input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+        #app-souvera-user-management textarea,
+        #app-souvera-user-management select {
+            margin: 3px 3px 3px 0;
+            padding: 0 12px;
+            font-size: 13px;
+            background-color: var(--color-main-background);
+            color: var(--color-main-text);
+            border: 2px solid var(--color-border-maxcontrast);
+            border-radius: var(--border-radius-large);
+            box-sizing: border-box;
+            min-height: var(--default-clickable-area);
+            outline: none;
+        }
+        #app-souvera-user-management select {
+            min-height: calc(var(--default-clickable-area) + 7px);
+            padding: 4px 26px 4px 10px;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: var(--font-face);
+            font-size: var(--default-font-size);
+            color: var(--color-main-text);
+            background-color: var(--color-primary);
+            background-image: linear-gradient(160deg, #00679e 0%, #0a7cbb 100%);
+        }
+
+        a { color: inherit; text-decoration: none; }
+        a:hover { text-decoration: none; }
+        button { font-family: inherit; }
+
+        /* ===== Faux Nextcloud top header ===== */
+        #nc-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            background-color: var(--color-primary);
+            color: var(--color-primary-text);
+            z-index: 2000;
+        }
+
+        #nc-header .nc-left { display: flex; align-items: center; gap: 8px; }
+        #nc-header .nc-logo {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #nc-header .nc-logo svg { width: 22px; height: 22px; }
+        #nc-header .nc-apptitle { font-weight: 700; font-size: 16px; letter-spacing: .2px; }
+        #nc-header .nc-right { display: flex; align-items: center; gap: 14px; }
+        #nc-header .nc-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            opacity: .92;
+        }
+        #nc-header .nc-icon svg { width: 20px; height: 20px; fill: #fff; }
+        #nc-header .nc-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #ffffff; color: var(--color-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px;
+        }
+
+        /* ===== Content area below header (where the Vue app renders) ===== */        #app-souvera-user-management {
+            position: absolute;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            min-height: 0;
+        }
+    </style>
+</head>
+<body>
+    <header id="nc-header">
+        <div class="nc-left">
+            <span class="nc-logo">
+                <svg viewBox="0 0 24 24"><path fill="#00679e" d="M12 6.5c-2.06 0-3.8 1.4-4.32 3.3-.46-1-1.47-1.7-2.65-1.7C3.36 8.1 2 9.46 2 11.13s1.36 3.02 3.03 3.02c1.18 0 2.19-.69 2.65-1.69C8.2 14.36 9.94 15.5 12 15.5s3.8-1.14 4.32-3.04c.46 1 1.47 1.69 2.65 1.69 1.67 0 3.03-1.35 3.03-3.02S20.64 8.1 18.97 8.1c-1.18 0-2.19.7-2.65 1.7C15.8 7.9 14.06 6.5 12 6.5Zm0 2.1c1.43 0 2.55 1.13 2.55 2.53S13.43 13.66 12 13.66 9.45 12.53 9.45 11.13 10.57 8.6 12 8.6Z"/></svg>
+            </span>
+            <span class="nc-apptitle">Souvera Central</span>
+        </div>
+        <div class="nc-right">
+            <span class="nc-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0A4.5 4.5 0 1 1 14 9.5 4.49 4.49 0 0 1 9.5 14Z"/></svg></span>
+            <span class="nc-icon"><svg viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1Z"/></svg></span>
+            <span class="nc-avatar">A</span>
+        </div>
+    </header>
+
+    <div id="skip-actions"></div>
+    <div id="app-souvera-user-management" data-initial-route="dashboard" data-action="" data-user-id=""></div>
+
+    <script>
+        window._oc_webroot = ''
+        if (location.search.indexOf('dark') !== -1) {
+            document.body.classList.add('theme-dark')
+        }
+        window.OC = window.OC || {
+            requestToken: '', config: {}, coreApps: [], appswebroots: {},
+            getLanguage: function () { return 'de' }, getLocale: function () { return 'de_DE' },
+            isUserAdmin: function () { return true }, MimeType: {}, dialogs: {}, Notification: {},
+            debug: false, theme: {}
+        }
+        window.OCP = window.OCP || {}
+        window.OCA = window.OCA || {}
+        window.oc_userconfig = window.oc_userconfig || {}
+    </script>
+    <script src="preview.js"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>souvera_central</id>
+    <name>Souvera Central</name>
+    <summary>Modulare Management-Zentrale für Nextcloud</summary>
+    <description><![CDATA[
+        Souvera Central ist die zentrale modulare Management-Plattform für Nextcloud.
+
+        Features:
+        - Modulares Plugin-System
+        - User Management mit Lizenz-Limits
+        - Domain-Whitelist für E-Mails
+        - Feature-Toggle für Module
+        - Erweiterbar mit zusätzlichen Modulen
+
+        Verfügbare Module:
+        - User Management: Moderne Benutzerverwaltung mit Echtzeit-Validierung
+        - Gruppen Management (coming soon)
+        - Security & Audit (coming soon)
+    ]]></description>
+    <version>0.40.60</version>
+    <licence>agpl</licence>
+    <author>Souvera</author>
+    <namespace>SouveraCentral</namespace>
+    <category>organization</category>
+    <bugs>https://github.com/Host-On/souvera_central/issues</bugs>
+
+    <dependencies>
+        <nextcloud min-version="30" max-version="34"/>
+    </dependencies>
+
+    <repair-steps>
+        <pre-update>
+            <!-- v0.40.27: `occ app:update souvera_central` pulls the
+                 newest GitHub releases for all managed apps BEFORE the
+                 migration machinery runs — no manual git pull needed. -->
+            <step>OCA\SouveraCentral\Repair\SelfUpdateNowStep</step>
+        </pre-update>
+        <post-migration>
+            <step>OCA\SouveraCentral\Repair\InstallBrandingTheme</step>
+            <step>OCA\SouveraCentral\Repair\EnsureHelpGroupAccess</step>
+        </post-migration>
+    </repair-steps>
+    <commands>
+        <command>OCA\SouveraCentral\Command\SeedTestUsers</command>
+        <command>OCA\SouveraCentral\Command\SyncMailboxes</command>
+        <command>OCA\SouveraCentral\Command\ProvisionMailbox</command>
+        <command>OCA\SouveraCentral\Command\MakeSouveraUser</command>
+        <command>OCA\SouveraCentral\Command\QuotaSet</command>
+        <command>OCA\SouveraCentral\Command\QuotaDefault</command>
+        <command>OCA\SouveraCentral\Command\SouveraReport</command>
+        <command>OCA\SouveraCentral\Command\SouveraUsersCount</command>
+        <command>OCA\SouveraCentral\Command\SelfUpdate</command>
+        <command>OCA\SouveraCentral\Command\LicensesSet</command>
+        <command>OCA\SouveraCentral\Command\MailStorageSet</command>
+        <command>OCA\SouveraCentral\Command\MailSignatureSieve</command>
+        <command>OCA\SouveraCentral\Command\SystemMailboxNormalize</command>
+        <command>OCA\SouveraCentral\Command\StalwartStatus</command>
+        <command>OCA\SouveraCentral\Command\MailboxList</command>
+        <command>OCA\SouveraCentral\Command\MailboxGet</command>
+        <command>OCA\SouveraCentral\Command\MailboxDelete</command>
+        <command>OCA\SouveraCentral\Command\MailboxReindex</command>
+        <command>OCA\SouveraCentral\Command\MailboxReindexAll</command>
+        <command>OCA\SouveraCentral\Command\AliasList</command>
+        <command>OCA\SouveraCentral\Command\AliasAdd</command>
+        <command>OCA\SouveraCentral\Command\AliasRemove</command>
+        <command>OCA\SouveraCentral\Command\AliasGlobalList</command>
+        <command>OCA\SouveraCentral\Command\AliasGlobalFind</command>
+        <command>OCA\SouveraCentral\Command\AliasGlobalRemove</command>
+        <command>OCA\SouveraCentral\Command\DomainList</command>
+        <command>OCA\SouveraCentral\Command\DomainAdd</command>
+        <command>OCA\SouveraCentral\Command\DomainDelete</command>
+        <command>OCA\SouveraCentral\Command\BrandingInstallTheme</command>
+        <command>OCA\SouveraCentral\Command\ProviderTokenSet</command>
+        <command>OCA\SouveraCentral\Command\ProviderTokenShow</command>
+        <command>OCA\SouveraCentral\Command\ProviderTokenDelete</command>
+        <command>OCA\SouveraCentral\Command\BookStackTokenSet</command>
+        <command>OCA\SouveraCentral\Command\BookStackTokenShow</command>
+        <command>OCA\SouveraCentral\Command\BookStackTokenDelete</command>
+        <command>OCA\SouveraCentral\Command\PostmasterPasswordSet</command>
+        <command>OCA\SouveraCentral\Command\PostmasterPasswordShow</command>
+        <command>OCA\SouveraCentral\Command\PostmasterPasswordDelete</command>
+        <command>OCA\SouveraCentral\Command\HelpCacheClear</command>
+        <command>OCA\SouveraCentral\Command\ExternalEnable</command>
+        <command>OCA\SouveraCentral\Command\ExternalDisable</command>
+        <command>OCA\SouveraCentral\Command\ExternalStatus</command>
+        <command>OCA\SouveraCentral\Command\ExternalConfigure</command>
+		<command>OCA\SouveraCentral\Command\DevopsChannel</command>
+    </commands>
+
+    <background-jobs>
+        <job>OCA\SouveraCentral\DevOps\SelfUpdateJob</job>
+    </background-jobs>
+
+    <!--
+        Bewusst KEIN statischer navigations-Block.
+        Die App-Navigation wird dynamisch in Application::boot() registriert
+        (lib/AppInfo/Application.php) - mit fester id "souvera_central" und NUR
+        fuer eingeloggte souvera-admins sichtbar. Fuer Gaeste/Login wird kein
+        Eintrag erzeugt -> kein NavigationManager::init()-Crash unter NC34.
+        WICHTIG: Falls jemals statisch, MUSS ein navigation-Eintrag id, name und
+        route enthalten, sonst TypeError (null) in IAppManager::isAlwaysEnabled(string).
+        Ebenso KEINE leeren Container-Elemente -> InfoParser-Crash.
+    -->
+</info>

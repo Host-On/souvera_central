@@ -1,0 +1,32 @@
+{
+  "id": "user_management",
+  "name": "User Management",
+  "description": "Moderne Benutzerverwaltung mit Lizenz-Limits und Domain-Validierung",
+  "version": "1.0.0",
+  "icon": "icon-user",
+  "enabled": true,
+  "routes": {
+    "list": "/api/users",
+    "create": "/api/users",
+    "update": "/api/users/{id}",
+    "delete": "/api/users/{id}",
+    "config": "/api/config"
+  },
+  "permissions": [
+    "user:read",
+    "user:write",
+    "user:delete"
+  ],
+  "settings": {
+    "max_licenses": {
+      "type": "integer",
+      "default": 10,
+      "description": "Maximale Anzahl von Benutzern"
+    },
+    "allowed_domains": {
+      "type": "array",
+      "default": [],
+      "description": "Erlaubte E-Mail-Domains (leer = alle erlaubt)"
+    }
+  }
+}

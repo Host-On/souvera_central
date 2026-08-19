@@ -1,0 +1,190 @@
+# Souvera Central
+
+**Modulare Management-Zentrale für Nextcloud**
+
+Erweiterte Benutzerverwaltung mit Lizenz-Limits, Gruppenverwaltung und Dashboard.
+
+## Features
+
+- ✅ Benutzerverwaltung (CRUD, Manager-Zuweisungen, Quota, Aktivieren/Deaktivieren)
+- ✅ Gruppenverwaltung (CRUD, Mitgliederverwaltung)
+- ✅ Geteilte Postfächer (Stalwart **0.16** Integration via **JMAP**)
+- ✅ Automatische Postfach-Provisionierung (User anlegen/Passwort-Sync/Löschen via Event-Listener)
+- ✅ E-Mail Aliase pro Benutzer + Postfach-Quota (Speicherlimit)
+- ✅ smail-Sichtbarkeit über dedizierte Mail-Gruppe (nur Benutzer mit Postfach sehen die Mail-App)
+- ✅ Dashboard mit Statistiken
+- ✅ Konfigurierbare Limits mit Warnungen (Lizenzen, Gruppen, Postfächer, Aliase)
+- ✅ E-Mail Domain-Whitelist
+- ✅ Dynamische Reseller-Kontakt-Links
+
+## Anforderungen
+
+- **Nextcloud 30–34** (nativer v34-Look, PHP-8-Attribute)
+- **Stalwart Mail Server 0.16+** — Kommunikation ausschließlich über die **JMAP-Management-API**
+  (`urn:stalwart:jmap`). Die alte REST-API (`/api/principal …`) wurde in 0.16 entfernt und wird
+  **nicht** mehr unterstützt.
+
+## Installation
+
+```bash
+# Dependencies installieren
+npm install
+
+# Production Build
+npm run build
+
+# In Nextcloud aktivieren
+sudo -u www-data php occ app:enable souvera_central
+```
+
+## Konfiguration
+
+Füge in `config/config.php` hinzu:
+
+```php
+// Reseller-Integration
+'souvera_central.cloud_uuid' => 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+
+// Limits
+'souvera_central.max_licenses' => 10,           // Max. Benutzer (Default: 10)
+'souvera_central.max_groups' => 20,             // Max. Gruppen (Default: 20)
+'souvera_central.max_shared_mailboxes' => 10,   // Max. geteilte Postfächer (Default: 10)
+'souvera_central.max_aliases_per_user' => 10,   // Max. Aliase pro Benutzer (Default: 10)
+'souvera_central.warning_threshold' => 0.8,     // Warnung ab 80% (Default: 0.8)
+
+// E-Mail Domain-Whitelist (optional, leer = alle erlaubt)
+'souvera_central.allowed_domains' => ['example.com', 'company.de'],
+
+// Stalwart Mail Server 0.16 (JMAP)
+// WICHTIG: Server-Basis-URL angeben (OHNE /api oder /jmap) – die App ermittelt
+// daraus selbst /jmap/session und /jmap.
+'souvera_central.stalwart_api_url' => 'https://mail.example.com',
+'souvera_central.stalwart_admin_user' => 'admin',
+'souvera_central.stalwart_admin_password' => 'your-password',
+
+// smail-Sichtbarkeit: dedizierte Mail-Gruppe (optional)
+'souvera_central.mail_group' => 'souvera-users',        // GID, Default: souvera-users
+'souvera_central.mail_group_name' => 'Souvera Users',   // Anzeigename, Default: Souvera Users
+'souvera_central.mail_group_sync' => true,              // Benutzer mit Postfach automatisch zuordnen
+
+// Delegierte Verwaltung (Souvera-Administrator ohne NC-Superadmin-Rechte)
+// Hinweis: "scadmin" ist der Admin-BENUTZER, die Admin-GRUPPE heißt "souvera-admins".
+'souvera_central.admin_group' => 'souvera-admins',     // GID der Souvera-Admin-Gruppe (Default)
+'souvera_central.admin_group_name' => 'Souvera Admins',
+'souvera_central.hidden_users' => ['ncadmin'],          // in Central ausgeblendete technische Benutzer
+```
+
+> **Souvera User vs. Nextcloud User**
+> Ein **Souvera User** ist Mitglied der Gruppe `souvera-users`: lizenziert (zählt auf `max_licenses`)
+> und erhält ein Stalwart-Postfach. Ein **Nextcloud User** ist *nicht* in dieser Gruppe: unlizenziert,
+> ohne Postfach. Der Typ wird beim Anlegen/Bearbeiten eines Benutzers umgeschaltet.
+>
+> **Souvera-Administrator (Gruppe `souvera-admins`)**
+> Mitglieder der Gruppe `souvera-admins` dürfen Souvera Central vollständig bedienen (Benutzer, Gruppen,
+> geteilte Postfächer, Einstellungen) – **ohne** echte Nextcloud-Superadmin-Rechte. Sie erhalten
+> ebenfalls ein Postfach, **verbrauchen aber keine Lizenz**. Die Gruppe wird vom CloudManager bei der
+> Installation angelegt; Central verwendet und schützt sie (Wiederherstellung bei versehentlicher Löschung).
+> Die App (Icon **und** Routen) ist **ausschließlich** für `souvera-admins`-Mitglieder und echte
+> NC-Superadmins sichtbar/bedienbar – alle anderen sehen die App nicht und erhalten beim Öffnen 403.
+
+> Beschränke anschließend die **smail**-App in den Nextcloud-App-Einstellungen auf die
+> Gruppe **Souvera Users** (`souvera-users`), damit Benutzer ohne Postfach die Mail-App nicht sehen.
+> Die Gruppe ist **geschützt**: Wird sie versehentlich gelöscht, legt die App sie automatisch wieder
+> an und stellt alle Postfach-Inhaber als Mitglieder wieder her.
+
+## Souvera Shield – Einstellungen aus Central auslesen
+
+Die Shield-Einstellungen werden **global** in der Nextcloud-AppConfig der App `souvera_central`
+gespeichert (gepflegt unter *Central → Einstellungen → Souvera Shield*). Die Shield-App liest sie
+direkt aus – kein HTTP, keine Auth nötig (beide Apps laufen auf derselben Instanz).
+
+| AppConfig-Key (`app = souvera_central`)        | Typ           | Default | Bedeutung                                   |
+|------------------------------------------------|---------------|---------|---------------------------------------------|
+| `settings.shield.desktop_notifications`        | `'0'` / `'1'` | `'0'`   | Desktop-Benachrichtigungen erhalten         |
+| `settings.shield.daily_summary`                | `'0'` / `'1'` | `'0'`   | Tägliche Zusammenfassung per E-Mail         |
+| `settings.shield.min_spam_score`               | Float `0..10` | `'2.5'` | Mindest-Spam-Score (0,5-Schritte) für Benachr. |
+
+**In der Shield-App (PHP) auslesen:**
+
+```php
+// IConfig per Dependency Injection (versionsübergreifend kompatibel)
+$desktop      = $config->getAppValue('souvera_central', 'settings.shield.desktop_notifications', '0') === '1';
+$dailySummary = $config->getAppValue('souvera_central', 'settings.shield.daily_summary', '0') === '1';
+$minSpamScore = (float) $config->getAppValue('souvera_central', 'settings.shield.min_spam_score', '2.5');
+```
+
+**Zum Prüfen via occ:**
+
+```bash
+sudo -u www-data php occ config:app:get souvera_central settings.shield.min_spam_score
+```
+
+
+
+```bash
+# Einzelnes Postfach gezielt provisionieren (z. B. ncadmin im Build-Prozess) – idempotent
+sudo -u www-data php occ souvera:provision-mailbox admin@example.com --password-stdin <<< "$ADMIN_PW"
+sudo -u www-data php occ souvera:provision-mailbox info@example.com --generate --quota 5368709120
+
+# Backfill: fehlende Postfächer für alle bestehenden Benutzer anlegen
+sudo -u www-data php occ souvera:sync-mailboxes            # mit --dry-run zum Testen
+
+# Bestehenden Nextcloud-Benutzer zum lizenzierten Souvera User machen (Gruppe + Postfach + Lizenzprüfung)
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com            # Zufallspasswort fürs Postfach
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com --generate # Passwort erzeugen + ausgeben
+sudo -u www-data php occ souvera:make-souvera-user anna@example.com --force    # Lizenzlimit ignorieren
+```
+
+`souvera:make-souvera-user` nutzt dieselbe Logik wie der UI-Button „Zum Souvera User machen".
+Optionen: `--password` | `--password-stdin` | `--generate`, `--force` (Lizenzlimit ignorieren).
+
+`souvera:provision-mailbox` Optionen: `--password` | `--password-stdin` | `--generate`,
+`--display-name`, `--quota` (Bytes, 0 = unbegrenzt).
+
+### Instanzweite App-Umbenennung (Talk → „Link", Office/Collabora → „Desk")
+
+Das App-Menü + der Seitentitel werden automatisch umbenannt (Frontend-Skript, immer aktiv).
+Für die **tiefe** Umbenennung **innerhalb** von Talk und Office/Collabora (Menüs, Titel,
+Benachrichtigungstexte) werden native NC-Theme-l10n-Overrides installiert:
+
+```bash
+# Overrides für de/en/nl in ein Theme schreiben und dieses aktivieren
+sudo -u www-data php occ souvera:branding:install-theme --activate
+
+# Vorschau ohne Schreiben
+sudo -u www-data php occ souvera:branding:install-theme --dry-run
+
+# Alle vorhandenen Sprachen der Ziel-Apps, eigenes Theme
+sudo -u www-data php occ souvera:branding:install-theme --theme=souvera --all-langs --activate
+
+# Danach Theme-Caches aktualisieren
+sudo -u www-data php occ maintenance:theme:update
+```
+
+Schreibt `themes/<theme>/apps/{spreed,richdocuments,richdocumentscode}/l10n/<lang>.{js,json}`
+(vollständige Dateien, nur die Produktnamen geändert). **Nach NC-/App-Updates erneut ausführen.**
+Optionen: `--theme=<name>` (Default: aktives Theme oder `souvera`), `--lang=de,en,nl`,
+`--all-langs`, `--activate`, `--dry-run`.
+
+## Entwicklung
+
+```bash
+npm run dev         # Development Build mit Watch
+npm run build       # Production Build
+npm run lint        # Code-Qualität prüfen
+npm run lint:fix    # Auto-Fix Lint-Fehler
+```
+
+## Reseller-Integration
+
+Die App ruft automatisch die Support-URL des Resellers ab:
+
+**API:** `POST https://manage.souvera.eu/api/public/workspace/reseller`
+
+**Fallback-Logik:** `support_url` → `url` → `souvera.eu`
+
+Ohne konfigurierte `cloud_uuid` wird `souvera.eu` als Fallback genutzt.
+
+## Lizenz
+
+AGPL-3.0
