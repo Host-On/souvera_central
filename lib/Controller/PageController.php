@@ -78,6 +78,12 @@ class PageController extends Controller {
 
     #[NoCSRFRequired]
     #[NoAdminRequired]
+    public function ai(): TemplateResponse {
+        return $this->renderPage('ai');
+    }
+
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
     public function changelogs(): TemplateResponse {
         return $this->renderPage('changelogs');
     }

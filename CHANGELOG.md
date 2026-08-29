@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.68] — 2026-08
+
+### Fixed
+
+- AI-Seite ist jetzt direkt verlinkbar (F5/Deep-Link auf
+  `/apps/souvera_central/ai` lieferte „Seite nicht gefunden") — die
+  Server-Route `page#ai` fehlte.
+
 ## [0.40.67] — 2026-08
 
 ### Added

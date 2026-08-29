@@ -18,6 +18,7 @@ return [
         ['name' => 'page#groups', 'url' => '/groups', 'verb' => 'GET'],
         ['name' => 'page#sharedMailboxes', 'url' => '/shared-mailboxes', 'verb' => 'GET'],
         ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
+        ['name' => 'page#ai', 'url' => '/ai', 'verb' => 'GET'],
         ['name' => 'page#changelogs', 'url' => '/changelogs', 'verb' => 'GET'],
 
         // User API-Routen
