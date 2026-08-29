@@ -59,17 +59,25 @@ class AiConfigService
 
     /**
      * Serialisierter Snapshot für `occ …:ai:status --json` und die Admin-UI.
-     * Enthält KEINE Secrets.
+     * Enthält KEINE Secrets. Bewusst fehlertolerant: eine nicht angelegte
+     * KB-Tabelle (z. B. direkt nach einem Update) darf hier nie crashen.
      *
      * @return array{enabled:bool, central_version:string, kb_count:int,
      *               mcp:array{token_set:bool, created_at:?string}}
      */
     public function snapshot(): array
     {
+        $kbCount = 0;
+        try {
+            $kbCount = $this->kb->count();
+        } catch (\Throwable $e) {
+            // Tabelle existiert noch (Migration läuft ggf. erst) — 0 melden.
+        }
+
         return [
             'enabled' => $this->isEnabled(),
             'central_version' => $this->centralVersion(),
-            'kb_count' => $this->kb->count(),
+            'kb_count' => $kbCount,
             'mcp' => [
                 'token_set' => $this->mcpToken->hasToken(),
                 'created_at' => $this->mcpToken->getCreatedAt(),

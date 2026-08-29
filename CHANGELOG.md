@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.69] — 2026-08
+
+### Fixed
+
+- MCP-Endpoint: interner Fehler (undefined method beim Request-Body) bezogen;
+  Request-Body wird jetzt über `php://input` gelesen. Zusätzlich fängt der
+  Endpoint jede interne Exception ab und antwortet mit sauberem
+  JSON-RPC-Fehler (-32603) statt HTTP 500; Details landen im Server-Log
+  (app: souvera_central).
+- `ai:status` / Status-UI tolerant, wenn die KB-Tabelle noch nicht existiert
+  (zählt als 0 statt Absturz).
+
 ## [0.40.68] — 2026-08
 
 ### Fixed

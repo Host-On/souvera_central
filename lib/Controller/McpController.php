@@ -32,6 +32,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class McpController extends Controller
 {
@@ -46,6 +47,7 @@ class McpController extends Controller
         private AiConfigService $aiConfig,
         private AiMcpTokenService $mcpToken,
         private AiKbService $kb,
+        private LoggerInterface $logger,
     ) {
         parent::__construct('souvera_central', $request);
     }
@@ -58,13 +60,28 @@ class McpController extends Controller
     #[NoAdminRequired]
     public function call(): JSONResponse
     {
+        try {
+            return $this->handleCall();
+        } catch (\Throwable $e) {
+            // Nie einen nackten 500 an den Agenten liefern — sauberer
+            // JSON-RPC-Fehler + vollständiger Trace im Server-Log.
+            $this->logger->error('Souvera AI: MCP request failed: ' . $e->getMessage(), [
+                'app' => 'souvera_central',
+                'exception' => $e,
+            ]);
+            return $this->error(null, -32603, 'Internal error');
+        }
+    }
+
+    private function handleCall(): JSONResponse
+    {
         $guard = $this->guard();
         if ($guard !== null) {
             return $guard;
         }
 
-        $raw = $this->request->getRawBody();
-        $message = json_decode($raw, true);
+        $raw = file_get_contents('php://input');
+        $message = json_decode((string) $raw, true);
         if (!is_array($message) || !isset($message['method'])) {
             return $this->error($message['id'] ?? null, -32700, 'Parse error');
         }
@@ -72,9 +89,6 @@ class McpController extends Controller
         $id = $message['id'] ?? null;
         $method = (string) $message['method'];
         $params = is_array($message['params'] ?? null) ? $message['params'] : [];
-
-        // Notifications (ohne id) erwarten keine Antwort-Payload.
-        $isNotification = !array_key_exists('id', $message);
 
         switch ($method) {
             case 'initialize':
@@ -237,6 +251,10 @@ class McpController extends Controller
                     return $this->error($id, -32602, 'Unknown tool: ' . $name);
             }
         } catch (\Throwable $e) {
+            $this->logger->error('Souvera AI: MCP tool call failed (' . $name . '): ' . $e->getMessage(), [
+                'app' => 'souvera_central',
+                'exception' => $e,
+            ]);
             return $this->toolResult('Internal error while executing tool.', true);
         }
     }
