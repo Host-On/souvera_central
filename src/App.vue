@@ -58,6 +58,9 @@
 
                 <!-- Changelog -->
                 <ChangelogView v-else-if="currentRoute === 'changelogs'" :key="routeKey" />
+
+                <!-- Souvera AI -->
+                <AiView v-else-if="currentRoute === 'ai'" :key="routeKey" />
             </div>
         </NcAppContent>
     </NcContent>
@@ -80,6 +83,7 @@ import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import History from 'vue-material-design-icons/History.vue'
+import Robot from 'vue-material-design-icons/Robot.vue'
 
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
@@ -87,6 +91,7 @@ import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
 import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.vue'
 import Settings from './modules/Settings/Settings.vue'
 import ChangelogView from './modules/Changelog/ChangelogView.vue'
+import AiView from './modules/Ai/Ai.vue'
 
 export default {
     name: 'App',
@@ -101,7 +106,8 @@ export default {
         GroupManagement,
         SharedMailboxesView,
         Settings,
-        ChangelogView
+        ChangelogView,
+        AiView
     },
 
     data() {
@@ -153,6 +159,13 @@ export default {
                     label: t('souvera_central', 'Settings'),
                     icon: markRaw(Cog),
                     url: generateUrl('/apps/souvera_central/settings'),
+                    adminOnly: true
+                },
+                {
+                    id: 'ai',
+                    label: t('souvera_central', 'Souvera AI'),
+                    icon: markRaw(Robot),
+                    url: generateUrl('/apps/souvera_central/ai'),
                     adminOnly: true
                 },
                 {
@@ -233,7 +246,7 @@ export default {
             if (this.isSouveraAdmin) {
                 return route
             }
-            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings']
+            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings', 'ai']
             return adminOnlyRoutes.indexOf(route) !== -1 ? 'changelogs' : route
         },
 
@@ -243,7 +256,7 @@ export default {
 
         handlePopState() {
             const path = window.location.pathname
-            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|changelogs)/)
+            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|ai|changelogs)/)
 
             this.currentRoute = this.authorizeRoute(match && match[1] ? match[1] : 'dashboard')
             this.updateCurrentPath()

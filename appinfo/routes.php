@@ -63,6 +63,12 @@ return [
         // Reseller API-Route
         ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],
 
+        // Souvera AI: Status-Steuerung + lokale Wissensbasis-Ansicht
+        ['name' => 'ai_api#status', 'url' => '/api/ai/status', 'verb' => 'GET'],
+        ['name' => 'ai_api#enable', 'url' => '/api/ai/enable', 'verb' => 'POST'],
+        ['name' => 'ai_api#disable', 'url' => '/api/ai/disable', 'verb' => 'POST'],
+        ['name' => 'ai_api#kbList', 'url' => '/api/ai/kb', 'verb' => 'GET'],
+
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],
 
