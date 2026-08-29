@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.66] — 2026-08
+
+### Changed
+
+- AI toggle vereinfacht: `ai:book` entfernt, nur noch `ai:enable` /
+  `ai:disable` / `ai:status`. Die Buchungsprüfung liegt beim Hoster.
+
+### Added
+
+- „Souvera AI"-Sektion in der Central-Verwaltung: Status-Schalter und
+  Ansicht der Wissensbasis (`resources/ai`), admin-only.
+
 ## [0.40.65] — 2026-08
 
 ### Added
