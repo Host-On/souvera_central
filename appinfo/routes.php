@@ -63,11 +63,20 @@ return [
         // Reseller API-Route
         ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],
 
-        // Souvera AI: Status-Steuerung + lokale Wissensbasis-Ansicht
+        // Souvera AI: Status-Steuerung + Knowledge-Basis-Verwaltung
         ['name' => 'ai_api#status', 'url' => '/api/ai/status', 'verb' => 'GET'],
         ['name' => 'ai_api#enable', 'url' => '/api/ai/enable', 'verb' => 'POST'],
         ['name' => 'ai_api#disable', 'url' => '/api/ai/disable', 'verb' => 'POST'],
         ['name' => 'ai_api#kbList', 'url' => '/api/ai/kb', 'verb' => 'GET'],
+        ['name' => 'ai_api#kbCreate', 'url' => '/api/ai/kb', 'verb' => 'POST'],
+        ['name' => 'ai_api#kbGet', 'url' => '/api/ai/kb/{id}', 'verb' => 'GET'],
+        ['name' => 'ai_api#kbUpdate', 'url' => '/api/ai/kb/{id}', 'verb' => 'PUT'],
+        ['name' => 'ai_api#kbDelete', 'url' => '/api/ai/kb/{id}', 'verb' => 'DELETE'],
+        ['name' => 'ai_api#mcpRotate', 'url' => '/api/ai/mcp/rotate', 'verb' => 'POST'],
+
+        // MCP-Endpoint für den internen AI-Agenten (KB, read-only)
+        ['name' => 'mcp#call', 'url' => '/mcp', 'verb' => 'POST'],
+        ['name' => 'mcp#callGet', 'url' => '/mcp', 'verb' => 'GET'],
 
         // Debug-Route
         ['name' => 'user_api#debug', 'url' => '/api/debug', 'verb' => 'GET'],

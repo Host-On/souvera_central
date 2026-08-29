@@ -13,14 +13,13 @@ declare(strict_types=1);
  * hat, entscheidet der Hoster / CloudManager in seinem eigenen System —
  * er ruft `ai:enable` nur auf gebuchten Instanzen auf.
  *
- * Consumer-Apps (z. B. souvera_documents) lesen den Zustand lazy:
+ * Bei Aktivierung wird automatisch der MCP-Zugriffs-Token für den internen
+ * Agenten provisioniert (AiMcpTokenService, verschlüsselt).
+ *
+ * Consumer-Apps lesen den Zustand lazy:
  *
  *   $svc = \OCP\Server::get(\OCA\SouveraCentral\Service\AiConfigService::class);
  *   if ($svc->isEnabled()) { ... }
- *
- * Schreiben erfolgt ausschließlich über occ bzw. die Admin-UI. Es gibt
- * bewusst keinen offenen REST-Endpoint für die Setter (spiegelt das Muster
- * des ExternalAccountsConfigService).
  */
 
 namespace OCA\SouveraCentral\Service;
@@ -38,6 +37,8 @@ class AiConfigService
     public function __construct(
         private IConfig $config,
         private IAppManager $appManager,
+        private AiMcpTokenService $mcpToken,
+        private AiKbService $kb,
     ) {
     }
 
@@ -50,19 +51,29 @@ class AiConfigService
     public function setEnabled(bool $enabled): void
     {
         $this->config->setAppValue(self::APP_ID, self::KEY_ENABLED, $enabled ? '1' : '0');
+        if ($enabled) {
+            // MCP-Zugriffs-Token für den internen Agenten automatisch provisionieren.
+            $this->mcpToken->ensureToken();
+        }
     }
 
     /**
      * Serialisierter Snapshot für `occ …:ai:status --json` und die Admin-UI.
      * Enthält KEINE Secrets.
      *
-     * @return array{enabled:bool, central_version:string}
+     * @return array{enabled:bool, central_version:string, kb_count:int,
+     *               mcp:array{token_set:bool, created_at:?string}}
      */
     public function snapshot(): array
     {
         return [
             'enabled' => $this->isEnabled(),
             'central_version' => $this->centralVersion(),
+            'kb_count' => $this->kb->count(),
+            'mcp' => [
+                'token_set' => $this->mcpToken->hasToken(),
+                'created_at' => $this->mcpToken->getCreatedAt(),
+            ],
         ];
     }
 

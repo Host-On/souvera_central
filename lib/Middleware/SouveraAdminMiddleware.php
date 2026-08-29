@@ -17,6 +17,7 @@ namespace OCA\SouveraCentral\Middleware;
 use OCA\SouveraCentral\Controller\ChangelogController;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
+use OCA\SouveraCentral\Controller\McpController;
 use OCA\SouveraCentral\Controller\MailSettingsApiController;
 use OCA\SouveraCentral\Controller\PageController;
 use OCA\SouveraCentral\Controller\StatusController;
@@ -49,6 +50,12 @@ class SouveraAdminMiddleware extends Middleware {
         }
         // DevOps-Status ist öffentlich lesbar (kein Admin-Login nötig)
         if ($controller instanceof StatusController) {
+            return;
+        }
+        // MCP-Endpoint authorisiert über den internen Bearer-Token
+        // (AiMcpTokenService), nicht über die NC-Session — siehe
+        // docs/SHARED_AI_MCP.md.
+        if ($controller instanceof McpController) {
             return;
         }
         // Changelog-Viewer hat dieselbe gelockerte Prüfung wie die

@@ -37,6 +37,9 @@ abstract class AbstractAiCommand extends Base
         $output->writeln('Souvera AI');
         $output->writeln('----------');
         $output->writeln(sprintf('%-20s %s', 'Aktiviert:', $yn($snap['enabled'])));
+        $output->writeln(sprintf('%-20s %d', 'KB-Artikel:', $snap['kb_count']));
+        $output->writeln(sprintf('%-20s %s', 'MCP-Token:', $yn($snap['mcp']['token_set'])
+            . ($snap['mcp']['created_at'] !== null ? ' (seit ' . $snap['mcp']['created_at'] . ')' : '')));
         $output->writeln(sprintf('%-20s %s', 'Central-Version:', $snap['central_version'] !== '' ? $snap['central_version'] : '(unbekannt)'));
     }
 }

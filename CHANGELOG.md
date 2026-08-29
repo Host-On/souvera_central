@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.40.67] — 2026-08
+
+### Added
+
+- Interne Wissensbasis für den Nextcloud-Agenten: KB-Artikel (Titel +
+  Markdown) werden in der Central-UI verwaltet (anlegen, bearbeiten,
+  löschen) und in der DB gespeichert. Startinhalt wird einmalig aus
+  `resources/ai/*.md` importiert.
+- MCP-Endpoint `/apps/souvera_central/mcp` (stateless HTTP/JSON-RPC,
+  read-only): `kb_list`, `kb_get`, `kb_search` — der Agent liest die
+  Wissensbasis live, kein Datei-Sync.
+- MCP-Zugriffs-Token wird bei Aktivierung der KI automatisch erzeugt und
+  verschlüsselt in der DB abgelegt; der Agent erhält ihn intern über die
+  Shared API (`AiMcpTokenService::getToken()`). Rotation über UI/occ.
+
 ## [0.40.66] — 2026-08
 
 ### Changed
