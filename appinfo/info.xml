@@ -87,7 +87,6 @@
         <command>OCA\SouveraCentral\Command\ExternalStatus</command>
         <command>OCA\SouveraCentral\Command\ExternalConfigure</command>
 		<command>OCA\SouveraCentral\Command\DevopsChannel</command>
-        <command>OCA\SouveraCentral\Command\AiBook</command>
         <command>OCA\SouveraCentral\Command\AiEnable</command>
         <command>OCA\SouveraCentral\Command\AiDisable</command>
         <command>OCA\SouveraCentral\Command\AiStatus</command>

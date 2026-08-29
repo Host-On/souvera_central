@@ -36,7 +36,6 @@ abstract class AbstractAiCommand extends Base
         $yn = fn (bool $b) => $b ? 'ja' : 'nein';
         $output->writeln('Souvera AI');
         $output->writeln('----------');
-        $output->writeln(sprintf('%-20s %s', 'Gebucht:', $yn($snap['booked'])));
         $output->writeln(sprintf('%-20s %s', 'Aktiviert:', $yn($snap['enabled'])));
         $output->writeln(sprintf('%-20s %s', 'Central-Version:', $snap['central_version'] !== '' ? $snap['central_version'] : '(unbekannt)'));
     }

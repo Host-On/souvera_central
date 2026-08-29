@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 /**
  * Souvera Central - occ souvera_central:ai:enable
- * Aktiviert die KI-Funktion. Nur erlaubt, wenn die Instanz AI gebucht hat.
+ * Aktiviert die KI-Funktion. Die Prüfung, ob die Instanz das Add-on gebucht
+ * hat, liegt beim Hoster/CloudManager — er ruft enable nur auf gebuchten
+ * Instanzen auf.
  *
- * Exit-Codes: 0 aktiviert · 2 nicht gebucht / ungültig · 3 nicht initialisiert.
+ * Exit-Codes: 0 aktiviert · 3 nicht initialisiert.
  */
 
 namespace OCA\SouveraCentral\Command;
@@ -21,17 +23,12 @@ class AiEnable extends AbstractAiCommand
     {
         $this
             ->setName('souvera_central:ai:enable')
-            ->setDescription('Aktiviert die KI-Funktion (nur wenn AI gebucht ist)')
+            ->setDescription('Aktiviert die KI-Funktion')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Ergebnis als JSON');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->svc->isBooked()) {
-            $output->writeln('<error>Souvera AI ist für diese Instanz nicht gebucht. Zuerst mit `occ souvera_central:ai:book` buchen.</error>');
-            return 2;
-        }
-
         try {
             $this->svc->setEnabled(true);
             $this->emit($input, $output, 'Souvera AI AKTIVIERT.');
