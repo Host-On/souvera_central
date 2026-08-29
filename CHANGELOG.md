@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.65] — 2026-08
+
+### Added
+
+- Souvera AI feature toggle: new occ commands `souvera_central:ai:book`,
+  `souvera_central:ai:enable`, `souvera_central:ai:disable` and
+  `souvera_central:ai:status`. Enabling requires the instance to have booked
+  Souvera AI (`souvera_central.ai_booked`).
+
+- Souvera knowledge base under `resources/ai/` (identity, products,
+  features, terminology, support) as the factual RAG source for Souvera AI.
+
 ## [0.40.64] — 2026-08
 
 ### Fixed
