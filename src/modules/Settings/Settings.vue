@@ -268,6 +268,9 @@
                 </div>
             </div>
 
+            <!-- Mail domains (Multi-Domain) -->
+            <DomainsSection />
+
             <!-- Mail signature -->
             <div class="settings-section" data-testid="signature-settings-section">
                 <div class="section-header">
@@ -370,6 +373,7 @@ import Database from 'vue-material-design-icons/Database.vue'
 import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
+import DomainsSection from './DomainsSection.vue'
 
 export default {
     name: 'Settings',
@@ -382,7 +386,8 @@ export default {
         Database,
         InfinityIcon,
         ShieldCheck,
-        AlertCircleOutline
+        AlertCircleOutline,
+        DomainsSection
     },
 
     data() {

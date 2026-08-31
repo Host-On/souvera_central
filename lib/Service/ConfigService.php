@@ -128,6 +128,25 @@ class ConfigService {
     }
 
     /**
+     * Entfernt eine Domain aus der Erlaubnisliste (idempotent,
+     * case-insensitive).
+     */
+    public function removeAllowedDomain(string $domain): void {
+        $domain = strtolower(trim($domain));
+        if ($domain === '') {
+            return;
+        }
+        $domains = $this->getAllowedDomains();
+        $filtered = array_values(array_filter(
+            $domains,
+            static fn ($d) => strtolower(trim((string) $d)) !== $domain
+        ));
+        if (count($filtered) !== count($domains)) {
+            $this->config->setSystemValue('souvera_central.allowed_domains', $filtered);
+        }
+    }
+
+    /**
      * Prüft ob eine E-Mail-Domain erlaubt ist
      *
      * @param string $email

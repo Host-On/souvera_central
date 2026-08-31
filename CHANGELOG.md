@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.70] — 2026-08
+
+### Added
+
+- Multi-Domain: Mail-Domains als first-class — Verwaltung in den
+  Central-Einstellungen (Liste mit Stalwart-Status und Postfach-/Alias-
+  Belegung, Anlegen/Entfernen mit Benutzungs-Guard), Admin-API
+  (`/api/domains`), Contract für den CloudManager
+  (`docs/MULTI_DOMAIN.md`). Neue Benutzer können über das bestehende
+  Domain-Dropdown mit jeder erlaubten Domain angelegt werden.
+
 ## [0.40.69] — 2026-08
 
 ### Fixed

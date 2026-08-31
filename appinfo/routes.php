@@ -75,6 +75,11 @@ return [
         ['name' => 'ai_api#kbDelete', 'url' => '/api/ai/kb/{id}', 'verb' => 'DELETE'],
         ['name' => 'ai_api#mcpRotate', 'url' => '/api/ai/mcp/rotate', 'verb' => 'POST'],
 
+        // Mail-Domain-Verwaltung (Multi-Domain; CM-Contract: docs/MULTI_DOMAIN.md)
+        ['name' => 'domain_api#list', 'url' => '/api/domains', 'verb' => 'GET'],
+        ['name' => 'domain_api#create', 'url' => '/api/domains', 'verb' => 'POST'],
+        ['name' => 'domain_api#destroy', 'url' => '/api/domains/{domain}', 'verb' => 'DELETE'],
+
         // MCP-Endpoint für den internen AI-Agenten (KB, read-only)
         ['name' => 'mcp#call', 'url' => '/mcp', 'verb' => 'POST'],
         ['name' => 'mcp#callGet', 'url' => '/mcp', 'verb' => 'GET'],
