@@ -172,6 +172,19 @@ class ConfigService {
     }
 
     /**
+     * Externe Authentifizierung (Föderation, z. B. Authentik/Keycloak via
+     * NC `user_oidc`/`user_saml`): Wenn aktiv, bekommen beim ersten Login
+     * automatisch provisionierte Benutzer (sofern Mitglied der
+     * souvera-users-Gruppe) ein Stalwart-Postfach mit zufälligem internen
+     * Passwort. Login selbst läuft über SSO, Mail-Auth über das
+     * H2CK/oidc-JWT. Hoster-Set via occ/config.php:
+     *   souvera_central.ext_idp.enabled = true
+     */
+    public function isExternalIdpProvisioningEnabled(): bool {
+        return (bool) $this->config->getSystemValue('souvera_central.ext_idp.enabled', false);
+    }
+
+    /**
      * License Key (optional, falls benötigt)
      *
      * @return string|null

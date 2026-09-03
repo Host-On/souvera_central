@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.72] — 2026-08
+
+### Added
+
+- Externe Authentifizierung als User-Quelle (Authentik/Keycloak via NC
+  `user_oidc`/`user_saml`): Bei aktivem Feature-Flag
+  (`souvera_central.ext_idp.enabled`) bekommen föderierte Benutzer mit
+  erlaubter Claim-Adresse automatisch ein Stalwart-Postfach (zufälliges
+  internes Passwort — Login via SSO, Mail-Auth via H2CK/oidc-JWT).
+  Setup-Contract: `docs/EXTERNAL_IDP.md`.
+
 ## [0.40.71] — 2026-08
 
 ### Changed
