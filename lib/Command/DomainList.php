@@ -3,21 +3,18 @@
 declare(strict_types=1);
 
 /**
- * Souvera Central - Stalwart-Domains auflisten (mit Diagnose)
+ * Souvera Central - occ souvera:domain:list
  *
- * Zeigt alle in Stalwart konfigurierten Domains. Werden Roh-IDs, aber keine
- * Namen gefunden, deutet das auf ein Schema-Problem hin – dann werden die
- * Roh-Objekte ausgegeben.
- *
- * Beispiel:
- *   occ souvera:domain:list
+ * Listet die Mail-Domains des Workspaces mit Stalwart-Status und
+ * Belegung (Postfächer/Aliase) — die occ-Seite der Domain-Verwaltung
+ * (UI/API: {@see DomainManagementService}, Contract: docs/MULTI_DOMAIN.md).
  */
 
 namespace OCA\SouveraCentral\Command;
 
 use OC\Core\Command\Base;
 use OCA\SouveraCentral\Service\ConfigService;
-use OCA\SouveraCentral\Service\StalwartService;
+use OCA\SouveraCentral\Service\DomainManagementService;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,6 +24,7 @@ class DomainList extends Base {
     public function __construct(
         private StalwartService $stalwart,
         private ConfigService $config,
+        private DomainManagementService $domains,
     ) {
         parent::__construct();
     }
@@ -34,8 +32,8 @@ class DomainList extends Base {
     protected function configure() {
         $this
             ->setName('souvera:domain:list')
-            ->setDescription('Listet die in Stalwart konfigurierten Domains (mit Diagnose).')
-            ->addOption('json', null, InputOption::VALUE_NONE, 'Ausgabe als JSON (Roh-Objekte)');
+            ->setDescription('Listet die Mail-Domains mit Stalwart-Status und Belegung.')
+            ->addOption('json', null, InputOption::VALUE_NONE, 'Ergebnis als JSON');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
@@ -44,31 +42,29 @@ class DomainList extends Base {
             return 1;
         }
 
-        $raw = $this->stalwart->listDomainsRaw();
+        $result = $this->domains->listDomains();
 
         if ($input->getOption('json')) {
-            $output->writeln((string) json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $output->writeln((string) json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             return 0;
         }
 
-        $map = $this->stalwart->domainNameMap();
-        if (!empty($map)) {
-            $table = new Table($output);
-            $table->setHeaders(['Domain', 'ID']);
-            foreach ($map as $id => $name) {
-                $table->addRow([$name, $id]);
-            }
-            $table->render();
-            $output->writeln('Domains gesamt: <info>' . count($map) . '</info>');
-            return 0;
+        $table = new Table($output);
+        $table->setHeaders(['Domain', 'Stalwart', 'Erlaubt', 'Postfächer', 'Aliase']);
+        foreach ($result['domains'] as $d) {
+            $table->addRow([
+                $d['domain'],
+                $d['in_stalwart'] ? '✓' : '✗',
+                $d['allowed'] ? '✓' : '—',
+                (string) $d['accounts'],
+                (string) $d['aliases'],
+            ]);
         }
+        $table->render();
 
-        $output->writeln('<comment>Keine Domains lesbar. Roh-IDs vom Server: ' . count($raw['ids']) . '</comment>');
-        if (!empty($raw['list'])) {
-            $output->writeln('<comment>Roh-Objekte (Schema-Prüfung):</comment>');
-            $output->writeln((string) json_encode($raw['list'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        } else {
-            $output->writeln('→ Es existiert keine Domain. Anlegen mit: <info>occ souvera:domain:add &lt;domain&gt;</info>');
+        $output->writeln('Mail-Domains gesamt: <info>' . count($result['domains']) . '</info>');
+        if (!$result['stalwart_available']) {
+            $output->writeln('<comment>Stalwart-Werte konnten nicht abgefragt werden.</comment>');
         }
         return 0;
     }

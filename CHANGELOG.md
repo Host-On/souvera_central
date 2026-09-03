@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.71] — 2026-08
+
+### Changed
+
+- `occ souvera:domain:list` zeigt jetzt Stalwart-Status, Erlaubnis-Flag
+  und Postfach-/Alias-Belegung je Mail-Domain (identisch zur Admin-UI,
+  `--json` für den CloudManager).
+
 ## [0.40.70] — 2026-08
 
 ### Added
