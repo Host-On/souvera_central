@@ -1,0 +1,129 @@
+/**
+ * Souvera Central - Souvera-Header (v34-Header-Umbau)
+ *
+ * Wird von BrandingScriptListener INSTANZWEIT injiziert, wenn
+ * `branding.header.enabled` (Default: an). Alle Selektoren sind bewusst
+ * guarded — bricht ein NC-Update das DOM, bleibt die Seite funktional.
+ *
+ * Layout-Ziel:
+ *   [Icon] [Dashboard][Dateien][Mail][Link][Deck][Kalender][Central][Mehr ▾] …… [Suche 320px] [🔔][📮][Avatar]
+ */
+
+/* ---- Logo: nur Souvera-Icon ------------------------------------------- */
+
+#header #nextcloud {
+    width: 48px;
+    min-width: 48px;
+    overflow: hidden;
+    justify-content: center;
+}
+
+#header #nextcloud .logo-icon--text,
+#header #nextcloud .header-appname {
+    display: none !important;
+}
+
+/* ---- Suche: kompakt + rechtsbündig ------------------------------------ */
+
+#header .unified-search,
+#header .unified-search__form,
+#header #unified-search {
+    max-width: 320px !important;
+    margin-left: auto !important;
+    margin-right: 4px !important;
+}
+
+/* ---- „Dashboard"-Breadcrumb ausblenden (Platz für die App-Buttons) ----- */
+
+#header .app-menu__current-app-name {
+    display: none !important;
+}
+
+/* ---- App-Buttons im Header --------------------------------------------- */
+
+#souvera-header-apps {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    padding-left: 4px;
+}
+
+#souvera-header-apps .souvera-header-app,
+#souvera-header-apps .app-menu.souvera-header-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-element, 8px);
+    color: var(--color-header-contrast-text, #ffffff);
+    text-decoration: none !important;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.85;
+    transition: background-color 120ms ease-in-out, opacity 120ms ease-in-out;
+}
+
+#souvera-header-apps .souvera-header-app:hover,
+#souvera-header-apps .app-menu.souvera-header-more:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+#souvera-header-apps .souvera-header-app[data-active='1'],
+#souvera-header-apps .souvera-header-app[aria-current='page'] {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+#souvera-header-apps .souvera-header-app img,
+#souvera-header-apps .app-menu.souvera-header-more img {
+    width: 18px;
+    height: 18px;
+    /* Header-Hintergrund ist primär/dunkel — Icons einheitlich weiß */
+    filter: brightness(0) invert(1);
+}
+
+#souvera-header-apps .souvera-header-app-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+/* „Mehr"-Trigger (umgehängter v34-App-Menu-Button): eigenes Label,
+ * Current-App-Anzeige aus (der Button ist jetzt ein Menü-Toggle). */
+#souvera-header-apps .app-menu.souvera-header-more::after {
+    content: 'Mehr';
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#souvera-header-apps .app-menu.souvera-header-more .app-menu__current-app-name,
+#souvera-header-apps .app-menu.souvera-header-more .app-menu__current-app-icon {
+    display: none !important;
+}
+
+/* ---- Responsiv ---------------------------------------------------------- */
+
+/* Labels aus, sobald es eng wird — Icons reichen */
+@media (max-width: 1440px) {
+    #souvera-header-apps .souvera-header-app-label {
+        display: none;
+    }
+    #souvera-header-apps .souvera-header-app,
+    #souvera-header-apps .app-menu.souvera-header-more {
+        padding: 6px 9px;
+    }
+}
+
+/* Mobil: Header-Buttons + „Mehr" aus — die Seitenleiste bleibt die Navigation */
+@media (max-width: 1024px) {
+    #souvera-header-apps {
+        display: none !important;
+    }
+}

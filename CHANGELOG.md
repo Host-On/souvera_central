@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.73] — 2026-08
+
+### Added
+
+- **Souvera-Header** (global, Notbremse `branding.header.enabled=0`):
+  gepinnte App-Buttons direkt im Header (Dashboard, Dateien, Mail, Link,
+  Deck, Kalender, Central nur für Admins), „Dashboard"-Breadcrumb ausge-
+  blendet, Suche rechts kompakt (320px), „Mehr" = bestehender App-Grid-
+  Dropdown. Mobile <1024px: Buttons aus, Seitenleiste bleibt.
+  Gepinnte Liste konfigurierbar via `souvera_central.branding.header.pinned`.
+
 ## [0.40.72] — 2026-08
 
 ### Added

@@ -9,12 +9,18 @@ declare(strict_types=1);
  * Frontend-Skript ein, das instanzweit die Anzeigenamen von Talk (spreed) und
  * Office/Collabora (richdocuments) überschreibt – in Souvera heißen sie „Link"
  * bzw. „Desk". Immer aktiv; die Namen sind über Central editierbar.
+ *
+ * Zusätzlich (Souvera-Header): baut bei jedem gerenderten Template den
+ * v34-Header um — gepinnte App-Buttons direkt im Header, „Dashboard"-
+ * Breadcrumb aus, Suche rechts kompakt, „Mehr" = der bestehende App-Grid-
+ * Dropdown. Globales Feature (Notbremse: branding.header.enabled = 0).
  */
 
 namespace OCA\SouveraCentral\Listener;
 
 use OCA\SouveraCentral\AppInfo\Application;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\PermissionService;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
@@ -28,6 +34,7 @@ class BrandingScriptListener implements IEventListener {
         private ConfigService $config,
         private IInitialState $initialState,
         private IURLGenerator $urlGenerator,
+        private PermissionService $permission,
     ) {
     }
 
@@ -47,7 +54,16 @@ class BrandingScriptListener implements IEventListener {
             'spreed' => $this->urlGenerator->imagePath(Application::APP_ID, 'link.png'),
         ];
 
+        // Souvera-Header: Central-Button nur für Souvera-Admins sichtbar
+        // (client-seitig gefiltert, server-seitig vorgefiltert im State).
+        $branding['header']['isSouveraAdmin'] = $this->permission->isSouveraAdmin();
+
         $this->initialState->provideInitialState('branding', $branding);
         Util::addScript(Application::APP_ID, Application::APP_ID . '-branding');
+
+        if (($branding['header']['enabled'] ?? false) === true) {
+            Util::addStyle(Application::APP_ID, 'souvera_central-header');
+            Util::addScript(Application::APP_ID, Application::APP_ID . '-header');
+        }
     }
 }

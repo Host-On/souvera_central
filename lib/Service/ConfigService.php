@@ -736,6 +736,11 @@ class ConfigService {
      *
      * @return array{names: array<string,string>}
      */
+    /** Default-Gepinnte Apps für den Souvera-Header (Reihenfolge). */
+    public const HEADER_PINNED_DEFAULT = [
+        'dashboard', 'files', 'souvera_mail', 'spreed', 'deck', 'calendar', 'souvera_central',
+    ];
+
     public function getBrandingConfig(): array {
         $office = $this->getBrandingOfficeName();
         return [
@@ -750,7 +755,40 @@ class ConfigService {
                 'office' => $office,
                 'collabora' => $office,
             ],
+            // Souvera-Header (v34-Header-Umbau): gepinnte Apps direkt im Header,
+            // „Dashboard"-Breadcrumb aus, Suche rechts kompakt, „Mehr" = der
+            // bestehende App-Grid-Dropdown. Global an (dev-Channels), Notbremse:
+            // branding.header.enabled = 0
+            'header' => [
+                'enabled' => $this->isHeaderLayoutEnabled(),
+                'pinned' => $this->getHeaderPinnedApps(),
+                'adminOnly' => ['souvera_central'],
+            ],
         ];
+    }
+
+    /**
+     * Souvera-Header aktiv? Default AN — Notbremse per occ/config.php:
+     *   souvera_central.branding.header.enabled = 0
+     */
+    public function isHeaderLayoutEnabled(): bool {
+        return $this->config->getAppValue('souvera_central', 'branding.header.enabled', '1') === '1';
+    }
+
+    /**
+     * Gepinnte Apps für den Souvera-Header (App-IDs in Reihenfolge).
+     * Überschreibbar via occ/config.php:
+     *   souvera_central.branding.header.pinned = ["dashboard","files",...]
+     */
+    public function getHeaderPinnedApps(): array {
+        $raw = $this->config->getAppValue('souvera_central', 'branding.header.pinned', '');
+        if (trim($raw) !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map('strval', $decoded), static fn ($v) => trim($v) !== ''));
+            }
+        }
+        return self::HEADER_PINNED_DEFAULT;
     }
 
     /** @see ARCHIVE_PLAN §2.2a */
