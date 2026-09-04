@@ -67,6 +67,12 @@ class BrandingScriptListener implements IEventListener {
         }
 
         $branding = $this->config->getBrandingConfig();
+
+        // Titel serverseitig branden (FOUC-frei im Tab): pageTitle-Parameter
+        // der Response VOR dem Rendern umbenennen — NC rendert
+        // „<pageTitle> – <Instanzname>" daraus.
+        $this->brandPageTitle($event, $branding['names']);
+
         // Icon-Override (Talk/spreed -> Souvera-Icon). Weitere Apps können hier
         // analog ergänzt werden, sobald ein Motiv vorliegt.
         $branding['icons'] = [
@@ -117,6 +123,37 @@ class BrandingScriptListener implements IEventListener {
             }
         } catch (\Throwable $e) {
             // Nie den Seitenaufbau gefährden
+        }
+    }
+
+    /**
+     * pageTitle serverseitig umbenennen (Talk→Link, Office→Desk). Längste
+     * Phrasen zuerst, damit „Nextcloud Talk" nicht als „Nextcloud Link"
+     * endet. Läuft VOR dem Rendern — der Browser-Titel ist sofort korrekt.
+     */
+    private function brandPageTitle(BeforeTemplateRenderedEvent $event, array $names): void {
+        try {
+            $response = $event->getTemplateResponse();
+            if (!$response instanceof TemplateResponse) {
+                return;
+            }
+            $params = $response->getParams();
+            if (!isset($params['pageTitle']) || !is_string($params['pageTitle']) || $params['pageTitle'] === '') {
+                return;
+            }
+
+            $link = (string)($names['spreed'] ?? 'Link');
+            $desk = (string)($names['richdocuments'] ?? 'Desk');
+            $search = ['Nextcloud Talk', 'Talk', 'Nextcloud Office', 'Collabora Online', 'Collabora', 'Office'];
+            $replace = [$link, $link, $desk, $desk, $desk, $desk];
+
+            $title = str_replace($search, $replace, $params['pageTitle']);
+            if ($title !== $params['pageTitle']) {
+                $params['pageTitle'] = $title;
+                $response->setParams($params);
+            }
+        } catch (\Throwable $e) {
+            // Titel nicht branden können ≠ Seite brechen
         }
     }
 

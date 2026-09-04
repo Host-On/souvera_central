@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.98] — 2026-09
+
+### Fixed
+
+- **Titel-FOUC behoben (serverseitig):** der `pageTitle`-Parameter der
+  Response wird vor dem Rendern gebrandet (Talk→Link, Office→Desk) — der
+  Tab-Titel ist ab dem ersten Byte korrekt, kein „Talk"-Blitz mehr.
+  (Das L10n-Theme greift nicht auf info.xml-Namen — NC übersetzt die
+  App-Namen nicht über die L10N-Factory; stattdessen wird der
+  pageTitle-Parameter gepatcht.)
+
 ## [0.40.97] — 2026-09
 
 ### Added
