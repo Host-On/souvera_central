@@ -436,12 +436,20 @@ body#body-login .guest-content .guest-box label {
     vertical-align: -2px;
 }
 
-.login-box label[for='rememberme'],
-.login-box input[type='checkbox'] + label,
-.login-box .remember-label {
+/* „An mich erinnern": NcCheckboxRadioSwitch — Text-Span (nicht den Haken!)
+   kräftig erzwingen, NC färbt intern anders als am Elterneck messbar */
+body#body-login .login-box .checkbox-radio-switch .checkbox-content {
     color: #3c4552 !important;
-    font-weight: 600;
-    font-size: 0.875rem;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    opacity: 1 !important;
+}
+
+body#body-login .login-box #rememberme-label,
+body#body-login .login-box #rememberme-label span {
+    color: #3c4552 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
 }
 
 .login-box button[type='submit'] {
@@ -479,7 +487,8 @@ body#body-login .guest-content .guest-box label {
     box-shadow: none;
 }
 
-/* Sekundärbereich: „Mit einem Gerät anmelden", alternative Logins */
+/* Sekundärbereich: „Mit einem Gerät anmelden" ist ein NcButton (tertiary),
+   alternative Logins echte Links — beides kräftig erzwingen */
 .login-box .login-additional {
     margin-top: 14px;
     padding-top: 16px;
@@ -487,18 +496,31 @@ body#body-login .guest-content .guest-box label {
     text-align: center !important;
 }
 
-.login-box .login-additional a,
-.login-box .login-additional button,
-.login-box .login-box__alternative-logins a {
-    color: #3c4552;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-decoration: none;
+body#body-login .login-box .login-additional .button-vue,
+body#body-login .login-box .login-additional .button-vue .button-vue__text,
+body#body-login .login-box .button-vue--tertiary,
+body#body-login .login-box .button-vue--tertiary .button-vue__text {
+    color: #3c4552 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
 }
 
-.login-box .login-additional a:hover,
-.login-box .login-additional a:focus-visible {
-    color: var(--sl-accent-strong);
+body#body-login .login-box .login-additional .button-vue:hover,
+body#body-login .login-box .login-additional .button-vue:focus-visible,
+body#body-login .login-box .login-additional a,
+body#body-login .login-box .login-additional a:hover,
+body#body-login .login-box .login-box__alternative-logins a {
+    color: #3c4552 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+body#body-login .login-box .login-additional .button-vue:hover,
+body#body-login .login-box .login-additional .button-vue:focus-visible,
+body#body-login .login-box .login-additional a:hover,
+body#body-login .login-box .login-additional a:focus-visible {
+    color: var(--sl-accent-strong) !important;
     text-decoration: underline;
     text-underline-offset: 3px;
 }

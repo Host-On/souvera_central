@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.93] — 2026-09
+
+### Fixed
+
+- Blassheit endgültig behoben: „An mich erinnern" ist eine Vue-Checkbox
+  (Text-Span `#rememberme-label`), „Mit einem Gerät anmelden" ein
+  NcButton (tertiary) — Farbe/Gewicht/Opacity jetzt auf jeder Knotenebene
+  erzwungen statt über Link-Selektoren, die ins Leere gingen.
+
 ## [0.40.92] — 2026-09
 
 ### Fixed
