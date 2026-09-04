@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.86] — 2026-09
+
+### Fixed
+
+- Kein Layout-Flackern mehr: login.css wird statisch im Head geliefert
+  (vor dem ersten Paint), die Seite erscheint erst, wenn Panel und Karte
+  stehen — mit 1,5s-Failsafe-Reveal, falls JS versagt. Panel-Text
+  linksbündig (NC erbt zentrierten Text in die Gast-Seite).
+
 ## [0.40.85] — 2026-09
 
 ### Fixed

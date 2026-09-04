@@ -99,7 +99,10 @@
     var instanceBg = captureInstanceBackground()
 
     function loadCss() {
+        // Der Listener liefert das CSS statisch im Head. Fallback: falls der
+        // Link fehlt (z. B. alter Cache-Stand), dynamisch mit Cache-Buster.
         try {
+            if (document.querySelector('link[href*="souvera_central-login.css"]')) { return }
             var link = document.createElement('link')
             link.rel = 'stylesheet'
             link.href = OC.filePath('souvera_central', 'css', 'souvera_central-login.css') + '?t=' + Date.now()
@@ -295,6 +298,9 @@
             return
         }
         try { buildCard() } catch (e) { /* noop */ }
+
+        // Alles steht → Seite freigeben (Anti-Flash, siehe login.css)
+        try { document.body.classList.add('souvera-login-ready') } catch (e) { /* noop */ }
     }
 
     loadCss()

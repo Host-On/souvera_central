@@ -120,6 +120,10 @@ class BrandingScriptListener implements IEventListener {
         $this->initialState->provideInitialState('loginBranding', [
             'text' => $lang,
         ]);
+        // CSS statisch in den Head → vor dem ersten Paint (kein Layout-Flackern).
+        // Das JS deckt zusätzlich dynamisch mit Cache-Buster auf, falls der
+        // statische Link fehlt.
+        Util::addStyle(Application::APP_ID, 'souvera_central-login');
         Util::addScript(Application::APP_ID, Application::APP_ID . '-login');
     }
 }
