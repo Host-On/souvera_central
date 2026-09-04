@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace OCA\SouveraCentral\AppInfo;
 
+use OCA\SouveraCentral\Command\InstallBrandingThemeCommand;
 use OCA\SouveraCentral\Listener\BrandingScriptListener;
 use OCA\SouveraCentral\Listener\GroupDeletionGuardListener;
 use OCA\SouveraCentral\Listener\PasswordSyncListener;
@@ -59,6 +60,8 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(BeforeTemplateRenderedEvent::class, BrandingScriptListener::class);
         // Login-Seiten erhalten ein EIGENES Event (NC >= 28): BeforeLoginTemplateRenderedEvent
         $context->registerEventListener(BeforeLoginTemplateRenderedEvent::class, BrandingScriptListener::class);
+
+        $context->registerCommand(InstallBrandingThemeCommand::class);
     }
 
     public function boot(IBootContext $context): void {

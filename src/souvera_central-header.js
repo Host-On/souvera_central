@@ -220,7 +220,12 @@
 
     function render() {
         // Mobil (≤1024px): Original-Header, kein Umbau.
-        if (window.innerWidth <= 1024) { cleanupMobile(); return }
+        if (window.innerWidth <= 1024) {
+            cleanupMobile()
+            // Anti-Flash-Freigabe auch auf Mobil (Original-Header ist final)
+            try { document.body.classList.add('souvera-header-ready') } catch (e) { /* noop */ }
+            return
+        }
 
         var headerRoot = headerEl()
         if (!headerRoot) { log('no header element yet'); return }
@@ -303,6 +308,8 @@
         // und eigenem Container werden per Inline-Style versteckt (das
         // Grid-Icon + „Current-App"-Display von NC lebt dort). Zusätzlich
         // als CSS-Backup mit dem Marker (siehe header.css).
+        // Anti-Flash-Freigabe: Header einblenden (siehe header.css)
+        try { document.body.classList.add('souvera-header-ready') } catch (e) { /* noop */ }
         if (document.documentElement.className.indexOf(OK_MARKER) === -1) {
             document.documentElement.className += ' ' + OK_MARKER
         }

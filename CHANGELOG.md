@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.40.95] — 2026-09
+
+### Added
+
+- **Kein Branding-FOUC mehr im angemeldeten Bereich:** header.css/-js
+  werden statisch im Head ausgeliefert (vor dem First Paint), der
+  dynamische `?t=`-Loader bleibt nur als Fallback. Header erscheint erst
+  gebrandet — mit 1,2s-Failsafe-Auto-Reveal, falls JS versagt.
+- `occ souvera:branding:install-theme`: schreibt das Souvera-L10n-Theme
+  (serverseitige Umbenennung Talk→Link, Office→Desk — auch im `<title>`);
+  Aktivierung manuell via `--activate` oder
+  `occ config:system:set theme --value souvera`.
+
+### Fixed
+
+- UTF-8-sicheres Base64 beim Initial-State-Patch (Umlaut-Falle bei
+  atob/btoa).
+
 ## [0.40.94] — 2026-09
 
 ### Fixed

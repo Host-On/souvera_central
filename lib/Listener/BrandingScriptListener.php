@@ -72,10 +72,14 @@ class BrandingScriptListener implements IEventListener {
         $this->initialState->provideInitialState('branding', $branding);
         Util::addScript(Application::APP_ID, Application::APP_ID . '-branding');
 
-        // Hinweis: header.css/-header.js werden vom Branding-Script DYNAMISCH
-        // mit Zeitstempel nachgeladen (NCs Cache-Buster ?v= ist der Core-Hash
-        // und ändert sich bei App-Updates nie → Browser-Caches wären sonst
-        // ewig stale).
+        // Souvera-Header: Assets STATISCH im Head (vor dem First Paint) —
+        // NC bustert App-Assets pro Datei (?v= ändert sich pro Deploy, live
+        // verifiziert). Das eliminiert das Header-FOUC (Logo/Talk-Schirm).
+        // branding.js behält den dynamischen ?t=-Loader nur als Fallback.
+        if (!empty($branding['header']['enabled'])) {
+            Util::addStyle(Application::APP_ID, 'souvera_central-header');
+            Util::addScript(Application::APP_ID, Application::APP_ID . '-header');
+        }
     }
 
     /**

@@ -29,6 +29,25 @@
  *   → zentriert über allem; Fix: nach rechts versetzen (inset-inline-end).
  */
 
+/* ---- Anti-Flash: Header erst zeigen, wenn das Header-JS fertig ist.
+   Failsafe: CSS-Animation gibt nach 1,2s automatisch frei — der Header ist
+   NIE dauerhaft weg, auch wenn JS versagt (Notbremse bleibt intakt). ------ */
+
+body:not(.souvera-header-ready) #header {
+    visibility: hidden;
+    animation: sl-header-reveal 0s 1.2s forwards;
+}
+
+@keyframes sl-header-reveal {
+    to { visibility: visible; }
+}
+
+body.souvera-header-ready #header {
+    visibility: visible;
+    animation: none;
+}
+
+
 /* Alle Umbauten NUR auf dem Desktop — mobil bleibt der Original-Header
  * (Hamburger, Assistant, Suche-Icon) unangetastet. */
 @media (min-width: 1025px) {
