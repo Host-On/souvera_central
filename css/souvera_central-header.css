@@ -115,28 +115,20 @@
     background: var(--color-background-hover);
 }
 
-/* ---- Logo: nur Souvera-Icon, kompakt --------------------------------------- */
+/* ---- Logo: kompakt — präzise gegen die echten v34-Regeln ------------------ */
+/* Echte Regeln: #nextcloud { padding-inline-start: 86px },
+ * .logo { position: absolute; inset-inline-start: 12px; width: 62px;
+ *         top: 1px; bottom: 1px; background-size: contain }                    */
 
 #header #nextcloud {
-    padding: 0 6px 0 10px !important;
-    margin: 0 !important;
-    width: auto !important;
-    min-width: 0 !important;
-    max-width: none !important;
+    padding: 5px 4px 5px 48px !important;
+    margin: 2px !important;
 }
 
-#header #nextcloud .logo,
-#header #nextcloud .logo-icon {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    background-size: contain !important;
-    background-position: center !important;
-}
-
-#header #nextcloud .logo-icon--text,
-#header #nextcloud .header-appname {
-    display: none !important;
+#header #nextcloud .logo {
+    width: 34px !important;
+    inset-inline-start: 10px !important;
+    /* position: absolute + top/bottom UNVERÄNDERT lassen (sonst zerbricht das Logo) */
 }
 
 /* ---- NC-App-Menü (Grid-Icon + Appname) erst bei Erfolg ausblenden -------- */
@@ -145,37 +137,21 @@ html.souvera-header-ok #header-start__appmenu {
     display: none !important;
 }
 
-/* ---- Suche: aus der absoluten Zentrierung in den Fluss, rechts ------------ */
-/* NC positioniert die Suche absolut zentriert ÜBER den Header — deshalb
- * überlappte sie „Mehr". Heraus aus der Absolute-Positionierung und als
- * flexibles Element in .header-end (vor den Icons), 320px breit. */
+/* ---- Suche: aus der absoluten Zentrierung nach rechts, kompakt ------------ */
+/* Echte v34-Regel: .unified-search-input:not(.--mobile) { position: absolute;
+ * top:0; bottom:0; inset-inline:0; margin-inline:auto;
+ * width: clamp(200px, 35vw, 600px) } — liegt zentriert ÜBER dem ganzen
+ * Header (deshalb überlappte sie „Mehr"). Fix: aus der Zentrierung nach
+ * rechts versetzen + 320px. */
 
-#header .header-end {
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-end;
-    flex: 1 1 auto !important;
-    margin-left: auto !important;
-    min-width: 0 !important;
-    gap: 4px;
-}
-
-#header #unified-search {
-    position: static !important;
-    left: auto !important;
-    right: auto !important;
-    transform: none !important;
-    flex: 0 1 320px !important;
+#header .unified-search-input:not(.unified-search-input--mobile) {
+    position: absolute !important;
+    inset-inline: auto !important;
+    inset-inline-end: 170px !important;
+    margin-inline: 0 !important;
+    width: 320px !important;
     max-width: 320px !important;
-    min-width: 180px !important;
-    margin: 0 !important;
-}
-
-#header #unified-search .unified-search__form,
-#header #unified-search form,
-#header #unified-search input[type='search'] {
-    max-width: 320px !important;
-    width: 100% !important;
+    pointer-events: auto !important;
 }
 
 /* ---- Responsive ------------------------------------------------------------ */

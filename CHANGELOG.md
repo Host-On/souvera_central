@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.77] — 2026-08
+
+### Fixed
+
+- Header-CSS gegen die ECHTEN v34-Server-Regeln gebaut (aus
+  core/css/server.css + dem Unified-Search-Bundle der Instanz gezogen):
+  Logo-Fix (30×30-Override hatte das absolute Logo-Layout zerstört → Logo
+  weg; jetzt nur padding-inline-start 48px + .logo 34px, Absolute-
+  Positionierung unangetastet) und Suche präzise verschoben (echter
+  Selektor `.unified-search-input`, 320px, `inset-inline-end: 170px`
+  vor den Icons statt zentriert über allem).
+
 ## [0.40.76] — 2026-08
 
 ### Fixed
