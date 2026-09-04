@@ -152,8 +152,13 @@
 }
 
 /* ---- NC-App-Menü (Grid-Icon + Appname) erst bei Erfolg ausblenden -------- */
+/* Dreifach abgesichert: ID, gerenderte .app-menu-Klasse, generisch alle
+ * weiteren Kinder von .header-start (das JS versteckt sie zusätzlich per
+ * Inline-Style). */
 
-html.souvera-header-ok #header-start__appmenu {
+html.souvera-header-ok #header-start__appmenu,
+html.souvera-header-ok #header .header-start > nav,
+html.souvera-header-ok #header .header-start > .app-menu {
     display: none !important;
 }
 

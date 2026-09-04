@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.40.80] — 2026-08
+
+### Fixed
+
+- Reste im Header entfernt: Grid-Icon + „Current-App"-Display wurden
+  NICHT in `#header-start__appmenu` gerendert (Server-HTML leer, NC
+  mountet woanders) — jetzt werden ALLE weiteren Kinder von
+  `.header-start` (außer Logo und eigenen Buttons) per Inline-Style
+  versteckt, plus CSS-Backup für ID/Klasse/Kind-Selektoren.
+
 ## [0.40.79] — 2026-08
 
 ### Fixed

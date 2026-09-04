@@ -249,13 +249,25 @@
         })
         container.appendChild(more)
 
-        // Erfolgs-Marker + altes NC-App-Menü direkt ausblenden (JS-Style
-        // gewinnt unabhängig von CSS-Kaskaden/NC-Updates).
+        // Erfolgs-Marker + altes NC-App-Menü ausblenden. Robust gegen
+        // unbekannte IDs/Klassen: ALLE Kinder von .header-start außer Logo
+        // und eigenem Container werden per Inline-Style versteckt (das
+        // Grid-Icon + „Current-App"-Display von NC lebt dort). Zusätzlich
+        // als CSS-Backup mit dem Marker (siehe header.css).
         if (document.documentElement.className.indexOf(OK_MARKER) === -1) {
             document.documentElement.className += ' ' + OK_MARKER
         }
-        var oldMenu = document.getElementById('header-start__appmenu')
-        if (oldMenu) { oldMenu.style.display = 'none' }
+        try {
+            var startSection = headerRoot.querySelector('.header-start')
+            if (startSection) {
+                var kids = startSection.children
+                for (var k = kids.length - 1; k >= 0; k--) {
+                    var kid = kids[k]
+                    if (kid.id === 'nextcloud' || kid.id === HEADER_ID) { continue }
+                    kid.style.setProperty('display', 'none', 'important')
+                }
+            }
+        } catch (e) { /* noop */ }
         log('rendered ' + cfg.pinned.length + ' pinned + ' + remaining.length + ' more')
     }
 
