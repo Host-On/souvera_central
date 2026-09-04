@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.85] — 2026-09
+
+### Fixed
+
+- Login-Layout wurde nie injiziert: NC feuert für Login-Seiten seit 28
+  das dedizierte `BeforeLoginTemplateRenderedEvent` — der Listener lauscht
+  jetzt zusätzlich darauf.
+
 ## [0.40.84] — 2026-09
 
 ### Added

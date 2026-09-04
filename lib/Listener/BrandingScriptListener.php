@@ -21,7 +21,9 @@ namespace OCA\SouveraCentral\Listener;
 use OCA\SouveraCentral\AppInfo\Application;
 use OCA\SouveraCentral\Service\ConfigService;
 use OCA\SouveraCentral\Service\PermissionService;
+use OCP\AppFramework\Http\Events\BeforeLoginTemplateRenderedEvent;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
+use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -39,14 +41,20 @@ class BrandingScriptListener implements IEventListener {
     }
 
     public function handle(Event $event): void {
+        // Login-Seiten (NC >= 28): dediziertes Event mit getResponse()
+        if ($event instanceof BeforeLoginTemplateRenderedEvent) {
+            $this->handleGuest($event->getResponse());
+            return;
+        }
+
         if (!($event instanceof BeforeTemplateRenderedEvent)) {
             return;
         }
 
-        // Gast-Seiten (Anmelden, 2FA, Fehler): Souvera-Login-Layout.
+        // Übrige Gast-Seiten (2FA, Fehler): Souvera-Login-Layout.
         // Public-Share-Seiten (renderAs = public) bleiben unangetastet.
         if (!$event->isLoggedIn()) {
-            $this->handleGuest($event);
+            $this->handleGuest($event->getTemplateResponse());
             return;
         }
 
@@ -78,9 +86,8 @@ class BrandingScriptListener implements IEventListener {
      * links neben der Anmeldekarte aufbaut. Notbremse:
      * occ config:system:set souvera_login.enabled --value 0
      */
-    private function handleGuest(BeforeTemplateRenderedEvent $event): void {
-        $response = $event->getTemplateResponse();
-        if ($response === null || $response->getRenderAs() !== 'guest') {
+    private function handleGuest(TemplateResponse $response): void {
+        if ($response->getRenderAs() !== 'guest') {
             return;
         }
         if (!$this->config->isLoginBrandingEnabled()) {

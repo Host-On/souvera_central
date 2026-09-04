@@ -23,6 +23,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\AppFramework\Http\Events\BeforeLoginTemplateRenderedEvent;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\L10N\IFactory;
@@ -56,6 +57,8 @@ class Application extends App implements IBootstrap {
         // Instanzweite App-Umbenennung (Talk -> "Link", Office/Collabora -> "Desk")
         // global auf jeder Seite einspielen.
         $context->registerEventListener(BeforeTemplateRenderedEvent::class, BrandingScriptListener::class);
+        // Login-Seiten erhalten ein EIGENES Event (NC >= 28): BeforeLoginTemplateRenderedEvent
+        $context->registerEventListener(BeforeLoginTemplateRenderedEvent::class, BrandingScriptListener::class);
     }
 
     public function boot(IBootContext $context): void {
