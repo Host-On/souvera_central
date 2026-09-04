@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.91] — 2026-09
+
+### Fixed
+
+- Dunkler Schleier beim Scrollen (Mobil): das Panel war `static`, seine
+  Scrim-Schicht verankerte sich am Viewport statt am Panel — jetzt
+  `relative`.
+- Mobile Brand-Kopfzeile deutlich kompakter.
+- Login-Karte ~20 % breiter (Desktop 504px, mobil 552px).
+- „Passwort vergessen?", „An mich erinnern" und „Mit einem Gerät
+  anmelden" kräftiger (Kontrast + Gewicht).
+
 ## [0.40.90] — 2026-09
 
 ### Fixed
