@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.76] — 2026-08
+
+### Fixed
+
+- Header-Feinschliff: Logo kompakt (nur Icon, minimaler Rand), Suche aus
+  der absoluten Zentrierung in den Flex-Fluss von .header-end geholt
+  (320px, rechts vor den Icons) — überlappte zuvor den „Mehr"-Button.
+
 ## [0.40.75] — 2026-08
 
 ### Fixed
