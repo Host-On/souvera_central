@@ -62,9 +62,15 @@ body#body-login {
 
 /* NC rechnet einzelne Gast-Boxen mit content-box — width:100% + padding
    läuft sonst über den Viewport hinaus (Mobil: 438px in 390px) */
+body#body-login .wrapper,
+body#body-login .wrapper .v-align,
 body#body-login .guest-content .guest-box,
 body#body-login .wrapper > footer.guest-box {
     box-sizing: border-box !important;
+}
+
+body#body-login .wrapper .v-align {
+    width: 100% !important;
 }
 
 /* Anti-Flash: Seite bleibt unsichtbar, bis das Login-Layout steht (JS setzt

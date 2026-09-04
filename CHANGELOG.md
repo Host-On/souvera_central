@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.90] — 2026-09
+
+### Fixed
+
+- Letzter Mobil-Überlauf: auch `.v-align` mit content-box — `border-box`
+  erzwungen, Breite 100 % verankert.
+
 ## [0.40.89] — 2026-09
 
 ### Fixed
