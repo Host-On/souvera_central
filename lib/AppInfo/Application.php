@@ -60,8 +60,6 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(BeforeTemplateRenderedEvent::class, BrandingScriptListener::class);
         // Login-Seiten erhalten ein EIGENES Event (NC >= 28): BeforeLoginTemplateRenderedEvent
         $context->registerEventListener(BeforeLoginTemplateRenderedEvent::class, BrandingScriptListener::class);
-
-        $context->registerCommand(InstallBrandingThemeCommand::class);
     }
 
     public function boot(IBootContext $context): void {

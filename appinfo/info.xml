@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.40.95</version>
+    <version>0.40.96</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -90,6 +90,7 @@
         <command>OCA\SouveraCentral\Command\AiEnable</command>
         <command>OCA\SouveraCentral\Command\AiDisable</command>
         <command>OCA\SouveraCentral\Command\AiStatus</command>
+        <command>OCA\SouveraCentral\Command\InstallBrandingThemeCommand</command>
     </commands>
 
     <background-jobs>

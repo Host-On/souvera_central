@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.96] — 2026-09
+
+### Fixed
+
+- occ-Befehl korrekt registriert: NC 34 kennt kein
+  `IRegistrationContext::registerCommand` (verifiziert) — der Command wird
+  jetzt über den klassischen `info.xml`-`<commands>`-Weg geladen. Der
+  Bootstrap-Fatal (der auch den Rest der App lahmlegen konnte) ist entfernt.
+
 ## [0.40.95] — 2026-09
 
 ### Added
