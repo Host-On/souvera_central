@@ -40,7 +40,15 @@ class BrandingScriptListener implements IEventListener {
     ) {
     }
 
+    /** Letzter Auto-Write-Versuch (in-process throttle, 5 Min) */
+    private static ?int $lastThemeWriteAttempt = null;
+
     public function handle(Event $event): void {
+        // Theme-L10n-Dateien best effort schreiben (einmalig, dann Marker im
+        // App-Config; bei Fehlschlag alle 5 Min erneut). Aktivierung bleibt
+        // manuell: occ config:system:set theme --value souvera
+        $this->autoWriteThemeL10n();
+
         // Login-Seiten (NC >= 28): dediziertes Event mit getResponse()
         if ($event instanceof BeforeLoginTemplateRenderedEvent) {
             $this->handleGuest($event->getResponse());
@@ -90,6 +98,28 @@ class BrandingScriptListener implements IEventListener {
      * links neben der Anmeldekarte aufbaut. Notbremse:
      * occ config:system:set souvera_login.enabled --value 0
      */
+    /**
+     * Theme-L10n-Dateien einmalig schreiben. Schlägt fehl (Rechte), wird alle
+     * 5 Minuten erneut versucht. Der Operator aktiviert danach manuell.
+     */
+    private function autoWriteThemeL10n(): void {
+        try {
+            if ($this->config->getSelfAppValue('theme_l10n_installed') === '1') {
+                return;
+            }
+            $now = time();
+            if (self::$lastThemeWriteAttempt !== null && ($now - self::$lastThemeWriteAttempt) < 300) {
+                return;
+            }
+            self::$lastThemeWriteAttempt = $now;
+            if ($this->config->writeThemeL10nFiles()) {
+                $this->config->setSelfAppValue('theme_l10n_installed', '1');
+            }
+        } catch (\Throwable $e) {
+            // Nie den Seitenaufbau gefährden
+        }
+    }
+
     private function handleGuest(TemplateResponse $response): void {
         if ($response->getRenderAs() !== 'guest') {
             return;

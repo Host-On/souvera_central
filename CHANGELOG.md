@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.40.97] — 2026-09
+
+### Added
+
+- Theme-L10n-Dateien werden jetzt automatisch geschrieben (einmalig,
+  gethrottelt, best effort beim ersten Seitenaufruf) — die Aktivierung
+  bleibt ein einziger Kern-Befehl:
+  `occ config:system:set theme --value souvera`
+  (unabhängig vom Command-Loading).
+
 ## [0.40.96] — 2026-09
 
 ### Fixed

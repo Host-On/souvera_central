@@ -7,6 +7,8 @@
 
 namespace OCA\SouveraCentral\Service;
 
+use OCA\SouveraCentral\AppInfo\Application;
+
 use OCP\IConfig;
 
 class ConfigService {
@@ -21,6 +23,54 @@ class ConfigService {
      *
      * @return int
      */
+    /** App-eigener AppValue-Reader (Bequemlichkeits-Wrapper) */
+    public function getSelfAppValue(string $key, string $default = ''): string {
+        return $this->config->getAppValue(Application::APP_ID, $key, $default);
+    }
+
+    /** App-eigener AppValue-Writer (Bequemlichkeits-Wrapper) */
+    public function setSelfAppValue(string $key, string $value): void {
+        $this->config->setAppValue(Application::APP_ID, $key, $value);
+    }
+
+    /**
+     * Schreibt die Souvera-L10n-Theme-Dateien nach
+     * <serverroot>/themes/souvera/l10n/apps/<app>/l10n/<lang>.json.
+     * NC merged Theme-Übersetzungen bei aktivem `theme`-Config (L10N/Factory).
+     * Gibt true zurück, wenn ALLE Dateien erfolgreich geschrieben wurden.
+     */
+    public function writeThemeL10nFiles(): bool {
+        $serverRoot = \OC::$SERVERROOT;
+        if (!is_string($serverRoot) || $serverRoot === '' || !is_dir($serverRoot)) {
+            return false;
+        }
+
+        $link = $this->getBrandingTalkName();
+        $desk = $this->getBrandingOfficeName();
+        $plural = 'nplurals=2; plural=(n != 1);';
+        $targets = [
+            'spreed' => ['Talk' => $link],
+            'richdocuments' => ['Nextcloud Office' => $desk],
+        ];
+
+        foreach ($targets as $appId => $map) {
+            $dir = $serverRoot . '/themes/souvera/l10n/apps/' . $appId . '/l10n';
+            if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+                return false;
+            }
+            foreach (['de', 'en'] as $lang) {
+                $json = json_encode(
+                    ['translations' => $map, 'pluralForm' => $plural],
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
+                if (@file_put_contents($dir . '/' . $lang . '.json', $json . "\n") === false) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     /**
      * Login-Branding (Split-Screen) aktiv? Notbremse via
      * occ config:system:set souvera_login.enabled --value 0.
