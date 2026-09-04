@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.83] — 2026-08
+
+### Changed
+
+- Neues „Link"-Icon (ersetzt Talk-Branding) — jetzt als SVG
+  (`img/link.svg`), das alte `img/link.png` wurde entfernt.
+
 ## [0.40.82] — 2026-08
 
 ### Fixed

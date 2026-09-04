@@ -51,7 +51,7 @@ class BrandingScriptListener implements IEventListener {
         // Icon-Override (Talk/spreed -> Souvera-Icon). Weitere Apps können hier
         // analog ergänzt werden, sobald ein Motiv vorliegt.
         $branding['icons'] = [
-            'spreed' => $this->urlGenerator->imagePath(Application::APP_ID, 'link.png'),
+            'spreed' => $this->urlGenerator->imagePath(Application::APP_ID, 'link.svg'),
         ];
 
         // Souvera-Header: Central-Button nur für Souvera-Admins sichtbar
