@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.75] — 2026-08
+
+### Fixed
+
+- **Root-Cause des toten Headers gefunden (offline reproduziert):**
+  Variablen-Verschattung — im render()-forEach wurde `header.adminOnly`
+  auf dem DOM-Element statt auf der Config gelesen (`header` = DOM-Element
+  aus `headerEl()`) → TypeError beim ersten Button → stiller Abbruch.
+  Config-Zugriffe auf `cfg.*` umgestellt, DOM-Root in `headerRoot`
+  umbenannt. Verifiziert: 7 Buttons + „Mehr" rendern mit den echten
+  Instanzdaten.
+
 ## [0.40.74] — 2026-08
 
 ### Fixed

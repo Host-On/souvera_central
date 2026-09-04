@@ -158,12 +158,12 @@
         return document.querySelector('header#header') || document.getElementById('header')
     }
 
-    function buildContainer(header) {
+    function buildContainer(headerRoot) {
         var container = document.getElementById(HEADER_ID)
-        if (container && container.isConnected && header.contains(container)) {
+        if (container && container.isConnected && headerRoot.contains(container)) {
             return container
         }
-        var logo = header.querySelector('#nextcloud')
+        var logo = headerRoot.querySelector('#nextcloud')
         if (!logo) { return null }
         container = container || document.createElement('div')
         container.id = HEADER_ID
@@ -173,13 +173,13 @@
     }
 
     function render() {
-        var header = headerEl()
-        if (!header) { log('no header element yet'); return }
+        var headerRoot = headerEl()
+        if (!headerRoot) { log('no header element yet'); return }
 
         var cfg = headerConfig()
         if (!cfg) { log('header disabled or state missing'); return }
 
-        var container = buildContainer(header)
+        var container = buildContainer(headerRoot)
         if (!container) { log('no logo anchor — cannot place container'); return }
         container.innerHTML = ''
 
@@ -187,7 +187,7 @@
         log('core apps: ' + apps.length + ', pinned: ' + cfg.pinned.join(','))
 
         cfg.pinned.forEach(function (appId) {
-            if (header.adminOnly.indexOf(appId) !== -1 && !header.isSouveraAdmin) {
+            if (cfg.adminOnly.indexOf(appId) !== -1 && !cfg.isSouveraAdmin) {
                 log('skip ' + appId + ' (admin only)')
                 return
             }
@@ -214,7 +214,7 @@
         var remaining = apps.filter(function (app) {
             if (!app || !app.href) { return false }
             if (cfg.pinned.indexOf(app.id) !== -1) { return false }
-            if (header.adminOnly.indexOf(app.id) !== -1 && !header.isSouveraAdmin) { return false }
+            if (cfg.adminOnly.indexOf(app.id) !== -1 && !cfg.isSouveraAdmin) { return false }
             return true
         })
 
