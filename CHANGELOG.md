@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.81] — 2026-08
+
+### Fixed
+
+- Mobile vollständig zurückgebaut: Header-Umbau greift NUR ≥1025px —
+  mobil bleibt der Original-NC-Header (Hamburger-Menü, Assistant-Button,
+  Suche-Icon) unangetastet. Resize wechselt sauber zwischen den Modi.
+- `.header-end` wird nicht mehr angefasst (Assistant-Button war dadurch
+  verschwunden) — die Suche wird stattdessen präzise per
+  `inset-inline-end: 190px` (320px) neben den Header-Icons platziert.
+
 ## [0.40.80] — 2026-08
 
 ### Fixed

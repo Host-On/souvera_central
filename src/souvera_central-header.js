@@ -34,6 +34,7 @@
     'use strict'
 
     var HEADER_ID = 'souvera-header-apps'
+    var DESKTOP_MIN = 1025
     var OK_MARKER = 'souvera-header-ok'
     var DEBUG = /[?&]souveraDebug=1/.test(window.location.search)
 
@@ -172,7 +173,21 @@
         return container
     }
 
+    function cleanupMobile() {
+        // Mobil: Original-NC-Header (Hamburger, Assistant, …) — unsere
+        // Buttons raus, Marker und Inline-Hides zurücksetzen.
+        var container = document.getElementById(HEADER_ID)
+        if (container) { container.remove() }
+        document.documentElement.className = document.documentElement.className
+            .split(/\s+/).filter(function (c) { return c !== OK_MARKER }).join(' ')
+        var oldMenu = document.getElementById('header-start__appmenu')
+        if (oldMenu) { oldMenu.style.display = '' }
+    }
+
     function render() {
+        // Mobil (≤1024px): Original-Header, kein Umbau.
+        if (window.innerWidth <= 1024) { cleanupMobile(); return }
+
         var headerRoot = headerEl()
         if (!headerRoot) { log('no header element yet'); return }
 
@@ -292,6 +307,7 @@
                 }
             })
             observer.observe(document.body, { childList: true, subtree: true })
+            window.addEventListener('resize', function () { render() })
         } catch (e) { /* noop */ }
 
         // Erst-Render-Resilienz: kurze Retry-Phase (Vue mountet verzögert)
