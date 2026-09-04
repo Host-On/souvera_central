@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.89] — 2026-09
+
+### Fixed
+
+- Mobil 11px-Seitenversatz: NC rechnet Gast-Boxen mit content-box —
+  `width:100%` + Padding lief 438px in einen 390px-Viewport. Jetzt
+  `border-box` erzwungen, Body-Zentrierung neutralisiert.
+
 ## [0.40.88] — 2026-09
 
 ### Fixed
