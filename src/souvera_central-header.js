@@ -93,6 +93,37 @@
         return path === target || path.indexOf(target + '/') === 0 || path.indexOf(target + '?') === 0
     }
 
+    function isDarkTheme() {
+        try {
+            var raw = getComputedStyle(document.body)
+                .getPropertyValue('--color-main-background').trim()
+            var rgb = null
+            if (raw.charAt(0) === '#') {
+                var h = raw.slice(1)
+                if (h.length === 3) { h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2) }
+                if (h.length >= 6) {
+                    rgb = [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+                }
+            } else {
+                var m = raw.match(/rgba?\(([^)]+)\)/)
+                if (m) {
+                    var parts = m[1].split(',').map(function (x) { return parseFloat(x) })
+                    if (parts.length >= 3) { rgb = parts.slice(0, 3) }
+                }
+            }
+            if (rgb) {
+                // Luminanz < 0.5 → dunkles Theme
+                return (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 < 0.5
+            }
+        } catch (e) { /* noop */ }
+        return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    }
+
+    /** Filter für Icons auf Panel-Hintergrund (hell → schwarz, dunkel → weiß) */
+    function panelIconFilter() {
+        return isDarkTheme() ? 'brightness(0) invert(1)' : 'brightness(0)'
+    }
+
     function makeIcon(src) {
         var img = document.createElement('img')
         img.setAttribute('src', src)
@@ -143,7 +174,10 @@
             a.className = 'souvera-header-dropdown-entry'
             a.setAttribute('href', app.href || '#')
             a.setAttribute('role', 'menuitem')
-            a.appendChild(makeIcon(app.icon || ''))
+            var icon = makeIcon(app.icon || '')
+            // Mask-Icons (weiß) auf Panel-Hintergrund: je Theme tönen
+            icon.style.filter = panelIconFilter()
+            a.appendChild(icon)
             var label = document.createElement('span')
             label.textContent = app.name || app.id || ''
             a.appendChild(label)

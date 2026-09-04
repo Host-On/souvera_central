@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.40.82] — 2026-08
+
+### Fixed
+
+- „Mehr"-Dropdown: App-Icons waren weiß auf weiß — NCs Nav-Icons sind
+  weiße Mask-Icons; das Dropdown tönt sie jetzt je Theme (schwarz im
+  hellen, weiß im dunklen Modus, per Helligkeits-Erkennung beim Öffnen).
+- Suche weiter nach links gerückt (Ende bei 260px statt 190px), damit der
+  Assistant-Button (✨) nicht mehr hinter dem Suchfeld verschwindet.
+
 ## [0.40.81] — 2026-08
 
 ### Fixed
