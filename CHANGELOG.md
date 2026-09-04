@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.87] — 2026-09
+
+### Fixed
+
+- Split-Layout robust gegen NCs eigene Guest-Body-Regeln (Flex-Column +
+  Zentrierung): Brand-Panel jetzt `position: fixed` (immer exakt die linke
+  Hälfte), Wrapper per Margin auf die rechte Hälfte. Mobil: Karte direkt
+  unter der Brand-Kopfzeile statt in einer Viewport-Höhe zentriert.
+
 ## [0.40.86] — 2026-09
 
 ### Fixed

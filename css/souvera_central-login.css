@@ -44,11 +44,15 @@ body#body-login {
     --sl-line: #eceff4;
 }
 
-/* Theming-Hintergrund (blaue Flächen-Welt) komplett ersetzen */
+/* Theming-Hintergrund (blaue Flächen-Welt) komplett ersetzen.
+   Achtung: NC setzt am Guest-Body selbst Flex-Column + Zentrierung — das
+   Layout wird daher NICHT über den Body gelöst, sondern über ein fixes
+   Brand-Panel (immer exakt die linke Hälfte) + Wrapper mit Margin-Offset.
+   So ist das Split-Layout immun gegen NCs Body-Regeln und Load-Order. */
 body#body-login {
-    margin: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     min-height: 100vh;
-    display: flex;
     background: var(--sl-right-bg) !important;
     font-family: var(--font-face, 'Nunito Sans', sans-serif);
 }
@@ -81,11 +85,16 @@ body#body-login.souvera-login-ready {
 }
 
 body#body-login .wrapper {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box;
+    width: 50% !important;
+    min-width: 0 !important;
+    margin: 0 0 0 50% !important;
+    padding: 0 !important;
     min-height: 100vh;
-    min-width: 0;
     background: none !important;
     background-image: none !important;
 }
@@ -93,12 +102,15 @@ body#body-login .wrapper {
 /* ---- Brand-Panel (links) ------------------------------------------------- */
 
 .souvera-login-brand {
-    position: relative;
-    width: 50%;
-    min-height: 100vh;
-    flex: 0 0 50%;
+    position: fixed;
+    top: 0;
+    right: 50%;
+    bottom: 0;
+    left: 0;
+    width: auto;
     display: flex;
     overflow: hidden;
+    z-index: 10;
     background:
         radial-gradient(1100px 700px at 16% 10%, rgba(47, 125, 246, 0.16), transparent 62%),
         radial-gradient(900px 620px at 86% 92%, rgba(47, 125, 246, 0.09), transparent 58%),
@@ -553,8 +565,16 @@ body#body-login :focus-visible {
 /* ---- Mobil (< 1025px): kompakte Brand-Kopfzeile, Karte darunter ----------- */
 
 @media (max-width: 1024px) {
-    body#body-login {
-        flex-direction: column;
+    .souvera-login-brand {
+        position: static;
+        width: 100%;
+    }
+
+    body#body-login .wrapper {
+        width: 100% !important;
+        margin-left: 0 !important;
+        /* Karte direkt unter der Brand-Kopfzeile statt in 100vh zentriert */
+        min-height: 0 !important;
     }
 
     /* Mobil: Textblock sitzt oben → Scrim oben dicht, unten Bild sichtbar */
