@@ -64,8 +64,7 @@
     background: rgba(255, 255, 255, 0.18);
 }
 
-#souvera-header-apps .souvera-header-app img,
-#souvera-header-apps .souvera-header-dropdown-entry img {
+#souvera-header-apps .souvera-header-app img {
     width: 18px;
     height: 18px;
     /* Header-Hintergrund ist primär/dunkel — Icons einheitlich weiß */
@@ -84,12 +83,15 @@
     line-height: 1;
 }
 
-/* ---- Eigenes „Mehr"-Dropdown --------------------------------------------- */
+/* ---- Eigenes „Mehr"-Dropdown (hängt am BODY — nicht am Container!) ------- */
+/* Achtung: Das Dropdown wird an document.body gehängt. Selektoren daher
+ * NICHT unter #souvera-header-apps verschachteln. Icons in Originalfarben
+ * (weißer Panel-Hintergrund), sonst verschwinden farbige App-Icons. */
 
 .souvera-header-dropdown {
     position: fixed;
     z-index: 8500;
-    min-width: 220px;
+    min-width: 240px;
     max-height: 70vh;
     overflow-y: auto;
     padding: 6px;
@@ -113,6 +115,24 @@
 
 .souvera-header-dropdown-entry:hover {
     background: var(--color-background-hover);
+}
+
+/* App-Icons im Dropdown: feste Größe in Originalfarben (Shield-SVG kam
+ * sonst RIESIG daher — SVGs ohne intrinsische Größe füllen den Container) */
+.souvera-header-dropdown-entry img {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+    flex: 0 0 18px;
+    filter: none !important;
+}
+
+.souvera-header-dropdown-entry span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ---- Logo: kompakt — präzise gegen die echten v34-Regeln ------------------ */

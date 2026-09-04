@@ -249,10 +249,13 @@
         })
         container.appendChild(more)
 
-        // Erfolgs-Marker: erst jetzt darf das CSS das NC-App-Menü ausblenden.
+        // Erfolgs-Marker + altes NC-App-Menü direkt ausblenden (JS-Style
+        // gewinnt unabhängig von CSS-Kaskaden/NC-Updates).
         if (document.documentElement.className.indexOf(OK_MARKER) === -1) {
             document.documentElement.className += ' ' + OK_MARKER
         }
+        var oldMenu = document.getElementById('header-start__appmenu')
+        if (oldMenu) { oldMenu.style.display = 'none' }
         log('rendered ' + cfg.pinned.length + ' pinned + ' + remaining.length + ' more')
     }
 

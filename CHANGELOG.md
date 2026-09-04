@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.40.78] — 2026-08
+
+### Fixed
+
+- Header: neues NC-App-Menü (`#header-start__appmenu`) wird nach
+  erfolgreichem Rendern direkt per JS ausgeblendet (CSS-Marker allein
+  griff auf der Instanz nicht).
+- „Mehr"-Dropdown: App-Icons hatten feste Größe 18×18 in Originalfarben
+  — das riesige Shield-SVG kam daher, dass das Dropdown am BODY hängt und
+  der alte Selektor unter `#souvera-header-apps` nie griff; Icons jetzt
+  korrekt_formatiert in Originalfarben.
+- Neue Reihenfolge: Logo | Mail | Kalender | Link | Desk | Deck |
+  Dateien | Mehr.
+
 ## [0.40.77] — 2026-08
 
 ### Fixed

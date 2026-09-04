@@ -738,7 +738,7 @@ class ConfigService {
      */
     /** Default-Gepinnte Apps für den Souvera-Header (Reihenfolge). */
     public const HEADER_PINNED_DEFAULT = [
-        'dashboard', 'files', 'souvera_mail', 'spreed', 'deck', 'calendar', 'souvera_central',
+        'souvera_mail', 'calendar', 'spreed', 'office', 'deck', 'files',
     ];
 
     public function getBrandingConfig(): array {
