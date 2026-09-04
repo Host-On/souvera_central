@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.40.79] — 2026-08
+
+### Fixed
+
+- **Browser-Cache entwaffnet**: header.css/-js lädt das Branding-Script
+  jetzt DYNAMISCH mit Zeitstempel — NCs `?v=` an Asset-URLs ist der
+  Core-Hash und ändert sich bei App-Updates nie, deshalb bekamen
+  Dev-Instanzen nach Updates dauerhaft alte Header-Assets.
+
 ## [0.40.78] — 2026-08
 
 ### Fixed

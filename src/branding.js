@@ -32,6 +32,24 @@
     const names = cfg.names
     const icons = cfg.icons || {}
 
+    // ---- Souvera-Header: dynamisch mit Cache-Buster nachladen ---------------
+    // NCs ?v= an Asset-URLs ist der CORE-Hash und ändert sich bei App-Updates
+    // nie — ohne diesen Loader bliebe der Browser für immer auf dem alten
+    // header.js/-css.
+    if (cfg.header && cfg.header.enabled === true) {
+        try {
+            var bust = '?t=' + Date.now()
+            var css = document.createElement('link')
+            css.rel = 'stylesheet'
+            css.href = OC.filePath('souvera_central', 'css', 'souvera_central-header.css') + bust
+            document.head.appendChild(css)
+            var js = document.createElement('script')
+            js.src = OC.filePath('souvera_central', 'js', 'souvera_central-header.js') + bust
+            js.defer = true
+            document.head.appendChild(js)
+        } catch (e) { /* noop */ }
+    }
+
     // Ursprüngliche Produktbezeichnungen je App-ID (für Text-/Icon-Erkennung im
     // Dashboard-Widget-Titel, der eine ganze Phrase sein kann, z. B. „Talk
     // Erwähnungen"). Von der spezifischsten zur allgemeinsten Phrase.
