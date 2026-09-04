@@ -21,6 +21,14 @@ class ConfigService {
      *
      * @return int
      */
+    /**
+     * Login-Branding (Split-Screen) aktiv? Notbremse via
+     * occ config:system:set souvera_login.enabled --value 0.
+     */
+    public function isLoginBrandingEnabled(): bool {
+        return $this->config->getSystemValueString('souvera_login.enabled', '1') !== '0';
+    }
+
     public function getMaxLicenses(): int {
         return (int) $this->config->getSystemValue('souvera_central.max_licenses', 10);
     }

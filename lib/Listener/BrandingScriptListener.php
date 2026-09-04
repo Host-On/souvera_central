@@ -42,8 +42,11 @@ class BrandingScriptListener implements IEventListener {
         if (!($event instanceof BeforeTemplateRenderedEvent)) {
             return;
         }
-        // Nur für angemeldete Benutzer (nicht auf Login-/Public-Seiten).
+
+        // Gast-Seiten (Anmelden, 2FA, Fehler): Souvera-Login-Layout.
+        // Public-Share-Seiten (renderAs = public) bleiben unangetastet.
         if (!$event->isLoggedIn()) {
+            $this->handleGuest($event);
             return;
         }
 
@@ -65,5 +68,51 @@ class BrandingScriptListener implements IEventListener {
         // mit Zeitstempel nachgeladen (NCs Cache-Buster ?v= ist der Core-Hash
         // und ändert sich bei App-Updates nie → Browser-Caches wären sonst
         // ewig stale).
+    }
+
+    /**
+     * Login-/Guest-Seiten: Split-Screen-Login im Host-On-Stil.
+     *
+     * Injiziert das Bootstrap-Script (souvera_central-login), das das
+     * login.css dynamisch mit Cache-Buster nachlädt und das Brand-Panel
+     * links neben der Anmeldekarte aufbaut. Notbremse:
+     * occ config:system:set souvera_login.enabled --value 0
+     */
+    private function handleGuest(BeforeTemplateRenderedEvent $event): void {
+        $response = $event->getTemplateResponse();
+        if ($response === null || $response->getRenderAs() !== 'guest') {
+            return;
+        }
+        if (!$this->config->isLoginBrandingEnabled()) {
+            return;
+        }
+
+        $lang = [
+            'de' => [
+                'headline1' => 'Deine Daten.',
+                'headline2' => 'Dein Workspace.',
+                'subline' => 'Mail, Kalender, Shield und mehr — nahtlos verbunden, DSGVO-konform in Deutschland.',
+                'chips' => ['E-Mail', 'Kalender', 'Shield', 'Desktop'],
+                'cardTitle' => 'Willkommen zurück',
+                'cardSub' => 'Melde dich in deinem Workspace an.',
+                'labelUser' => 'E-Mail oder Benutzername',
+                'labelPassword' => 'Passwort',
+            ],
+            'en' => [
+                'headline1' => 'Your data.',
+                'headline2' => 'Your workspace.',
+                'subline' => 'Mail, calendar, shield and more — seamlessly connected, GDPR-compliant in Germany.',
+                'chips' => ['E-Mail', 'Calendar', 'Shield', 'Desktop'],
+                'cardTitle' => 'Welcome back',
+                'cardSub' => 'Sign in to your workspace.',
+                'labelUser' => 'Email or username',
+                'labelPassword' => 'Password',
+            ],
+        ];
+
+        $this->initialState->provideInitialState('loginBranding', [
+            'text' => $lang,
+        ]);
+        Util::addScript(Application::APP_ID, Application::APP_ID . '-login');
     }
 }

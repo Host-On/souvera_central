@@ -1,0 +1,618 @@
+/**
+ * Souvera Central – Login-Branding CSS
+ *
+ * RICHTUNGSKONTRAKT (pinned Brief: Host-On-Split, Souvera-Brand):
+ * THESIS: Der Login ist die erste Sekunde der Marke — links eine dunkle,
+ *   souveräne Bühne mit klarem Anspruch, rechts eine ruhige, präzise Karte.
+ *   Kein zentriertes Formular auf Hintergrundbild.
+ * OWN-WORLD: Tiefes Navy mit feinem Plus-Raster und blauem Glow links,
+ *   helles Kartenfeld rechts; Souvera-Blau als einziger Akzent; sichtbare
+ *   Feld-Labels; weiche, abgesetzte Schatten (Offset + Blur, keine Halos).
+ * STORY: In 2s verstanden — Souvera = meine Daten, meine Sicherheit, mein
+ *   Workspace; Handlung: Anmelden.
+ * FIRST VIEWPORT: ≥1025px 50/50-Split; links Logo → Headline (Akzentwort
+ *   blau) → Subline → Chips; rechts Karte „Willkommen zurück", Labels über
+ *   Feldern, „Passwort vergessen?" rechts, blauer Button, Footer unten.
+ * FORM: Injection (Listener → Bootstrap-JS → dieses CSS, Cache-Buster).
+ * FINISH: unreviewed and undocumented is unfinished; this build ends with
+ *   the finish review, the verdict, DESIGN.md, and every shipping raster
+ *   carrying its provenance.
+ *
+ * Scoping: strikt auf body#body-login (Login/2FA/Fehler) — Public-Share-
+ * Seiten (renderAs public) bleiben unangetastet. Alle Gastboxen werden als
+ * Karte gestylt (content-agnostisch für 2FA & Co.).
+ */
+
+/* ---- Welt ---------------------------------------------------------------- */
+
+body#body-login {
+    --sl-navy: #0a0d16;
+    --sl-navy-2: #0e1424;
+    --sl-text: #f4f6fb;
+    --sl-muted: rgba(244, 246, 251, 0.74);
+    --sl-chip: rgba(244, 246, 251, 0.8);
+    --sl-chip-border: rgba(244, 246, 251, 0.17);
+    --sl-accent: #2f7df6;
+    --sl-accent-strong: #1e63d6;
+    --sl-accent-ring: rgba(47, 125, 246, 0.28);
+    --sl-right-bg: #f4f5f8;
+    --sl-card: #ffffff;
+    --sl-card-border: #e6e9ef;
+    --sl-card-text: #0b0e1a;
+    --sl-card-muted: #5b6572;
+    --sl-field-border: #d3d9e3;
+    --sl-line: #eceff4;
+}
+
+/* Theming-Hintergrund (blaue Flächen-Welt) komplett ersetzen */
+body#body-login {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    background: var(--sl-right-bg) !important;
+    font-family: var(--font-face, 'Nunito Sans', sans-serif);
+}
+
+body#body-login .wrapper {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 0;
+    background: none !important;
+    background-image: none !important;
+}
+
+/* ---- Brand-Panel (links) ------------------------------------------------- */
+
+.souvera-login-brand {
+    position: relative;
+    width: 50%;
+    min-height: 100vh;
+    flex: 0 0 50%;
+    display: flex;
+    overflow: hidden;
+    background:
+        radial-gradient(1100px 700px at 16% 10%, rgba(47, 125, 246, 0.16), transparent 62%),
+        radial-gradient(900px 620px at 86% 92%, rgba(47, 125, 246, 0.09), transparent 58%),
+        linear-gradient(168deg, var(--sl-navy-2) 0%, var(--sl-navy) 58%);
+    color: var(--sl-text);
+}
+
+/* Mit Instanz-Hintergrundbild: Bild cover + dunkler Scrim für Lesbarkeit */
+.souvera-login-brand.has-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.souvera-login-brand.has-image::before {
+    /* Desktop: Text sitzt unten → dort dichter Scrim, oben bleibt das Bild sichtbar.
+       WICHTIG: background-size zurücksetzen — die Fallback-Regel kachelt mit 72px. */
+    background-image: linear-gradient(180deg, rgba(7, 10, 20, 0.34) 0%, rgba(7, 10, 20, 0.52) 46%, rgba(7, 10, 20, 0.82) 100%);
+    background-size: 100% 100%;
+    background-position: 0 0;
+}
+
+.souvera-login-brand.has-image::after {
+    background: none;
+}
+
+/* Fallback ohne Bild: feines Plus-Raster (Kreuzpunkte) als Textur */
+.souvera-login-brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to bottom, transparent 0, transparent calc(50% - 0.5px), rgba(255, 255, 255, 0.05) calc(50% - 0.5px), rgba(255, 255, 255, 0.05) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to right, transparent 0, transparent calc(50% - 0.5px), rgba(255, 255, 255, 0.05) calc(50% - 0.5px), rgba(255, 255, 255, 0.05) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+    background-size: 72px 72px;
+}
+
+/* Blue-Glow-Tiefe ohne Kante: weiche Aufhellung unten rechts */
+.souvera-login-brand::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(520px 360px at 78% 84%, rgba(47, 125, 246, 0.12), transparent 70%);
+}
+
+.souvera-login-brand__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: clamp(36px, 4.5vw, 68px);
+}
+
+.souvera-login-brand__logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    align-self: flex-start;
+}
+
+.souvera-login-brand__logo {
+    /* Quadratische Icon-Box (Theming-Logo ist das S-Icon); Backgrounds
+       dimensionieren nicht — feste Box, Inhalt skaliert per contain */
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    background: center / contain no-repeat;
+    filter: none;
+}
+
+.souvera-login-brand__wordmark {
+    color: var(--sl-text);
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 14px rgba(6, 9, 18, 0.55);
+    white-space: nowrap;
+}
+
+.souvera-login-brand__text {
+    margin-top: auto;
+    padding-top: 56px;
+}
+
+.souvera-login-brand__headline {
+    margin: 0 0 18px;
+    color: var(--sl-text);
+    font-size: clamp(2.2rem, 3vw, 2.95rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 22px rgba(6, 9, 18, 0.6);
+}
+
+.souvera-login-brand__headline-line {
+    display: block;
+}
+
+.souvera-login-brand__accent {
+    color: var(--sl-accent);
+}
+
+.souvera-login-brand__sub {
+    margin: 0 0 30px;
+    max-width: 36ch;
+    color: var(--sl-text);
+    opacity: 0.88;
+    font-size: clamp(1rem, 1.1vw, 1.07rem);
+    line-height: 1.65;
+    text-shadow: 0 1px 16px rgba(6, 9, 18, 0.65);
+}
+
+.souvera-login-brand__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.souvera-login-brand__chips span {
+    padding: 7px 16px;
+    border: 1px solid var(--sl-chip-border);
+    border-radius: 999px;
+    color: var(--sl-text);
+    background: rgba(8, 12, 24, 0.38);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: nowrap;
+    text-shadow: 0 1px 10px rgba(6, 9, 18, 0.6);
+}
+
+/* ---- Rechte Spalte: Karte + Footer ---------------------------------------- */
+
+body#body-login .wrapper .v-align {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    padding: 40px 32px 24px;
+    background: none !important;
+}
+
+/* Jede Gastbox in der Guest-Content-Spalte = Karte (2FA/Geräte/Fehler inkl.) */
+body#body-login .guest-content .guest-box {
+    width: 100%;
+    max-width: 420px;
+    margin: 0;
+    padding: 36px 34px 30px;
+    background: var(--sl-card) !important;
+    border: 1px solid var(--sl-card-border);
+    border-radius: 16px;
+    box-shadow:
+        0 12px 32px rgba(11, 14, 26, 0.09),
+        0 2px 6px rgba(11, 14, 26, 0.05);
+    color: var(--sl-card-text);
+}
+
+/* Kern-Gastbox: linksbündig (NC zentriert standardmäßig) */
+body#body-login .guest-content .guest-box .login-form,
+body#body-login .guest-content .guest-box .login-form__headline,
+body#body-login .guest-content .guest-box label {
+    text-align: left;
+}
+
+/* Überschrift + Subline */
+.login-form__headline {
+    margin: 0;
+    color: var(--sl-card-text) !important;
+    font-size: 1.5rem;
+    font-weight: 750;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+}
+
+.souvera-login-card-sub {
+    margin: 6px 0 24px;
+    color: var(--sl-card-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+/* Label-Zeilen (eingefügt vom Bootstrap-JS) */
+.souvera-login-label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 7px;
+}
+
+.souvera-login-label-row label {
+    margin: 0;
+    color: #333c48;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.souvera-login-label-row__link {
+    font-size: 0.8rem;
+    margin: 0 !important;
+}
+
+.souvera-login-label-row__link a,
+.souvera-login-label-row__link a:visited {
+    color: var(--sl-accent-strong);
+    text-decoration: none;
+}
+
+.souvera-login-label-row__link a:hover,
+.souvera-login-label-row__link a:focus-visible {
+    color: var(--sl-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Eingabefelder: der Wrapper (mit Icons) ist das sichtbare Feld */
+.login-box div:has(> #user),
+.login-box div:has(> #password) {
+    display: flex;
+    align-items: center;
+    height: 46px;
+    margin: 0 0 16px;
+    padding: 0 10px;
+    background: #ffffff;
+    border: 1px solid var(--sl-field-border);
+    border-radius: 10px;
+    box-shadow: none !important;
+}
+
+.login-box div:has(> #user):focus-within,
+.login-box div:has(> #password):focus-within {
+    border-color: var(--sl-accent);
+    box-shadow: 0 0 0 3px var(--sl-accent-ring) !important;
+}
+
+.login-box #user,
+.login-box #password {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 6px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    color: var(--sl-card-text);
+    font-size: 0.95rem;
+    outline: none;
+    caret-color: var(--sl-accent);
+}
+
+.login-box #user::placeholder,
+.login-box #password::placeholder {
+    color: #98a2b0;
+    opacity: 1;
+}
+
+/* Remember-me */
+.login-box #rememberme,
+.login-box .remember-me-container {
+    margin: 2px 0 18px;
+    color: var(--sl-card-muted);
+    font-size: 0.875rem;
+}
+
+.login-box #rememberme[type='checkbox'],
+.login-box input[type='checkbox']#rememberme {
+    margin-right: 7px;
+    vertical-align: -2px;
+}
+
+.login-box label[for='rememberme'] {
+    color: var(--sl-card-muted);
+    font-weight: 400;
+    font-size: 0.875rem;
+}
+
+.login-box button[type='submit'] {
+    text-align: center;
+}
+
+/* Anmelden-Button */
+.login-box button[type='submit'] {
+    width: 100%;
+    height: 46px;
+    margin: 0 0 4px;
+    background: var(--sl-accent) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: #ffffff !important;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 6px 16px rgba(47, 125, 246, 0.28);
+    transition: background 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.login-box button[type='submit']:hover:not(:disabled) {
+    background: var(--sl-accent-strong) !important;
+    box-shadow: 0 8px 20px rgba(47, 125, 246, 0.34);
+}
+
+.login-box button[type='submit']:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--sl-accent-ring), 0 6px 16px rgba(47, 125, 246, 0.28) !important;
+}
+
+.login-box button[type='submit']:disabled {
+    opacity: 0.65;
+    box-shadow: none;
+}
+
+/* Sekundärbereich: „Mit einem Gerät anmelden", alternative Logins */
+.login-box .login-additional {
+    margin-top: 14px;
+    padding-top: 16px;
+    border-top: 1px solid var(--sl-line);
+    text-align: center !important;
+}
+
+.login-box .login-additional a,
+.login-box .login-additional button,
+.login-box .login-box__alternative-logins a {
+    color: var(--sl-card-muted);
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.login-box .login-additional a:hover,
+.login-box .login-additional a:focus-visible {
+    color: var(--sl-accent-strong);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Fehler-/Hinweismeldungen bleiben lesbar */
+.login-box .warning,
+.login-box .error-msg,
+.guest-content .guest-box .warning {
+    color: #9a3312;
+}
+
+/* Footer: ruhig, unten zentriert in der rechten Spalte */
+body#body-login .wrapper > footer.guest-box {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 24px 26px !important;
+    text-align: center;
+    color: #7b8493;
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+
+body#body-login .wrapper > footer.guest-box .info {
+    color: inherit;
+}
+
+body#body-login .wrapper > footer.guest-box a {
+    color: #67707e;
+    text-decoration: none;
+}
+
+body#body-login .wrapper > footer.guest-box a:hover,
+body#body-login .wrapper > footer.guest-box a:focus-visible {
+    color: var(--sl-accent-strong);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---- Motion: eine choreografierte Eingangssequenz ------------------------- */
+
+@keyframes sl-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.souvera-login-brand__inner > * {
+    animation: sl-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.souvera-login-brand__inner > :nth-child(2) {
+    animation-delay: 0.07s;
+}
+
+.souvera-login-brand__inner > :nth-child(3) {
+    animation-delay: 0.14s;
+}
+
+.souvera-login-brand__inner > :nth-child(4) {
+    animation-delay: 0.21s;
+}
+
+body#body-login .guest-content .guest-box {
+    animation: sl-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .souvera-login-brand__inner > *,
+    body#body-login .guest-content .guest-box {
+        animation: none;
+    }
+}
+
+/* ---- Browser-Oberflächen mitgestalten ------------------------------------- */
+
+body#body-login ::selection {
+    background: rgba(47, 125, 246, 0.24);
+}
+
+body#body-login input {
+    caret-color: var(--sl-accent);
+}
+
+body#body-login :focus-visible {
+    outline: 2px solid var(--sl-accent);
+    outline-offset: 2px;
+}
+
+.login-box div:has(> #user):focus-within,
+.login-box div:has(> #password):focus-within {
+    outline: none;
+}
+
+/* ---- Mobil (< 1025px): kompakte Brand-Kopfzeile, Karte darunter ----------- */
+
+@media (max-width: 1024px) {
+    body#body-login {
+        flex-direction: column;
+    }
+
+    /* Mobil: Textblock sitzt oben → Scrim oben dicht, unten Bild sichtbar */
+    .souvera-login-brand.has-image::before {
+        background-image: linear-gradient(180deg, rgba(7, 10, 20, 0.78) 0%, rgba(7, 10, 20, 0.6) 55%, rgba(7, 10, 20, 0.38) 100%);
+    }
+
+    .souvera-login-brand {
+        width: 100%;
+        flex: 0 0 auto;
+        min-height: 0;
+    }
+
+    .souvera-login-brand__inner {
+        max-width: 520px;
+        padding: 26px 22px 22px;
+    }
+
+    .souvera-login-brand__logo {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .souvera-login-brand__wordmark {
+        font-size: 0.9rem;
+        letter-spacing: 0.13em;
+    }
+
+    .souvera-login-brand__text {
+        padding-top: 22px;
+    }
+
+    .souvera-login-brand__headline {
+        font-size: clamp(1.55rem, 6.4vw, 2.1rem);
+        margin-bottom: 10px;
+    }
+
+    .souvera-login-brand__sub {
+        margin-bottom: 18px;
+        font-size: 0.92rem;
+    }
+
+    .souvera-login-brand__chips {
+        gap: 8px;
+    }
+
+    .souvera-login-brand__chips span {
+        padding: 5px 12px;
+        font-size: 0.78rem;
+    }
+
+    body#body-login .wrapper .v-align {
+        padding: 22px 16px 16px;
+    }
+
+    body#body-login .guest-content .guest-box {
+        max-width: 460px;
+        padding: 26px 22px 22px;
+    }
+
+    body#body-login .wrapper > footer.guest-box {
+        padding-bottom: 20px !important;
+    }
+}
+
+/* ---- Dark-Mode-Insurance (falls ein Theme durchschlägt) -------------------- */
+
+body#body-login[data-theme-dark] {
+    --sl-right-bg: #14161c;
+    --sl-card: #1e2129;
+    --sl-card-border: #333844;
+    --sl-card-text: #f2f4f8;
+    --sl-card-muted: #a6adba;
+    --sl-field-border: #3a3f4a;
+    --sl-line: #2a2e37;
+}
+
+body#body-login[data-theme-dark] .login-box #user::placeholder,
+body#body-login[data-theme-dark] .login-box #password::placeholder {
+    color: #77808f;
+}
+
+body#body-login[data-theme-dark] .login-box div:has(> #user),
+body#body-login[data-theme-dark] .login-box div:has(> #password) {
+    background: #262a33;
+}
+
+body#body-login[data-theme-dark] .login-box .login-additional {
+    border-top-color: var(--sl-line);
+}
+
+body#body-login[data-theme-dark] .souvera-login-label-row label {
+    color: #c7cdd8;
+}

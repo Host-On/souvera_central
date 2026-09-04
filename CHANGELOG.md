@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.40.84] — 2026-09
+
+### Added
+
+- **Souvera-Login: Split-Screen im Host-On-Stil.** Linke Bühne mit dem
+  Instanz-Hintergrundbild (`--image-background`, occ-Theming), Souvera-Logo
+  + Wordmark (aus dem Theming), Headline, Subline und Feature-Chips;
+  rechts die Anmeldekarte („Willkommen zurück", sichtbare Feld-Labels,
+  „Passwort vergessen?" beim Passwortfeld, Souvera-Blau-Button).
+  Mobil: kompakte Brand-Kopfzeile über der Karte. 2FA-/Geräte-/Fehler-
+  seiten erben das Layout; Public-Share-Seiten bleiben unangetastet.
+  Notbremse: `occ config:system:set souvera_login.enabled --value 0`.
+
 ## [0.40.83] — 2026-08
 
 ### Changed

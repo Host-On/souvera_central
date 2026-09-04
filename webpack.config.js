@@ -16,6 +16,7 @@ module.exports = (env, argv) => {
             main: path.join(__dirname, 'src', 'main.js'),
             branding: path.join(__dirname, 'src', 'branding.js'),
             header: path.join(__dirname, 'src', 'souvera_central-header.js'),
+            login: path.join(__dirname, 'src', 'souvera_central-login.js'),
             help: path.join(__dirname, 'src', 'help-main.js')
         },
         output: {
