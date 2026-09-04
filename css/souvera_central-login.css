@@ -91,6 +91,7 @@ body#body-login .wrapper {
     justify-content: flex-start !important;
     box-sizing: border-box;
     width: 50% !important;
+    max-width: none !important;
     min-width: 0 !important;
     margin: 0 0 0 50% !important;
     padding: 0 !important;
@@ -570,9 +571,13 @@ body#body-login :focus-visible {
         width: 100%;
     }
 
+    body#body-login {
+        overflow-x: hidden !important;
+    }
+
     body#body-login .wrapper {
         width: 100% !important;
-        margin-left: 0 !important;
+        margin: 0 !important;
         /* Karte direkt unter der Brand-Kopfzeile statt in 100vh zentriert */
         min-height: 0 !important;
     }

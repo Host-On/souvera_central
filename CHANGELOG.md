@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.88] — 2026-09
+
+### Fixed
+
+- Feld-Placeholders ergänzt (NC 34 liefert absichtlich leere) und
+  NCs `.wrapper`-Max-Width neutralisiert; Mobil ohne Seiten-Offset.
+
 ## [0.40.87] — 2026-09
 
 ### Fixed

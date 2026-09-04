@@ -260,6 +260,14 @@
         addLabelRow('user', t.labelUser)
         var pwRow = addLabelRow('password', t.labelPassword)
 
+        // Placeholders: NC 34 liefert bewusst leere — Host-On-Stil zeigt sie
+        try {
+            var user = document.getElementById('user')
+            var pw = document.getElementById('password')
+            if (user && !user.placeholder && t.placeholderUser) { user.placeholder = t.placeholderUser }
+            if (pw && !pw.placeholder && t.placeholderPassword) { pw.placeholder = t.placeholderPassword }
+        } catch (e) { /* noop */ }
+
         // „Passwort vergessen?" rechts neben das Passwort-Label
         var lost = q('#lost-password')
         if (lost && pwRow) {

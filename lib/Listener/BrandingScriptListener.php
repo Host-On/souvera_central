@@ -104,6 +104,8 @@ class BrandingScriptListener implements IEventListener {
                 'cardSub' => 'Melde dich in deinem Workspace an.',
                 'labelUser' => 'E-Mail oder Benutzername',
                 'labelPassword' => 'Passwort',
+                'placeholderUser' => 'Kontoname oder E-Mail-Adresse',
+                'placeholderPassword' => 'Passwort',
             ],
             'en' => [
                 'headline1' => 'Your data.',
@@ -114,6 +116,8 @@ class BrandingScriptListener implements IEventListener {
                 'cardSub' => 'Sign in to your workspace.',
                 'labelUser' => 'Email or username',
                 'labelPassword' => 'Password',
+                'placeholderUser' => 'Username or email address',
+                'placeholderPassword' => 'Password',
             ],
         ];
 
