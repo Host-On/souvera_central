@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.40.92] — 2026-09
+
+### Fixed
+
+- Login-Karte jetzt wirklich breiter: NC limitierte die Gast-Content-
+  Breite (~341px) — aufgehoben, die Karte nutzt ihre 504px.
+- „Passwort vergessen?"/„An mich erinnern" wirklich kräftig: die alten
+  Regeln griffen ins Leere (`#lost-password` ist selbst der Link, das
+  Remember-Label teils ohne for-Attribut) — Selektoren gehärtet.
+- Doppelter blauer Fokus-Rahmen: NC zeichnet ein eigenes Outline aufs
+  fokussierte Input — entfernt, der Wrapper-Ring ist der einzige
+  Indikator.
+
 ## [0.40.91] — 2026-09
 
 ### Fixed

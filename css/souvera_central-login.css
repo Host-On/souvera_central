@@ -281,6 +281,15 @@ body#body-login .wrapper .v-align {
     background: none !important;
 }
 
+/* NC limitiert die Gast-Content-Breite — die Karte darf die volle
+   v-align-Breite nutzen (max-width regelt die Karte selbst) */
+body#body-login .guest-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 /* Jede Gastbox in der Guest-Content-Spalte = Karte (2FA/Geräte/Fehler inkl.) */
 body#body-login .guest-content .guest-box {
     width: 100%;
@@ -342,17 +351,23 @@ body#body-login .guest-content .guest-box label {
     margin: 0 !important;
 }
 
+.souvera-login-label-row__link,
 .souvera-login-label-row__link a,
-.souvera-login-label-row__link a:visited {
-    color: #1a56c4;
+.souvera-login-label-row__link a:visited,
+#lost-password,
+#lost-password a,
+#lost-password a:visited {
+    color: #1a56c4 !important;
     font-weight: 600;
     text-decoration: none;
 }
 
 .souvera-login-label-row__link a:hover,
-.souvera-login-label-row__link a:focus-visible {
-    color: var(--sl-accent);
-    text-decoration: underline;
+.souvera-login-label-row__link a:focus-visible,
+#lost-password a:hover,
+#lost-password:hover {
+    color: var(--sl-accent) !important;
+    text-decoration: underline !important;
     text-underline-offset: 3px;
 }
 
@@ -388,8 +403,17 @@ body#body-login .guest-content .guest-box label {
     border-radius: 0 !important;
     color: var(--sl-card-text);
     font-size: 0.95rem;
-    outline: none;
     caret-color: var(--sl-accent);
+}
+
+/* Ein einziger Fokus-Indikator: der Wrapper-Ring — NCs Input-Outline aus */
+.login-box #user:focus,
+.login-box #user:focus-visible,
+.login-box #password:focus,
+.login-box #password:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .login-box #user::placeholder,
@@ -412,8 +436,10 @@ body#body-login .guest-content .guest-box label {
     vertical-align: -2px;
 }
 
-.login-box label[for='rememberme'] {
-    color: #3c4552;
+.login-box label[for='rememberme'],
+.login-box input[type='checkbox'] + label,
+.login-box .remember-label {
+    color: #3c4552 !important;
     font-weight: 600;
     font-size: 0.875rem;
 }
