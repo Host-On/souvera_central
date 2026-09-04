@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.99] — 2026-09
+
+### Fixed
+
+- Titel-Blitz endgültig geschlossen (zweigleisig): Serverseitig wird der
+  `pageTitle` jetzt auch FORCIERT, wenn die App ihn nicht setzt
+  (App-ID aus dem Pfad → gebrandeter Name). Clientseitig interceptiert
+  branding.js den `document.title`-Setter — Vue-Apps (Talk, Office)
+  schreiben keinen ungebrandeten Titel mehr, jede Zuweisung wird sofort
+  umbenannt. Kein Observer-Rennen mehr.
+
 ## [0.40.98] — 2026-09
 
 ### Fixed

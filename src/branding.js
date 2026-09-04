@@ -32,6 +32,41 @@
     const names = cfg.names
     const icons = cfg.icons || {}
 
+    // ---- Titel-Interceptor: Vue-Apps schreiben document.title clientseitig
+    //      („Talk – …“) — jeder Schreibvorgang wird SOFORT umbenannt, kein
+    //      Observer-Rennen im Tab. -------------------------------------------
+    const TITLE_RULES = [
+        { words: ['Nextcloud Talk', 'Talk'], to: (names.spreed || 'Link') },
+        { words: ['Nextcloud Office', 'Collabora Online', 'Collabora', 'Office'], to: (names.richdocuments || 'Desk') }
+    ]
+
+    function renameTitleString(title) {
+        if (typeof title !== 'string' || title === '') { return title }
+        for (let i = 0; i < TITLE_RULES.length; i++) {
+            const rule = TITLE_RULES[i]
+            const re = wordsRegex(rule.words, 'g')
+            if (re.test(title)) { return title.replace(re, rule.to) }
+        }
+        return title
+    }
+
+    try {
+        const proto = Object.getPrototypeOf(document)
+        const desc = Object.getOwnPropertyDescriptor(proto, 'title')
+            || Object.getOwnPropertyDescriptor(Document.prototype, 'title')
+        if (desc && desc.get && desc.set && !document.__souveraTitleHooked) {
+            Object.defineProperty(document, 'title', {
+                configurable: true,
+                get: function () { return desc.get.call(document) },
+                set: function (v) {
+                    try { v = renameTitleString(v) } catch (e) { /* noop */ }
+                    desc.set.call(document, v)
+                }
+            })
+            document.__souveraTitleHooked = true
+        }
+    } catch (e) { /* noop */ }
+
     // ---- Souvera-Header: Fallback-Loader ------------------------------------
     // Der Listener liefert header.css/-js STATISCH im Head (vor dem First
     // Paint — kein FOUC). NC bustert App-Assets pro Datei (?v= ändert sich

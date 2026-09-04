@@ -27,6 +27,7 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\Util;
 
@@ -37,6 +38,7 @@ class BrandingScriptListener implements IEventListener {
         private IInitialState $initialState,
         private IURLGenerator $urlGenerator,
         private PermissionService $permission,
+        private IRequest $request,
     ) {
     }
 
@@ -138,6 +140,21 @@ class BrandingScriptListener implements IEventListener {
                 return;
             }
             $params = $response->getParams();
+
+            // App-ID aus dem Pfad (z. B. /apps/spreed) → gebrandeter Name
+            $pathName = null;
+            if (preg_match('#/apps/([^/?#]+)#', (string)$this->request->getPathInfo(), $m) && isset($names[$m[1]])) {
+                $pathName = (string)$names[$m[1]];
+            }
+
+            // Kein pageTitle gesetzt → forciert setzen (sonst lautet der erste
+            // Titel nur „<Instanzname>“ und die Vue-Apps schreiben später
+            // clientseitig „Talk“ dazwischen = Flash im Tab)
+            if ((!isset($params['pageTitle']) || !is_string($params['pageTitle']) || $params['pageTitle'] === '') && $pathName !== null) {
+                $params['pageTitle'] = $pathName;
+                $response->setParams($params);
+            }
+
             if (!isset($params['pageTitle']) || !is_string($params['pageTitle']) || $params['pageTitle'] === '') {
                 return;
             }
