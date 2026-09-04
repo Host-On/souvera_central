@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.40.94] — 2026-09
+
+### Fixed
+
+- Checkbox-Hover von „An mich erinnern" neutralisiert (NC malte einen
+  grauen Hover-Block).
+- Passwort-vergessen-/2FA-Seiten im Kartendesign: generische Regeln für
+  Headline, Felder und Buttons in allen Gastboxen (bisher nur
+  login-box-spezifisch — dort war die Headline blass und das Feld
+  ungestylt).
+
 ## [0.40.93] — 2026-09
 
 ### Fixed

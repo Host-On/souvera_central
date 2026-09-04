@@ -452,6 +452,14 @@ body#body-login .login-box #rememberme-label span {
     font-weight: 600 !important;
 }
 
+/* Hover der Vue-Checkbox neutralisieren (NC malt grauen Hover-Block) */
+body#body-login .login-box .checkbox-radio-switch,
+body#body-login .login-box .checkbox-radio-switch .checkbox-content,
+body#body-login .login-box .checkbox-radio-switch:hover .checkbox-content {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 .login-box button[type='submit'] {
     text-align: center;
 }
@@ -523,6 +531,80 @@ body#body-login .login-box .login-additional a:focus-visible {
     color: var(--sl-accent-strong) !important;
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+/* ---- Generische Gastboxen (Passwort-vergessen, 2FA, …) --------------------- */
+/* Die Login-Box-spezifischen Regeln greifen dort nicht — dieselbe Optik,
+   aber strukturneutral. */
+
+body#body-login .guest-content .guest-box h2,
+body#body-login .guest-content .guest-box h3 {
+    margin: 0 0 20px;
+    color: var(--sl-card-text) !important;
+    font-size: 1.4rem;
+    font-weight: 700 !important;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-align: left !important;
+}
+
+body#body-login .guest-content .guest-box .input-field__main-wrapper,
+body#body-login .guest-content .guest-box div:has(> input[type='text']),
+body#body-login .guest-content .guest-box div:has(> input[type='email']),
+body#body-login .guest-content .guest-box div:has(> input[type='password']) {
+    display: flex;
+    align-items: center;
+    height: 46px;
+    margin: 0 0 16px;
+    padding: 0 10px;
+    background: #ffffff;
+    border: 1px solid var(--sl-field-border);
+    border-radius: 10px;
+    box-shadow: none !important;
+}
+
+body#body-login .guest-content .guest-box .input-field__main-wrapper:focus-within,
+body#body-login .guest-content .guest-box div:has(> input[type='text']):focus-within,
+body#body-login .guest-content .guest-box div:has(> input[type='email']):focus-within,
+body#body-login .guest-content .guest-box div:has(> input[type='password']):focus-within {
+    border-color: var(--sl-accent);
+    box-shadow: 0 0 0 3px var(--sl-accent-ring) !important;
+}
+
+body#body-login .guest-content .guest-box .input-field__main-wrapper input,
+body#body-login .guest-content .guest-box input[type='text'],
+body#body-login .guest-content .guest-box input[type='email'],
+body#body-login .guest-content .guest-box input[type='password'] {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0 6px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    color: var(--sl-card-text);
+    font-size: 0.95rem;
+    caret-color: var(--sl-accent);
+}
+
+body#body-login .guest-content .guest-box input:focus,
+body#body-login .guest-content .guest-box input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+body#body-login .guest-content .guest-box button[type='submit'],
+body#body-login .guest-content .guest-box button.primary,
+body#body-login .guest-content .guest-box .button-vue--vue-primary {
+    color: #ffffff !important;
+    font-weight: 700;
+    text-align: center;
+}
+
+body#body-login .guest-content .guest-box .button-vue__text {
+    color: inherit !important;
 }
 
 /* Fehler-/Hinweismeldungen bleiben lesbar */
