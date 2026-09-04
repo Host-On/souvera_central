@@ -3,24 +3,45 @@
  *
  * Baut die gepinnten App-Buttons direkt in den Nextcloud-Header:
  *
- *   [Icon] [Dashboard][Dateien][Mail][Link][Deck][Kalender][Central][Mehr ▾] … [Suche]
+ *   [Icon] [Dashboard][Dateien][Mail][Link][Deck][Kalender][Central] [Mehr ▾] … [Suche]
  *
- * Datenquellen:
- *   - `#initial-state-core-apps`        → alle Apps (id, name, icon, href)
- *   - `#initial-state-souvera_central-branding` → header.enabled/pinned/adminOnly
- *     + isSouveraAdmin (server-seitig geprüft)
+ * Bekannter ECHTER DOM (v34.0.3, aus der Instanz verifiziert):
  *
- * „Mehr" = der bestehende v34-App-Menu-Trigger (Grid-Icon), wird ans Ende
- * der Buttons umgehängt — das Dropdown bleibt NC-synchron.
+ *   <header id="header">
+ *     <div class="header-start">
+ *       <a id="nextcloud"><div class="logo logo-icon"></div></a>
+ *       <nav id="header-start__appmenu"></nav>   ← Vue rendert hier Grid-Icon + Appname
+ *     </div>
+ *     <div class="header-end">
+ *       <div id="unified-search"></div><div id="notifications"></div>…
+ *     </div>
+ *   </header>
  *
- * Failsafe: Alle Schritte guarded; ohne DOM/State passiert nichts. Die
- * Notbremse ist `souvera_central.branding.header.enabled = 0`.
+ * Regeln (aus dem ersten Versuch gelernt):
+ *   1. NIEMALS in von Vue verwaltete Subtrees eingreifen
+ *      (`#header-start__appmenu` bleibt unberührt) — kein DOM-Krieg.
+ *   2. Eigener Container als GESCHWISTER von #nextcloud, `flex: 0 0 auto`
+ *      (kollabiert nicht).
+ *   3. „Mehr" = EIGENES Dropdown aus `#initial-state-core-apps` minus
+ *      gepinnte Apps.
+ *   4. Erfolgs-Marker `html.souvera-header-ok`: Erst wenn unsere Buttons
+ *      wirklich hängen, wird das NC-App-Menü per CSS ausgeblendet — bei
+ *      JS-Fehler bleibt die Original-Navigation voll funktionfähig.
+ *   5. Notbremse: `souvera_central.branding.header.enabled = 0`.
  */
 
 (function () {
     'use strict'
 
     var HEADER_ID = 'souvera-header-apps'
+    var OK_MARKER = 'souvera-header-ok'
+    var DEBUG = /[?&]souveraDebug=1/.test(window.location.search)
+
+    function log(msg) {
+        if (DEBUG) {
+            try { console.log('[SouveraHeader] ' + msg) } catch (e) { /* noop */ }
+        }
+    }
 
     function loadBranding() {
         var el = document.getElementById('initial-state-souvera_central-branding')
@@ -46,15 +67,15 @@
         return header
     }
 
-    // App anhand der ID finden; Fallback: href-Match auf /apps/<id>
     function findApp(apps, appId) {
-        for (var i = 0; i < apps.length; i++) {
-            var a = apps[i]
+        var i, a
+        for (i = 0; i < apps.length; i++) {
+            a = apps[i]
             if (a && a.id === appId) { return a }
         }
-        for (var j = 0; j < apps.length; j++) {
-            var b = apps[j]
-            if (b && typeof b.href === 'string' && b.href.indexOf('/apps/' + appId) !== -1) { return b }
+        for (i = 0; i < apps.length; i++) {
+            a = apps[i]
+            if (a && typeof a.href === 'string' && a.href.indexOf('/apps/' + appId) !== -1) { return a }
         }
         return null
     }
@@ -75,14 +96,14 @@
         var img = document.createElement('img')
         img.setAttribute('src', src)
         img.setAttribute('alt', '')
-        img.style.filter = 'brightness(0) invert(1)'
         return img
     }
 
-    function makeLabel(text) {
+    function makeChevron() {
         var span = document.createElement('span')
-        span.className = 'souvera-header-app-label'
-        span.textContent = text
+        span.className = 'souvera-header-chevron'
+        span.setAttribute('aria-hidden', 'true')
+        span.textContent = '▾'
         return span
     }
 
@@ -90,51 +111,91 @@
         return document.querySelector('header#header') || document.getElementById('header')
     }
 
-    function logoEl(header) {
-        return header ? header.querySelector('#nextcloud') : null
+    // ---- „Mehr"-Dropdown (eigenes, außerhalb von Vue-Territorium) -----------
+
+    var openDropdown = null
+
+    function closeDropdown() {
+        if (openDropdown) {
+            openDropdown.remove()
+            openDropdown = null
+        }
+        document.removeEventListener('click', onOutsideClick, true)
+        document.removeEventListener('keydown', onEscape, true)
     }
 
-    // Der v34-App-Menu-Trigger (Grid-Icon + Current-App-Anzeige) — wird zum
-    // „Mehr"-Button umgehängt. Fallback: null → Trigger bleibt, wo er ist.
-    function findMenuTrigger(header) {
-        if (!header) { return null }
-        return header.querySelector('.app-menu') || header.querySelector('[class*="app-menu"]')
+    function onOutsideClick(e) {
+        if (openDropdown && !openDropdown.contains(e.target)) { closeDropdown() }
+    }
+
+    function onEscape(e) {
+        if (e.key === 'Escape') { closeDropdown() }
+    }
+
+    function buildDropdown(remaining) {
+        var panel = document.createElement('div')
+        panel.className = 'souvera-header-dropdown'
+        panel.setAttribute('role', 'menu')
+
+        remaining.forEach(function (app) {
+            var a = document.createElement('a')
+            a.className = 'souvera-header-dropdown-entry'
+            a.setAttribute('href', app.href || '#')
+            a.setAttribute('role', 'menuitem')
+            a.appendChild(makeIcon(app.icon || ''))
+            var label = document.createElement('span')
+            label.textContent = app.name || app.id || ''
+            a.appendChild(label)
+            panel.appendChild(a)
+        })
+
+        return panel
+    }
+
+    // ---- Rendering -----------------------------------------------------------
+
+    function headerEl() {
+        return document.querySelector('header#header') || document.getElementById('header')
     }
 
     function buildContainer(header) {
-        var existing = document.getElementById(HEADER_ID)
-        if (existing && existing.isConnected && header.contains(existing)) {
-            return existing
+        var container = document.getElementById(HEADER_ID)
+        if (container && container.isConnected && header.contains(container)) {
+            return container
         }
-        var logo = logoEl(header)
+        var logo = header.querySelector('#nextcloud')
         if (!logo) { return null }
-        var container = existing || document.createElement('div')
+        container = container || document.createElement('div')
         container.id = HEADER_ID
+        // Geschwister des Logos in .header-start — kein Vue-Territorium.
         logo.insertAdjacentElement('afterend', container)
         return container
     }
 
     function render() {
         var header = headerEl()
-        if (!header) { return }
+        if (!header) { log('no header element yet'); return }
 
         var cfg = headerConfig()
-        if (!cfg) {
-            var stale = document.getElementById(HEADER_ID)
-            if (stale) { stale.remove() }
-            return
-        }
+        if (!cfg) { log('header disabled or state missing'); return }
 
         var container = buildContainer(header)
-        if (!container) { return }
+        if (!container) { log('no logo anchor — cannot place container'); return }
         container.innerHTML = ''
 
         var apps = loadCoreApps()
+        log('core apps: ' + apps.length + ', pinned: ' + cfg.pinned.join(','))
 
         cfg.pinned.forEach(function (appId) {
-            if (header.adminOnly.indexOf(appId) !== -1 && !header.isSouveraAdmin) { return }
+            if (header.adminOnly.indexOf(appId) !== -1 && !header.isSouveraAdmin) {
+                log('skip ' + appId + ' (admin only)')
+                return
+            }
             var app = findApp(apps, appId)
-            if (!app || !app.href) { return }
+            if (!app || !app.href) {
+                log('skip ' + appId + ' (not in core apps)')
+                return
+            }
 
             var a = document.createElement('a')
             a.className = 'souvera-header-app'
@@ -142,35 +203,91 @@
             a.setAttribute('data-active', isActive(app.href) ? '1' : '0')
             a.setAttribute('title', app.name || appId)
             a.appendChild(makeIcon(app.icon || ''))
-            a.appendChild(makeLabel(app.name || appId))
+            var label = document.createElement('span')
+            label.className = 'souvera-header-app-label'
+            label.textContent = app.name || appId
+            a.appendChild(label)
             container.appendChild(a)
         })
 
-        // „Mehr": bestehenden App-Menu-Trigger umhängen (Dropdown bleibt NC-synchron)
-        var trigger = findMenuTrigger(header)
-        if (trigger && trigger.parentElement !== container) {
-            trigger.classList.add('souvera-header-more')
-            container.appendChild(trigger)
+        // „Mehr ▾": restliche Apps (core apps minus gepinnte, minus adminOnly)
+        var remaining = apps.filter(function (app) {
+            if (!app || !app.href) { return false }
+            if (cfg.pinned.indexOf(app.id) !== -1) { return false }
+            if (header.adminOnly.indexOf(app.id) !== -1 && !header.isSouveraAdmin) { return false }
+            return true
+        })
+
+        var more = document.createElement('button')
+        more.className = 'souvera-header-more'
+        more.setAttribute('type', 'button')
+        more.setAttribute('aria-haspopup', 'menu')
+        more.setAttribute('aria-expanded', 'false')
+        more.setAttribute('title', 'Weitere Apps')
+        more.appendChild(makeChevron())
+        var moreLabel = document.createElement('span')
+        moreLabel.className = 'souvera-header-app-label'
+        moreLabel.textContent = 'Mehr'
+        more.appendChild(moreLabel)
+
+        more.addEventListener('click', function (e) {
+            e.stopPropagation()
+            if (openDropdown) {
+                closeDropdown()
+                more.setAttribute('aria-expanded', 'false')
+                return
+            }
+            openDropdown = buildDropdown(remaining)
+            more.setAttribute('aria-expanded', 'true')
+            // Unter dem Button positionieren (Header ist position:fixed)
+            var rect = more.getBoundingClientRect()
+            openDropdown.style.top = (rect.bottom + 6) + 'px'
+            openDropdown.style.left = Math.max(8, rect.left - 40) + 'px'
+            document.body.appendChild(openDropdown)
+            document.addEventListener('click', onOutsideClick, true)
+            document.addEventListener('keydown', onEscape, true)
+        })
+        container.appendChild(more)
+
+        // Erfolgs-Marker: erst jetzt darf das CSS das NC-App-Menü ausblenden.
+        if (document.documentElement.className.indexOf(OK_MARKER) === -1) {
+            document.documentElement.className += ' ' + OK_MARKER
         }
+        log('rendered ' + cfg.pinned.length + ' pinned + ' + remaining.length + ' more')
     }
 
     function start() {
-        render()
-        // SPA-/Vue-Re-Render abfangen: Container weg oder Trigger zurückgesort → neu bauen
+        try {
+            render()
+        } catch (e) {
+            log('render error: ' + (e && e.message))
+            try { console.error('[SouveraHeader] render failed', e) } catch (e2) { /* noop */ }
+            return
+        }
+
+        // Resilienz: Nur neu rendern, wenn unser Container ENTFERNT wurde
+        // (Vue-/Core-Re-Render). Kein Umbauen fremder Nodes → kein Krieg.
         try {
             var observer = new MutationObserver(function () {
                 var header = headerEl()
                 if (!header) { return }
                 var container = document.getElementById(HEADER_ID)
-                if (!container || !header.contains(container)) { render() }
+                if (!container || !header.contains(container)) {
+                    try { render() } catch (e) { /* noop */ }
+                }
             })
             observer.observe(document.body, { childList: true, subtree: true })
         } catch (e) { /* noop */ }
-        // Erst-Render-Resilienz: kurze Retry-Phase wie im Branding-Script
+
+        // Erst-Render-Resilienz: kurze Retry-Phase (Vue mountet verzögert)
         var tries = 0
         var timer = setInterval(function () {
-            render()
-            if (++tries >= 20) { clearInterval(timer) }
+            tries++
+            var container = document.getElementById(HEADER_ID)
+            if (!container || container.children.length === 0) {
+                try { render() } catch (e) { /* noop */ }
+            }
+            if (tries >= 20 || (container && container.children.length > 0)) { clearInterval(timer) }
         }, 500)
     }
 

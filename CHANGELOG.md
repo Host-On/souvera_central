@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.74] — 2026-08
+
+### Fixed
+
+- Souvera-Header gegen den ECHTEN v34-DOM neu gebaut (aus der Instanz
+  verifiziert): eigener Container als Geschwister von #nextcloud (kein
+  Eindringen in Vue-Territorium → kein DOM-Krieg), „Mehr" als EIGENES
+  Dropdown (restliche Apps aus dem core-apps State), Failsafe-Marker
+  `html.souvera-header-ok` (NC-App-Menü wird erst ausgeblendet, wenn die
+  Buttons wirklich hängen), Suche rechts kompakt via `#unified-search`.
+  Debug-Log via `?souveraDebug=1`.
+
 ## [0.40.73] — 2026-08
 
 ### Added
