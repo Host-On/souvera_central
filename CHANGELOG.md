@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.41.3] — 2026-09
+
+### Added
+
+- DevOps-Status umridet: `souvera_documents` (GitLab
+  `souvera/souvera_documents`) aufgenommen — Releases/Branch-Head via
+  GitLab-API v4 (PRIVATE-TOKEN, `souvera.gitlab_devops_token`, Basis-URL
+  `souvera.gitlab_url`).
+
 ## [0.41.2] — 2026-09
 
 ### Fixed

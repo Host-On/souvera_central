@@ -32,6 +32,9 @@ class StatusController extends Controller
         if ($this->appManager->isInstalled('souvera_mailarchiv')) {
             $apps[] = 'souvera_mailarchiv';
         }
+        if ($this->appManager->isInstalled('souvera_documents')) {
+            $apps[] = 'souvera_documents';
+        }
         $result = [];
 
         foreach ($apps as $appId) {
@@ -70,6 +73,17 @@ class StatusController extends Controller
     {
         $repo = $this->repoFor($appId);
         if ($repo === '') return [];
+
+        if ($this->isGitlabRepo($appId)) {
+            $json = $this->gitlabApiGet($this->gitlabBase() . '/api/v4/projects/'
+                . $this->gitlabProject($repo) . '/releases?per_page=3');
+            if ($json === null || !\is_array($json)) return [];
+            return \array_map(fn($r) => [
+                'tag' => $r['tag_name'] ?? '',
+                'published' => $r['released_at'] ?? '',
+            ], $json);
+        }
+
         $json = $this->apiGet("https://api.github.com/repos/$repo/releases?per_page=3");
         if ($json === null || !\is_array($json)) return [];
         return \array_map(fn($r) => [
@@ -85,6 +99,27 @@ class StatusController extends Controller
     {
         $repo = $this->repoFor($appId);
         if ($repo === '') return null;
+
+        if ($this->isGitlabRepo($appId)) {
+            $base = $this->gitlabBase();
+            $project = $this->gitlabProject($repo);
+            $commit = $this->gitlabApiGet("$base/api/v4/projects/$project/repository/branches/"
+                . \rawurlencode($branch));
+            if ($commit === null || !isset($commit['commit']['id'])) return null;
+
+            $version = null;
+            $rawXml = $this->gitlabRawGet("$base/api/v4/projects/$project/repository/files/"
+                . \rawurlencode('appinfo/info.xml') . "/raw?ref=" . \rawurlencode($branch));
+            if ($rawXml !== null && \preg_match('/<version>([^<]+)<\/version>/', $rawXml, $m)) {
+                $version = \trim($m[1]);
+            }
+
+            return [
+                'sha' => \substr((string) $commit['commit']['id'], 0, 8),
+                'message' => \mb_substr((string) ($commit['commit']['message'] ?? ''), 0, 80),
+                'version' => $version,
+            ];
+        }
 
         $commit = $this->apiGet("https://api.github.com/repos/$repo/commits/$branch");
         if ($commit === null || empty($commit['sha'])) return null;
@@ -147,8 +182,68 @@ class StatusController extends Controller
             'souvera_central' => 'Host-On/souvera_central',
             'souvera_shield' => 'Host-On/souvera_shield',
             'souvera_mailarchiv' => 'Host-On/souvera_mailarchiv',
+            'souvera_documents' => 'souvera/souvera_documents',
             default => '',
         };
+    }
+
+    private function isGitlabRepo(string $appId): bool
+    {
+        return $appId === 'souvera_documents';
+    }
+
+    private function gitlabBase(): string
+    {
+        try {
+            $url = \trim((string) $this->config->getSystemValue('souvera.gitlab_url', 'https://git.host-on.dev'));
+            return $url !== '' ? \rtrim($url, '/') : 'https://git.host-on.dev';
+        } catch (\Throwable) {
+            return 'https://git.host-on.dev';
+        }
+    }
+
+    private function gitlabToken(): string
+    {
+        try {
+            return \trim((string) $this->config->getSystemValue('souvera.gitlab_devops_token', ''));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    private function gitlabProject(string $repo): string
+    {
+        return \str_replace('/', '%2F', $repo);
+    }
+
+    private function gitlabApiGet(string $url): ?array
+    {
+        $token = $this->gitlabToken();
+        if ($token === '') return null;
+        $json = @\file_get_contents($url, false, \stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Souvera-DevOps\r\nPRIVATE-TOKEN: $token\r\n",
+                'timeout' => 10,
+            ],
+        ]));
+        if ($json === false) return null;
+        $data = \json_decode($json, true);
+        return \is_array($data) ? $data : null;
+    }
+
+    private function gitlabRawGet(string $url): ?string
+    {
+        $token = $this->gitlabToken();
+        if ($token === '') return null;
+        $body = @\file_get_contents($url, false, \stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Souvera-DevOps\r\nPRIVATE-TOKEN: $token\r\n",
+                'timeout' => 10,
+            ],
+        ]));
+        return ($body !== false) ? $body : null;
     }
 
     private function readToken(): string
