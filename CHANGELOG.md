@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.41.2] — 2026-09
+
+### Fixed
+
+- „Mehr"-Menü: UTF-8-Mojibake in App-Namen („AktivitÃ¤t") — der
+  core/apps-State wird jetzt UTF-8-korrekt dekodiert.
+- Extra-Apps verlinken auf die NC-Route (`/apps/<id>`) statt auf den
+  physischen Webroot (`/custom_apps/<id>`).
+
 ## [0.41.1] — 2026-09
 
 ### Fixed

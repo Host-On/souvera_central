@@ -57,12 +57,24 @@
             .replace(/^./, function (c) { return c.toUpperCase() })
     }
 
+    /** Base64 → UTF-8 (NCs State ist base64 von UTF-8-Bytes; atob allein
+     *  macht aus „Aktivität" ein „AktivitÃ¤t"). */
+    function b64ToUtf8(b64) {
+        var bin = atob(b64)
+        try {
+            if (typeof TextDecoder !== 'undefined') {
+                return new TextDecoder('utf-8').decode(Uint8Array.from(bin, function (c) { return c.charCodeAt(0) }))
+            }
+            return decodeURIComponent(escape(bin))
+        } catch (e) { return bin }
+    }
+
     function loadCoreApps(cfg, names) {
         var el = document.getElementById('initial-state-core-apps')
         if (!el) { return [] }
         var apps
         try {
-            apps = JSON.parse(atob(el.value))
+            apps = JSON.parse(b64ToUtf8(el.value))
         } catch (e) { return [] }
         if (!Array.isArray(apps)) { return [] }
 
@@ -70,7 +82,8 @@
         // dynamischer Navigation (z. B. souvera_documents), die NICHT im
         // core/apps-State landen — NUR diese ergänzen, niemals alle
         // installierten Apps (Backend-Apps wie dav/comments gehören nicht ins
-        // Menü).
+        // Menü). Link über die NC-Route (/apps/<id>), NICHT über den physischen
+        // Webroot (/custom_apps/<id>).
         try {
             var webroots = (window.OC && window.OC.appswebroots) || {}
             var extra = (cfg && Array.isArray(cfg.extraApps)) ? cfg.extraApps : []
@@ -82,7 +95,7 @@
                 apps.push({
                     id: appId,
                     name: (names && names[appId]) || prettyAppId(appId),
-                    href: webroots[appId] + '/',
+                    href: OC.generateUrl('/apps/' + appId),
                     icon: webroots[appId] + '/img/app.svg'
                 })
             })
