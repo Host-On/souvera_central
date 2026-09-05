@@ -4,8 +4,8 @@
 
 ### Fixed
 
-- **Self-Update führt jetzt App-Migrationen aus** (in-process, identisch zu
-  ): ein reiner Datei-Swap ohne Migration ließ neue
+- **Self-Update fuehrt jetzt App-Migrationen aus** (in-process, identisch zu
+  occ migrations:migrate): ein reiner Datei-Swap ohne Migration liess neue
   Tabellen fehlen — Documents crashte dadurch beim ersten Aufruf. Betrifft
   alle Souvera-Apps mit neuen Migrations-Versionen.
 
