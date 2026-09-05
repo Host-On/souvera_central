@@ -5,7 +5,7 @@
 ### Changed
 
 - occ-Command-Namespace vereinheitlicht: alle 30 bisherigen
-  -Commands heißen jetzt  (konsistent mit
+  „souvera:*"-Commands heißen jetzt „souvera_central:*" (konsistent mit
   mail/shield/mailarchiv/documents). Die alten Namen bleiben als Aliase
   registriert — bestehende Server-Skripte laufen weiter.
 
