@@ -64,7 +64,7 @@ class BrandingScriptListener implements IEventListener {
         // Übrige Gast-Seiten (2FA, Fehler): Souvera-Login-Layout.
         // Public-Share-Seiten (renderAs = public) bleiben unangetastet.
         if (!$event->isLoggedIn()) {
-            $this->handleGuest($event->getTemplateResponse());
+            $this->handleGuest($event->getResponse());
             return;
         }
 
@@ -135,7 +135,7 @@ class BrandingScriptListener implements IEventListener {
      */
     private function brandPageTitle(BeforeTemplateRenderedEvent $event, array $names): void {
         try {
-            $response = $event->getTemplateResponse();
+            $response = $event->getResponse();
             if (!$response instanceof TemplateResponse) {
                 return;
             }
