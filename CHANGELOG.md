@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.40.100] — 2026-09
+
+### Fixed
+
+- **Kritisch:** App-Login (iOS/Android) und öffentliche Seiten brachen mit
+  500 — der Listener rief `getTemplateResponse()` auf
+  `BeforeTemplateRenderedEvent`, das in NC 34 nur `getResponse()`
+  exponiert (verifiziert in der NC-Quelle). Betroffen waren alle
+  nicht-Login-Gast-Renders: 401-/Fehler-Seiten (App-Login-Flow!),
+  öffentliche Shares und die Passwort-vergessen-Seite (die frühere
+  „Interner Serverfehler"-Diagnose war dieser Bug, nicht die
+  Mail-Konfiguration).
+- Dadurch funktioniert jetzt auch der serverseitige Titel-Patch erstmals
+  wirklich (er crashte bisher still in seinem catch) — Titel-FOUC ist
+  damit ebenfalls geschlossen.
+
 ## [0.40.99] — 2026-09
 
 ### Fixed
