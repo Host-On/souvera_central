@@ -323,11 +323,34 @@ trait SelfUpdateTrait
         $occPath = \OC::$SERVERROOT . '/occ';
         // PHP_BINARY instead of "php": cron often runs with a minimal PATH
         // where the interpreter is not resolvable, failing every update.
+        // Gruppen-Freigabe erhalten (05.09.-Fix): der 'enabled'-AppConfig-
+        // Wert (JSON mit Gruppenliste) liegt in der DB und überlebt den
+        // Code-Tausch — aber ein platte app:enable würde ihn bei einer
+        // zwischenzeitlichen Deaktivierung auf 'yes' zurücksetzen. Gruppen
+        // daher explizit mit --groups mitgeben.
+        $groupArgs = '';
+        $enabledRaw = '';
+        try {
+            $enabledRaw = trim((string) \OCP\Server::get(\OCP\IConfig::class)
+                ->getAppValue($appId, 'enabled', 'yes'));
+        } catch (\Throwable) {
+        }
+        $decoded = json_decode($enabledRaw, true);
+        if (is_array($decoded)) {
+            $groups = isset($decoded['groups']) && is_array($decoded['groups'])
+                ? $decoded['groups'] : $decoded;
+            foreach ($groups as $g) {
+                if (is_string($g) && $g !== '') {
+                    $groupArgs .= ' --groups ' . escapeshellarg($g);
+                }
+            }
+        }
         exec(sprintf(
-            '%s %s app:enable %s 2>&1',
+            '%s %s app:enable %s%s 2>&1',
             escapeshellarg(\PHP_BINARY),
             escapeshellarg($occPath),
-            escapeshellarg($appId)
+            escapeshellarg($appId),
+            $groupArgs
         ), $occOut, $occExit);
 
         $log = implode("\n", $occOut);
