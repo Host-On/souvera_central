@@ -45,7 +45,9 @@ class InstallBrandingThemeCommand extends Command {
 	}
 
 	protected function configure(): void {
-		$this->setName('souvera:branding:install-theme');
+		$this->setName('souvera_central:branding:install-theme');
+		// Legacy-Alias (Namespace vor der Vereinheitlichung)
+		$this->setAliases(['souvera:branding:install-theme']);
 		$this->setDescription('Schreibt das Souvera-L10n-Theme (Talk→Link, Office→Desk) nach themes/souvera/');
 		$this->addOption('activate', null, InputOption::VALUE_NONE, 'Theme sofort aktivieren (occ config:system:set theme=souvera)');
 	}

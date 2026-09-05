@@ -33,7 +33,9 @@ class MailboxDelete extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:mailbox:delete')
+            ->setName('souvera_central:mailbox:delete')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:mailbox:delete'])
             ->setDescription('Löscht ein Stalwart-Postfach (der NC-Benutzer bleibt bestehen).')
             ->addArgument('email', InputArgument::REQUIRED, 'Mailadresse des Postfachs')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Löschen ohne Rückfrage bestätigen');

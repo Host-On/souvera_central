@@ -27,7 +27,9 @@ class ProviderTokenDelete extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:provider-token:delete')
+            ->setName('souvera_central:provider-token:delete')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:provider-token:delete'])
             ->setDescription('Entfernt den zentralen provider.tools-Token.')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Ohne Rückfrage löschen.');
     }

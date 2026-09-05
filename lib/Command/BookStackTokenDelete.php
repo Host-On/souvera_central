@@ -27,7 +27,9 @@ class BookStackTokenDelete extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:bookstack-token:delete')
+            ->setName('souvera_central:bookstack-token:delete')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:bookstack-token:delete'])
             ->setDescription('Entfernt den zentralen BookStack-Token.')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Ohne Rückfrage löschen.');
     }

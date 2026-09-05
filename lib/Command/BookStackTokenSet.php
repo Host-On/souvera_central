@@ -34,7 +34,9 @@ class BookStackTokenSet extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:bookstack-token:set')
+            ->setName('souvera_central:bookstack-token:set')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:bookstack-token:set'])
             ->setDescription('Speichert den BookStack API-Token zentral + verschlüsselt.')
             ->addArgument('token', InputArgument::OPTIONAL, 'Der BookStack-Token "<ID>:<SECRET>" (alternativ --stdin oder interaktiv).')
             ->addOption('stdin', null, InputOption::VALUE_NONE, 'Token von STDIN lesen (empfohlen).');

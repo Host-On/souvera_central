@@ -35,7 +35,9 @@ class MailboxReindex extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:mailbox:reindex')
+            ->setName('souvera_central:mailbox:reindex')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:mailbox:reindex'])
             ->setDescription('Reindexiert die Mails eines einzelnen Postfachs in Stalwart.')
             ->addArgument('email', InputArgument::REQUIRED, 'Mailadresse des Postfachs')
             ->addOption('due', null, InputOption::VALUE_REQUIRED, 'Fälligkeit (ISO-8601, UTC). Ohne Angabe: sofort.');

@@ -27,7 +27,9 @@ class HelpCacheClear extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:help:cache-clear')
+            ->setName('souvera_central:help:cache-clear')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:help:cache-clear'])
             ->setDescription('Leert den zwischengespeicherten BookStack-Inhalt der Hilfe.');
     }
 

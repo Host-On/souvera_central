@@ -31,7 +31,9 @@ class DomainList extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:domain:list')
+            ->setName('souvera_central:domain:list')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:domain:list'])
             ->setDescription('Listet die Mail-Domains mit Stalwart-Status und Belegung.')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Ergebnis als JSON');
     }

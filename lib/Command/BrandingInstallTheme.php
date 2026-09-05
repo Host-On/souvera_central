@@ -45,7 +45,9 @@ class BrandingInstallTheme extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:branding:install-theme')
+            ->setName('souvera_central:branding:install-theme')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:branding:install-theme'])
             ->setDescription('Installiert l10n-Overrides (Talk->Link, Office/Collabora->Desk) in ein NC-Theme.')
             ->addOption('theme', null, InputOption::VALUE_REQUIRED, 'Theme-Name (Verzeichnis unter themes/). Default: aktives Theme oder "souvera".')
             ->addOption('lang', null, InputOption::VALUE_REQUIRED, 'Sprachen als CSV (z. B. de,de_DE,en,nl). Ignoriert bei --all-langs.', 'de,de_DE,en,nl')

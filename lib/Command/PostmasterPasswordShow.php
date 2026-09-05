@@ -28,7 +28,9 @@ class PostmasterPasswordShow extends Base {
     protected function configure() {
         parent::configure();
         $this
-            ->setName('souvera:postmaster-password:show')
+            ->setName('souvera_central:postmaster-password:show')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:postmaster-password:show'])
             ->setDescription('Zeigt den Status des zentralen Postmaster-App-Passworts.')
             ->addOption('reveal', null, InputOption::VALUE_NONE, 'Passwort im Klartext ausgeben.');
     }

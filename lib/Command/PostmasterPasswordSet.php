@@ -33,7 +33,9 @@ class PostmasterPasswordSet extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:postmaster-password:set')
+            ->setName('souvera_central:postmaster-password:set')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:postmaster-password:set'])
             ->setDescription('Speichert das Postmaster-App-Passwort zentral + verschlüsselt.')
             ->addArgument('password', InputArgument::OPTIONAL, 'Das App-Passwort (alternativ --stdin oder interaktiv).')
             ->addOption('stdin', null, InputOption::VALUE_NONE, 'Passwort von STDIN lesen (empfohlen).');

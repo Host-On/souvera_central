@@ -28,7 +28,9 @@ class BookStackTokenShow extends Base {
     protected function configure() {
         parent::configure();
         $this
-            ->setName('souvera:bookstack-token:show')
+            ->setName('souvera_central:bookstack-token:show')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:bookstack-token:show'])
             ->setDescription('Zeigt den Status des zentralen BookStack-Tokens.')
             ->addOption('reveal', null, InputOption::VALUE_NONE, 'Token im Klartext ausgeben.');
     }

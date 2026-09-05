@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.41.4] — 2026-09
+
+### Changed
+
+- occ-Command-Namespace vereinheitlicht: alle 30 bisherigen
+  -Commands heißen jetzt  (konsistent mit
+  mail/shield/mailarchiv/documents). Die alten Namen bleiben als Aliase
+  registriert — bestehende Server-Skripte laufen weiter.
+
 ## [0.41.3] — 2026-09
 
 ### Added

@@ -28,7 +28,9 @@ class AliasRemove extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:remove')
+            ->setName('souvera_central:alias:remove')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:remove'])
             ->setDescription('Entfernt einen E-Mail-Alias von einem Postfach.')
             ->addArgument('email', InputArgument::REQUIRED, 'Haupt-Mailadresse des Postfachs')
             ->addArgument('alias', InputArgument::REQUIRED, 'Zu entfernender Alias');

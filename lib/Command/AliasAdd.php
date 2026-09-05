@@ -28,7 +28,9 @@ class AliasAdd extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:add')
+            ->setName('souvera_central:alias:add')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:add'])
             ->setDescription('Fügt einem Postfach einen E-Mail-Alias hinzu.')
             ->addArgument('email', InputArgument::REQUIRED, 'Haupt-Mailadresse des Postfachs')
             ->addArgument('alias', InputArgument::REQUIRED, 'Neuer Alias (z. B. vertrieb@example.com)');

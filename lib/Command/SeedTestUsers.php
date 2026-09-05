@@ -30,7 +30,9 @@ class SeedTestUsers extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:seed-users')
+            ->setName('souvera_central:seed-users')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:seed-users'])
             ->setDescription('Erstellt Testbenutzer für Souvera Central')
             ->addOption(
                 'count',

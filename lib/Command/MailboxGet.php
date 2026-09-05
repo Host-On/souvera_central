@@ -32,7 +32,9 @@ class MailboxGet extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:mailbox:get')
+            ->setName('souvera_central:mailbox:get')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:mailbox:get'])
             ->setDescription('Zeigt Details eines Stalwart-Postfachs (Aliase, Limit, Belegung).')
             ->addArgument('email', InputArgument::REQUIRED, 'Mailadresse des Postfachs');
     }

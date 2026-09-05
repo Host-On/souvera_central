@@ -33,7 +33,9 @@ class DomainAdd extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:domain:add')
+            ->setName('souvera_central:domain:add')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:domain:add'])
             ->setDescription('Legt eine Domain in Stalwart an (Voraussetzung für Postfächer/Aliase).')
             ->addArgument('domain', InputArgument::REQUIRED, 'Domainname (z. B. gratify.it)')
             ->addOption('allow', null, InputOption::VALUE_NONE, 'Domain zusätzlich in die Central-Erlaubnisliste (allowed_domains) aufnehmen');

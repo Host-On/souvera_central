@@ -33,7 +33,9 @@ class AliasGlobalFind extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:global-find')
+            ->setName('souvera_central:alias:global-find')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:global-find'])
             ->setDescription('Zeigt, welches Konto einen bestimmten Alias serverweit hält.')
             ->addArgument('alias', InputArgument::REQUIRED, 'Zu suchende Alias-/Mailadresse');
     }

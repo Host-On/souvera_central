@@ -28,7 +28,9 @@ class AliasList extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:list')
+            ->setName('souvera_central:alias:list')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:list'])
             ->setDescription('Listet die E-Mail-Aliase eines Postfachs.')
             ->addArgument('email', InputArgument::REQUIRED, 'Mailadresse des Postfachs');
     }

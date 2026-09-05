@@ -27,7 +27,9 @@ class PostmasterPasswordDelete extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:postmaster-password:delete')
+            ->setName('souvera_central:postmaster-password:delete')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:postmaster-password:delete'])
             ->setDescription('Entfernt das zentrale Postmaster-App-Passwort.')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Ohne Rückfrage löschen.');
     }

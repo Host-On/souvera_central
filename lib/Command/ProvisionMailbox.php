@@ -42,7 +42,9 @@ class ProvisionMailbox extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:provision-mailbox')
+            ->setName('souvera_central:provision-mailbox')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:provision-mailbox'])
             ->setDescription('Legt gezielt ein Stalwart-Postfach an (z. B. für den ncadmin im Build).')
             ->addArgument('email', InputArgument::REQUIRED, 'Mailadresse des Postfachs (z. B. admin@example.com)')
             ->addOption('password', 'p', InputOption::VALUE_REQUIRED, 'Klartext-Passwort')

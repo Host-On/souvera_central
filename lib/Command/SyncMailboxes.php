@@ -36,7 +36,9 @@ class SyncMailboxes extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:sync-mailboxes')
+            ->setName('souvera_central:sync-mailboxes')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:sync-mailboxes'])
             ->setDescription('Legt fehlende Stalwart-Postfächer für bestehende Benutzer an (Backfill).')
             ->addOption(
                 'dry-run',

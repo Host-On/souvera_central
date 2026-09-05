@@ -36,7 +36,9 @@ class MailboxReindexAll extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:mailbox:reindex-all')
+            ->setName('souvera_central:mailbox:reindex-all')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:mailbox:reindex-all'])
             ->setDescription('Reindexiert die Mails ALLER Postfächer in Stalwart (serverweit).')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Ausführen ohne Rückfrage bestätigen')
             ->addOption('due', null, InputOption::VALUE_REQUIRED, 'Fälligkeit (ISO-8601, UTC). Ohne Angabe: sofort.');

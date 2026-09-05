@@ -35,7 +35,9 @@ class MailboxList extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:mailbox:list')
+            ->setName('souvera_central:mailbox:list')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:mailbox:list'])
             ->setDescription('Listet alle Stalwart-Postfächer (Quelle: Stalwart) mit Limit und Belegung.')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Ausgabe als JSON');
     }

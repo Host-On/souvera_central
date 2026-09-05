@@ -35,7 +35,9 @@ class StalwartStatus extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:stalwart:status')
+            ->setName('souvera_central:stalwart:status')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:stalwart:status'])
             ->setDescription('Zeigt Stalwart-Verbindungsstatus, Domains und (optional) eine E-Mail-Diagnose.')
             ->addOption('email', null, InputOption::VALUE_REQUIRED, 'Mailadresse für eine gezielte Diagnose (z. B. falk@example.com)');
     }

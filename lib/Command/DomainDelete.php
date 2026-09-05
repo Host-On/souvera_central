@@ -33,7 +33,9 @@ class DomainDelete extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:domain:delete')
+            ->setName('souvera_central:domain:delete')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:domain:delete'])
             ->setDescription('Löscht eine Domain aus Stalwart.')
             ->addArgument('domain', InputArgument::REQUIRED, 'Domainname')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Löschen ohne Rückfrage bestätigen');

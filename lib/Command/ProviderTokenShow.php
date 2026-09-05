@@ -28,7 +28,9 @@ class ProviderTokenShow extends Base {
     protected function configure() {
         parent::configure();
         $this
-            ->setName('souvera:provider-token:show')
+            ->setName('souvera_central:provider-token:show')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:provider-token:show'])
             ->setDescription('Zeigt den Status des zentralen provider.tools-Tokens.')
             ->addOption('reveal', null, InputOption::VALUE_NONE, 'Token im Klartext ausgeben.');
     }

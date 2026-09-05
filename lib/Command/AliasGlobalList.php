@@ -36,7 +36,9 @@ class AliasGlobalList extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:global-list')
+            ->setName('souvera_central:alias:global-list')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:global-list'])
             ->setDescription('Listet ALLE E-Mail-Aliase serverweit (User + geteilte Postfächer) inkl. Besitzer.')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Ausgabe als JSON');
     }

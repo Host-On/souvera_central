@@ -45,7 +45,9 @@ class MakeSouveraUser extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:make-souvera-user')
+            ->setName('souvera_central:make-souvera-user')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:make-souvera-user'])
             ->setDescription('Macht einen bestehenden Nextcloud-Benutzer zum lizenzierten Souvera User (souvera-users + Postfach).')
             ->addArgument('user', InputArgument::REQUIRED, 'UID des Benutzers (i. d. R. = E-Mail-Adresse)')
             ->addOption('password', 'p', InputOption::VALUE_REQUIRED, 'Klartext-Passwort fürs Postfach')

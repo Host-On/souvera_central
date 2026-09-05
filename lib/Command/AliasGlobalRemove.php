@@ -35,7 +35,9 @@ class AliasGlobalRemove extends Base {
 
     protected function configure() {
         $this
-            ->setName('souvera:alias:global-remove')
+            ->setName('souvera_central:alias:global-remove')
+            // Legacy-Alias (Namespace vor der Vereinheitlichung)
+            ->setAliases(['souvera:alias:global-remove'])
             ->setDescription('Entfernt einen Alias serverweit von JEDEM Konto, das ihn führt (gibt die Adresse frei).')
             ->addArgument('alias', InputArgument::REQUIRED, 'Zu entfernende Alias-Adresse')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Entfernen ohne Rückfrage bestätigen');
