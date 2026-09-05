@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.41.0] — 2026-09
+
+### Added
+
+- **Central-Integration für Souvera Documents:** neue Admin-Sektion
+  „Souvera Documents" (DMS-Einstellungen zentral verwaltbar: aktiv,
+  Ein-/Archivordner, Auto-Verarbeitung/-Archivierung; Integrations-Modus;
+  Typen-Übersicht) — Konsumiert die Documents-Settings-API.
+
 ## [0.40.100] — 2026-09
 
 ### Fixed

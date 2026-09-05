@@ -61,6 +61,9 @@
 
                 <!-- Souvera AI -->
                 <AiView v-else-if="currentRoute === 'ai'" :key="routeKey" />
+
+                <!-- Souvera Documents -->
+                <DocumentsView v-else-if="currentRoute === 'documents'" :key="routeKey" />
             </div>
         </NcAppContent>
     </NcContent>
@@ -84,6 +87,7 @@ import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import History from 'vue-material-design-icons/History.vue'
 import Robot from 'vue-material-design-icons/Robot.vue'
+import FileDocumentIcon from 'vue-material-design-icons/FileDocument.vue'
 
 import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
@@ -92,6 +96,7 @@ import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.v
 import Settings from './modules/Settings/Settings.vue'
 import ChangelogView from './modules/Changelog/ChangelogView.vue'
 import AiView from './modules/Ai/Ai.vue'
+import DocumentsView from './modules/Documents/Documents.vue'
 
 export default {
     name: 'App',
@@ -107,8 +112,8 @@ export default {
         SharedMailboxesView,
         Settings,
         ChangelogView,
-        AiView
-    },
+        AiView,
+        DocumentsView    },
 
     data() {
         return {
@@ -166,6 +171,13 @@ export default {
                     label: t('souvera_central', 'Souvera AI'),
                     icon: markRaw(Robot),
                     url: generateUrl('/apps/souvera_central/ai'),
+                    adminOnly: true
+                },
+                {
+                    id: 'documents',
+                    label: t('souvera_central', 'Souvera Documents'),
+                    icon: markRaw(FileDocumentIcon),
+                    url: generateUrl('/apps/souvera_central/documents'),
                     adminOnly: true
                 },
                 {

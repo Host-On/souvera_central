@@ -50,13 +50,40 @@
         try { return JSON.parse(atob(el.value)) } catch (e) { return null }
     }
 
+    function prettyAppId(appId) {
+        return String(appId)
+            .replace(/^souvera_/, '')
+            .replace(/[-_]+/g, ' ')
+            .replace(/^./, function (c) { return c.toUpperCase() })
+    }
+
     function loadCoreApps() {
         var el = document.getElementById('initial-state-core-apps')
         if (!el) { return [] }
+        var apps
         try {
-            var apps = JSON.parse(atob(el.value))
-            return Array.isArray(apps) ? apps : []
+            apps = JSON.parse(atob(el.value))
         } catch (e) { return [] }
+        if (!Array.isArray(apps)) { return [] }
+
+        // Generischer Fallback: installierte Apps (OC.appswebroots), die NICHT
+        // im core/apps-State landen (z. B. Apps mit dynamischer Navigation wie
+        // souvera_documents), ergänzen — sonst fehlen sie im „Mehr"-Menü.
+        try {
+            var webroots = (window.OC && window.OC.appswebroots) || {}
+            Object.keys(webroots).forEach(function (appId) {
+                for (var i = 0; i < apps.length; i++) {
+                    if (apps[i] && apps[i].id === appId) { return }
+                }
+                apps.push({
+                    id: appId,
+                    name: prettyAppId(appId),
+                    href: webroots[appId] + '/',
+                    icon: webroots[appId] + '/img/app.svg'
+                })
+            })
+        } catch (e) { /* noop */ }
+        return apps
     }
 
     function headerConfig() {
