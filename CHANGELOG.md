@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.41.6] — 2026-09
+
+### Fixed
+
+- Documents-Admin-Sektion: API-Pfad korrigiert (NC 34 registriert die
+  OCS-Controller-Routen nur unter /apps/<app>/... — /ocs/v2.php lief 404,
+  daher „Documents app is not reachable").
+
 ## [0.41.5] — 2026-09
 
 ### Fixed

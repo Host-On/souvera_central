@@ -100,7 +100,7 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateOcsUrl, generateUrl } from '@nextcloud/router'
+import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
 
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -109,7 +109,8 @@ import FileDocument from 'vue-material-design-icons/FileDocument.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
 
-const documentsApi = generateOcsUrl('/apps/souvera_documents/api/v1', 2)
+// NC 34: OCS-Controller-Routen nur unter /apps/<app>/… (kein /ocs/v2-Pfad)
+const documentsApi = generateUrl('/apps/souvera_documents/api/v1')
 
 export default {
     name: 'DocumentsView',
