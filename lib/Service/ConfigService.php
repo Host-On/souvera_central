@@ -812,6 +812,7 @@ class ConfigService {
                 // zusätzlich die tatsächlich verwendeten Pfad-Segmente abbilden.
                 'office' => $office,
                 'collabora' => $office,
+                'souvera_documents' => 'Dokumente',
             ],
             // Souvera-Header (v34-Header-Umbau): gepinnte Apps direkt im Header,
             // „Dashboard"-Breadcrumb aus, Suche rechts kompakt, „Mehr" = der
@@ -821,6 +822,10 @@ class ConfigService {
                 'enabled' => $this->isHeaderLayoutEnabled(),
                 'pinned' => $this->getHeaderPinnedApps(),
                 'adminOnly' => ['souvera_central'],
+                // Apps mit dynamischer Navigation, die im „Mehr"-Menü
+                // zusätzlich auftauchen (Whitelist — NIEMALS alle installierten
+                // Apps: Backend-Apps wie dav/comments gehören nicht ins Menü).
+                'extraApps' => ['souvera_documents'],
             ],
         ];
     }

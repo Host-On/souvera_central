@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.41.1] — 2026-09
+
+### Fixed
+
+- „Mehr"-Menü: der documents-Fallback listete ALLE installierten Apps
+  (inkl. Backend-Apps wie Dav/Admin audit/App api) — jetzt Whitelist
+  (`extraApps`, default: souvera_documents) aus der Branding-Konfig.
+
 ## [0.41.0] — 2026-09
 
 ### Added

@@ -57,7 +57,7 @@
             .replace(/^./, function (c) { return c.toUpperCase() })
     }
 
-    function loadCoreApps() {
+    function loadCoreApps(cfg, names) {
         var el = document.getElementById('initial-state-core-apps')
         if (!el) { return [] }
         var apps
@@ -66,18 +66,22 @@
         } catch (e) { return [] }
         if (!Array.isArray(apps)) { return [] }
 
-        // Generischer Fallback: installierte Apps (OC.appswebroots), die NICHT
-        // im core/apps-State landen (z. B. Apps mit dynamischer Navigation wie
-        // souvera_documents), ergänzen — sonst fehlen sie im „Mehr"-Menü.
+        // Extra-Apps (Whitelist aus der Branding-Konfig): installierte Apps mit
+        // dynamischer Navigation (z. B. souvera_documents), die NICHT im
+        // core/apps-State landen — NUR diese ergänzen, niemals alle
+        // installierten Apps (Backend-Apps wie dav/comments gehören nicht ins
+        // Menü).
         try {
             var webroots = (window.OC && window.OC.appswebroots) || {}
-            Object.keys(webroots).forEach(function (appId) {
+            var extra = (cfg && Array.isArray(cfg.extraApps)) ? cfg.extraApps : []
+            extra.forEach(function (appId) {
                 for (var i = 0; i < apps.length; i++) {
                     if (apps[i] && apps[i].id === appId) { return }
                 }
+                if (!webroots[appId]) { return }
                 apps.push({
                     id: appId,
-                    name: prettyAppId(appId),
+                    name: (names && names[appId]) || prettyAppId(appId),
                     href: webroots[appId] + '/',
                     icon: webroots[appId] + '/img/app.svg'
                 })
@@ -254,6 +258,8 @@
             return
         }
 
+        var branding = loadBranding()
+        var names = (branding && branding.names) || {}
         var headerRoot = headerEl()
         if (!headerRoot) { log('no header element yet'); return }
 
@@ -264,7 +270,7 @@
         if (!container) { log('no logo anchor — cannot place container'); return }
         container.innerHTML = ''
 
-        var apps = loadCoreApps()
+        var apps = loadCoreApps(cfg, names)
         log('core apps: ' + apps.length + ', pinned: ' + cfg.pinned.join(','))
 
         cfg.pinned.forEach(function (appId) {
