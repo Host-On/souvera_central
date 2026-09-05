@@ -134,7 +134,13 @@ trait SelfUpdateTrait
             return ['up_to_date' => true, 'sha' => $latestSha];
         }
 
-        $url = "https://api.github.com/repos/$repo/zipball/$branch";
+        if ($this->isGitlabApp()) {
+            $url = $this->gitlabBase() . '/api/v4/projects/'
+                . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
+                . rawurlencode($branch);
+        } else {
+            $url = "https://api.github.com/repos/$repo/zipball/$branch";
+        }
         $result = $this->downloadAndApply($appId, $appPath, $url);
         if (empty($result['error'])) {
             \OCP\Server::get(\OCP\IConfig::class)
@@ -148,6 +154,19 @@ trait SelfUpdateTrait
         $repo = $this->getRepo();
         if ($repo === '') {
             return ['error' => 'Unknown app'];
+        }
+        if ($this->isGitlabApp()) {
+            $data = $this->gitlabApiGet($this->gitlabBase() . '/api/v4/projects/'
+                . $this->gitlabProjectEncoded() . '/releases');
+            $rawTag = (is_array($data) && isset($data[0]['tag_name']))
+                ? (string) $data[0]['tag_name'] : '';
+            if ($rawTag === '') {
+                return ['error' => 'No GitLab release found'];
+            }
+            $url = $this->gitlabBase() . '/api/v4/projects/'
+                . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
+                . rawurlencode($rawTag);
+            return $this->downloadAndApply($appId, $appPath, $url);
         }
         // GitHub zipball expects the tag exactly as stored (with or without "v").
         $data = $this->apiGet("https://api.github.com/repos/$repo/releases/latest");
@@ -164,6 +183,15 @@ trait SelfUpdateTrait
      */
     private function fetchBranchSha(string $repo, string $branch): ?string
     {
+        if ($this->isGitlabApp()) {
+            $data = $this->gitlabApiGet($this->gitlabBase() . '/api/v4/projects/'
+                . $this->gitlabProjectEncoded() . '/repository/branches/'
+                . rawurlencode($branch));
+            if ($data === null || !isset($data['commit']['id'])) {
+                return null;
+            }
+            return (string) $data['commit']['id'];
+        }
         $data = $this->apiGet("https://api.github.com/repos/$repo/commits/$branch");
         if ($data === null || !isset($data['sha'])) {
             return null;
@@ -179,13 +207,19 @@ trait SelfUpdateTrait
         }
 
         $client = \OCP\Server::get(\OCP\Http\Client\IClientService::class)->newClient();
+        if ($this->isGitlabApp()) {
+            $token = $this->readGitlabToken();
+        }
         try {
-            $response = $client->get($url, [
-                'headers' => [
+            $headers = $this->isGitlabApp()
+                ? ['PRIVATE-TOKEN' => $token, 'User-Agent' => 'Souvera-DevOps']
+                : [
                     'Authorization' => 'Bearer ' . $token,
                     'User-Agent' => 'Souvera-DevOps',
                     'Accept' => 'application/vnd.github+json',
-                ],
+                ];
+            $response = $client->get($url, [
+                'headers' => $headers,
                 'timeout' => 60,
                 'connect_timeout' => 15,
                 'http_errors' => false,
@@ -337,6 +371,69 @@ trait SelfUpdateTrait
         }
     }
 
+    /** GitLab-native Apps (eigenes GitLab) — Update-Quelle nicht GitHub. */
+    private function isGitlabApp(): bool
+    {
+        return $this->getAppId() === 'souvera_documents';
+    }
+
+    private function gitlabBase(): string
+    {
+        try {
+            $u = \OCP\Server::get(\OCP\IConfig::class)
+                ->getSystemValue('souvera.gitlab_url', 'https://git.host-on.dev');
+        } catch (\Throwable) {
+            $u = 'https://git.host-on.dev';
+        }
+        return rtrim(trim((string) $u), '/');
+    }
+
+    private function gitlabProjectEncoded(): string
+    {
+        return str_replace('/', '%2F', $this->getRepo());
+    }
+
+    private function readGitlabToken(): string
+    {
+        try {
+            $t = \OCP\Server::get(\OCP\IConfig::class)
+                ->getSystemValue('souvera.gitlab_devops_token', '');
+            return trim((string) $t);
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    private function gitlabApiGet(string $url): ?array
+    {
+        $token = $this->readGitlabToken();
+        if ($token === '') {
+            return null;
+        }
+        $client = \OCP\Server::get(\OCP\Http\Client\IClientService::class)->newClient();
+        try {
+            $response = $client->get($url, [
+                'headers' => [
+                    'PRIVATE-TOKEN' => $token,
+                    'User-Agent' => 'Souvera-DevOps',
+                ],
+                'timeout' => 15,
+                'connect_timeout' => 10,
+                'http_errors' => false,
+            ]);
+        } catch (\Throwable) {
+            return null;
+        }
+        if ($response->getStatusCode() >= 400) {
+            return null;
+        }
+        try {
+            return json_decode((string) $response->getBody(), true);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     private function getRepo(): string
     {
         return match ($this->getAppId()) {
@@ -344,6 +441,7 @@ trait SelfUpdateTrait
             'souvera_central' => 'Host-On/souvera_central',
             'souvera_shield' => 'Host-On/souvera_shield',
             'souvera_mailarchiv' => 'Host-On/souvera_mailarchiv',
+            'souvera_documents' => 'souvera/souvera_documents', // GitLab
             default => '',
         };
     }
@@ -355,13 +453,19 @@ trait SelfUpdateTrait
             return null;
         }
         $client = \OCP\Server::get(\OCP\Http\Client\IClientService::class)->newClient();
+        if ($this->isGitlabApp()) {
+            $token = $this->readGitlabToken();
+        }
         try {
-            $response = $client->get($url, [
-                'headers' => [
+            $headers = $this->isGitlabApp()
+                ? ['PRIVATE-TOKEN' => $token, 'User-Agent' => 'Souvera-DevOps']
+                : [
                     'Authorization' => 'Bearer ' . $token,
                     'User-Agent' => 'Souvera-DevOps',
                     'Accept' => 'application/vnd.github+json',
-                ],
+                ];
+            $response = $client->get($url, [
+                'headers' => $headers,
                 'timeout' => 15,
                 'connect_timeout' => 10,
                 'http_errors' => false,
