@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.41.5] — 2026-09
+
+### Fixed
+
+- **Self-Update führt jetzt App-Migrationen aus** (in-process, identisch zu
+  ): ein reiner Datei-Swap ohne Migration ließ neue
+  Tabellen fehlen — Documents crashte dadurch beim ersten Aufruf. Betrifft
+  alle Souvera-Apps mit neuen Migrations-Versionen.
+
 ## [0.41.4] — 2026-09
 
 ### Changed

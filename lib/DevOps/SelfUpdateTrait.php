@@ -142,6 +142,9 @@ trait SelfUpdateTrait
             $url = "https://api.github.com/repos/$repo/zipball/$branch";
         }
         $result = $this->downloadAndApply($appId, $appPath, $url);
+        if (!isset($result['error'])) {
+            $this->runAppMigrations($appId);
+        }
         if (empty($result['error'])) {
             \OCP\Server::get(\OCP\IConfig::class)
                 ->setAppValue($appId, 'devops.last_sha', $latestSha);
@@ -166,7 +169,11 @@ trait SelfUpdateTrait
             $url = $this->gitlabBase() . '/api/v4/projects/'
                 . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
                 . rawurlencode($rawTag);
-            return $this->downloadAndApply($appId, $appPath, $url);
+            $applied = $this->downloadAndApply($appId, $appPath, $url);
+        if (!isset($applied['error'])) {
+            $this->runAppMigrations($appId);
+        }
+        return $applied;
         }
         // GitHub zipball expects the tag exactly as stored (with or without "v").
         $data = $this->apiGet("https://api.github.com/repos/$repo/releases/latest");
@@ -175,7 +182,11 @@ trait SelfUpdateTrait
             $rawTag = (string) $data['tag_name'];
         }
         $url = "https://api.github.com/repos/$repo/zipball/" . ($rawTag !== '' ? $rawTag : "v$tag");
-        return $this->downloadAndApply($appId, $appPath, $url);
+        $applied = $this->downloadAndApply($appId, $appPath, $url);
+        if (!isset($applied['error'])) {
+            $this->runAppMigrations($appId);
+        }
+        return $applied;
     }
 
     /**
@@ -197,6 +208,26 @@ trait SelfUpdateTrait
             return null;
         }
         return (string) $data['sha'];
+    }
+
+    /**
+     * Run app migrations in-process after a self-update. A raw zipball swap
+     * does NOT execute migrations — without this, new tables from newer
+     * versions are missing and the app crashes on first use.
+     * (Same mechanism as `occ migrations:migrate <app>`.)
+     */
+    private function runAppMigrations(string $appId): void
+    {
+        try {
+            $connection = \OCP\Server::get(\OCP\IDBConnection::class);
+            $ms = new \OC\DB\MigrationService($appId, $connection);
+            $ms->migrate();
+            \OCP\Server::get(\Psr\Log\LoggerInterface::class)
+                ->info('Souvera SelfUpdate: migrations executed', ['app' => $appId]);
+        } catch (\Throwable $e) {
+            \OCP\Server::get(\Psr\Log\LoggerInterface::class)
+                ->error('Souvera SelfUpdate: migrations failed for ' . $appId . ': ' . $e->getMessage());
+        }
     }
 
     private function downloadAndApply(string $appId, string $appPath, string $url): array
