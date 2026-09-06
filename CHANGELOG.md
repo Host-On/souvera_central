@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.43.0] — 2026-09
+
+### Changed
+
+- **GitLab-Migration**: Suite-Updater und DevOps-Status ziehen jetzt ALLE
+  Apps von git.host-on.dev/souvera (central, mail, shield, mailarchiv,
+  documents). GitHub ist nur noch Uebergangsspiegel bis zur Archivierung.
+
 ## [0.42.0] — 2026-09
 
 ### Added

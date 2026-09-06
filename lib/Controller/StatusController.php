@@ -183,10 +183,10 @@ class StatusController extends Controller
     private function repoFor(string $appId): string
     {
         return match ($appId) {
-            'souvera_mail' => 'Host-On/souvera_mail',
-            'souvera_central' => 'Host-On/souvera_central',
-            'souvera_shield' => 'Host-On/souvera_shield',
-            'souvera_mailarchiv' => 'Host-On/souvera_mailarchiv',
+            'souvera_mail' => 'souvera/souvera_mail',
+            'souvera_central' => 'souvera/souvera_central',
+            'souvera_shield' => 'souvera/souvera_shield',
+            'souvera_mailarchiv' => 'souvera/souvera_mailarchiv',
             'souvera_documents' => 'souvera/souvera_documents',
             default => '',
         };
@@ -194,7 +194,9 @@ class StatusController extends Controller
 
     private function isGitlabRepo(string $appId): bool
     {
-        return $appId === 'souvera_documents';
+        // Seit der GitLab-Migration liegen ALLE Souvera-Apps auf
+        // git.host-on.dev — GitHub-Pfade sind toter Übergangscode.
+        return true;
     }
 
     private function gitlabBase(): string

@@ -113,13 +113,27 @@ trait SelfUpdateTrait
         if ($repo === '') {
             return null;
         }
-        $data = $this->apiGet("https://api.github.com/repos/$repo/releases/latest");
-        if ($data === null || !isset($data['tag_name'])) {
-            return null;
+
+        $project = str_replace('/', '%2F', $repo);
+
+        // 1) Neuester GitLab-Release
+        $releases = $this->gitlabApiGet($this->gitlabBase() . '/api/v4/projects/'
+            . $project . '/releases?per_page=1');
+        if (is_array($releases) && isset($releases[0]['tag_name'])) {
+            return ltrim((string) $releases[0]['tag_name'], 'v');
         }
-        // Keep the raw tag (e.g. "v1.2.3") for downloading; version_compare
-        // handles the optional "v" prefix itself since PHP 7.1.
-        return ltrim((string) $data['tag_name'], 'v');
+
+        // 2) Fallback: neuester Tag (semantisch absteigend sortiert)
+        $tags = $this->gitlabApiGet($this->gitlabBase() . '/api/v4/projects/'
+            . $project . '/repository/tags?per_page=100');
+        if (is_array($tags) && $tags !== []) {
+            usort($tags, static function ($a, $b) {
+                return version_compare($b['name'], $a['name']);
+            });
+            return ltrim((string) $tags[0]['name'], 'v');
+        }
+
+        return null;
     }
 
     private function downloadBranch(string $appId, string $appPath, string $branch): array
@@ -434,7 +448,9 @@ trait SelfUpdateTrait
     /** GitLab-native Apps (eigenes GitLab) — Update-Quelle nicht GitHub. */
     private function isGitlabApp(): bool
     {
-        return $this->getAppId() === 'souvera_documents';
+        // Seit der GitLab-Migration liegen ALLE Souvera-Apps auf
+        // git.host-on.dev — der GitHub-Pfad ist toter Übergangscode.
+        return true;
     }
 
     private function gitlabBase(): string
@@ -496,12 +512,13 @@ trait SelfUpdateTrait
 
     private function getRepo(): string
     {
+        // ALLE Apps liegen auf GitLab: https://git.host-on.dev/souvera/<app>
         return match ($this->getAppId()) {
-            'souvera_mail' => 'Host-On/souvera_mail',
-            'souvera_central' => 'Host-On/souvera_central',
-            'souvera_shield' => 'Host-On/souvera_shield',
-            'souvera_mailarchiv' => 'Host-On/souvera_mailarchiv',
-            'souvera_documents' => 'souvera/souvera_documents', // GitLab
+            'souvera_mail' => 'souvera/souvera_mail',
+            'souvera_central' => 'souvera/souvera_central',
+            'souvera_shield' => 'souvera/souvera_shield',
+            'souvera_mailarchiv' => 'souvera/souvera_mailarchiv',
+            'souvera_documents' => 'souvera/souvera_documents',
             default => '',
         };
     }
