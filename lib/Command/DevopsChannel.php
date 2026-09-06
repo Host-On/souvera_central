@@ -20,7 +20,7 @@ class DevopsChannel extends Command
     protected function configure(): void
     {
         $this->setName('souvera_central:devops:channel')
-            ->setDescription('Switch update channel: stable (releases, daily in maintenance window) or dev (every 5 min)')
+            ->setDescription('Switch the ONE suite-wide update channel: stable (latest release, daily in maintenance window) or dev (main HEAD, every 5 min)')
             ->addArgument('channel', InputArgument::REQUIRED, 'stable or dev');
     }
 
@@ -31,9 +31,10 @@ class DevopsChannel extends Command
             $output->writeln('<error>Channel must be "stable" or "dev"</error>');
             return Command::FAILURE;
         }
-        $this->config->setAppValue('souvera_central', 'devops.channel', $channel);
-        $interval = $channel === 'dev' ? '5 min (branch HEAD)' : '24h (within Nextcloud maintenance window)';
-        $output->writeln("<info>Update channel set to '$channel' (check every $interval)</info>");
+        // Zentraler Suite-Channel: gilt für ALLE Souvera-Apps
+        \OCP\Server::get(\OCA\SouveraCentral\Service\ConfigService::class)->setSuiteUpdateChannel($channel);
+        $interval = $channel === 'dev' ? '5 min (branch HEAD of main)' : 'daily (within Nextcloud maintenance window)';
+        $output->writeln("<info>Suite update channel set to '$channel' for ALL Souvera apps (check $interval)</info>");
         return Command::SUCCESS;
     }
 }

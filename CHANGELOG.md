@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.42.0] — 2026-09
+
+### Added
+
+- **`occ souvera:self-update` — der Suite-weite Updater** (Alias:
+  `souvera_central:self-update`): aktualisiert ALLE installierten
+  Souvera-Apps (mail, central, shield, mailarchiv, documents) nach dem
+  EINEN zentralen Update-Channel. Manuelle Läufe ignorieren
+  Wartungsfenster und 24h-Drossel; Migrations laufen automatisch.
+
+### Changed
+
+- **EIN Update-Channel für die gesamte Suite** (statt pro App):
+  `occ souvera_central:devops:channel dev|stable` bzw.
+  `occ config:system:set souvera.update.channel --value dev|stable`.
+  dev = main-HEAD (jeder Push), stable = letzter Release (Tag) —
+  jeweils suite-weit. DevOps-Status zeigt den zentralen Channel.
+
 ## [0.41.7] — 2026-09
 
 ### Fixed

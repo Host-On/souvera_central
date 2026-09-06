@@ -39,7 +39,12 @@ class StatusController extends Controller
 
         foreach ($apps as $appId) {
             $version = $this->appManager->getAppVersion($appId);
-            $channel = trim((string) $this->config->getAppValue($appId, 'devops.channel', 'stable'));
+            // EIN zentraler Suite-Channel für alle Apps
+            $suiteChannel = trim((string) $this->config->getSystemValue('souvera.update.channel', ''));
+            if ($suiteChannel !== 'dev' && $suiteChannel !== 'stable') {
+                $suiteChannel = trim((string) $this->config->getAppValue('souvera_central', 'devops.channel', 'stable'));
+            }
+            $channel = ($suiteChannel === 'dev') ? 'dev' : 'stable';
             $lastCheck = (int) $this->config->getAppValue($appId, 'devops.last_check', '0');
             $branch = trim((string) $this->config->getAppValue($appId, 'devops.branch', 'main'));
 

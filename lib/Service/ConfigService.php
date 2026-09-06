@@ -23,6 +23,38 @@ class ConfigService {
      *
      * @return int
      */
+    /**
+     * EIN zentraler Update-Channel für die komplette Souvera-Suite
+     * ('dev' = main-HEAD bei jedem Check, 'stable' = letzter Release,
+     * täglich im Wartungsfenster). System-Config gewinnt; als
+     * Abwärtskompatibilität fällt der Wert auf den bisherigen App-Channel
+     * von souvera_central zurück.
+     *
+     * occ config:system:set souvera.update.channel --value dev|stable
+     */
+    public function getSuiteUpdateChannel(): string {
+        try {
+            $suite = trim((string) $this->config->getSystemValue('souvera.update.channel', ''));
+            if ($suite === 'dev' || $suite === 'stable') {
+                return $suite;
+            }
+        } catch (\Throwable) {
+            // fall through zur App-Config
+        }
+        $legacy = trim((string) $this->config->getAppValue('souvera_central', 'devops.channel', 'stable'));
+
+        return $legacy === 'dev' ? 'dev' : 'stable';
+    }
+
+    public function setSuiteUpdateChannel(string $channel): void {
+        if (!in_array($channel, ['dev', 'stable'], true)) {
+            throw new \InvalidArgumentException('Channel must be "stable" or "dev"');
+        }
+        $this->config->setSystemValue('souvera.update.channel', $channel);
+        // Abwärtskompatibel auch den alten App-Wert pflegen
+        $this->config->setAppValue('souvera_central', 'devops.channel', $channel);
+    }
+
     /** App-eigener AppValue-Reader (Bequemlichkeits-Wrapper) */
     public function getSelfAppValue(string $key, string $default = ''): string {
         return $this->config->getAppValue(Application::APP_ID, $key, $default);

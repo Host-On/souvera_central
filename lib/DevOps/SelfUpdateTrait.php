@@ -20,13 +20,19 @@ trait SelfUpdateTrait
 {
     abstract protected function getAppId(): string;
 
-    public function checkAndUpdate(): array
+    /**
+     * @param bool $manual true = expliziterocc-Aufruf: Wartungsfenster und
+     *                     24h-Drossel werden ignoriert (der Cron-Pfad nutzt
+     *                     den Default false).
+     */
+    public function checkAndUpdate(bool $manual = false): array
     {
         $appId = $this->getAppId();
         $config = \OCP\Server::get(\OCP\IConfig::class);
-        $channel = trim((string) $config->getAppValue($appId, 'devops.channel', 'stable'));
+        // EIN Suite-Channel für alle Apps (dev = main-HEAD, stable = Release)
+        $channel = \OCP\Server::get(\OCA\SouveraCentral\Service\ConfigService::class)->getSuiteUpdateChannel();
 
-        if ($channel === 'stable') {
+        if ($channel === 'stable' && !$manual) {
             // Release channel: check/install at most once per 24h and only
             // inside the maintenance window (config.php:
             // 'maintenance_window_start' => hour 0-23, window length 1h).
