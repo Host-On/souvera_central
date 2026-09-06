@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.42.1] — 2026-09
+
+### Fixed
+
+- Self-Update leert nach dem Datei-Tausch opcache und NC-Caches — vorher
+  blieben stale Container-Definitionen aktiv (Phantom-Klassen wie
+  „Command\StalwartService" in den Logs, Requests schlugen kontinuierlich
+  fehl bis zum nächsten FPM-Restart).
+
 ## [0.43.0] — 2026-09
 
 ### Changed

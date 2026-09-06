@@ -235,6 +235,10 @@ trait SelfUpdateTrait
      * does NOT execute migrations — without this, new tables from newer
      * versions are missing and the app crashes on first use.
      * (Same mechanism as `occ migrations:migrate <app>`.)
+     *
+     * Additionally clears PHP opcache + NC caches: a raw file swap leaves
+     * stale opcache/container definitions behind (phantom classes like
+     * „Command\StalwartService" in the logs).
      */
     private function runAppMigrations(string $appId): void
     {
@@ -247,6 +251,17 @@ trait SelfUpdateTrait
         } catch (\Throwable $e) {
             \OCP\Server::get(\Psr\Log\LoggerInterface::class)
                 ->error('Souvera SelfUpdate: migrations failed for ' . $appId . ': ' . $e->getMessage());
+        }
+
+        // Stale caches nach dem Datei-Tausch leeren
+        try {
+            if (function_exists('opcache_reset')) {
+                @\opcache_reset();
+            }
+            \OCP\Server::get(\OCP\ICacheFactory::class)->createDistributed('souvera_selfupdate')->clear();
+            \OCP\Server::get(\OCP\ICacheFactory::class)->createLocal('souvera_selfupdate')->clear();
+        } catch (\Throwable $e) {
+            // best effort
         }
     }
 
