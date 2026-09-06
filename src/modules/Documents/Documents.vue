@@ -110,7 +110,20 @@ import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
 
 // NC 34: OCS-Controller-Routen nur unter /apps/<app>/… (kein /ocs/v2-Pfad)
+// NC 34 (live verifiziert): die documents-Routen laufen unter /apps/…,
+// aber der OCS-Controller antwortet dort DEFAULTMÄSSIG MIT XML — JSON nur
+// mit Accept-Header. Ohne ihn crasht data.ocs.data auf einem XML-String.
+axios.defaults.headers.common['Accept'] = 'application/json'
+
 const documentsApi = generateUrl('/apps/souvera_documents/api/v1')
+
+function ocsData(response) {
+	const d = response && response.data
+	if (d && d.ocs && d.ocs.data !== undefined) {
+		return d.ocs.data
+	}
+	return d
+}
 
 export default {
     name: 'DocumentsView',
@@ -148,9 +161,9 @@ export default {
                 axios.get(`${documentsApi}/integration`),
                 axios.get(`${documentsApi}/types`),
             ])
-            this.settings = settings.data.ocs.data
-            this.integrationMode = integration.data.ocs.data.mode || 'standalone'
-            this.types = types.data.ocs.data
+            this.settings = ocsData(settings)
+            this.integrationMode = (ocsData(integration) || {}).mode || 'standalone'
+            this.types = ocsData(types) || []
         } catch (e) {
             this.notice = t('souvera_central', 'Documents app is not reachable — is it installed and enabled?')
             this.noticeKind = 'error'

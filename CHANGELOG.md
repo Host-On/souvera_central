@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.41.7] — 2026-09
+
+### Fixed
+
+- Documents-Admin-Sektion: unter /apps/… antwortet der documents-OCS-Controller
+  defaultmaessig mit XML — jetzt globaler Accept: application/json-Header +
+  defensive OCS-Extraktion. Behebt „Documents app is not reachable".
+
 ## [0.41.6] — 2026-09
 
 ### Fixed
