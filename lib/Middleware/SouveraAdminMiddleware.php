@@ -18,6 +18,7 @@ use OCA\SouveraCentral\Controller\ChangelogController;
 use OCA\SouveraCentral\Controller\HelpApiController;
 use OCA\SouveraCentral\Controller\HelpController;
 use OCA\SouveraCentral\Controller\McpController;
+use OCA\SouveraCentral\Controller\SignatureHookController;
 use OCA\SouveraCentral\Controller\MailSettingsApiController;
 use OCA\SouveraCentral\Controller\PageController;
 use OCA\SouveraCentral\Controller\StatusController;
@@ -56,6 +57,12 @@ class SouveraAdminMiddleware extends Middleware {
         // (AiMcpTokenService), nicht über die NC-Session — siehe
         // docs/SHARED_AI_MCP.md.
         if ($controller instanceof McpController) {
+            return;
+        }
+        // Stalwart MTA-Hook (zentrale Signatur-Injection): authorisiert über
+        // den Hook-Bearer-Secret (SignatureHookController::checkSecret),
+        // NICHT über eine NC-Session — Stalwart sendet ohne User-Session.
+        if ($controller instanceof SignatureHookController) {
             return;
         }
         // Changelog-Viewer hat dieselbe gelockerte Prüfung wie die
