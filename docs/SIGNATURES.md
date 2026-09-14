@@ -37,14 +37,18 @@ Webmail (souvera_mail): Compose fügt dieselbe Signatur direkt ein
    occ souvera_central:signature:hook-config [--rotate-secret]
    ```
    → Hook-URL, Secret und Stalwart-Config-Snippet.
-4. **Stalwart konfigurieren** (DATA-Stage, vor DKIM):
-   ```ini
-   [session.data.hooks]
-   hook = "http"
-   url = "https://<cloud>/apps/souvera_central/signature/hook"
+4. **Stalwart konfigurieren — AUTOMATISCH**:
    ```
-   Authorization-Header mit dem Secret (`Bearer <secret>`) gemäß
-   Stalwart-Doku (HTTP-Hook-Auth). Ggf. Expression für Größenlimit.
+   occ souvera_central:signature:hook-config --apply
+   ```
+   oder in der Admin-UI (Signatures-Seite): „Apply hook config to Stalwart".
+   Der Apply-Flow liest die Config, prüft auf Kollisionen (fremde Hooks →
+   Abbruch ohne Schreiben), sichert den Ist-Zustand (Rollback), schreibt
+   nur die eigenen Keys und verifiziert per Read-back. Der Push-Benach-
+   richtigungs-Webhook (`webhook.*` — anderes Subsystem, feuert nach der
+   Zustellung) bleibt garantiert unberührt und wird im Status angezeigt.
+   Rollback: `--rollback` bzw. „Rollback"-Button. Kalibrierung der
+   Stalwart-Hook-Key-Syntax: zentral in StalwartConfigService::hookTemplate().
 5. **Test**: Mail aus Thunderbird senden → Signatur muss erscheinen;
    `X-Souvera-Signature: injected` im Header prüfen; DKIM-Validator
    (z. B. dkimchecker.com) → `body hash: pass`.
