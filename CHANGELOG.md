@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.43.1] — 2026-09
+
+### Added
+
+- Guard-Test `tests/test_commands_valid.php`: jede in info.xml registrierte
+  occ-Command-Klasse muss als Datei in `lib/Command/` existieren (und
+  umgekehrt). Hintergrund: auf Deployment-Kopien tauchte der Phantom-Eintrag
+  „Command\StalwartService“ auf und warnte bei jedem occ-Aufruf — der
+  Repo-Stand war stets sauber. Der Test verhindert, dass ein Phantom-Eintrag
+  je wieder ein Release verlässt (Bereinigung der deployten info.xml bleibt
+  Ops-Aufgabe).
+- Versions-Hinweis: 0.43.0 war bereits released, danach folgte 0.42.1
+  (Versions-Regression in der Historie) — dieser Bump geht bewusst auf
+  0.43.1, damit keine veröffentlichte Nummer wiederverwendet wird.
+
 ## [0.42.1] — 2026-09
 
 ### Fixed
