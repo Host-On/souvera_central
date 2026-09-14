@@ -71,6 +71,8 @@ class PageController extends Controller {
     }
 
     /** Zentrale E-Mail-Signaturen (Admin-Editor). */
+    #[NoCSRFRequired]
+    #[NoAdminRequired]
     public function signatures(): TemplateResponse {
         return $this->renderPage('signatures');
     }
