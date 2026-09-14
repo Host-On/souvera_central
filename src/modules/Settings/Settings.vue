@@ -343,6 +343,9 @@
                         >
                             {{ signatureDeployMessage.text }}
                         </p>
+
+                        <!-- Zentrale Signatur: Overrides, Fallbacks, Logo, MTA-Hook -->
+                        <SignatureAdminSection />
                     </div>
                 </div>
             </div>
@@ -374,6 +377,7 @@ import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import DomainsSection from './DomainsSection.vue'
+import SignatureAdminSection from './SignatureAdminSection.vue'
 
 export default {
     name: 'Settings',
@@ -387,6 +391,7 @@ export default {
         InfinityIcon,
         ShieldCheck,
         AlertCircleOutline,
+        SignatureAdminSection,
         DomainsSection
     },
 

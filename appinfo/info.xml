@@ -19,7 +19,7 @@
         - Gruppen Management (coming soon)
         - Security & Audit (coming soon)
     ]]></description>
-    <version>0.43.1</version>
+    <version>0.44.0</version>
     <licence>agpl</licence>
     <author>Souvera</author>
     <namespace>SouveraCentral</namespace>
@@ -55,6 +55,7 @@
         <command>OCA\SouveraCentral\Command\LicensesSet</command>
         <command>OCA\SouveraCentral\Command\MailStorageSet</command>
         <command>OCA\SouveraCentral\Command\MailSignatureSieve</command>
+        <command>OCA\SouveraCentral\Command\SignatureHookConfig</command>
         <command>OCA\SouveraCentral\Command\SystemMailboxNormalize</command>
         <command>OCA\SouveraCentral\Command\StalwartStatus</command>
         <command>OCA\SouveraCentral\Command\MailboxList</command>

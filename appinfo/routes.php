@@ -60,6 +60,22 @@ return [
         ['name' => 'settings_api#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings_api#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
         ['name' => 'mail_settings_api#getMailSettings', 'url' => '/api/mail-settings', 'verb' => 'GET'],
+        ['name' => 'mail_settings_api#getResolvedSignature', 'url' => '/api/mail-settings/signature', 'verb' => 'GET'],
+        ['name' => 'mail_settings_api#getSignatureLogo', 'url' => '/api/mail-settings/signature-logo', 'verb' => 'GET'],
+        // Stalwart MTA-Hook (PublicPage + Bearer-Secret, siehe SignatureHookController)
+        ['name' => 'signature_hook#hook', 'url' => '/signature/hook', 'verb' => 'POST'],
+        // Signatur-Admin-API (Souvera-Admins, via SouveraAdminMiddleware)
+        ['name' => 'signature_admin#overview', 'url' => '/api/signature-admin/overview', 'verb' => 'GET'],
+        ['name' => 'signature_admin#setFallbacks', 'url' => '/api/signature-admin/fallbacks', 'verb' => 'POST'],
+        ['name' => 'signature_admin#listOverrides', 'url' => '/api/signature-admin/overrides', 'verb' => 'GET'],
+        ['name' => 'signature_admin#saveOverride', 'url' => '/api/signature-admin/overrides', 'verb' => 'POST'],
+        ['name' => 'signature_admin#deleteOverride', 'url' => '/api/signature-admin/overrides/{id}', 'verb' => 'DELETE'],
+        ['name' => 'signature_admin#uploadLogo', 'url' => '/api/signature-admin/logo', 'verb' => 'POST'],
+        ['name' => 'signature_admin#deleteLogo', 'url' => '/api/signature-admin/logo', 'verb' => 'DELETE'],
+        ['name' => 'signature_admin#logoBytes', 'url' => '/api/signature-admin/logo/bytes', 'verb' => 'GET'],
+        ['name' => 'signature_admin#setHook', 'url' => '/api/signature-admin/hook', 'verb' => 'POST'],
+        ['name' => 'signature_admin#rotateSecret', 'url' => '/api/signature-admin/hook/rotate-secret', 'verb' => 'POST'],
+        ['name' => 'signature_admin#resolveTest', 'url' => '/api/signature-admin/resolve-test', 'verb' => 'GET'],
 
         // Reseller API-Route
         ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],

@@ -40,6 +40,13 @@ class Application extends App implements IBootstrap {
 
     public function __construct() {
         parent::__construct(self::APP_ID);
+        // Runtime-Dependency (zbateson/mail-mime-parser) für die
+        // zentrale Signatur-Injection — vendor wird mit der App
+        // ausgeliefert (siehe .gitignore-Notiz).
+        $autoload = \dirname(__DIR__) . '/../vendor/autoload.php';
+        if (\is_file($autoload)) {
+            require_once $autoload;
+        }
     }
 
     public function register(IRegistrationContext $context): void {

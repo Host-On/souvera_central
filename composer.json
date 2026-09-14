@@ -1,0 +1,21 @@
+{
+    "name": "souvera/souvera_central",
+    "description": "Souvera Central — Workspace-Verwaltung (Users, Mail, Branding, Signatures)",
+    "type": "nextcloud-app",
+    "license": "AGPL-3.0-or-later",
+    "config": {
+        "platform": {
+            "php": "8.3"
+        },
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "autoload": {
+        "psr-4": {
+            "OCA\\SouveraCentral\\": "lib/"
+        }
+    },
+    "require": {
+        "zbateson/mail-mime-parser": "^1.3"
+    }
+}

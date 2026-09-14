@@ -1,5 +1,7 @@
 node_modules/
-vendor/
+# vendor/ wird bewusst GETRACKT: Runtime-Dependencies (mail-mime-parser
+# für die zentrale Signatur-Injection) müssen im Self-Update-Zipball
+# mit ausgeliefert werden — der Zipball enthält nur getrackte Dateien.
 preview/preview.js
 preview/*.chunk.js
 .DS_Store

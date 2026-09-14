@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.44.0] — 2026-09
+
+### Added
+
+- **Zentrale E-Mail-Signaturen vollständig integriert**:
+  - Per-Gruppe/per-User Overrides (DB, Priorität vor dem globalen Template)
+  - Admin-Fallbacks für Variablen (%title%, %department%, %phone%, %company%)
+  - Optionale User-Zusatzfelder (souvera_central_sig_fields)
+  - Logo-Asset (Inline-CID via multipart/related) inkl. Upload in der Admin-UI
+  - **Stalwart MTA-Hook-Endpoint** (PublicPage + Bearer-Secret): injiziert die
+    finale Signatur serverseitig in ALLE ausgehenden SMTP-Mails (Thunderbird,
+    Outlook, Mobile) — vor DKIM-Signierung, fail-open, Skip-Regeln für
+    S/MIME/PGP/ICS/Doppel-Signierung/Größe
+  - Resolve-API für souvera_mail (Compose-Injection im Webmail)
+  - occ souvera_central:signature:hook-config (URL/Secret/Stalwart-Snippet)
+  - Tests: test_signature_injection.php (echtes MIME über mail-mime-parser)
+- Composer-Runtime-Dependency: zbateson/mail-mime-parser (vendor wird
+  ausgeliefert, .gitignore angepasst).
+
 ## [0.43.1] — 2026-09
 
 ### Added
