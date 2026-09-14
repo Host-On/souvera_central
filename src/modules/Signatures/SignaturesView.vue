@@ -1,5 +1,6 @@
 <template>
 	<div class="signatures-view">
+		<div v-if="toast.show" class="signatures-view__toast" :class="'signatures-view__toast--' + toast.type">{{ toast.message }}</div>
 		<header class="signatures-view__header">
 			<h2>{{ t('souvera_central', 'E-mail signatures') }}</h2>
 			<p class="signatures-view__intro">
@@ -49,7 +50,6 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { showSuccess, showError } from '@nextcloud/dialogs'
 import SignatureAdminSection from '../Settings/SignatureAdminSection.vue'
 
 const unwrap = (response) => response.data.ocs?.data || response.data.data || response.data
@@ -88,6 +88,10 @@ export default {
 		this.loadGlobal()
 	},
 	methods: {
+		toast(type, message) {
+			this.toast = { show: true, type, message }
+			setTimeout(() => { this.toast.show = false }, 4000)
+		},
 		insertVariable(v) {
 			this.signature.template += v
 		},
@@ -111,10 +115,10 @@ export default {
 						server_side: this.signature.server_side,
 					},
 				})
-				showSuccess(this.t('souvera_central', 'Signature template saved'))
+				this.toast('success', this.t('souvera_central', 'Signature template saved'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Save failed'))
+				this.toast('error', this.t('souvera_central', 'Save failed'))
 			} finally {
 				this.saving = false
 			}
@@ -155,6 +159,9 @@ export default {
 	border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer;
 }
 .signatures-view__btn:disabled { opacity: 0.6; cursor: default; }
+.signatures-view__toast { margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+.signatures-view__toast--success { background: var(--color-success, #2d7d46); color: #fff; }
+.signatures-view__toast--error { background: var(--color-error); color: #fff; }
 .signatures-view__preview {
 	border: 1px solid var(--color-border); border-radius: 8px; padding: 14px;
 	min-height: 48px; background: var(--color-main-background);
