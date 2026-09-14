@@ -49,6 +49,7 @@
 
                 <!-- Shared Mailboxes -->
                 <SharedMailboxesView v-else-if="currentRoute === 'shared-mailboxes'" :key="routeKey" />
+				<SignaturesView v-else-if="currentRoute === 'signatures'" :key="routeKey" />
 
                 <!-- Settings -->
                 <Settings
@@ -84,6 +85,7 @@ import ViewDashboard from 'vue-material-design-icons/ViewDashboard.vue'
 import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import EmailMultiple from 'vue-material-design-icons/EmailMultiple.vue'
+import DrawPen from 'vue-material-design-icons/DrawPen.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import History from 'vue-material-design-icons/History.vue'
 import Robot from 'vue-material-design-icons/Robot.vue'
@@ -93,6 +95,7 @@ import Dashboard from './modules/Dashboard/Dashboard.vue'
 import UserManagement from './modules/UserManagement/UserManagement.vue'
 import GroupManagement from './modules/GroupManagement/GroupManagement.vue'
 import SharedMailboxesView from './modules/SharedMailboxes/SharedMailboxesView.vue'
+import SignaturesView from './modules/Signatures/SignaturesView.vue'
 import Settings from './modules/Settings/Settings.vue'
 import ChangelogView from './modules/Changelog/ChangelogView.vue'
 import AiView from './modules/Ai/Ai.vue'
@@ -110,6 +113,7 @@ export default {
         UserManagement,
         GroupManagement,
         SharedMailboxesView,
+        SignaturesView,
         Settings,
         ChangelogView,
         AiView,
@@ -157,6 +161,13 @@ export default {
                     label: t('souvera_central', 'Shared mailboxes'),
                     icon: markRaw(EmailMultiple),
                     url: generateUrl('/apps/souvera_central/shared-mailboxes'),
+                    adminOnly: true
+                },
+                {
+                    id: 'signatures',
+                    label: t('souvera_central', 'Signatures'),
+                    icon: markRaw(DrawPen),
+                    url: generateUrl('/apps/souvera_central/signatures'),
                     adminOnly: true
                 },
                 {
@@ -258,7 +269,7 @@ export default {
             if (this.isSouveraAdmin) {
                 return route
             }
-            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'settings', 'ai']
+            const adminOnlyRoutes = ['dashboard', 'users', 'groups', 'shared-mailboxes', 'signatures', 'settings', 'ai']
             return adminOnlyRoutes.indexOf(route) !== -1 ? 'changelogs' : route
         },
 
@@ -268,7 +279,7 @@ export default {
 
         handlePopState() {
             const path = window.location.pathname
-            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|settings|ai|changelogs)/)
+            const match = path.match(/\/apps\/souvera_central\/(dashboard|users|groups|shared-mailboxes|signatures|settings|ai|changelogs)/)
 
             this.currentRoute = this.authorizeRoute(match && match[1] ? match[1] : 'dashboard')
             this.updateCurrentPath()

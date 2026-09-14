@@ -17,6 +17,7 @@ return [
         ['name' => 'page#users_edit', 'url' => '/users/edit/{id}', 'verb' => 'GET'],
         ['name' => 'page#groups', 'url' => '/groups', 'verb' => 'GET'],
         ['name' => 'page#sharedMailboxes', 'url' => '/shared-mailboxes', 'verb' => 'GET'],
+        ['name' => 'page#signatures', 'url' => '/signatures', 'verb' => 'GET'],
         ['name' => 'page#settings', 'url' => '/settings', 'verb' => 'GET'],
         ['name' => 'page#ai', 'url' => '/ai', 'verb' => 'GET'],
         ['name' => 'page#changelogs', 'url' => '/changelogs', 'verb' => 'GET'],

@@ -70,6 +70,11 @@ class PageController extends Controller {
         return $this->renderPage('shared-mailboxes');
     }
 
+    /** Zentrale E-Mail-Signaturen (Admin-Editor). */
+    public function signatures(): TemplateResponse {
+        return $this->renderPage('signatures');
+    }
+
     #[NoCSRFRequired]
     #[NoAdminRequired]
     public function settings(): TemplateResponse {

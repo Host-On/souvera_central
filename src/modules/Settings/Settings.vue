@@ -271,82 +271,19 @@
             <!-- Mail domains (Multi-Domain) -->
             <DomainsSection />
 
-            <!-- Mail signature -->
+            <!-- Mail signature (verwaltet auf der eigenen Signatures-Seite) -->
             <div class="settings-section" data-testid="signature-settings-section">
                 <div class="section-header">
                     <Email :size="22" />
                     <h3>{{ t('souvera_central', 'Mail signature') }}</h3>
                 </div>
                 <p class="section-description">
-                    {{ t('souvera_central', 'One global signature, managed centrally. Used by Souvera Mail and optionally enforced server-side for all SMTP clients.') }}
+                    {{ t('souvera_central', 'E-mail signatures are managed centrally on the dedicated Signatures page (template, overrides, fallbacks, logo, Stalwart hook).') }}
                 </p>
-
                 <div class="settings-group">
-                    <label class="checkbox-label" data-testid="signature-enabled-label">
-                        <input
-                            v-model="settings.signature.enabled"
-                            type="checkbox"
-                            data-testid="signature-enabled-checkbox"
-                            @change="saveSettings"
-                        />
-                        <span>{{ t('souvera_central', 'Enable global mail signature') }}</span>
-                    </label>
-
-                    <div v-if="settings.signature.enabled" class="signature-editor" data-testid="signature-editor">
-                        <label class="field-label">{{ t('souvera_central', 'Signature (HTML allowed)') }}</label>
-                        <textarea
-                            v-model="settings.signature.template"
-                            class="signature-textarea"
-                            rows="7"
-                            data-testid="signature-template-input"
-                            :placeholder="signaturePlaceholder"
-                            @blur="saveSettings"
-                        ></textarea>
-
-                        <div class="signature-variables" data-testid="signature-variables">
-                            <span class="var-hint">{{ t('souvera_central', 'Available variables (click to insert):') }}</span>
-                            <button
-                                v-for="v in settings.signature.variables"
-                                :key="v"
-                                type="button"
-                                class="var-chip"
-                                :data-testid="'signature-var-' + v"
-                                @click="insertVariable(v)"
-                            >{{ v }}</button>
-                        </div>
-
-                        <div class="signature-preview-wrap">
-                            <label class="field-label">{{ t('souvera_central', 'Preview') }}</label>
-                            <!-- eslint-disable-next-line vue/no-v-html -->
-                            <div class="signature-preview" data-testid="signature-preview" v-html="signaturePreview"></div>
-                        </div>
-
-                        <label class="checkbox-label" data-testid="signature-serverside-label">
-                            <input
-                                v-model="settings.signature.server_side"
-                                type="checkbox"
-                                data-testid="signature-serverside-checkbox"
-                                @change="saveSettings"
-                            />
-                            <span>{{ t('souvera_central', 'Enforce server-side for all SMTP clients (Stalwart)') }}</span>
-                        </label>
-                        <p class="setting-hint">
-                            {{ settings.signature.server_side
-                                ? t('souvera_central', 'Server-side is ON: Souvera Mail will NOT add the signature (Stalwart appends it). Deploy the Sieve script via: occ souvera_central:mailsignature:sieve (requires Stalwart ≥ 0.16.6).')
-                                : t('souvera_central', 'Server-side is OFF: only Souvera Mail renders the personalized signature; other SMTP clients (Thunderbird, Outlook, mobile) do not get it.') }}
-                        </p>
-                        <p
-                            v-if="signatureDeployMessage"
-                            class="signature-deploy-status"
-                            :class="'is-' + signatureDeployMessage.type"
-                            data-testid="signature-deploy-status"
-                        >
-                            {{ signatureDeployMessage.text }}
-                        </p>
-
-                        <!-- Zentrale Signatur: Overrides, Fallbacks, Logo, MTA-Hook -->
-                        <SignatureAdminSection />
-                    </div>
+                    <button class="sig-settings-link" data-testid="signature-open-page" @click="openSignaturesPage">
+                        {{ t('souvera_central', 'Open signature management') }}
+                    </button>
                 </div>
             </div>
 
@@ -377,7 +314,6 @@ import InfinityIcon from 'vue-material-design-icons/Infinity.vue'
 import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import DomainsSection from './DomainsSection.vue'
-import SignatureAdminSection from './SignatureAdminSection.vue'
 
 export default {
     name: 'Settings',
@@ -391,7 +327,6 @@ export default {
         InfinityIcon,
         ShieldCheck,
         AlertCircleOutline,
-        SignatureAdminSection,
         DomainsSection
     },
 

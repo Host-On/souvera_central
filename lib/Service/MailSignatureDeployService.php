@@ -23,6 +23,7 @@ class MailSignatureDeployService {
         private ConfigService $config,
         private StalwartService $stalwart,
         private LoggerInterface $logger,
+        private \OCP\IConfig $appConfig,
     ) {
     }
 
@@ -43,6 +44,12 @@ class MailSignatureDeployService {
 
     /** Soll die Signatur serverseitig ausgerollt werden? */
     public function shouldDeploy(): bool {
+        // MTA-Hook aktiv → der Hook übernimmt die Injection vollständig;
+        // das Sieve-Script wird dann per sync() automatisch ENTFERNT
+        // (gegenseitige Ausschließung, sonst doppelte Signaturen).
+        if ($this->appConfig->getAppValue('souvera_central', 'settings.mail_signature.hook_enabled', '0') === '1') {
+            return false;
+        }
         return $this->config->isMailSignatureEnabled()
             && $this->config->isMailSignatureServerSide()
             && trim($this->config->getMailSignatureTemplate()) !== '';
