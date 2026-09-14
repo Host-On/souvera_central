@@ -56,6 +56,13 @@ class PermissionService {
     }
 
     /**
+     * Name der Souvera-Admin-Gruppe (für actionable 403-Hinweise).
+     */
+    public function adminGroupName(): string {
+        return $this->config->getScadminGroupId();
+    }
+
+    /**
      * Prüft, ob der Benutzer ein echter Nextcloud-Superadmin ist.
      */
     public function isNextcloudAdmin(?string $userId = null): bool {

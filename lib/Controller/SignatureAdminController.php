@@ -16,6 +16,7 @@ namespace OCA\SouveraCentral\Controller;
 use OCA\SouveraCentral\AppInfo\Application;
 use OCA\SouveraCentral\Service\SignatureInjectionService;
 use OCA\SouveraCentral\Service\SignatureResolverService;
+use OCA\SouveraCentral\Service\StalwartConfigService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
@@ -43,6 +44,7 @@ class SignatureAdminController extends OCSController {
         private IGroupManager $groupManager,
         private SignatureResolverService $resolver,
         private SignatureInjectionService $injection,
+        private StalwartConfigService $stalwartConfig,
     ) {
         parent::__construct($appName, $request);
     }
@@ -208,6 +210,39 @@ class SignatureAdminController extends OCSController {
             return new DataResponse(['found' => false]);
         }
         return new DataResponse(['found' => true, 'html' => $sig['html'], 'text' => $sig['text'], 'source' => $sig['source']]);
+    }
+
+    /**
+     * Stalwart-Verkabelung AUTOMATISCH anwenden (Pre-Check → Snapshot →
+     * Write → Verify). Kollisionen führen zu einem Abbruch OHNE Schreiben.
+     */
+    #[NoAdminRequired]
+    public function wireStalwart(): DataResponse {
+        $hookUrl = $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.hook_url', '');
+        $secret = $this->config->getAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, '');
+        if ($secret === '') {
+            return new DataResponse(['error' => 'Kein Hook-Secret vorhanden — erst generieren'], Http::STATUS_BAD_REQUEST);
+        }
+        if ($hookUrl === '') {
+            // URL aus der Cloud-Instanz ableiten (Central-Basis + Pfad).
+            $base = $this->request->getServerProtocol() . '://' . ($this->request->getServerHost() ?: '');
+            $hookUrl = \rtrim($base, '/') . '/apps/souvera_central/signature/hook';
+        }
+        $result = $this->stalwartConfig->apply($hookUrl, $secret);
+        return new DataResponse($result, $result['ok'] ? Http::STATUS_OK : Http::STATUS_BAD_REQUEST);
+    }
+
+    /** Rollback der letzten Stalwart-Verkabelung. */
+    #[NoAdminRequired]
+    public function unwireStalwart(): DataResponse {
+        $result = $this->stalwartConfig->rollback();
+        return new DataResponse($result, $result['ok'] ? Http::STATUS_OK : Http::STATUS_BAD_REQUEST);
+    }
+
+    /** Stalwart-Hook-Status (eigene Keys + Push-Webhook-Keys als Übersicht). */
+    #[NoAdminRequired]
+    public function stalwartStatus(): DataResponse {
+        return new DataResponse($this->stalwartConfig->status());
     }
 
     // resolveSelf/logo-für-User leben in MailSettingsApiController — dieser

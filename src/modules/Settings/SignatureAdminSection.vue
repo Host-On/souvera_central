@@ -88,6 +88,27 @@
 			</div>
 		</div>
 
+		<!-- Stalwart-Verkabelung (automatisch) -->
+		<div class="sig-admin__block">
+			<label class="field-label">{{ t('souvera_central', 'Wire into Stalwart (automatic)') }}</label>
+			<div class="sig-admin__resolve">
+				<button class="sig-admin__btn" data-testid="sig-wire-apply" @click="wireStalwart">
+					{{ t('souvera_central', 'Apply hook config to Stalwart') }}
+				</button>
+				<button class="sig-admin__btn sig-admin__btn--danger" @click="unwireStalwart">
+					{{ t('souvera_central', 'Rollback') }}
+				</button>
+				<button class="sig-admin__btn" @click="loadStalwartStatus">
+					{{ t('souvera_central', 'Check Stalwart status') }}
+				</button>
+			</div>
+			<p v-if="wireMessage" class="sig-admin__hint" :class="{ 'sig-admin__hint--warn': wireError }">{{ wireMessage }}</p>
+			<p v-if="stalwartKeys.length" class="sig-admin__hint">
+				{{ t('souvera_central', 'Hook keys:') }} {{ stalwartKeys.join(', ') }}
+				— {{ t('souvera_central', 'Event webhook keys (push notifications) are untouched:') }} {{ webhookKeys.join(', ') || '—' }}
+			</p>
+		</div>
+
 		<!-- Live-Vorschau -->
 		<div class="sig-admin__block">
 			<label class="field-label">{{ t('souvera_central', 'Resolve test (preview the final signature for an email address)') }}</label>
@@ -122,6 +143,10 @@ export default {
 			testEmail: '',
 			previewHtml: '',
 			previewNotFound: false,
+			wireMessage: '',
+			wireError: false,
+			stalwartKeys: [],
+			webhookKeys: [],
 			toast: { show: false, type: 'success', message: '' },
 		}
 	},
@@ -232,6 +257,63 @@ export default {
 				this.toast('success', this.t('souvera_central', 'New secret generated — update the Stalwart config!'))
 			} catch (e) {
 				console.error(e)
+			}
+		},
+		async wireStalwart() {
+			this.wireError = false
+			this.wireMessage = this.t('souvera_central', 'Applying… (pre-check → snapshot → write → verify)')
+			try {
+				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/wire'))
+				const data = unwrap(r) || {}
+				if (data.ok) {
+					this.wireError = false
+					this.wireMessage = this.t('souvera_central', 'Hook wired into Stalwart and verified.')
+					this.loadStalwartStatus()
+				} else {
+					this.wireError = true
+					this.wireMessage = (data.error || 'Apply failed') + (data.rollbackAvailable ? ' — Rollback available.' : '')
+					if (data.precheck) {
+						this.stalwartKeys = Object.keys(data.precheck.existingHooks || {})
+						this.webhookKeys = data.precheck.webhookKeys || []
+					}
+				}
+			} catch (e) {
+				console.error(e)
+				this.wireError = true
+				this.wireMessage = this.t('souvera_central', 'Wire failed — see logs')
+			}
+		},
+		async unwireStalwart() {
+			this.wireError = false
+			try {
+				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/unwire'))
+				const data = unwrap(r) || {}
+				this.wireError = !data.ok
+				this.wireMessage = data.ok ? this.t('souvera_central', 'Rollback OK — previous Stalwart config restored.') : (data.error || 'Rollback failed')
+				this.loadStalwartStatus()
+			} catch (e) {
+				console.error(e)
+				this.wireError = true
+				this.wireMessage = this.t('souvera_central', 'Rollback failed — see logs')
+			}
+		},
+		async loadStalwartStatus() {
+			try {
+				const r = await axios.get(generateUrl('/apps/souvera_central/api/signature-admin/stalwart-status'))
+				const data = unwrap(r) || {}
+				if (data.ok) {
+					this.stalwartKeys = Object.keys(data.signatureHook || {})
+					this.webhookKeys = data.webhookKeys || []
+					this.wireError = false
+					this.wireMessage = this.t('souvera_central', 'Stalwart status loaded.')
+				} else {
+					this.wireError = true
+					this.wireMessage = data.error || 'Status failed'
+				}
+			} catch (e) {
+				console.error(e)
+				this.wireError = true
+				this.wireMessage = this.t('souvera_central', 'Stalwart status failed — is souvera_central.stalwart_api_url configured?')
 			}
 		},
 		async resolveTest() {

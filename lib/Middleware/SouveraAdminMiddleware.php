@@ -76,12 +76,18 @@ class SouveraAdminMiddleware extends Middleware {
             if ($this->permission->canSeeHelp()) {
                 return;
             }
-            throw new NotSouveraAdminException();
+            $uid = $this->permission->getCurrentUserId() ?? '?';
+            throw new NotSouveraAdminException(
+                'Zugriff verboten: das Konto „' . $uid . '“ ist kein Souvera-Administrator. Lösung: vom Administrator in die Gruppe „' . $this->permission->adminGroupName() . '“ aufnehmen lassen (occ group:adduser "' . $this->permission->adminGroupName() . '" "' . $uid . '").'
+            );
         }
         if ($this->permission->isSouveraAdmin()) {
             return;
         }
-        throw new NotSouveraAdminException();
+        $uid = $this->permission->getCurrentUserId() ?? '?';
+        throw new NotSouveraAdminException(
+            'Zugriff verboten: das Konto „' . $uid . '“ ist kein Souvera-Administrator. Lösung: vom Administrator in die Gruppe „' . $this->permission->adminGroupName() . '“ aufnehmen lassen (occ group:adduser "' . $this->permission->adminGroupName() . '" "' . $uid . '").'
+        );
     }
 
     public function afterException(Controller $controller, string $methodName, \Exception $exception): Response {

@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.46.0] — 2026-09
+
+### Added
+
+- **Automatische Stalwart-Verkabelung**: `occ souvera_central:signature:hook-config --apply`
+  (kollisions-sicher: Pre-Check → Snapshot → Write → Verify → Rollback-Pflicht) sowie
+  `--status` und `--rollback`. Dieselben Aktionen als Buttons in der Signatures-Admin
+  („Apply hook config to Stalwart" / „Rollback" / „Check Stalwart status") — ohne CLI.
+  Der Push-Benachrichtigungs-Event-Webhook (`webhook.*`) liegt in einem anderen
+  Config-Subsystem und bleibt garantiert unberührt (im Pre-Check sichtbar).
+
+### Fixed
+
+- 403-Meldung für Central-Admin-Seiten ist jetzt actionable (nennt UID +
+  aufzunehmende Admin-Gruppe mit occ-Befehl).
+
 ## [0.45.0] — 2026-09
 
 ### Added

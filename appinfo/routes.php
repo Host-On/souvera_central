@@ -77,6 +77,9 @@ return [
         ['name' => 'signature_admin#setHook', 'url' => '/api/signature-admin/hook', 'verb' => 'POST'],
         ['name' => 'signature_admin#rotateSecret', 'url' => '/api/signature-admin/hook/rotate-secret', 'verb' => 'POST'],
         ['name' => 'signature_admin#resolveTest', 'url' => '/api/signature-admin/resolve-test', 'verb' => 'GET'],
+        ['name' => 'signature_admin#wireStalwart', 'url' => '/api/signature-admin/wire', 'verb' => 'POST'],
+        ['name' => 'signature_admin#unwireStalwart', 'url' => '/api/signature-admin/unwire', 'verb' => 'POST'],
+        ['name' => 'signature_admin#stalwartStatus', 'url' => '/api/signature-admin/stalwart-status', 'verb' => 'GET'],
 
         // Reseller API-Route
         ['name' => 'reseller_api#getResellerInfo', 'url' => '/api/reseller', 'verb' => 'GET'],

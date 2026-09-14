@@ -5,9 +5,15 @@ declare(strict_types=1);
 /**
  * Souvera Central — occ souvera_central:signature:hook-config
  *
- * Gibt die Stalwart-MTA-Hook-Konfiguration für die zentrale Signatur-
- * Injection aus (URL + Secret + Stalwart-Config-Snippet zum Copy-Paste)
- * und kann das Secret rotieren.
+ * Verkabelt den zentralen Signatur-MTA-Hook AUTOMATISCH in die Stalwart-
+ * Config (WebAdmin-API): Pre-Check (Kollisionen) → Snapshot → Write →
+ * Verify. Rollback immer verfügbar.
+ *
+ *   (ohne Option)         : Hook-URL + Secret + Snippet ausgeben (read-only)
+ *   --apply               : kollisions-sicher in die Stalwart-Config schreiben
+ *   --rollback            : letzten Config-Stand wiederherstellen
+ *   --status              : aktuelle Stalwart-Hook-/Webhook-Keys anzeigen
+ *   --rotate-secret       : neues Hook-Secret generieren
  */
 
 namespace OCA\SouveraCentral\Command;
@@ -15,6 +21,7 @@ namespace OCA\SouveraCentral\Command;
 use OC\Core\Command\Base;
 use OCA\SouveraCentral\AppInfo\Application;
 use OCA\SouveraCentral\Service\ConfigService;
+use OCA\SouveraCentral\Service\StalwartConfigService;
 use OCP\IConfig;
 use OCP\IURLGenerator;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,6 +33,7 @@ class SignatureHookConfig extends Base {
         private IConfig $config,
         private IURLGenerator $urlGenerator,
         private ConfigService $configService,
+        private StalwartConfigService $stalwartConfig,
     ) {
         parent::__construct();
     }
@@ -33,7 +41,10 @@ class SignatureHookConfig extends Base {
     protected function configure(): void {
         $this
             ->setName('souvera_central:signature:hook-config')
-            ->setDescription('Stalwart MTA-Hook-Konfiguration für die zentrale Signatur ausgeben')
+            ->setDescription('Zentrale Signatur: Stalwart-Hook-Konfiguration anzeigen/automatisch verkabeln')
+            ->addOption('apply', null, InputOption::VALUE_NONE, 'Hook kollisions-sicher automatisch in die Stalwart-Config schreiben')
+            ->addOption('rollback', null, InputOption::VALUE_NONE, 'Letzten Config-Stand wiederherstellen')
+            ->addOption('status', null, InputOption::VALUE_NONE, 'Aktuelle Hook-/Webhook-Keys der Stalwart-Config anzeigen')
             ->addOption('rotate-secret', null, InputOption::VALUE_NONE, 'Neues Hook-Secret generieren');
     }
 
@@ -45,34 +56,99 @@ class SignatureHookConfig extends Base {
         }
 
         $secret = (string) $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.hook_secret', '');
+        $hookUrl = $this->urlGenerator->getAbsoluteURL('/apps/souvera_central/signature/hook');
+        $enabled = $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.hook_enabled', '0') === '1';
+
+        if ($input->getOption('status')) {
+            return $this->showStatus($output);
+        }
+        if ($input->getOption('rollback')) {
+            return $this->doRollback($output);
+        }
+        if ($input->getOption('apply')) {
+            return $this->doApply($output, $secret);
+        }
+
+        // ---- Read-only Ausgabe ----
         if ($secret === '') {
-            $output->writeln('<error>Kein Hook-Secret gesetzt. Erst ausführen mit --rotate-secret oder in der Central-Admin-UI generieren.</error>');
+            $output->writeln('<error>Kein Hook-Secret gesetzt. Erst mit --rotate-secret generieren (oder in der Admin-UI).</error>');
             return 1;
         }
 
-        $url = \rtrim($this->urlGenerator->getAbsoluteURL('/apps/souvera_central/signature/hook'), '/');
-        $enabled = $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.hook_enabled', '0') === '1';
-
-        $output->writeln('Hook-URL:    ' . $url);
+        $output->writeln('Hook-URL:    ' . $hookUrl);
         $output->writeln('Secret:      ' . $secret);
-        $output->writeln('Hook aktiv:  ' . ($enabled ? 'ja' : 'NEIN — in der Central-Admin-UI aktivieren'));
-
+        $output->writeln('Hook aktiv:  ' . ($enabled ? 'ja' : 'NEIN — in der Signatures-Admin-UI aktivieren'));
         $output->writeln('');
-        $output->writeln('Stalwart-Config-Snippet (in die Stalwart-Konfiguration der Cloud einpflegen):');
-        $output->writeln(<<<'SNIPPET'
-        # Zentrale Signatur-Injection (DATA-Stage) — vor DKIM-Signierung
-        [session.data.hooks]
-        hook = "http"
-        url = "<HOOK-URL>"
-        # Optional: nur Mailgrößen unter dem Limit an den Hook schicken
-        # expression = "message_size < 10485760"
-        SNIPPET);
-        $output->writeln('');
-        $output->writeln('Im Snippet <HOOK-URL> durch die Hook-URL ersetzen und den Secret als');
-        $output->writeln('Authorization:-Header konfigurieren (siehe Stalwart-Doku: session.data.hooks).');
-        $output->writeln('Hinweis: Wenn der SIEVE-Signatur-Pfad (mailsignature:sieve --deploy) aktiv ist,');
-        $output->writeln('zuerst mit --remove entfernen — sonst doppelte Signaturen.');
+        $output->writeln('Automatisches Verkabeln:  occ souvera_central:signature:hook-config --apply');
+        $output->writeln('Rollback:                 occ souvera_central:signature:hook-config --rollback');
+        $output->writeln('Status:                   occ souvera_central:signature:hook-config --status');
 
+        return 0;
+    }
+
+    private function doApply(OutputInterface $output, string $secret): int {
+        if ($secret === '') {
+            $output->writeln('<error>Kein Hook-Secret gesetzt — erst --rotate-secret oder die Admin-UI nutzen.</error>');
+            return 1;
+        }
+        $hookUrl = $this->urlGenerator->getAbsoluteURL('/apps/souvera_central/signature/hook');
+        $output->writeln('Wende Hook-Config an (Pre-Check → Snapshot → Write → Verify)…');
+        $result = $this->stalwartConfig->apply($hookUrl, $secret);
+
+        if (!$result['ok']) {
+            $output->writeln('<error>FEHLGESCHLAGEN: ' . $result['error'] . '</error>');
+            if (($result['precheck']['foreignHooks'] ?? []) !== []) {
+                $output->writeln('Kollidierende Keys (NICHT angerührt):');
+                foreach ($result['precheck']['foreignHooks'] as $k => $v) {
+                    $output->writeln('  ' . $k . ' = ' . $v);
+                }
+            }
+            if ($result['rollbackAvailable']) {
+                $output->writeln('Rollback verfügbar: occ souvera_central:signature:hook-config --rollback');
+            }
+            return 1;
+        }
+
+        $output->writeln('<info>OK — Hook verkabelt und verifiziert.</info>');
+        foreach ($result['written'] as $k => $v) {
+            $output->writeln('  ' . $k . ' = ' . $v);
+        }
+        $output->writeln('Nächster Schritt: Hook in der Signatures-Admin-UI aktivieren (falls noch nicht geschehen) und eine Testmail aus Thunderbird senden.');
+        return 0;
+    }
+
+    private function doRollback(OutputInterface $output): int {
+        $result = $this->stalwartConfig->rollback();
+        if ($result['ok']) {
+            $output->writeln('<info>Rollback OK — vorheriger Config-Stand wiederhergestellt.</info>');
+            return 0;
+        }
+        $output->writeln('<error>Rollback fehlgeschlagen: ' . $result['error'] . '</error>');
+        return 1;
+    }
+
+    private function showStatus(OutputInterface $output): int {
+        $result = $this->stalwartConfig->status();
+        if (!$result['ok']) {
+            $output->writeln('<error>' . $result['error'] . '</error>');
+            return 1;
+        }
+        $output->writeln('Signatur-Hook-Keys (session.data.hooks*):');
+        if (($result['signatureHook'] ?? []) === []) {
+            $output->writeln('  (keine)');
+        }
+        foreach ($result['signatureHook'] as $k => $v) {
+            $output->writeln('  ' . $k . ' = ' . $v);
+        }
+        $output->writeln('Event-Webhook-Keys (webhook.*) — von Signaturen UNBERÜHRT, u. a. Push-Benachrichtigungen:');
+        $webhooks = $result['webhookKeys'] ?? [];
+        if ($webhooks === []) {
+            $output->writeln('  (keine)');
+        }
+        foreach ($webhooks as $k) {
+            $output->writeln('  ' . $k);
+        }
+        $output->writeln('Rollback verfügbar: ' . ($result['rollbackAvailable'] ? 'ja' : 'nein'));
         return 0;
     }
 }
