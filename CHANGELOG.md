@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.45.0] — 2026-09
+
+### Added
+
+- **Eigenes Signatures-Menü in Central**: dedizierte Admin-Seite
+  (`/apps/souvera_central/signatures`) mit vollständigem Template-Editor,
+  Overrides, Fallbacks, Logo und MTA-Hook — ersetzt den Einstellungs-
+  Unterabschnitt (dort verbleibt ein Verweis).
+- Sieve-Hook-Ausschließlichkeit: ist der MTA-Hook aktiv, entfernt der
+  Settings-Sync das Sieve-Signatur-Script automatisch (keine doppelten
+  Signaturen).
+
 ## [0.44.0] — 2026-09
 
 ### Added
