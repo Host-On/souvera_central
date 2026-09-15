@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace OCA\SouveraCentral\Service;
+
 /**
  * Verkabelt den zentralen Signatur-MTA-Hook AUTOMATISCH in die
  * Stalwart-Konfiguration der Cloud — über die Stalwart-WebAdmin-API

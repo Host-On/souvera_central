@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.46.1] — 2026-09
+
+### Fixed
+
+- **Hotfix „Cannot redeclare class StalwartConfigService"**: die Datei
+  hatte keine Namespace-Deklaration (globale Klasse → Doppel-Include beim
+  occ-Boot, kompletter occ-Ausfall). Vollscan: alle lib-Dateien haben
+  Namespaces.
+
 ## [0.46.0] — 2026-09
 
 ### Added
