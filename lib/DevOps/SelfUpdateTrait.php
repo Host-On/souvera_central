@@ -361,6 +361,23 @@ trait SelfUpdateTrait
             $this->rmdirRecursive($extractDir);
             return ['error' => 'Cannot copy extracted app into place: ' . $e->getMessage()];
         }
+
+        // INTEGRITÄTS-CHECK: Partial-Copy (NFS-Hänger, Prozess-Abbruch) darf
+        // niemals als „erledigt" durchgehen — sonst bleiben Dateien dauerhaft
+        // weg (Fall 0.46.0: lib aktualisiert, js/css/img verloren). Vergleicht
+        // die Dateianzahl Quelle ↔ Ziel; bei Mismatch → Restore aus Backup.
+        $srcCount = $this->countFiles($sourceDir);
+        $dstCount = $this->countFiles($appPath);
+        if ($srcCount !== $dstCount) {
+            $this->rmdirRecursive($appPath);
+            $this->copyRecursive($backupDir, $appPath);
+            $this->rmdirRecursive($backupDir);
+            $this->rmdirRecursive($extractDir);
+            return [
+                'error' => "Integrity check failed: source has {$srcCount} files, target has {$dstCount} — backup restored. (Partial copy — meist NFS/Timeout. Retry.)",
+            ];
+        }
+
         $this->rmdirRecursive($sourceDir);
 
         $enableResult = $this->enableApp($appId);
@@ -599,6 +616,21 @@ trait SelfUpdateTrait
             }
         }
         closedir($dir);
+    }
+
+    /** Rekursive Dateianzahl (Verzeichnisse zählen nicht) — Integritätscheck. */
+    private function countFiles(string $dir): int
+    {
+        $count = 0;
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($it as $f) {
+            if ($f->isFile()) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private function rmdirRecursive(string $dir): void

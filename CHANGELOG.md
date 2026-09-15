@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.2] — 2026-09
+
+### Fixed
+
+- **Self-Update-Integritätscheck**: nach dem Datei-Kopieren wird die
+  Dateianzahl Quelle↔Ziel verglichen — ein Partial-Copy (NFS-Hänger/
+  Prozess-Abbruch) wird erkannt und aus dem Backup restauriert, statt
+  als erfolgreiches Update durchzugehen (Fall 0.46.x: lib aktualisiert,
+  js/css/img verloren → weiße Seiten).
+
 ## [0.46.1] — 2026-09
 
 ### Fixed
