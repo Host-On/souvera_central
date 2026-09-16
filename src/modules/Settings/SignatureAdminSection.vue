@@ -3,7 +3,8 @@
 		<div v-if="toast.show" class="sig-admin__toast" :class="'sig-admin__toast--' + toast.type">{{ toast.message }}</div>
 		<!-- Admin-Fallbacks für Variablen -->
 		<div class="sig-admin__block">
-			<label class="field-label">{{ t('souvera_central', 'Fallback values (used when a user has no data in their profile)') }}</label>
+			<h4 class="sig-admin__heading">{{ t('souvera_central', 'Ersatzwerte (Fallbacks)') }}</h4>
+			<p class="sig-admin__hint">{{ t('souvera_central', 'Greifen, wenn ein Nutzer die Daten nicht in seinem Profil pflegt (z. B. zentrale Telefonzentrale).') }}</p>
 			<div class="sig-admin__fallbacks">
 				<input v-model="fallbacks.title" class="sig-admin__input" :placeholder="t('souvera_central', 'Title — e.g. Senior Consultant')" />
 				<input v-model="fallbacks.department" class="sig-admin__input" :placeholder="t('souvera_central', 'Department — e.g. Sales')" />
@@ -17,7 +18,7 @@
 
 		<!-- Logo -->
 		<div class="sig-admin__block">
-			<label class="field-label">{{ t('souvera_central', 'Logo (inline image for the signature)') }}</label>
+			<h4 class="sig-admin__heading">{{ t('souvera_central', 'Logo (Inline-Bild für die Signatur)') }}</h4>
 			<div class="sig-admin__logo">
 				<img v-if="logo" :src="logoUrl" class="sig-admin__logo-img" alt="Logo" />
 				<span v-else class="sig-admin__muted">{{ t('souvera_central', 'No logo uploaded') }}</span>
@@ -33,7 +34,8 @@
 
 		<!-- Overrides -->
 		<div class="sig-admin__block">
-			<label class="field-label">{{ t('souvera_central', 'Per-group / per-user overrides (take priority over the global template)') }}</label>
+			<h4 class="sig-admin__heading">{{ t('souvera_central', 'Overrides — pro Gruppe / pro Benutzer') }}</h4>
+			<p class="sig-admin__hint">{{ t('souvera_central', 'Vorrang vor der globalen Vorlage. Niedrigste Prioritätszahl gewinnt.') }}</p>
 			<table class="sig-admin__table">
 				<thead>
 					<tr><th>{{ t('souvera_central', 'Scope') }}</th><th>{{ t('souvera_central', 'Group / user') }}</th><th>{{ t('souvera_central', 'Priority') }}</th><th>{{ t('souvera_central', 'Active') }}</th><th></th></tr>
@@ -342,7 +344,8 @@ export default {
 </script>
 
 <style scoped>
-.sig-admin__block { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.sig-admin__block { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--color-border); }
+.sig-admin__heading { margin: 0 0 6px; font-size: 14px; font-weight: 700; color: var(--color-main-text); }
 .sig-admin__block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 .sig-admin__fallbacks { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .sig-admin__input { width: 100%; max-width: 420px; }
