@@ -72,10 +72,39 @@ class StatusController extends Controller
                 // Self-Update-Check (warum ein Update nicht greift).
                 'last_error' => $this->jsonAppValue($appId, 'devops.last_error'),
                 'last_result' => $this->jsonAppValue($appId, 'devops.last_result'),
+                // Asset-Existenz auf dem Dateisystem: wenn hier true steht,
+                // die Datei aber per HTTP 404 liefert, liegt die Störung im
+                // WEBSERVER/PROXY (Caddy), nicht im App-Update.
+                'assets_on_disk' => $this->checkAssets($appId),
             ];
         }
 
         return new DataResponse($result);
+    }
+
+    /** Prüft, ob die Haupt-Bundles der App physisch existieren. */
+    private function checkAssets(string $appId): ?array {
+        try {
+            $path = $this->appManager->getAppPath($appId);
+            if ($path === null) {
+                return null;
+            }
+            $out = [];
+            foreach (['js/souvera_' . $appId . '-main.js', 'css/main.css', 'img/app.svg'] as $rel) {
+                $out[$rel] = \is_file($path . '/' . $rel);
+            }
+            // mail/central: zusätzlich das große v2/v1-Bundle
+            $bundle = 'js/souvera_' . $appId . '-main.js';
+            if ($appId === 'souvera_mail' && \is_file($path . '/js/souvera_mail-v2.js')) {
+                $out['js/souvera_mail-v2.js'] = true;
+            }
+            if ($appId === 'souvera_mailarchiv' || $appId === 'desk') {
+                unset($out[$bundle]);
+            }
+            return $out;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** @return mixed|null */
