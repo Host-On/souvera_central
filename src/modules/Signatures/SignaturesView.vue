@@ -1,5 +1,6 @@
 <template>
 	<div class="signatures-view">
+		<div v-if="toast.show" class="signatures-view__toast" :class="'signatures-view__toast--' + toast.type">{{ toast.message }}</div>
 		<header class="signatures-view__header">
 			<h2>{{ t('souvera_central', 'E-Mail-Signaturen') }}</h2>
 			<p class="signatures-view__intro">
@@ -234,6 +235,7 @@ export default {
 			testEmail: '',
 			previewHtml: '',
 			previewNotFound: false,
+			toast: { show: false, type: 'success', message: '' },
 		}
 	},
 	computed: {
@@ -261,6 +263,11 @@ export default {
 		this.loadGlobal()
 	},
 	methods: {
+		/** Inline-Toast (central hat kein @nextcloud/dialogs als Dependency). */
+		toast(type, message) {
+			this.toast = { show: true, type, message }
+			setTimeout(() => { this.toast = { show: false, type, message } }, 4000)
+		},
 		async loadGlobal() {
 			try {
 				const r = await axios.get(generateUrl('/apps/souvera_central/api/signature-admin/overview'))
@@ -288,10 +295,10 @@ export default {
 						server_side: this.signature.server_side,
 					},
 				})
-				showSuccess(this.t('souvera_central', 'Signatur-Vorlage gespeichert'))
+				this.toast('success', this.t('souvera_central', 'Signatur-Vorlage gespeichert'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Speichern fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
 			} finally {
 				this.saving = false
 			}
@@ -302,10 +309,10 @@ export default {
 		async saveFallbacks() {
 			try {
 				await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/fallbacks'), { fallbacks: this.fallbacks })
-				showSuccess(this.t('souvera_central', 'Ersatzwerte gespeichert'))
+				this.toast('success', this.t('souvera_central', 'Ersatzwerte gespeichert'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Speichern fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
 			}
 		},
 		async saveOverride() {
@@ -319,12 +326,12 @@ export default {
 					active: true,
 				})
 				const data = unwrap(r) || {}
-				if (data.error) { showError(data.error); return }
+				if (data.error) { this.toast('error', data.error); return }
 				this.overrides = data.overrides || []
-				showSuccess(this.t('souvera_central', 'Override gespeichert'))
+				this.toast('success', this.t('souvera_central', 'Override gespeichert'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Speichern fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
 			}
 		},
 		async deleteOverride(id) {
@@ -332,10 +339,10 @@ export default {
 				const r = await axios.delete(generateUrl('/apps/souvera_central/api/signature-admin/overrides/' + id))
 				const data = unwrap(r) || {}
 				this.overrides = data.overrides || []
-				showSuccess(this.t('souvera_central', 'Override gelöscht'))
+				this.toast('success', this.t('souvera_central', 'Override gelöscht'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Löschen fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Löschen fehlgeschlagen'))
 			}
 		},
 		loadOverride(o) {
@@ -355,13 +362,13 @@ export default {
 			try {
 				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/logo'), fd)
 				const data = unwrap(r) || {}
-				if (data.error) { showError(data.error); return }
+				if (data.error) { this.toast('error', data.error); return }
 				this.logo = data.logo
 				this.logoUrl = generateUrl('/apps/souvera_central/api/signature-admin/logo/bytes') + '?t=' + Date.now()
-				showSuccess(this.t('souvera_central', 'Logo hochgeladen'))
+				this.toast('success', this.t('souvera_central', 'Logo hochgeladen'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Upload fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Upload fehlgeschlagen'))
 			}
 		},
 		async deleteLogo() {
@@ -379,10 +386,10 @@ export default {
 					enabled: this.hook.enabled,
 					sizeLimit: this.hook.sizeLimit,
 				})
-				showSuccess(this.t('souvera_central', 'Hook-Einstellungen gespeichert'))
+				this.toast('success', this.t('souvera_central', 'Hook-Einstellungen gespeichert'))
 			} catch (e) {
 				console.error(e)
-				showError(this.t('souvera_central', 'Speichern fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
 			}
 		},
 		async rotateSecret() {
@@ -390,7 +397,7 @@ export default {
 				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/hook/rotate-secret'))
 				const data = unwrap(r) || {}
 				this.secret = data.secret || ''
-				showSuccess(this.t('souvera_central', 'Neues Secret generiert — Stalwart-Konfiguration aktualisieren!'))
+				this.toast('success', this.t('souvera_central', 'Neues Secret generiert — Stalwart-Konfiguration aktualisieren!'))
 			} catch (e) {
 				console.error(e)
 			}
