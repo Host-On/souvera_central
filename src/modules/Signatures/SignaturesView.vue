@@ -23,11 +23,6 @@
 					<span>{{ t('souvera_central', 'Globale Mail-Signatur aktivieren') }}</span>
 				</label>
 
-				<label class="signatures-view__checkbox">
-					<input v-model="signature.server_side" type="checkbox" data-testid="sig-serverside-checkbox" />
-					<span>{{ t('souvera_central', 'Serverseitig für ALLE SMTP-Clients erzwingen (Thunderbird, Outlook, mobil — Sieve-Script in Stalwart)') }}</span>
-				</label>
-
 				<div v-if="signature.enabled" class="signatures-view__editor">
 					<label class="signatures-view__label">{{ t('souvera_central', 'Signatur (HTML)') }}</label>
 					<textarea v-model="signature.template" class="signatures-view__textarea" rows="8"
@@ -220,7 +215,7 @@ export default {
 		return {
 			saving: false,
 			variables: ['%name%', '%first_name%', '%last_name%', '%email%', '%domain%', '%title%', '%department%', '%phone%', '%company%'],
-			signature: { enabled: false, template: '', server_side: false },
+			signature: { enabled: false, template: '' },
 			fallbacks: { title: '', department: '', phone: '', company: '' },
 			overrides: [],
 			overrideForm: { scope: 'group', scopeValue: '', priority: 100, html: '', text: '' },
@@ -273,7 +268,6 @@ export default {
 				const r = await axios.get(generateUrl('/apps/souvera_central/api/signature-admin/overview'))
 				const data = unwrap(r) || {}
 				this.signature.enabled = !!data.globalEnabled
-				this.signature.server_side = !!data.globalServerSide
 				this.signature.template = data.globalTemplate || ''
 				this.fallbacks = { title: '', department: '', phone: '', company: '', ...(data.fallbacks || {}) }
 				this.overrides = data.overrides || []
@@ -292,7 +286,6 @@ export default {
 					signature: {
 						enabled: this.signature.enabled,
 						template: this.signature.template,
-						server_side: this.signature.server_side,
 					},
 				})
 				this.toast('success', this.t('souvera_central', 'Signatur-Vorlage gespeichert'))
