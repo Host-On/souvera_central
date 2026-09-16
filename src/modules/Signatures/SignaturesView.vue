@@ -50,6 +50,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t } from '@nextcloud/l10n'
 import SignatureAdminSection from '../Settings/SignatureAdminSection.vue'
 
 const unwrap = (response) => response.data.ocs?.data || response.data.data || response.data
