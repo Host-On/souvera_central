@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Controller;
 
 use OCA\SouveraCentral\AppInfo\Application;
+use OCA\SouveraCentral\Service\MailSignatureDeployService;
 use OCA\SouveraCentral\Service\SignatureInjectionService;
 use OCA\SouveraCentral\Service\SignatureResolverService;
 use OCA\SouveraCentral\Service\StalwartConfigService;
@@ -44,6 +45,7 @@ class SignatureAdminController extends OCSController {
         private IGroupManager $groupManager,
         private SignatureResolverService $resolver,
         private SignatureInjectionService $injection,
+        private MailSignatureDeployService $signatureDeploy,
         private StalwartConfigService $stalwartConfig,
     ) {
         parent::__construct($appName, $request);
@@ -55,13 +57,13 @@ class SignatureAdminController extends OCSController {
         $overrides = [];
         $assets = [];
         $dbWarning = null;
-        try {
-            $overrides = $this->getOverrides();
-            $assets = $this->getAssets();
-        } catch (\Throwable $e) {
-            // DB-Fehler (typisch: Migration fehlt → sig-Tabellen existieren nicht)
-            // — graceful: leere Listen + klarer Warn-Text statt 500.
-            $dbWarning = 'DB-Fehler: ' . $e->getMessage() . ' — bitte occ migrations:migrate souvera_central ausführen';
+        $healed = $this->withSigTables(fn () => [$this->getOverrides(), $this->getAssets()]);
+        if ($healed['ok']) {
+            [$overrides, $assets] = $healed['value'];
+            $dbWarning = $healed['warning'] ?? null;
+        } else {
+            // Selbstheilung fehlgeschlagen — klare Diagnose statt 500.
+            $dbWarning = $healed['warning'] ?? 'DB-Fehler bei den Signatur-Tabellen';
         }
         $out = [
             'globalEnabled' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.enabled', '0') === '1',
@@ -96,6 +98,52 @@ class SignatureAdminController extends OCSController {
         return new DataResponse(['success' => true, 'fallbacks' => $clean]);
     }
 
+    /**
+     * POST /api/signature-admin/global — speichert enabled/template/server_side
+     * über MANUELLE Body-Lesung (jsonBody) statt OCS-Array-Binding, das am
+     * Plain-Pfad nicht greift (der alte settings_api-Pfad übersprang den
+     * Signatur-Block stumm → „speichert nicht“). Löst zusätzlich den
+     * Sieve-Deploy-Abgleich aus und meldet dessen Status.
+     */
+    #[NoAdminRequired]
+    public function saveGlobal(): DataResponse {
+        $body = $this->jsonBody();
+        $sig = \is_array($body['signature'] ?? null) ? $body['signature'] : [];
+
+        $changed = false;
+        if (\array_key_exists('enabled', $sig)) {
+            $this->config->setAppValue(Application::APP_ID, 'settings.mail_signature.enabled', ((bool) $sig['enabled']) ? '1' : '0');
+            $changed = true;
+        }
+        if (\array_key_exists('server_side', $sig)) {
+            $this->config->setAppValue(Application::APP_ID, 'settings.mail_signature.server_side', ((bool) $sig['server_side']) ? '1' : '0');
+            $changed = true;
+        }
+        if (\array_key_exists('template', $sig)) {
+            $this->config->setAppValue(Application::APP_ID, 'settings.mail_signature.template', (string) $sig['template']);
+            $changed = true;
+        }
+        if (!$changed) {
+            return new DataResponse(['error' => 'Keine Signatur-Felder im Body (signature{enabled,server_side,template})'], Http::STATUS_BAD_REQUEST);
+        }
+
+        // Sieve-Abgleich wie im alten settings_api-Pfad (nicht blockierend).
+        $deploy = null;
+        try {
+            $deploy = $this->signatureDeploy->sync();
+        } catch (\Throwable $e) {
+            $deploy = ['action' => 'sync', 'ok' => false, 'error' => $e->getMessage()];
+        }
+
+        $this->resolver->clearCache();
+        return new DataResponse([
+            'success' => true,
+            'globalEnabled' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.enabled', '0') === '1',
+            'globalServerSide' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.server_side', '0') === '1',
+            'signature_deploy' => $deploy,
+        ]);
+    }
+
     #[NoAdminRequired]
     public function listOverrides(): DataResponse {
         return new DataResponse(['overrides' => $this->getOverrides()]);
@@ -124,7 +172,7 @@ class SignatureAdminController extends OCSController {
         }
 
         $now = \time();
-        try {
+        $write = $this->withSigTables(function () use ($id, $scope, $scopeValue, $html, $text, $priority, $replacePersonal, $active, $now): void {
             if ($id > 0) {
                 $this->db->executeStatement(
                     'UPDATE *PREFIX*souvera_central_sig_overrides SET scope = ?, scope_value = ?, html = ?, text = ?, priority = ?, replace_personal = ?, active = ? WHERE id = ?',
@@ -136,8 +184,9 @@ class SignatureAdminController extends OCSController {
                     [$scope, $scopeValue, $html, $text, $priority, $replacePersonal ? 1 : 0, $active ? 1 : 0, $now]
                 );
             }
-        } catch (\Throwable $e) {
-            return new DataResponse(['error' => 'DB: ' . $e->getMessage() . ' — Migration läuft? (occ migrations:migrate souvera_central)'], Http::STATUS_BAD_REQUEST);
+        });
+        if (!$write['ok']) {
+            return new DataResponse(['error' => $write['warning'] ?? 'DB-Fehler'], Http::STATUS_BAD_REQUEST);
         }
         $this->resolver->clearCache();
         return new DataResponse(['success' => true, 'overrides' => $this->getOverrides()]);
@@ -145,9 +194,18 @@ class SignatureAdminController extends OCSController {
 
     #[NoAdminRequired]
     public function deleteOverride(int $id): DataResponse {
-        $this->db->executeStatement('DELETE FROM *PREFIX*souvera_central_sig_overrides WHERE id = ?', [$id]);
+        if ($id <= 0) {
+            return new DataResponse(['error' => 'Ungültige ID'], Http::STATUS_BAD_REQUEST);
+        }
+        $del = $this->withSigTables(function () use ($id): void {
+            $this->db->executeStatement('DELETE FROM *PREFIX*souvera_central_sig_overrides WHERE id = ?', [$id]);
+        });
+        if (!$del['ok']) {
+            return new DataResponse(['error' => $del['warning'] ?? 'DB-Fehler'], Http::STATUS_BAD_REQUEST);
+        }
         $this->resolver->clearCache();
-        return new DataResponse(['success' => true, 'overrides' => $this->getOverrides()]);
+        $list = $this->withSigTables(fn () => $this->getOverrides());
+        return new DataResponse(['success' => true, 'overrides' => $list['ok'] ? $list['value'] : []]);
     }
 
     /**
@@ -157,7 +215,15 @@ class SignatureAdminController extends OCSController {
      */
     #[NoAdminRequired]
     public function uploadAssets(): DataResponse {
+        // Multi-Upload: PHP liefert name[0..n]/tmp_name[0..n]; IRequest als
+        // Fallback für Umgebungen, in denen $_FILES nicht direkt befüllt ist.
         $files = $_FILES['assets'] ?? null;
+        if (!\is_array($files) || !isset($files['name'])) {
+            $single = $this->request->getUploadedFile('assets');
+            if (\is_array($single) && isset($single['name'])) {
+                $files = $single;
+            }
+        }
         if (!\is_array($files) || !isset($files['name'])) {
             return new DataResponse(['error' => 'Keine Dateien übertragen (Feld "assets")'], Http::STATUS_BAD_REQUEST);
         }
@@ -184,14 +250,16 @@ class SignatureAdminController extends OCSController {
             }
             $clean = \basename((string) $name);
             $slug = $this->slugForFilename($clean, $this->existingSlugs());
-            try {
+            $ins = $this->withSigTables(function () use ($clean, $finfo, $data): void {
                 $this->db->executeStatement(
                     'INSERT INTO *PREFIX*souvera_central_sig_assets (name, mime, data) VALUES (?, ?, ?)',
                     [$clean, $finfo, $data]
                 );
+            });
+            if ($ins['ok']) {
                 $stored[] = $slug;
-            } catch (\Throwable $e) {
-                $errors[] = $clean . ': DB-Fehler (Migration läuft?) — ' . $e->getMessage();
+            } else {
+                $errors[] = $clean . ': ' . ($ins['warning'] ?? 'DB-Fehler');
             }
         }
         if ($stored === [] && $errors === []) {
@@ -397,6 +465,36 @@ class SignatureAdminController extends OCSController {
             }
         }
         return null;
+    }
+
+    /**
+     * Selbstheilung: fehlen die Signatur-Tabellen (Migration nie gelaufen —
+     * z. B. nach Datei-Heal ohne Self-Update), wird die Migration idempotent
+     * aus dem Request heraus ausgeführt (identisch zu occ migrations:migrate).
+     *
+     * @template T
+     * @param callable():T $query Db-Abfrage, die die Signatur-Tabellen nutzt
+     * @return array{ok: bool, value: mixed, warning?: string}
+     */
+    private function withSigTables(callable $query): array {
+        try {
+            return ['ok' => true, 'value' => $query()];
+        } catch (\Throwable $first) {
+            try {
+                $ms = new \OC\DB\MigrationService('souvera_central', \OCP\Server::get(\OCP\IDBConnection::class));
+                $ms->migrate();
+            } catch (\Throwable $mig) {
+                return ['ok' => false, 'value' => null,
+                    'warning' => 'Tabellen-Fehler und Selbstheilung fehlgeschlagen: '
+                        . $first->getMessage() . ' / Migration: ' . $mig->getMessage()];
+            }
+            try {
+                return ['ok' => true, 'value' => $query(), 'warning' => 'Signatur-Tabellen wurden automatisch angelegt (Migration nachgeholt).'];
+            } catch (\Throwable $second) {
+                return ['ok' => false, 'value' => null,
+                    'warning' => 'DB-Fehler trotz Migration: ' . $second->getMessage()];
+            }
+        }
     }
 
     /** @return array<string, mixed> */

@@ -67,6 +67,7 @@ return [
         ['name' => 'signature_hook#hook', 'url' => '/signature/hook', 'verb' => 'POST'],
         // Signatur-Admin-API (Souvera-Admins, via SouveraAdminMiddleware)
         ['name' => 'signature_admin#overview', 'url' => '/api/signature-admin/overview', 'verb' => 'GET'],
+        ['name' => 'signature_admin#saveGlobal', 'url' => '/api/signature-admin/global', 'verb' => 'POST'],
         ['name' => 'signature_admin#setFallbacks', 'url' => '/api/signature-admin/fallbacks', 'verb' => 'POST'],
         ['name' => 'signature_admin#listOverrides', 'url' => '/api/signature-admin/overrides', 'verb' => 'GET'],
         ['name' => 'signature_admin#saveOverride', 'url' => '/api/signature-admin/overrides', 'verb' => 'POST'],

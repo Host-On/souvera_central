@@ -179,8 +179,8 @@ trait SelfUpdateTrait
             $url = "https://api.github.com/repos/$repo/zipball/$branch";
         }
         $result = $this->downloadAndApply($appId, $appPath, $url);
-        if (!isset($result['error'])) {
-            $this->runAppMigrations($appId);
+        if (!isset($result['error']) && !$this->runAppMigrations($appId)) {
+            $result['migrations_failed'] = true;
         }
         if (empty($result['error'])) {
             \OCP\Server::get(\OCP\IConfig::class)
@@ -207,8 +207,8 @@ trait SelfUpdateTrait
                 . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
                 . rawurlencode($rawTag);
             $applied = $this->downloadAndApply($appId, $appPath, $url);
-        if (!isset($applied['error'])) {
-            $this->runAppMigrations($appId);
+        if (!isset($applied['error']) && !$this->runAppMigrations($appId)) {
+            $applied['migrations_failed'] = true;
         }
         return $applied;
         }
@@ -220,8 +220,8 @@ trait SelfUpdateTrait
         }
         $url = "https://api.github.com/repos/$repo/zipball/" . ($rawTag !== '' ? $rawTag : "v$tag");
         $applied = $this->downloadAndApply($appId, $appPath, $url);
-        if (!isset($applied['error'])) {
-            $this->runAppMigrations($appId);
+        if (!isset($applied['error']) && !$this->runAppMigrations($appId)) {
+            $applied['migrations_failed'] = true;
         }
         return $applied;
     }
@@ -257,8 +257,9 @@ trait SelfUpdateTrait
      * stale opcache/container definitions behind (phantom classes like
      * „Command\StalwartService" in the logs).
      */
-    private function runAppMigrations(string $appId): void
+    private function runAppMigrations(string $appId): bool
     {
+        $ok = true;
         try {
             $connection = \OCP\Server::get(\OCP\IDBConnection::class);
             $ms = new \OC\DB\MigrationService($appId, $connection);
@@ -266,6 +267,7 @@ trait SelfUpdateTrait
             \OCP\Server::get(\Psr\Log\LoggerInterface::class)
                 ->info('Souvera SelfUpdate: migrations executed', ['app' => $appId]);
         } catch (\Throwable $e) {
+            $ok = false;
             \OCP\Server::get(\Psr\Log\LoggerInterface::class)
                 ->error('Souvera SelfUpdate: migrations failed for ' . $appId . ': ' . $e->getMessage());
         }
@@ -280,6 +282,8 @@ trait SelfUpdateTrait
         } catch (\Throwable $e) {
             // best effort
         }
+
+        return $ok;
     }
 
     private function downloadAndApply(string $appId, string $appPath, string $url): array

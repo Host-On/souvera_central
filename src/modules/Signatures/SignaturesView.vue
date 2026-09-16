@@ -1,6 +1,7 @@
 <template>
 	<div class="signatures-view">
 		<div v-if="toast.show" class="signatures-view__toast" :class="'signatures-view__toast--' + toast.type">{{ toast.message }}</div>
+		<div v-if="pageWarning" class="signatures-view__warning" data-testid="sig-page-warning">{{ pageWarning }}</div>
 		<header class="signatures-view__header">
 			<h2>{{ t('souvera_central', 'E-Mail-Signaturen') }}</h2>
 			<p class="signatures-view__intro">
@@ -53,7 +54,7 @@
 				<span class="signatures-view__step">2</span>
 				<div>
 					<h3>{{ t('souvera_central', 'Bilder (Inline-Grafiken für die Signatur)') }}</h3>
-					<p class="signatures-view__help">{{ t('souvera_central', 'Mehrere Bilder möglich (PNG/JPG/SVG/WebP, max. 512 KB je Bild). Jedes Bild erhält eine CID — im HTML-Template referenzieren mit: <img src="cid:<cid>">') }}</p>
+					<p class="signatures-view__help">{{ t('souvera_central', 'Mehrere Bilder möglich (PNG/JPG/SVG/WebP, max. 512 KB je Bild). Jedes Bild erhält eine CID (siehe Liste) — im HTML-Template verwenden:') }} <code class="signatures-view__code">src="cid:CID-AUS-DER-LISTE"</code></p>
 				</div>
 			</div>
 			<div class="signatures-view__body">
@@ -239,6 +240,7 @@ export default {
 			previewHtml: '',
 			previewNotFound: false,
 			toast: { show: false, type: 'success', message: '' },
+			pageWarning: '',
 		}
 	},
 	computed: {
@@ -280,6 +282,7 @@ export default {
 				this.fallbacks = { title: '', department: '', phone: '', company: '', ...(data.fallbacks || {}) }
 				this.overrides = data.overrides || []
 				this.assets = data.assets || []
+				this.pageWarning = data.warning || ''
 				this.hook.enabled = !!(data.hook && data.hook.enabled)
 				this.hook.sizeLimit = (data.hook && data.hook.sizeLimit) || 10485760
 			} catch (e) {
@@ -289,13 +292,21 @@ export default {
 		async saveGlobal() {
 			this.saving = true
 			try {
-				await axios.put(generateUrl('/apps/souvera_central/api/settings'), {
+				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/global'), {
 					signature: {
 						enabled: this.signature.enabled,
 						template: this.signature.template,
 					},
 				})
+				const data = unwrap(r) || {}
+				if (data.error) {
+					this.toast('error', data.error)
+					return
+				}
 				this.toast('success', this.t('souvera_central', 'Signatur-Vorlage gespeichert'))
+				if (data.signature_deploy && data.signature_deploy.ok === false && data.signature_deploy.error) {
+					this.toast('error', this.t('souvera_central', 'Stalwart-Abgleich fehlgeschlagen: {e}', { e: String(data.signature_deploy.error).slice(0, 120) }))
+				}
 			} catch (e) {
 				console.error(e)
 				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
