@@ -25,6 +25,14 @@ Webmail (souvera_mail): Compose fügt dieselbe Signatur direkt ein
   keine Doppel-Signatur.
 ```
 
+## Wichtig für den Stable-/Dev-Kanal (GitLab-Archiv-Cache)
+
+GitLab cachet `repository/archive.zip` pro SHA. Nach dem Pushen neuer
+Versionen zusätzlich sicherstellen, dass der Self-Update einen aktuellen
+Commit zieht (neuer Commit = neue SHA = frisches Archiv). Ein stale
+Archiv-Cache hat bereits dazu geführt, dass Clouds einen Stand ohne
+js/css/img installierten (weiße Seiten).
+
 ## Einrichtung (pro Cloud)
 
 1. **Central aktualisieren** (≥ 0.44.0) — Migrationen laufen automatisch.
