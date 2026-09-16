@@ -22,6 +22,11 @@
 					<span>{{ t('souvera_central', 'Globale Mail-Signatur aktivieren') }}</span>
 				</label>
 
+				<label class="signatures-view__checkbox">
+					<input v-model="signature.server_side" type="checkbox" data-testid="sig-serverside-checkbox" />
+					<span>{{ t('souvera_central', 'Serverseitig für ALLE SMTP-Clients erzwingen (Thunderbird, Outlook, mobil — Sieve-Script in Stalwart)') }}</span>
+				</label>
+
 				<div v-if="signature.enabled" class="signatures-view__editor">
 					<label class="signatures-view__label">{{ t('souvera_central', 'Signatur (HTML)') }}</label>
 					<textarea v-model="signature.template" class="signatures-view__textarea" rows="8"
@@ -261,6 +266,7 @@ export default {
 				const r = await axios.get(generateUrl('/apps/souvera_central/api/signature-admin/overview'))
 				const data = unwrap(r) || {}
 				this.signature.enabled = !!data.globalEnabled
+				this.signature.server_side = !!data.globalServerSide
 				this.signature.template = data.globalTemplate || ''
 				this.fallbacks = { title: '', department: '', phone: '', company: '', ...(data.fallbacks || {}) }
 				this.overrides = data.overrides || []

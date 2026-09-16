@@ -54,6 +54,7 @@ class SignatureAdminController extends OCSController {
     public function overview(): DataResponse {
         return new DataResponse([
             'globalEnabled' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.enabled', '0') === '1',
+            'globalServerSide' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.server_side', '0') === '1',
             'globalTemplate' => (string) $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.template', ''),
             'variables' => ['%name%', '%first_name%', '%last_name%', '%email%', '%domain%', '%title%', '%department%', '%phone%', '%company%'],
             'fallbacks' => $this->getFallbacks(),
