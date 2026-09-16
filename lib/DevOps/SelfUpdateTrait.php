@@ -169,9 +169,12 @@ trait SelfUpdateTrait
         }
 
         if ($this->isGitlabApp()) {
+            // AUFgelösten Commit-SHA statt Branch-Namen: GitLab cachet
+            // archive.zip pro SHA-String — "?sha=main" kann einen STALE
+            // Stand liefern (Fall 0.46/0.47: Zipball ohne js/css/img).
             $url = $this->gitlabBase() . '/api/v4/projects/'
                 . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
-                . rawurlencode($branch);
+                . rawurlencode($latestSha) . '&_=' . time();
         } else {
             $url = "https://api.github.com/repos/$repo/zipball/$branch";
         }
@@ -379,16 +382,20 @@ trait SelfUpdateTrait
         // INTEGRITÄTS-CHECK: Partial-Copy (NFS-Hänger, Prozess-Abbruch) darf
         // niemals als „erledigt" durchgehen — sonst bleiben Dateien dauerhaft
         // weg (Fall 0.46.0: lib aktualisiert, js/css/img verloren). Vergleicht
-        // die Dateianzahl Quelle ↔ Ziel; bei Mismatch → Restore aus Backup.
-        $srcCount = $this->countFiles($sourceDir);
-        $dstCount = $this->countFiles($appPath);
-        if ($srcCount !== $dstCount) {
+        // die relativen Pfade Quelle ↔ Ziel; bei Mismatch → Restore + Liste
+        // der fehlenden Dateien im Fehler-Output.
+        $srcFiles = $this->listRelativeFiles($sourceDir);
+        $dstFiles = $this->listRelativeFiles($appPath);
+        $missing = \array_values(\array_diff($srcFiles, $dstFiles));
+        if ($missing !== [] || \count($srcFiles) !== \count($dstFiles)) {
+            $missingList = \implode(', ', \array_slice($missing, 0, 10));
             $this->rmdirRecursive($appPath);
             $this->copyRecursive($backupDir, $appPath);
             $this->rmdirRecursive($backupDir);
             $this->rmdirRecursive($extractDir);
             return [
-                'error' => "Integrity check failed: source has {$srcCount} files, target has {$dstCount} — backup restored. (Partial copy — meist NFS/Timeout. Retry.)",
+                'error' => 'Integrity check failed: ' . \count($missing) . ' of ' . \count($srcFiles)
+                    . ' files missing after copy — backup restored. Missing: ' . ($missingList ?: 'count mismatch'),
             ];
         }
 
@@ -603,6 +610,26 @@ trait SelfUpdateTrait
         return is_array($data) ? $data : null;
     }
 
+    /**
+     * Alle Dateien als relative Pfade (für den Integritäts-Vergleich).
+     * @return list<string>
+     */
+    private function listRelativeFiles(string $dir): array
+    {
+        $out = [];
+        $baseLen = \strlen(\rtrim($dir, '/') . '/');
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($it as $f) {
+            if ($f->isFile()) {
+                $out[] = \substr($f->getPathname(), $baseLen);
+            }
+        }
+        \sort($out);
+        return $out;
+    }
+
     private function copyRecursive(string $src, string $dst): void
     {
         $dir = @opendir($src);
@@ -619,8 +646,16 @@ trait SelfUpdateTrait
             if (is_dir($sp)) {
                 $this->copyRecursive($sp, $dp);
             } else {
-                if (!copy($sp, $dp)) {
-                    throw new \RuntimeException("Failed to copy $sp to $dp");
+                // NFS-transiente Fehler: 3 Versuche je Datei (300 ms Abstand),
+                // bevor der ganze Swap abgebrochen wird.
+                $copied = false;
+                for ($try = 0; $try < 3; $try++) {
+                    if (@copy($sp, $dp)) { $copied = true; break; }
+                    usleep(300000);
+                    \clearstatcache(true, $sp);
+                }
+                if (!$copied) {
+                    throw new \RuntimeException("Failed to copy $sp to $dp after 3 attempts");
                 }
                 // Preserve executable bits from source.
                 $spPerms = @fileperms($sp);

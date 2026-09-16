@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.47.1] — 2026-09
+
+### Fixed
+
+- **Self-Update lädt veraltete Archiv-Caches**: der Branch-Download nutzt
+  jetzt den AUFGE Lösten Commit-SHA statt des Branch-Namens (GitLab cachet
+  archive.zip pro SHA-String — ein stale „main“-Archiv lieferte Zipbälle
+  ohne die zuletzt hinzugefügten Dateien: js/css/img).
+- Datei-Kopieren mit 3-fach Retry gegen transiente NFS-Fehler.
+- Integritäts-Check listet jetzt die FEHLENDEN Dateien namentlich im
+  Fehler-Output (statt nur Zähler).
+
 ## [0.47.0] — 2026-09
 
 ### Added
