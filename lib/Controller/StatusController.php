@@ -68,10 +68,24 @@ class StatusController extends Controller
                 'last_check_ago_min' => $lastCheck ? intval((time() - $lastCheck) / 60) : null,
                 'releases' => $releases,
                 'branch_head' => $branchHead,
+                // Diagnose: der letzte fehlgeschlagene/erfolgreiche
+                // Self-Update-Check (warum ein Update nicht greift).
+                'last_error' => $this->jsonAppValue($appId, 'devops.last_error'),
+                'last_result' => $this->jsonAppValue($appId, 'devops.last_result'),
             ];
         }
 
         return new DataResponse($result);
+    }
+
+    /** @return mixed|null */
+    private function jsonAppValue(string $appId, string $key) {
+        $raw = trim((string) $this->config->getAppValue($appId, $key, ''));
+        if ($raw === '') {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        return $decoded !== null ? $decoded : $raw;
     }
 
     private function fetchReleases(string $appId): array

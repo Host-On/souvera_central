@@ -31,6 +31,9 @@ trait SelfUpdateTrait
         $config = \OCP\Server::get(\OCP\IConfig::class);
         // EIN Suite-Channel für alle Apps (dev = main-HEAD, stable = Release)
         $channel = \OCP\Server::get(\OCA\SouveraCentral\Service\ConfigService::class)->getSuiteUpdateChannel();
+        // Manual (occ souvera:self-update) = Reparatur-Modus: SHA-Gate und
+        // Rate-Limits werden umgangen — erzwingt den vollen Re-Swap, falls
+        // ein früherer Swap partiell war (Dateien fehlen, SHA „stimmt“).
 
         if ($channel === 'stable' && !$manual) {
             // Release channel: check/install at most once per 24h and only
@@ -70,7 +73,7 @@ trait SelfUpdateTrait
             $branch = trim((string) $config->getAppValue($appId, 'devops.branch', 'main'));
 
             if ($channel === 'dev') {
-                $result = $this->downloadBranch($appId, $appPath, $branch);
+                $result = $this->downloadBranch($appId, $appPath, $branch, $manual);
             } else {
                 $latest = $this->latestReleaseTag();
                 if ($latest === null) {
@@ -86,6 +89,14 @@ trait SelfUpdateTrait
             // Only write the timestamp after a successful check (or real update).
             if (empty($result['error'])) {
                 $config->setAppValue($appId, 'devops.last_check', (string) time());
+                $config->setAppValue($appId, 'devops.last_error', '');
+                $config->setAppValue($appId, 'devops.last_result',
+                    json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            } else {
+                // Fehler sichtbar machen (devops status) — sonst bleibt ein
+                // dauerhaft fehlschlagender Update-Job unsichtbar.
+                $config->setAppValue($appId, 'devops.last_error',
+                    json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             }
             return $result;
         } finally {
@@ -136,7 +147,7 @@ trait SelfUpdateTrait
         return null;
     }
 
-    private function downloadBranch(string $appId, string $appPath, string $branch): array
+    private function downloadBranch(string $appId, string $appPath, string $branch, bool $force = false): array
     {
         $repo = $this->getRepo();
         if ($repo === '') {
@@ -150,7 +161,10 @@ trait SelfUpdateTrait
         }
         $lastSha = trim((string) \OCP\Server::get(\OCP\IConfig::class)
             ->getAppValue($appId, 'devops.last_sha', ''));
-        if ($latestSha === $lastSha) {
+        // Reparatur-Modus (occ souvera:self-update): SHA-Gate umgehen — ein
+        // früherer partieller Swap hinterlässt einen „passenden“ SHA bei
+        // FEHLENDEN Dateien; ohne Force würde nie repariert.
+        if ($latestSha === $lastSha && !$force) {
             return ['up_to_date' => true, 'sha' => $latestSha];
         }
 

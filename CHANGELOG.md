@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.47.0] — 2026-09
+
+### Added
+
+- **Self-Update-Diagnose + Reparatur-Modus**: `occ souvera:self-update`
+  erzwingt jetzt den vollen Re-Swap (SHA-Gate umgangen) — repariert
+  Instanzen mit partiell getauschten App-Verzeichnissen (Dateien fehlen,
+  SHA „stimmt"). Jeder fehlgeschlagene Update-Check wird in
+  `devops.last_error` persistiert und im öffentlichen DevOps-Status
+  angezeigt — Update-Fehler sind damit ohne Log-Zugriff sichtbar.
+
 ## [0.46.2] — 2026-09
 
 ### Fixed
