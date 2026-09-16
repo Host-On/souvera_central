@@ -115,11 +115,13 @@ class StatusController extends Controller
                 return null;
             }
             $out = [];
-            foreach (['js/souvera_' . $appId . '-main.js', 'css/main.css', 'img/app.svg'] as $rel) {
+            // appIds wie 'souvera_central' — der Bundle-Präfix ist
+            // 'souvera_<rest>' OHNE Doppel-Präfix.
+            $shortApp = \preg_replace('/^souvera_/', '', $appId);
+            $bundle = 'js/souvera_' . $shortApp . '-main.js';
+            foreach ([$bundle, 'css/main.css', 'img/app.svg'] as $rel) {
                 $out[$rel] = \is_file($path . '/' . $rel);
             }
-            // mail/central: zusätzlich das große v2/v1-Bundle
-            $bundle = 'js/souvera_' . $appId . '-main.js';
             if ($appId === 'souvera_mail' && \is_file($path . '/js/souvera_mail-v2.js')) {
                 $out['js/souvera_mail-v2.js'] = true;
             }
