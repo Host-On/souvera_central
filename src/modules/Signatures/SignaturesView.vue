@@ -47,24 +47,33 @@
 			</div>
 		</section>
 
-		<!-- 2 · Logo -->
+		<!-- 2 · Bilder (Multi-Upload) -->
 		<section class="signatures-view__card">
 			<div class="signatures-view__card-head">
 				<span class="signatures-view__step">2</span>
 				<div>
-					<h3>{{ t('souvera_central', 'Logo (Inline-Bild für die Signatur)') }}</h3>
-					<p class="signatures-view__help">{{ t('souvera_central', 'Wird als Inline-Bild (CID) in die Signatur eingebettet. Referenz im HTML-Template: <img src="cid:souvera-sig-logo">') }}</p>
+					<h3>{{ t('souvera_central', 'Bilder (Inline-Grafiken für die Signatur)') }}</h3>
+					<p class="signatures-view__help">{{ t('souvera_central', 'Mehrere Bilder möglich (PNG/JPG/SVG/WebP, max. 512 KB je Bild). Jedes Bild erhält eine CID — im HTML-Template referenzieren mit: <img src="cid:<cid>">') }}</p>
 				</div>
 			</div>
 			<div class="signatures-view__body">
-				<div class="signatures-view__logo">
-					<img v-if="logo" :src="logoUrl" class="signatures-view__logo-img" alt="Logo" />
-					<span v-else class="signatures-view__muted">{{ t('souvera_central', 'Kein Logo hochgeladen') }}</span>
-					<input type="file" accept="image/png,image/jpeg,image/svg+xml" @change="uploadLogo" />
-					<button v-if="logo" class="signatures-view__btn signatures-view__btn--danger" @click="deleteLogo">
-						{{ t('souvera_central', 'Logo entfernen') }}
-					</button>
-				</div>
+				<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple
+					data-testid="sig-assets-input" @change="uploadAssets($event)" />
+
+				<table v-if="assets.length > 0" class="signatures-view__table" data-testid="sig-assets-table">
+					<thead>
+						<tr><th>{{ t('souvera_central', 'Bild') }}</th><th>{{ t('souvera_central', 'CID (zum Kopieren anklicken)') }}</th><th>{{ t('souvera_central', 'Größe') }}</th><th></th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="a in assets" :key="a.slug">
+							<td>{{ a.name }}</td>
+							<td><code class="signatures-view__cid" :title="t('souvera_central', 'CID kopieren')" @click="copyCid(a)">{{ a.cid }}</code></td>
+							<td>{{ formatSize(a.size) }}</td>
+							<td><button class="signatures-view__btn signatures-view__btn--danger" @click="deleteAsset(a.slug)">{{ t('souvera_central', 'Löschen') }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<p v-else class="signatures-view__muted">{{ t('souvera_central', 'Noch keine Bilder hochgeladen.') }}</p>
 			</div>
 		</section>
 
@@ -219,8 +228,7 @@ export default {
 			fallbacks: { title: '', department: '', phone: '', company: '' },
 			overrides: [],
 			overrideForm: { scope: 'group', scopeValue: '', priority: 100, html: '', text: '' },
-			logo: null,
-			logoUrl: '',
+			assets: [],
 			hook: { enabled: false, sizeLimit: 10485760 },
 			secret: '',
 			wireMessage: '',
@@ -271,8 +279,7 @@ export default {
 				this.signature.template = data.globalTemplate || ''
 				this.fallbacks = { title: '', department: '', phone: '', company: '', ...(data.fallbacks || {}) }
 				this.overrides = data.overrides || []
-				this.logo = data.logo
-				this.logoUrl = data.logo ? generateUrl('/apps/souvera_central/api/signature-admin/logo/bytes') + '?t=' + Date.now() : ''
+				this.assets = data.assets || []
 				this.hook.enabled = !!(data.hook && data.hook.enabled)
 				this.hook.sizeLimit = (data.hook && data.hook.sizeLimit) || 10485760
 			} catch (e) {
@@ -347,43 +354,43 @@ export default {
 				text: o.text || '',
 			}
 		},
-		async uploadLogo(ev) {
-			const file = ev.target.files?.[0]
-			if (!file) return
+		async uploadAssets(ev) {
+			const files = Array.from(ev.target.files || [])
+			ev.target.value = ''
+			if (files.length === 0) return
 			const fd = new FormData()
-			fd.append('logo', file)
+			for (const f of files) fd.append('assets', f)
 			try {
-				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/logo'), fd)
+				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/assets'), fd)
 				const data = unwrap(r) || {}
 				if (data.error) { this.toast('error', data.error); return }
-				this.logo = data.logo
-				this.logoUrl = generateUrl('/apps/souvera_central/api/signature-admin/logo/bytes') + '?t=' + Date.now()
-				this.toast('success', this.t('souvera_central', 'Logo hochgeladen'))
+				this.assets = data.assets || []
+				if ((data.errors || []).length) this.toast('error', data.errors.join('; '))
+				this.toast('success', this.t('souvera_central', '{n} Bild(er) hochgeladen', { n: (data.stored || []).length }))
 			} catch (e) {
 				console.error(e)
 				this.toast('error', this.t('souvera_central', 'Upload fehlgeschlagen'))
 			}
 		},
-		async deleteLogo() {
+		async deleteAsset(slug) {
 			try {
-				await axios.delete(generateUrl('/apps/souvera_central/api/signature-admin/logo'))
-				this.logo = null
-				this.logoUrl = ''
+				await axios.delete(generateUrl('/apps/souvera_central/api/signature-admin/assets/' + encodeURIComponent(slug)))
+				this.assets = this.assets.filter((a) => a.slug !== slug)
+				this.toast('success', this.t('souvera_central', 'Bild gelöscht'))
 			} catch (e) {
 				console.error(e)
+				this.toast('error', this.t('souvera_central', 'Löschen fehlgeschlagen'))
 			}
 		},
-		async saveHook() {
-			try {
-				await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/hook'), {
-					enabled: this.hook.enabled,
-					sizeLimit: this.hook.sizeLimit,
-				})
-				this.toast('success', this.t('souvera_central', 'Hook-Einstellungen gespeichert'))
-			} catch (e) {
-				console.error(e)
-				this.toast('error', this.t('souvera_central', 'Speichern fehlgeschlagen'))
-			}
+		copyCid(asset) {
+			navigator.clipboard?.writeText('cid:' + asset.cid)?.catch(() => {})
+			this.toast('success', this.t('souvera_central', 'CID kopiert: {cid}', { cid: asset.cid }))
+		},
+		formatSize(bytes) {
+			if (!bytes) return '—'
+			if (bytes > 1048576) return (bytes / 1048576).toFixed(1) + ' MB'
+			if (bytes > 1024) return (bytes / 1024).toFixed(0) + ' KB'
+			return bytes + ' B'
 		},
 		async rotateSecret() {
 			try {

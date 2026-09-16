@@ -21,7 +21,8 @@ use ZBateson\MailMimeParser\MailMimeParser;
  */
 class SignatureInjectionService {
     private const MARKER_HEADER = 'X-Souvera-Signature';
-    public const LOGO_CONTENT_ID = 'souvera-sig-logo';
+    /** CID-Präfix der Signatur-Assets (souvera-sig-<slug>). */
+    public const ASSET_CID_PREFIX = 'souvera-sig-';
 
     public function __construct(
         private LoggerInterface $logger,
@@ -36,10 +37,11 @@ class SignatureInjectionService {
 
     /**
      * @param array{html: string, text: string} $sig
+     * @param list<array{cid: string, name: string, mime: string, data: string}>|null $assets
      * @param array{name: string, mime: string, data: string}|null $logo
      * @return string|null modifizierte Roh-Mail oder null (unverändert lassen)
      */
-    public function inject(string $rawMessage, array $sig, ?array $logo = null): ?string {
+    public function inject(string $rawMessage, array $sig, ?array $assets = null): ?string {
         try {
             if ($this->isAlreadySigned($rawMessage)) {
                 return null;
@@ -71,13 +73,14 @@ class SignatureInjectionService {
                 return null;
             }
 
-            if ($logo !== null && $htmlPart !== null) {
-                // v1.x-API: addAttachmentPart(resource, mime, filename, disposition, encoding)
-                // — Content-ID/inline nachträglich am erzeugten Part setzen.
-                $message->addAttachmentPart($logo['data'], $logo['mime'], $logo['name'], 'inline');
+            // Alle Assets als Inline-Parts mit ihren CIDs einbetten —
+            // das Template referenziert sie per <img src="cid:<cid>">.
+            foreach (($assets ?? []) as $asset) {
+                if (!isset($asset['cid'], $asset['mime'], $asset['data']) || $asset['data'] === '') { continue; }
+                $message->addAttachmentPart($asset['data'], $asset['mime'], $asset['name'] ?? 'bild', 'inline');
                 $count = $message->getAttachmentCount();
                 $part = $count > 0 ? $message->getAttachmentPart($count - 1) : null;
-                $part?->setRawHeader('Content-ID', '<' . self::LOGO_CONTENT_ID . '>');
+                $part?->setRawHeader('Content-ID', '<' . $asset['cid'] . '>');
             }
 
             $message->setRawHeader(self::MARKER_HEADER, 'injected');

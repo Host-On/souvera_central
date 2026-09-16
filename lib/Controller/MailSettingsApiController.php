@@ -77,7 +77,7 @@ class MailSettingsApiController extends OCSController {
             'html' => $sig['html'],
             'text' => $sig['text'],
             'source' => $sig['source'],
-            'contentId' => SignatureInjectionService::LOGO_CONTENT_ID,
+            'assetCidPrefix' => SignatureInjectionService::ASSET_CID_PREFIX,
         ]);
     }
 

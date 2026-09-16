@@ -59,7 +59,7 @@ class SignatureAdminController extends OCSController {
             'variables' => ['%name%', '%first_name%', '%last_name%', '%email%', '%domain%', '%title%', '%department%', '%phone%', '%company%'],
             'fallbacks' => $this->getFallbacks(),
             'overrides' => $this->getOverrides(),
-            'logo' => $this->getLogoInfo(),
+            'assets' => $this->getAssets(),
             'hook' => [
                 'enabled' => $this->config->getAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, '0') === '1',
                 'hasSecret' => $this->config->getAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, '') !== '',
@@ -131,51 +131,74 @@ class SignatureAdminController extends OCSController {
         return new DataResponse(['success' => true, 'overrides' => $this->getOverrides()]);
     }
 
-    /** Logo hochladen (multipart/form-data, Feld "logo"). */
+    /**
+     * Bilder hochladen (multipart/form-data, Feld "assets", mehrfach möglich).
+     * Der CID eines Bildes leitet sich deterministisch aus dem Dateinamen ab:
+     * souvera-sig-<slug> — damit kann der Template-Autor direkt referenzieren.
+     */
     #[NoAdminRequired]
-    public function uploadLogo(): DataResponse {
-        $file = $this->request->getUploadedFile('logo');
-        if ($file === null || !isset($file['tmp_name']) || !\is_uploaded_file($file['tmp_name'])) {
-            return new DataResponse(['error' => 'Keine Datei übertragen'], Http::STATUS_BAD_REQUEST);
+    public function uploadAssets(): DataResponse {
+        $files = $_FILES['assets'] ?? null;
+        if (!\is_array($files) || !isset($files['name'])) {
+            return new DataResponse(['error' => 'Keine Dateien übertragen (Feld "assets")'], Http::STATUS_BAD_REQUEST);
         }
-        $allowed = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/svg+xml' => 'svg'];
-        $finfo = \function_exists('finfo_open')
-            ? \finfo_buffer(\finfo_open(FILEINFO_MIME_TYPE), (string) \file_get_contents($file['tmp_name']))
-            : (string) ($file['type'] ?? '');
-        if ($finfo === false || !isset($allowed[$finfo])) {
-            return new DataResponse(['error' => 'Nur PNG/JPG/SVG erlaubt (erkannt: ' . $finfo . ')'], Http::STATUS_BAD_REQUEST);
+        // Normalisiere Einzel- zu Multi-Upload-Struktur
+        $names = (array) $files['name'];
+        $tmps = (array) $files['tmp_name'];
+        $allowed = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
+        $stored = [];
+        $errors = [];
+        foreach ($names as $i => $name) {
+            $tmp = $tmps[$i] ?? null;
+            if ($tmp === null || !\is_uploaded_file($tmp)) { continue; }
+            $finfo = \function_exists('finfo_open')
+                ? \finfo_buffer(\finfo_open(FILEINFO_MIME_TYPE), (string) \file_get_contents($tmp))
+                : 'application/octet-stream';
+            if ($finfo === false || !\in_array($finfo, $allowed, true)) {
+                $errors[] = $name . ': nur PNG/JPG/SVG/WebP';
+                continue;
+            }
+            $data = (string) \file_get_contents($tmp);
+            if (\strlen($data) > 512 * 1024) {
+                $errors[] = $name . ': zu groß (max. 512 KB)';
+                continue;
+            }
+            $clean = \basename((string) $name);
+            $slug = $this->slugForFilename($clean, $this->existingSlugs());
+            $this->db->executeStatement(
+                'INSERT INTO *PREFIX*souvera_central_sig_assets (name, mime, data) VALUES (?, ?, ?)',
+                [$clean, $finfo, $data]
+            );
+            $stored[] = $slug;
         }
-        $data = (string) \file_get_contents($file['tmp_name']);
-        if (\strlen($data) > 512 * 1024) {
-            return new DataResponse(['error' => 'Logo zu groß (max. 512 KB)'], Http::STATUS_BAD_REQUEST);
+        if ($stored === [] && $errors === []) {
+            return new DataResponse(['error' => 'Keine gültigen Dateien'], Http::STATUS_BAD_REQUEST);
         }
-        $name = \basename((string) ($file['name'] ?? 'logo.png'));
-        $this->db->executeStatement(
-            'DELETE FROM *PREFIX*souvera_central_sig_assets'
-        );
-        $this->db->executeStatement(
-            'INSERT INTO *PREFIX*souvera_central_sig_assets (name, mime, data) VALUES (?, ?, ?)',
-            [$name, $finfo, $data]
-        );
         $this->resolver->clearCache();
-        return new DataResponse(['success' => true, 'logo' => $this->getLogoInfo()]);
+        $out = ['success' => true, 'stored' => $stored, 'assets' => $this->getAssets()];
+        if ($errors !== []) { $out['errors'] = $errors; }
+        return new DataResponse($out);
     }
 
     #[NoAdminRequired]
-    public function deleteLogo(): DataResponse {
-        $this->db->executeStatement('DELETE FROM *PREFIX*souvera_central_sig_assets');
+    public function deleteAsset(string $slug): DataResponse {
+        $name = $this->nameForSlug($slug);
+        if ($name === null) {
+            return new DataResponse(['error' => 'Asset nicht gefunden'], Http::STATUS_NOT_FOUND);
+        }
+        $this->db->executeStatement('DELETE FROM *PREFIX*souvera_central_sig_assets WHERE name = ?', [$name]);
         $this->resolver->clearCache();
         return new DataResponse(['success' => true]);
     }
 
-    /** Logo-Bytes für die Admin-Vorschau (Admin-Session). */
+    /** Asset-Bytes für die Vorschau (Admin-Session), per Slug. */
     #[NoAdminRequired]
-    public function logoBytes(): \OCP\AppFramework\Http\DataDownloadResponse {
-        $row = $this->db->fetchAssociative('SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets LIMIT 1');
-        if (!\is_array($row) || !isset($row['data'])) {
-            return new \OCP\AppFramework\Http\DataDownloadResponse('', 'logo.png', 'image/png');
+    public function assetBytes(string $slug): \OCP\AppFramework\Http\DataDownloadResponse {
+        $row = $this->assetRowBySlug($slug);
+        if ($row === null) {
+            return new \OCP\AppFramework\Http\DataDownloadResponse('', $slug, 'image/png');
         }
-        return new \OCP\AppFramework\Http\DataDownloadResponse((string) $row['data'], (string) ($row['name'] ?? 'logo.png'), (string) ($row['mime'] ?? 'image/png'));
+        return new \OCP\AppFramework\Http\DataDownloadResponse((string) $row['data'], (string) $row['name'], (string) $row['mime']);
     }
 
     #[NoAdminRequired]
@@ -287,13 +310,70 @@ class SignatureAdminController extends OCSController {
         }, $rows);
     }
 
-    /** @return array{name: string, mime: string, size: int}|null */
-    private function getLogoInfo(): ?array {
-        $row = $this->db->fetchAssociative('SELECT name, mime, LENGTH(data) AS size FROM *PREFIX*souvera_central_sig_assets LIMIT 1');
-        if (!\is_array($row)) {
-            return null;
+    /**
+     * Alle Assets mit deterministischem CID (souvera-sig-<slug>).
+     * @return list<array{name: string, slug: string, mime: string, size: int, cid: string}>
+     */
+    private function getAssets(): array {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT name, mime, LENGTH(data) AS size FROM *PREFIX*souvera_central_sig_assets ORDER BY name ASC'
+        );
+        $out = [];
+        foreach ($rows as $row) {
+            $name = (string) ($row['name'] ?? '');
+            $slug = self::slugForFilename($name, null);
+            $out[] = [
+                'name' => $name,
+                'slug' => $slug,
+                'mime' => (string) ($row['mime'] ?? 'image/png'),
+                'size' => (int) ($row['size'] ?? 0),
+                'cid' => 'souvera-sig-' . $slug,
+            ];
         }
-        return ['name' => (string) ($row['name'] ?? ''), 'mime' => (string) ($row['mime'] ?? ''), 'size' => (int) ($row['size'] ?? 0)];
+        return $out;
+    }
+
+    /** Slug aus dem Dateinamen (kleingeschrieben, nicht-alphanumerisch → Bindestrich). */
+    private static function slugForFilename(string $name, ?array $taken): string {
+        $base = \pathinfo($name, PATHINFO_FILENAME);
+        $slug = \strtolower(\preg_replace('/[^a-z0-9]+/i', '-', $base) ?? 'bild');
+        $slug = \trim($slug, '-') ?: 'bild';
+        if ($taken === null || !\in_array($slug, $taken, true)) {
+            return $slug;
+        }
+        $n = 2;
+        while (\in_array($slug . '-' . $n, $taken, true)) { $n++; }
+        return $slug . '-' . $n;
+    }
+
+    private function existingSlugs(): array {
+        $out = [];
+        foreach ($this->getAssets() as $a) {
+            $out[] = $a['slug'];
+        }
+        return $out;
+    }
+
+    private function assetRowBySlug(string $slug): ?array {
+        foreach ($this->getAssets() as $a) {
+            if ($a['slug'] === $slug) {
+                $row = $this->db->fetchAssociative(
+                    'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets WHERE name = ?',
+                    [$a['name']]
+                );
+                return \is_array($row) ? $row : null;
+            }
+        }
+        return null;
+    }
+
+    private function nameForSlug(string $slug): ?string {
+        foreach ($this->getAssets() as $a) {
+            if ($a['slug'] === $slug) {
+                return $a['name'];
+            }
+        }
+        return null;
     }
 
     /** @return array<string, mixed> */

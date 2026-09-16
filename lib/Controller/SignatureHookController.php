@@ -87,8 +87,8 @@ class SignatureHookController extends Controller {
                 return new JSONResponse(['status' => 'skipped', 'reason' => 'no signature for sender']);
             }
 
-            $logo = $this->loadLogo();
-            $modified = $injection->inject($raw, $sig, $logo);
+            $assets = $this->loadAssets();
+            $modified = $injection->inject($raw, $sig, $assets);
             if ($modified === null) {
                 return new JSONResponse(['status' => 'skipped', 'reason' => 'injection not applicable']);
             }
@@ -196,20 +196,32 @@ class SignatureHookController extends Controller {
         return \is_array($decoded) ? $decoded : null;
     }
 
-    /** Logo-Asset für Inline-CID (id → Bytes aus der DB). */
-    private function loadLogo(): ?array {
+    /**
+     * Alle Signatur-Assets als Injection-Liste (cid/name/mime/data) — der
+     * CID leitet sich deterministisch aus dem Dateinamen ab (souvera-sig-<slug>),
+     * identisch zur Slug-Berechnung im SignatureAdminController.
+     * @return list<array{cid: string, name: string, mime: string, data: string}>|null
+     */
+    private function loadAssets(): ?array {
         try {
-            $row = $this->db->fetchAssociative(
-                'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets LIMIT 1'
+            $rows = $this->db->fetchAllAssociative(
+                'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets ORDER BY name ASC'
             );
-            if (!\is_array($row) || !isset($row['data'])) {
-                return null;
+            $out = [];
+            foreach ($rows as $row) {
+                $data = (string) ($row['data'] ?? '');
+                if ($data === '') { continue; }
+                $name = (string) ($row['name'] ?? 'bild');
+                $slug = \strtolower(\preg_replace('/[^a-z0-9]+/i', '-', \pathinfo($name, PATHINFO_FILENAME)) ?? 'bild');
+                $slug = \trim($slug, '-') ?: 'bild';
+                $out[] = [
+                    'cid' => 'souvera-sig-' . $slug,
+                    'name' => $name,
+                    'mime' => (string) ($row['mime'] ?? 'image/png'),
+                    'data' => $data,
+                ];
             }
-            $data = (string) $row['data'];
-            if ($data === '') {
-                return null;
-            }
-            return ['name' => (string) ($row['name'] ?? 'logo.png'), 'mime' => (string) ($row['mime'] ?? 'image/png'), 'data' => $data];
+            return $out;
         } catch (\Throwable $e) {
             return null;
         }
