@@ -155,7 +155,9 @@ export default {
 		this.load()
 	},
 	methods: {
-		toast(type, message) {
+		/** l10n-Übersetzung als Methode — shorthand auf den IMPORT (nicht
+		 * this.t — das wäre Rekursion). Templates lösen t() über _ctx auf. */
+		t,		toast(type, message) {
 			this.toast = { show: true, type, message }
 			setTimeout(() => { this.toast.show = false }, 4000)
 		},

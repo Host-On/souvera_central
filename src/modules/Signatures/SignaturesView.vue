@@ -93,7 +93,9 @@ export default {
 			this.toast = { show: true, type, message }
 			setTimeout(() => { this.toast.show = false }, 4000)
 		},
-		insertVariable(v) {
+		/** l10n-Übersetzung als Methode — shorthand auf den IMPORT (nicht
+		 * this.t — das wäre Rekursion). Templates lösen t() über _ctx auf. */
+		t,		insertVariable(v) {
 			this.signature.template += v
 		},
 		async loadGlobal() {
