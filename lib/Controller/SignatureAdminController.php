@@ -52,20 +52,35 @@ class SignatureAdminController extends OCSController {
     /** Übersicht für die Admin-UI. */
     #[NoAdminRequired]
     public function overview(): DataResponse {
-        return new DataResponse([
+        $overrides = [];
+        $assets = [];
+        $dbWarning = null;
+        try {
+            $overrides = $this->getOverrides();
+            $assets = $this->getAssets();
+        } catch (\Throwable $e) {
+            // DB-Fehler (typisch: Migration fehlt → sig-Tabellen existieren nicht)
+            // — graceful: leere Listen + klarer Warn-Text statt 500.
+            $dbWarning = 'DB-Fehler: ' . $e->getMessage() . ' — bitte occ migrations:migrate souvera_central ausführen';
+        }
+        $out = [
             'globalEnabled' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.enabled', '0') === '1',
             'globalServerSide' => $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.server_side', '0') === '1',
             'globalTemplate' => (string) $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.template', ''),
             'variables' => ['%name%', '%first_name%', '%last_name%', '%email%', '%domain%', '%title%', '%department%', '%phone%', '%company%'],
             'fallbacks' => $this->getFallbacks(),
-            'overrides' => $this->getOverrides(),
-            'assets' => $this->getAssets(),
+            'overrides' => $overrides,
+            'assets' => $assets,
             'hook' => [
                 'enabled' => $this->config->getAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, '0') === '1',
                 'hasSecret' => $this->config->getAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, '') !== '',
                 'sizeLimit' => (int) $this->config->getAppValue(Application::APP_ID, self::SIZE_LIMIT_KEY, (string) 10485760),
             ],
-        ]);
+        ];
+        if ($dbWarning !== null) {
+            $out['warning'] = $dbWarning;
+        }
+        return new DataResponse($out);
     }
 
     #[NoAdminRequired]
@@ -109,16 +124,20 @@ class SignatureAdminController extends OCSController {
         }
 
         $now = \time();
-        if ($id > 0) {
-            $this->db->executeStatement(
-                'UPDATE *PREFIX*souvera_central_sig_overrides SET scope = ?, scope_value = ?, html = ?, text = ?, priority = ?, replace_personal = ?, active = ? WHERE id = ?',
-                [$scope, $scopeValue, $html, $text, $priority, $replacePersonal ? 1 : 0, $active ? 1 : 0, $id]
-            );
-        } else {
-            $this->db->executeStatement(
-                'INSERT INTO *PREFIX*souvera_central_sig_overrides (scope, scope_value, html, text, priority, replace_personal, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$scope, $scopeValue, $html, $text, $priority, $replacePersonal ? 1 : 0, $active ? 1 : 0, $now]
-            );
+        try {
+            if ($id > 0) {
+                $this->db->executeStatement(
+                    'UPDATE *PREFIX*souvera_central_sig_overrides SET scope = ?, scope_value = ?, html = ?, text = ?, priority = ?, replace_personal = ?, active = ? WHERE id = ?',
+                    [$scope, $scopeValue, $html, $text, $priority, $replacePersonal ? 1 : 0, $active ? 1 : 0, $id]
+                );
+            } else {
+                $this->db->executeStatement(
+                    'INSERT INTO *PREFIX*souvera_central_sig_overrides (scope, scope_value, html, text, priority, replace_personal, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$scope, $scopeValue, $html, $text, $priority, $replacePersonal ? 1 : 0, $active ? 1 : 0, $now]
+                );
+            }
+        } catch (\Throwable $e) {
+            return new DataResponse(['error' => 'DB: ' . $e->getMessage() . ' — Migration läuft? (occ migrations:migrate souvera_central)'], Http::STATUS_BAD_REQUEST);
         }
         $this->resolver->clearCache();
         return new DataResponse(['success' => true, 'overrides' => $this->getOverrides()]);
@@ -165,11 +184,15 @@ class SignatureAdminController extends OCSController {
             }
             $clean = \basename((string) $name);
             $slug = $this->slugForFilename($clean, $this->existingSlugs());
-            $this->db->executeStatement(
-                'INSERT INTO *PREFIX*souvera_central_sig_assets (name, mime, data) VALUES (?, ?, ?)',
-                [$clean, $finfo, $data]
-            );
-            $stored[] = $slug;
+            try {
+                $this->db->executeStatement(
+                    'INSERT INTO *PREFIX*souvera_central_sig_assets (name, mime, data) VALUES (?, ?, ?)',
+                    [$clean, $finfo, $data]
+                );
+                $stored[] = $slug;
+            } catch (\Throwable $e) {
+                $errors[] = $clean . ': DB-Fehler (Migration läuft?) — ' . $e->getMessage();
+            }
         }
         if ($stored === [] && $errors === []) {
             return new DataResponse(['error' => 'Keine gültigen Dateien'], Http::STATUS_BAD_REQUEST);
