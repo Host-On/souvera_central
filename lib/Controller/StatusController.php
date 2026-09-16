@@ -76,13 +76,38 @@ class StatusController extends Controller
                 // die Datei aber per HTTP 404 liefert, liegt die Störung im
                 // WEBSERVER/PROXY (Caddy), nicht im App-Update.
                 'assets_on_disk' => $this->checkAssets($appId),
+                'disk_free' => $this->diskFree($appId),
             ];
         }
 
         return new DataResponse($result);
     }
 
+    /**
+     * Freier Speicher des App-Verzeichnisses — Diagnose für Copy-Fehler
+     * im Self-Update (ENOSPC: kleine Dateien kopieren, große brechen).
+     */
+    private function diskFree(string $appId): ?array {
+        try {
+            $path = $this->appManager->getAppPath($appId);
+            if ($path === null) {
+                return null;
+            }
+            $free = @\disk_free_space($path);
+            if ($free === false) {
+                return null;
+            }
+            return [
+                'bytes' => (int) $free,
+                'human' => \round($free / 1073741824, 2) . ' GB',
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /** Prüft, ob die Haupt-Bundles der App physisch existieren. */
+
     private function checkAssets(string $appId): ?array {
         try {
             $path = $this->appManager->getAppPath($appId);
