@@ -40,35 +40,67 @@ class StalwartConfigService {
     }
 
     /**
-     * Die Hook-Keys, die dieser Service schreibt (Key → Wert).
-     * P0-KALIBRIERUNG: passt die exakte Stalwart-Syntax an.
+     * Legacy-Key-Schreibweise für Stalwart < 0.16 (Settings-REST-API).
      * @return array<string, string>
      */
-    public function hookTemplate(string $hookUrl, string $secret): array {
-        // Stalwart SMTP-Hooks an der DATA-Stage: Liste von HTTP-Hook-URLs.
-        // Der Secret wird als Query-Parameter transportiert (Stalwart-
-        // HTTP-Hooks unterstützen keine Auth-Header-Konfiguration pro Hook;
-        // die URL ist das Secret-Träger-Element — der Hook-Controller prüft
-        // zusätzlich Bearer/X-Souvera-Hook-Secret, siehe Controller).
+    private function hookTemplate(string $hookUrl, string $secret): array {
         return [
             'session.data.hooks' => \json_encode([$hookUrl . '?secret=' . $secret]),
         ];
     }
 
     /**
-     * Vollständiger Apply-Flow: Pre-Check → Snapshot → Write → Verify.
-     * @return array{ok: bool, action: string, precheck: array, written: array, rollbackAvailable: bool, error: ?string}
+     * Das MtaHook-Objekt im VERIFIZIERTEN Schema-Format (Stalwart 0.16,
+     * schema.json: fields.x:MtaHook + enums.MtaStage). Die Signatur geht
+     * via httpHeaders (Authorization: Bearer) — der Hook-Controller prüft
+     * Bearer/X-Souvera-Hook-Secret/?secret=.
+     *
+     * WICHTIG: tempFailOnError=false → Fail-OPEN. Ein Hook-Fehler darf die
+     * Mailzustellung nie blockieren (sonst 4xx auf alle Mails).
+     */
+    public function hookObject(string $hookUrl, string $secret): array {
+        return [
+            'url' => $hookUrl,
+            'stages' => ['data' => true],
+            'enable' => ['default' => 'true'],
+            'httpHeaders' => ['Authorization' => 'Bearer ' . $secret],
+            'timeout' => 10000,
+            'tempFailOnError' => false,
+            'maxResponseSize' => 10485760,
+            'allowInvalidCerts' => false,
+        ];
+    }
+
+    /** Das Hook-Objekt als formatiertes JSON für die manuelle WebAdmin-Eingabe. */
+    public function hookObjectJson(string $hookUrl, string $secret): string {
+        return (string) \json_encode($this->hookObject($hookUrl, $secret), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Apply-Flow. Stalwart 0.16+ hat die Settings-REST-API (/api/settings)
+     * ENTFERNT — Schema-Objekte werden über den WebAdmin verwaltet. Solange
+     * der programmatische Write-Mechanismus nicht kalibriert ist, liefert
+     * apply() ehrlich mode:'manual' mit der fertigen Objekt-Vorlage; die
+     * Verdrahtung erfolgt im WebAdmin (Configuration → MTA → MTA Hooks).
+     *
+     * @return array{ok: bool, action: string, mode: string, precheck: array, written: array, rollbackAvailable: bool, error: ?string, instructions: ?array}
      */
     public function apply(string $hookUrl, string $secret): array {
-        $result = ['ok' => false, 'action' => 'apply', 'precheck' => [], 'written' => [], 'rollbackAvailable' => false, 'error' => null];
+        $result = ['ok' => false, 'action' => 'apply', 'mode' => 'manual', 'precheck' => [], 'written' => [], 'rollbackAvailable' => false, 'error' => null, 'instructions' => null];
 
+        // Pre-Flight: ist die (alte) Settings-API erreichbar? Auf Stalwart
+        // 0.16+ schlägt sie bewusst fehl → Manual-Mode mit Vorlage.
         $config = $this->fetchConfig();
         if ($config === null) {
-            $result['error'] = 'Stalwart-Config-API nicht erreichbar oder Credentials unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)';
+            $base = $this->stalwartBase();
+            $result['error'] = $base === null
+                ? 'Stalwart-Admin-Zugang unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)'
+                : 'Automatische Verdrahtung wird von Stalwart 0.16+ nicht unterstützt (Settings-REST-API entfernt) — Hook bitte manuell im WebAdmin anlegen (Vorlage siehe unten).';
+            $result['instructions'] = $this->wireInstructions($hookUrl, $secret);
             return $result;
         }
 
-        // ---- Pre-Check: bestehende Hooks + Push-Webhook-Übersicht ----
+        // ---- Legacy-Pfad (Stalwart < 0.16 mit /api/settings) ----
         $existing = $this->collectKeys($config, 'session.data.hooks');
         $foreign = [];
         foreach ($existing as $key => $value) {
@@ -123,10 +155,27 @@ class StalwartConfigService {
             }
         }
         $result['ok'] = $verifyOk;
+        $result['mode'] = 'auto';
         if (!$verifyOk) {
             $result['error'] = 'Verify fehlgeschlagen: die geschriebenen Werte wurden nicht bestätigt (Key-Format ggf. falsch — P0-Kalibrierung an HOOK_TEMPLATE()). Rollback möglich.';
         }
         return $result;
+    }
+
+    /**
+     * Manual-Verdrahtungs-Anleitung: das fertige MtaHook-Objekt + Schritte.
+     * @return array{objectJson: string, steps: list<string>}
+     */
+    public function wireInstructions(string $hookUrl, string $secret): array {
+        return [
+            'objectJson' => $this->hookObjectJson($hookUrl, $secret),
+            'steps' => [
+                'Stalwart-WebAdmin öffnen (' . (string) ($this->configService->getStalwartApiUrl() ?? 'http://<stalwart>:8080') . ') und als Admin anmelden.',
+                'Configuration → MTA → MTA Hooks → „Create" wählen.',
+                'ID vergeben (z. B. souvera-signature) und die Felder exakt wie in der JSON-Vorlage füllen.',
+                'Speichern — danach hier „Stalwart-Status prüfen" bzw. eine Test-Mail versenden.',
+            ],
+        ];
     }
 
     /** Rollback auf den Snapshot vor dem letzten Apply. */

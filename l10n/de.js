@@ -2,6 +2,12 @@ OC.L10N.register(
     "souvera_central",
     {
     "E-Mail-Signaturen" : "E-Mail-Signaturen",
+    "Manuelle Verdrahtung (Stalwart 0.16+)" : "Manuelle Verdrahtung (Stalwart 0.16+)",
+    "Feldwerte (ID frei wählbar, z. B. souvera-signature):" : "Feldwerte (ID frei wählbar, z. B. souvera-signature):",
+    "JSON kopieren" : "JSON kopieren",
+    "JSON kopiert" : "JSON kopiert",
+    "Automatische Verdrahtung wird von Stalwart 0.16+ nicht unterstützt (Settings-REST-API entfernt) — Hook bitte manuell im WebAdmin anlegen (Vorlage siehe unten)." : "Automatische Verdrahtung wird von Stalwart 0.16+ nicht unterstützt (Settings-REST-API entfernt) — Hook bitte manuell im WebAdmin anlegen (Vorlage siehe unten).",
+    "Stalwart-Admin-Zugang unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)" : "Stalwart-Admin-Zugang unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)",
     "Bild-Breiten reparieren" : "Bild-Breiten reparieren",
     "Setzt bei jedem Bild eine feste Breite (max. 460 px) + max-width, damit die Tabelle nicht aufgeweitet wird." : "Setzt bei jedem Bild eine feste Breite (max. 460 px) + max-width, damit die Tabelle nicht aufgeweitet wird.",
     "{n} Bild-Tag(s) repariert — jetzt speichern." : "{n} Bild-Tag(s) repariert — jetzt speichern.",

@@ -229,6 +229,15 @@
 						{{ t('souvera_central', 'Hook-Keys:') }} {{ stalwartKeys.join(', ') }}
 						— {{ t('souvera_central', 'Push-Webhooks (anderes Subsystem) bleiben unberührt:') }} {{ webhookKeys.join(', ') || '—' }}
 					</p>
+					<div v-if="wireInstructions" class="signatures-view__manual-wire">
+						<h4>{{ t('souvera_central', 'Manuelle Verdrahtung (Stalwart 0.16+)') }}</h4>
+						<ol class="signatures-view__wire-steps">
+							<li v-for="(s, i) in wireInstructions.steps" :key="i">{{ s }}</li>
+						</ol>
+						<p class="signatures-view__hint">{{ t('souvera_central', 'Feldwerte (ID frei wählbar, z. B. souvera-signature):') }}</p>
+						<pre class="signatures-view__wire-json" data-testid="sig-wire-json">{{ wireInstructions.objectJson }}</pre>
+						<button class="signatures-view__btn" @click="copyWireJson">{{ t('souvera_central', 'JSON kopieren') }}</button>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -280,6 +289,7 @@ export default {
 			secret: '',
 			wireMessage: '',
 			wireError: false,
+			wireInstructions: null,
 			stalwartKeys: [],
 			webhookKeys: [],
 			testEmail: '',
@@ -619,6 +629,7 @@ export default {
 		},
 		async wireStalwart() {
 			this.wireError = false
+			this.wireInstructions = null
 			this.wireMessage = this.t('souvera_central', 'Anwenden… (Pre-Check → Snapshot → Schreiben → Verify)')
 			try {
 				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/wire'))
@@ -630,6 +641,9 @@ export default {
 				} else {
 					this.wireError = true
 					this.wireMessage = (data.error || 'Apply failed') + (data.rollbackAvailable ? ' — Rollback verfügbar.' : '')
+					if (data.instructions) {
+						this.wireInstructions = data.instructions
+					}
 					if (data.precheck) {
 						this.stalwartKeys = Object.keys(data.precheck.existingHooks || {})
 						this.webhookKeys = data.precheck.webhookKeys || []
@@ -640,6 +654,11 @@ export default {
 				this.wireError = true
 				this.wireMessage = this.t('souvera_central', 'Einkabeln fehlgeschlagen — siehe Logs')
 			}
+		},
+		copyWireJson() {
+			if (!this.wireInstructions) return
+			navigator.clipboard?.writeText(this.wireInstructions.objectJson)?.catch(() => {})
+			this.toast('success', this.t('souvera_central', 'JSON kopiert'))
 		},
 		async unwireStalwart() {
 			this.wireError = false
@@ -778,6 +797,15 @@ export default {
 .signatures-view__hook { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .signatures-view__hook-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .signatures-view__secret { font-family: monospace; font-size: 12px; word-break: break-all; background: var(--color-background-hover); padding: 6px 8px; border-radius: 6px; }
+.signatures-view__manual-wire { border: 1px solid var(--color-border); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+.signatures-view__manual-wire h4 { margin: 0 0 8px; font-size: 13.5px; }
+.signatures-view__wire-steps { margin: 0 0 10px; padding-left: 20px; font-size: 12.5px; color: var(--color-main-text); }
+.signatures-view__wire-steps li { margin-bottom: 4px; }
+.signatures-view__wire-json {
+	font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all;
+	background: var(--color-background-hover); border: 1px solid var(--color-border);
+	border-radius: 8px; padding: 10px; margin: 0 0 10px; max-width: 640px;
+}
 .signatures-view__resolve { display: flex; gap: 8px; margin: 8px 0; }
 .signatures-view__hint { font-size: 12px; color: var(--color-text-maxcontrast); margin-top: 6px; }
 .signatures-view__hint--warn { color: var(--color-error-text, var(--color-error)); }
