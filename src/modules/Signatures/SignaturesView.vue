@@ -24,15 +24,27 @@
 					<span>{{ t('souvera_central', 'Globale Mail-Signatur aktivieren') }}</span>
 				</label>
 
-				<div v-if="signature.enabled" class="signatures-view__editor">
-					<label class="signatures-view__label">{{ t('souvera_central', 'Signatur (HTML)') }}</label>
-					<textarea v-model="signature.template" class="signatures-view__textarea" rows="8"
-						placeholder="<p>%first_name% %last_name%</p><p>%title% · %company%</p><p>Phone: %phone%</p>"></textarea>
+			<div v-if="signature.enabled" class="signatures-view__editor">
+				<label class="signatures-view__label" for="sig-template">{{ t('souvera_central', 'Signatur (HTML)') }}</label>
+				<textarea id="sig-template" ref="templateArea" v-model="signature.template" class="signatures-view__textarea" rows="8"
+					placeholder="<p>%first_name% %last_name%</p><p>%title% · %company%</p><p>Phone: %phone%</p>"></textarea>
 
-				<div class="signatures-view__vars">
-					<span class="signatures-view__vars-hint">{{ t('souvera_central', 'Variablen (zum Einfügen anklicken):') }}</span>
-					<button v-for="v in variables" :key="v" type="button" class="signatures-view__var"
-						@click="insertVariable(v)">{{ v }}</button>
+				<div class="signatures-view__insert-bar">
+					<div class="signatures-view__vars">
+						<span class="signatures-view__vars-hint">{{ t('souvera_central', 'Variablen:') }}</span>
+						<button v-for="v in variables" :key="v" type="button" class="signatures-view__var"
+							:title="t('souvera_central', 'An der Cursor-Position einfügen')"
+							@click="insertVariable(v)">{{ v }}</button>
+					</div>
+					<div v-if="assets.length" class="signatures-view__vars">
+						<span class="signatures-view__vars-hint">{{ t('souvera_central', 'Bilder:') }}</span>
+						<button v-for="a in assets" :key="a.slug" type="button" class="signatures-view__var signatures-view__var--img"
+							:title="t('souvera_central', 'Bild an der Cursor-Position einfügen')"
+							@click="insertImage(a)">
+							<img v-if="thumbs[a.slug]" :src="thumbs[a.slug]" alt="" class="signatures-view__chip-img">
+							<span>{{ a.name }}</span>
+						</button>
+					</div>
 				</div>
 
 				<label class="signatures-view__label">{{ t('souvera_central', 'Vorschau (mit Beispieldaten)') }}</label>
@@ -48,32 +60,48 @@
 		</div>
 	</section>
 
-		<!-- 2 · Bilder (Multi-Upload) -->
+		<!-- 2 · Bilder -->
 		<section class="signatures-view__card">
 			<div class="signatures-view__card-head">
 				<span class="signatures-view__step">2</span>
 				<div>
 					<h3>{{ t('souvera_central', 'Bilder (Inline-Grafiken für die Signatur)') }}</h3>
-					<p class="signatures-view__help">{{ t('souvera_central', 'Mehrere Bilder möglich (PNG/JPG/SVG/WebP, max. 512 KB je Bild). Jedes Bild erhält eine CID (siehe Liste) — im HTML-Template verwenden:') }} <code class="signatures-view__code">src="cid:CID-AUS-DER-LISTE"</code></p>
+					<p class="signatures-view__help">{{ t('souvera_central', 'Mehrere Bilder möglich (PNG/JPG/SVG/WebP, max. 512 KB je Bild). Mit „Bild einfügen“ landet die Grafik direkt in der Vorlage — alternativ auch über die Bild-Chips in Schritt 1.') }}</p>
 				</div>
 			</div>
 			<div class="signatures-view__body">
-				<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple
-					data-testid="sig-assets-input" @change="uploadAssets($event)" />
+				<div class="signatures-view__dropzone" :class="{ 'signatures-view__dropzone--over': dragOver }"
+					@dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
+					<label class="signatures-view__btn" data-testid="sig-assets-label">
+						{{ t('souvera_central', 'Bilder auswählen') }}
+						<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple
+							class="signatures-view__file-hidden" data-testid="sig-assets-input" @change="onFileChange">
+					</label>
+					<span class="signatures-view__muted">{{ t('souvera_central', 'oder hierher ziehen') }}</span>
+				</div>
 
-				<table v-if="assets.length > 0" class="signatures-view__table" data-testid="sig-assets-table">
-					<thead>
-						<tr><th>{{ t('souvera_central', 'Bild') }}</th><th>{{ t('souvera_central', 'CID (zum Kopieren anklicken)') }}</th><th>{{ t('souvera_central', 'Größe') }}</th><th></th></tr>
-					</thead>
-					<tbody>
-						<tr v-for="a in assets" :key="a.slug">
-							<td>{{ a.name }}</td>
-							<td><code class="signatures-view__cid" :title="t('souvera_central', 'CID kopieren')" @click="copyCid(a)">{{ a.cid }}</code></td>
-							<td>{{ formatSize(a.size) }}</td>
-							<td><button class="signatures-view__btn signatures-view__btn--danger" @click="deleteAsset(a.slug)">{{ t('souvera_central', 'Löschen') }}</button></td>
-						</tr>
-					</tbody>
-				</table>
+				<div v-if="assets.length > 0" class="signatures-view__table-wrap">
+					<table class="signatures-view__table" data-testid="sig-assets-table">
+						<thead>
+							<tr><th>{{ t('souvera_central', 'Vorschau') }}</th><th>{{ t('souvera_central', 'Datei / CID') }}</th><th>{{ t('souvera_central', 'Größe') }}</th><th></th></tr>
+						</thead>
+						<tbody>
+							<tr v-for="a in assets" :key="a.slug">
+								<td><img v-if="thumbs[a.slug]" :src="thumbs[a.slug]" alt="" class="signatures-view__thumb"></td>
+								<td>
+									<div class="signatures-view__asset-name">{{ a.name }}</div>
+									<code class="signatures-view__cid" tabindex="0" role="button"
+									:title="t('souvera_central', 'CID kopieren')" @click="copyCid(a)" @keydown.enter.prevent="copyCid(a)">{{ a.cid }}</code>
+								</td>
+								<td>{{ formatSize(a.size) }}</td>
+								<td class="signatures-view__row-actions">
+									<button class="signatures-view__btn" @click="insertImage(a)">{{ t('souvera_central', 'Bild einfügen') }}</button>
+									<button class="signatures-view__btn signatures-view__btn--danger" @click="deleteAsset(a.slug)">{{ t('souvera_central', 'Löschen') }}</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 				<p v-else class="signatures-view__muted">{{ t('souvera_central', 'Noch keine Bilder hochgeladen.') }}</p>
 			</div>
 		</section>
@@ -126,18 +154,30 @@
 					</tbody>
 				</table>
 
+				<p class="signatures-view__muted">{{ t('souvera_central', 'Bestehende Zeile anklicken, um sie unten zu bearbeiten.') }}</p>
 				<div class="signatures-view__override-form">
-					<select v-model="overrideForm.scope" class="signatures-view__input signatures-view__input--small">
-						<option value="group">{{ t('souvera_central', 'Gruppe') }}</option>
-						<option value="user">{{ t('souvera_central', 'Benutzer') }}</option>
-					</select>
-					<input v-model="overrideForm.scopeValue" class="signatures-view__input signatures-view__input--small"
-						:placeholder="t('souvera_central', 'Gruppen-ID / Benutzer-ID')" />
-					<input v-model.number="overrideForm.priority" type="number" min="1" max="999" class="signatures-view__input signatures-view__input--small"
-						:placeholder="t('souvera_central', 'Priorität (1 = höchste)')" />
-					<button class="signatures-view__btn" @click="saveOverride">
-						{{ t('souvera_central', 'Override hinzufügen / aktualisieren') }}
-					</button>
+					<div class="signatures-view__field">
+						<label class="signatures-view__field-label" for="sig-override-scope">{{ t('souvera_central', 'Bereich') }}</label>
+						<select id="sig-override-scope" v-model="overrideForm.scope" class="signatures-view__input signatures-view__input--small">
+							<option value="group">{{ t('souvera_central', 'Gruppe') }}</option>
+							<option value="user">{{ t('souvera_central', 'Benutzer') }}</option>
+						</select>
+					</div>
+					<div class="signatures-view__field">
+						<label class="signatures-view__field-label" for="sig-override-value">{{ t('souvera_central', 'Gruppe / Benutzer') }}</label>
+						<input id="sig-override-value" v-model="overrideForm.scopeValue" class="signatures-view__input signatures-view__input--small"
+							:placeholder="t('souvera_central', 'Gruppen-ID / Benutzer-ID')">
+					</div>
+					<div class="signatures-view__field">
+						<label class="signatures-view__field-label" for="sig-override-prio">{{ t('souvera_central', 'Priorität') }}</label>
+						<input id="sig-override-prio" v-model.number="overrideForm.priority" type="number" min="1" max="999" class="signatures-view__input signatures-view__input--small"
+							:placeholder="t('souvera_central', 'Priorität (1 = höchste)')">
+					</div>
+					<div class="signatures-view__field signatures-view__field--action">
+						<button class="signatures-view__btn" @click="saveOverride">
+							{{ t('souvera_central', 'Override hinzufügen / aktualisieren') }}
+						</button>
+					</div>
 				</div>
 				<textarea v-model="overrideForm.html" class="signatures-view__textarea" rows="5"
 					:placeholder="t('souvera_central', 'Override-Signatur (HTML) — Variablen wie %name%, %phone% …')"></textarea>
@@ -241,6 +281,8 @@ export default {
 			previewNotFound: false,
 			toast: { show: false, type: 'success', message: '' },
 			pageWarning: '',
+			thumbs: {},
+			dragOver: false,
 		}
 	},
 	computed: {
@@ -283,11 +325,33 @@ export default {
 				this.overrides = data.overrides || []
 				this.assets = data.assets || []
 				this.pageWarning = data.warning || ''
-				this.hook.enabled = !!(data.hook && data.hook.enabled)
-				this.hook.sizeLimit = (data.hook && data.hook.sizeLimit) || 10485760
-			} catch (e) {
-				console.error('Signature overview load failed', e)
-			}
+			this.hook.enabled = !!(data.hook && data.hook.enabled)
+			this.hook.sizeLimit = (data.hook && data.hook.sizeLimit) || 10485760
+			this.loadThumbnails()
+		} catch (e) {
+			console.error('Signature overview load failed', e)
+		}
+	},
+		/** Lädt echte Vorschau-Bilder (Blob-URLs) für alle Assets. */
+		async loadThumbnails() {
+			this.revokeThumbs()
+			const next = {}
+			await Promise.all(this.assets.map(async (a) => {
+				try {
+					const r = await axios.get(
+						generateUrl('/apps/souvera_central/api/signature-admin/assets/' + encodeURIComponent(a.slug) + '/bytes'),
+						{ responseType: 'blob' },
+					)
+					next[a.slug] = URL.createObjectURL(r.data)
+				} catch (e) {
+					console.error('thumbnail failed', a.slug, e)
+				}
+			}))
+			this.thumbs = next
+		},
+		revokeThumbs() {
+			Object.values(this.thumbs).forEach((u) => URL.revokeObjectURL(u))
+			this.thumbs = {}
 		},
 		async saveGlobal() {
 			this.saving = true
@@ -314,8 +378,31 @@ export default {
 				this.saving = false
 			}
 		},
+		/** Fügt Text an der Cursor-Position des Template-Editors ein (Fallback: anhängen). */
+		insertAtCursor(text) {
+			const area = this.$refs.templateArea
+			const tpl = this.signature.template || ''
+			if (area && typeof area.selectionStart === 'number') {
+				const start = area.selectionStart
+				const end = area.selectionEnd
+				this.signature.template = tpl.slice(0, start) + text + tpl.slice(end)
+				this.$nextTick(() => {
+					area.focus()
+					const pos = start + text.length
+					area.setSelectionRange(pos, pos)
+				})
+			} else {
+				this.signature.template = tpl + text
+			}
+		},
 		insertVariable(v) {
-			this.signature.template += v
+			this.insertAtCursor(v)
+		},
+		/** Fügt das Bild als <img src="cid:…"> an der Cursor-Position ein. */
+		insertImage(asset) {
+			const alt = String(asset.name || '').replace(/"/g, '&quot;')
+			this.insertAtCursor(`<img src="cid:${asset.cid}" alt="${alt}">`)
+			this.toast('success', this.t('souvera_central', 'Bild in die Vorlage eingefügt — nicht vergessen zu speichern.'))
 		},
 		async saveFallbacks() {
 			try {
@@ -365,9 +452,15 @@ export default {
 				text: o.text || '',
 			}
 		},
-		async uploadAssets(ev) {
-			const files = Array.from(ev.target.files || [])
+		onFileChange(ev) {
+			this.uploadFiles(Array.from(ev.target.files || []))
 			ev.target.value = ''
+		},
+		onDrop(ev) {
+			this.dragOver = false
+			this.uploadFiles(Array.from(ev.dataTransfer?.files || []))
+		},
+		async uploadFiles(files) {
 			if (files.length === 0) return
 			const fd = new FormData()
 			for (const f of files) fd.append('assets', f)
@@ -376,6 +469,7 @@ export default {
 				const data = unwrap(r) || {}
 				if (data.error) { this.toast('error', data.error); return }
 				this.assets = data.assets || []
+				this.loadThumbnails()
 				if ((data.errors || []).length) this.toast('error', data.errors.join('; '))
 				this.toast('success', this.t('souvera_central', '{n} Bild(er) hochgeladen', { n: (data.stored || []).length }))
 			} catch (e) {
@@ -387,6 +481,12 @@ export default {
 			try {
 				await axios.delete(generateUrl('/apps/souvera_central/api/signature-admin/assets/' + encodeURIComponent(slug)))
 				this.assets = this.assets.filter((a) => a.slug !== slug)
+				if (this.thumbs[slug]) {
+					URL.revokeObjectURL(this.thumbs[slug])
+					const next = { ...this.thumbs }
+					delete next[slug]
+					this.thumbs = next
+				}
 				this.toast('success', this.t('souvera_central', 'Bild gelöscht'))
 			} catch (e) {
 				console.error(e)
@@ -529,6 +629,25 @@ export default {
 }
 .signatures-view__var:hover { background: var(--color-background-dark); }
 .signatures-view__actions { margin: 10px 0; }
+.signatures-view__insert-bar { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
+.signatures-view__var--img { display: inline-flex; align-items: center; gap: 6px; max-width: 220px; }
+.signatures-view__var--img span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signatures-view__chip-img { height: 18px; max-width: 36px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+.signatures-view__dropzone {
+	display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+	border: 1px dashed var(--color-border); border-radius: 10px;
+	padding: 14px 16px; margin: 4px 0 12px;
+	background: var(--color-background-hover); transition: border-color 0.15s ease-in-out;
+}
+.signatures-view__dropzone--over { border-color: var(--color-primary-element); }
+.signatures-view__file-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.signatures-view__table-wrap { overflow-x: auto; }
+.signatures-view__thumb { max-height: 40px; max-width: 96px; object-fit: contain; border-radius: 4px; }
+.signatures-view__asset-name { font-size: 13px; margin-bottom: 2px; }
+.signatures-view__row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.signatures-view__field { display: flex; flex-direction: column; gap: 4px; }
+.signatures-view__field--action { justify-content: flex-end; }
+.signatures-view__field-label { font-size: 12px; font-weight: 600; color: var(--color-text-maxcontrast); }
 .signatures-view__btn {
 	background: var(--color-primary-element); color: var(--color-primary-element-text);
 	border: none; border-radius: 8px; padding: 7px 14px; cursor: pointer; font-size: 13px;
@@ -556,4 +675,13 @@ export default {
 .signatures-view__resolve { display: flex; gap: 8px; margin: 8px 0; }
 .signatures-view__hint { font-size: 12px; color: var(--color-text-maxcontrast); margin-top: 6px; }
 .signatures-view__hint--warn { color: var(--color-error-text, var(--color-error)); }
+.signatures-view__btn:focus-visible,
+.signatures-view__var:focus-visible,
+.signatures-view__cid:focus-visible { outline: 2px solid var(--color-primary-element); outline-offset: 2px; }
+.signatures-view__cid {
+	cursor: copy; font-size: 12px; padding: 1px 6px;
+	background: var(--color-background-hover); border-radius: 4px;
+}
+.signatures-view__cid:hover { color: var(--color-primary-element); }
+.signatures-view__dropzone label { cursor: pointer; }
 </style>
