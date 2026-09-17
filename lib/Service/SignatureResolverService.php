@@ -122,7 +122,7 @@ class SignatureResolverService {
                 . ' WHERE active = 1 AND scope = ? AND scope_value = ?'
                 . ' ORDER BY priority ASC, id DESC LIMIT 1',
                 ['user', $user->getUID()]
-            )->fetchAssociative();
+            )->fetch();
             if (\is_array($row) && \trim((string) ($row['html'] ?? '')) !== '') {
                 return ['html' => (string) $row['html'], 'text' => (string) ($row['text'] ?? ''), 'source' => 'user:' . $user->getUID()];
             }
@@ -135,7 +135,7 @@ class SignatureResolverService {
                     . ' WHERE active = 1 AND scope = ? AND scope_value IN (' . $placeholders . ')'
                     . ' ORDER BY priority ASC, id DESC LIMIT 1',
                     \array_merge(['group'], $gids)
-                )->fetchAssociative();
+                )->fetch();
                 if (\is_array($row) && \trim((string) ($row['html'] ?? '')) !== '') {
                     return ['html' => (string) $row['html'], 'text' => (string) ($row['text'] ?? ''), 'source' => 'group:' . (string) $row['scope_value']];
                 }
@@ -186,7 +186,7 @@ class SignatureResolverService {
             $rows = $this->db->executeQuery(
                 'SELECT field_key, field_value FROM *PREFIX*souvera_central_sig_fields WHERE uid = ?',
                 [$uid]
-            )->fetchAllAssociative();
+            )->fetchAll();
             foreach ($rows as $row) {
                 $custom[(string) $row['field_key']] = (string) ($row['field_value'] ?? '');
             }

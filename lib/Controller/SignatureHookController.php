@@ -204,9 +204,9 @@ class SignatureHookController extends Controller {
      */
     private function loadAssets(): ?array {
         try {
-            $rows = $this->db->fetchAllAssociative(
+            $rows = $this->db->executeQuery(
                 'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets ORDER BY name ASC'
-            );
+            )->fetchAll();
             $out = [];
             foreach ($rows as $row) {
                 $data = (string) ($row['data'] ?? '');

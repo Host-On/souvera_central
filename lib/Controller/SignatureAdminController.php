@@ -384,9 +384,9 @@ class SignatureAdminController extends OCSController {
 
     /** @return list<array<string, mixed>> */
     private function getOverrides(): array {
-        $rows = $this->db->fetchAllAssociative(
+        $rows = $this->db->executeQuery(
             'SELECT id, scope, scope_value, html, text, priority, replace_personal, active FROM *PREFIX*souvera_central_sig_overrides ORDER BY priority ASC, id DESC'
-        );
+        )->fetchAll();
         return \array_map(static function (array $r): array {
             return [
                 'id' => (int) $r['id'],
@@ -406,9 +406,9 @@ class SignatureAdminController extends OCSController {
      * @return list<array{name: string, slug: string, mime: string, size: int, cid: string}>
      */
     private function getAssets(): array {
-        $rows = $this->db->fetchAllAssociative(
+        $rows = $this->db->executeQuery(
             'SELECT name, mime, LENGTH(data) AS size FROM *PREFIX*souvera_central_sig_assets ORDER BY name ASC'
-        );
+        )->fetchAll();
         $out = [];
         foreach ($rows as $row) {
             $name = (string) ($row['name'] ?? '');
@@ -448,10 +448,10 @@ class SignatureAdminController extends OCSController {
     private function assetRowBySlug(string $slug): ?array {
         foreach ($this->getAssets() as $a) {
             if ($a['slug'] === $slug) {
-                $row = $this->db->fetchAssociative(
+                $row = $this->db->executeQuery(
                     'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets WHERE name = ?',
                     [$a['name']]
-                );
+                )->fetch();
                 return \is_array($row) ? $row : null;
             }
         }
@@ -481,12 +481,12 @@ class SignatureAdminController extends OCSController {
             return ['ok' => true, 'value' => $query()];
         } catch (\Throwable $first) {
             try {
-                $ms = new \OC\DB\MigrationService('souvera_central', \OCP\Server::get(\OCP\IDBConnection::class));
-                $ms->migrate();
+                \OCA\SouveraCentral\DevOps\MigrationRunner::migrate('souvera_central');
             } catch (\Throwable $mig) {
                 return ['ok' => false, 'value' => null,
                     'warning' => 'Tabellen-Fehler und Selbstheilung fehlgeschlagen: '
-                        . $first->getMessage() . ' / Migration: ' . $mig->getMessage()];
+                        . $first->getMessage() . ' / Migration: ' . $mig->getMessage()
+                        . ' — bitte einmalig »occ migrations:migrate souvera_central« ausführen.'];
             }
             try {
                 return ['ok' => true, 'value' => $query(), 'warning' => 'Signatur-Tabellen wurden automatisch angelegt (Migration nachgeholt).'];

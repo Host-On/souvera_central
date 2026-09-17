@@ -89,7 +89,7 @@ class MailSettingsApiController extends OCSController {
     #[NoAdminRequired]
     public function getSignatureLogo(): DataDownloadResponse {
         try {
-            $row = $this->db->fetchAssociative('SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets LIMIT 1');
+            $row = $this->db->executeQuery('SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets LIMIT 1')->fetch();
             if (!\is_array($row) || !isset($row['data'])) {
                 return new DataDownloadResponse('', 'logo.png', 'image/png');
             }

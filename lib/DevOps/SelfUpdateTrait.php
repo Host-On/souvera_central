@@ -261,9 +261,7 @@ trait SelfUpdateTrait
     {
         $ok = true;
         try {
-            $connection = \OCP\Server::get(\OCP\IDBConnection::class);
-            $ms = new \OC\DB\MigrationService($appId, $connection);
-            $ms->migrate();
+            \OCA\SouveraCentral\DevOps\MigrationRunner::migrate($appId);
             \OCP\Server::get(\Psr\Log\LoggerInterface::class)
                 ->info('Souvera SelfUpdate: migrations executed', ['app' => $appId]);
         } catch (\Throwable $e) {
