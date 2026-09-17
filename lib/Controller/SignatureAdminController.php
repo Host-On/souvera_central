@@ -292,19 +292,54 @@ class SignatureAdminController extends OCSController {
         return new \OCP\AppFramework\Http\DataDownloadResponse((string) $row['data'], (string) $row['name'], (string) $row['mime']);
     }
 
+    /**
+     * Hook-Schalter — VOLLAUTOMATIK: Aktivieren generiert bei Bedarf das
+     * Secret und verdrahtet Stalwart (Pre-Check → Write → Reload → Verify);
+     * Deaktivieren kabelt Stalwart automatisch wieder ab. Die UI hat
+     * ausschließlich diese eine Checkbox.
+     */
     #[NoAdminRequired]
     public function setHook(): DataResponse {
         $body = $this->jsonBody();
-        if (isset($body['enabled'])) {
-            $this->config->setAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, ((bool) $body['enabled']) ? '1' : '0');
+        $enabled = \array_key_exists('enabled', $body) ? (bool) $body['enabled'] : null;
+        if ($enabled === null) {
+            return new DataResponse(['success' => false, 'error' => 'enabled fehlt im Request-Body'], Http::STATUS_BAD_REQUEST);
         }
         if (isset($body['sizeLimit'])) {
             $size = \max(0, (int) $body['sizeLimit']);
             $this->config->setAppValue(Application::APP_ID, self::SIZE_LIMIT_KEY, (string) $size);
         }
+
+        if ($enabled) {
+            // 1. Secret sicherstellen (automatisch generieren, falls fehlend)
+            $secret = $this->config->getAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, '');
+            if ($secret === '') {
+                $secret = \bin2hex(\random_bytes(32));
+                $this->config->setAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, $secret);
+            }
+            // 2. Hook-URL ableiten (Central-Basis + Pfad)
+            $hookUrl = $this->config->getAppValue(Application::APP_ID, 'settings.mail_signature.hook_url', '');
+            if ($hookUrl === '') {
+                $base = $this->request->getServerProtocol() . '://' . ($this->request->getServerHost() ?: '');
+                $hookUrl = \rtrim($base, '/') . '/apps/souvera_central/signature/hook';
+            }
+            // 3. Automatisch verdrahten
+            $wire = $this->stalwartConfig->apply($hookUrl, $secret);
+            if (!$wire['ok']) {
+                return new DataResponse(['success' => false, 'error' => ($wire['error'] ?? 'Verdrahtung fehlgeschlagen'), 'hook' => [
+                    'enabled' => false,
+                    'sizeLimit' => (int) $this->config->getAppValue(Application::APP_ID, self::SIZE_LIMIT_KEY, (string) 10485760),
+                ]]);
+            }
+            $this->config->setAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, '1');
+        } else {
+            // Deaktivieren: Hook aus + Stalwart automatisch auskabeln.
+            $this->config->setAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, '0');
+            $this->stalwartConfig->rollback();
+        }
+
         return new DataResponse(['success' => true, 'hook' => [
             'enabled' => $this->config->getAppValue(Application::APP_ID, self::HOOK_ENABLED_KEY, '0') === '1',
-            'hasSecret' => $this->config->getAppValue(Application::APP_ID, self::HOOK_SECRET_KEY, '') !== '',
             'sizeLimit' => (int) $this->config->getAppValue(Application::APP_ID, self::SIZE_LIMIT_KEY, (string) 10485760),
         ]]);
     }

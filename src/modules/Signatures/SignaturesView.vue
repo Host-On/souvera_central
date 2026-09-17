@@ -203,35 +203,12 @@
 			</div>
 			<div class="signatures-view__body">
 				<label class="signatures-view__checkbox">
-					<input v-model="hook.enabled" type="checkbox" @change="saveHook" />
+					<input v-model="hook.enabled" type="checkbox" :disabled="hookBusy" data-testid="sig-hook-enabled" @change="toggleHook" />
 					<span>{{ t('souvera_central', 'Signatur serverseitig via Stalwart MTA-Hook erzwingen (alle SMTP-Clients)') }}</span>
 				</label>
-				<div v-if="hook.enabled" class="signatures-view__hook">
-					<div class="signatures-view__hook-row">
-						<button class="signatures-view__btn" @click="rotateSecret">{{ t('souvera_central', 'Neues Hook-Secret generieren') }}</button>
-						<input v-model.number="hook.sizeLimit" type="number" min="0" step="1048576" class="signatures-view__input signatures-view__input--small"
-							:placeholder="t('souvera_central', 'Größenlimit in Bytes (0 = unbegrenzt)')" @change="saveHook" />
-					</div>
-					<p v-if="secret" class="signatures-view__secret">{{ secret }}</p>
-					<div class="signatures-view__hook-row">
-						<button class="signatures-view__btn" data-testid="sig-wire-apply" @click="wireStalwart">
-							{{ t('souvera_central', 'Hook-Konfiguration auf Stalwart anwenden') }}
-						</button>
-						<button class="signatures-view__btn signatures-view__btn--danger" @click="unwireStalwart">
-							{{ t('souvera_central', 'Rollback') }}
-						</button>
-						<button class="signatures-view__btn" @click="loadStalwartStatus">
-							{{ t('souvera_central', 'Stalwart-Status prüfen') }}
-						</button>
-					</div>
-					<p v-if="wireMessage" class="signatures-view__hint" :class="{ 'signatures-view__hint--warn': wireError }">{{ wireMessage }}</p>
-					<p v-if="hookConfigured" class="signatures-view__hint signatures-view__hint--ok">
-						{{ t('souvera_central', 'Hook ist in Stalwart verdrahtet (session.hook.souvera-signature).') }}
-					</p>
-					<p v-if="foreignHooks.length" class="signatures-view__hint">
-						{{ t('souvera_central', 'Weitere (fremde) Hooks vorhanden — bleiben unberührt:') }} {{ foreignHooks.join(', ') }}
-					</p>
-				</div>
+				<p v-if="hookBusy" class="signatures-view__hint">{{ t('souvera_central', 'Stalwart wird automatisch verdrahtet…') }}</p>
+				<p v-if="wireMessage && !hookBusy" class="signatures-view__hint"
+					:class="{ 'signatures-view__hint--warn': wireError, 'signatures-view__hint--ok': !wireError }">{{ wireMessage }}</p>
 			</div>
 		</section>
 
@@ -279,12 +256,9 @@ export default {
 			overrideForm: { scope: 'group', scopeValue: '', priority: 100, html: '', text: '' },
 			assets: [],
 			hook: { enabled: false, sizeLimit: 10485760 },
-			secret: '',
+			hookBusy: false,
 			wireMessage: '',
 			wireError: false,
-			hookConfigured: false,
-			foreignHooks: [],
-			stalwartKeys: [],
 			testEmail: '',
 			previewHtml: '',
 			previewNotFound: false,
@@ -610,70 +584,35 @@ export default {
 			if (bytes > 1024) return (bytes / 1024).toFixed(0) + ' KB'
 			return bytes + ' B'
 		},
-		async rotateSecret() {
+		/**
+		 * EIN Schalter für alles: Aktivieren generiert bei Bedarf das Secret
+		 * und verdrahtet Stalwart serverseitig; Deaktivieren kabelt ab.
+		 * Fehler rollen die Checkbox visuell zurück.
+		 */
+		async toggleHook() {
+			this.hookBusy = true
+			this.wireMessage = ''
+			const target = this.hook.enabled
 			try {
-				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/hook/rotate-secret'))
+				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/hook'), { enabled: target })
 				const data = unwrap(r) || {}
-				this.secret = data.secret || ''
-				this.toast('success', this.t('souvera_central', 'Neues Secret generiert — Stalwart-Konfiguration aktualisieren!'))
-			} catch (e) {
-				console.error(e)
-			}
-		},
-		async wireStalwart() {
-			this.wireError = false
-			this.wireMessage = this.t('souvera_central', 'Verdrahten… (Pre-Check → Schreiben → Reload → Verify)')
-			try {
-				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/wire'))
-				const data = unwrap(r) || {}
-				if (data.ok) {
-					this.wireError = false
-					this.wireMessage = this.t('souvera_central', 'Hook automatisch in Stalwart verdrahtet und verifiziert.')
-					this.loadStalwartStatus()
-				} else {
+				if (data.success === false || data.error) {
+					this.hook.enabled = !target
 					this.wireError = true
-					this.wireMessage = (data.error || 'Apply failed') + (data.rollbackAvailable ? ' — Rollback verfügbar.' : '')
+					this.wireMessage = data.error || this.t('souvera_central', 'Fehlgeschlagen — siehe Logs')
+					return
 				}
+				this.wireError = false
+				this.wireMessage = target
+					? this.t('souvera_central', 'Automatisch mit Stalwart verdrahtet — die serverseitige Injektion ist ab sofort aktiv.')
+					: this.t('souvera_central', 'Serverseitige Injektion deaktiviert und Stalwart automatisch ausgekabelt.')
 			} catch (e) {
 				console.error(e)
+				this.hook.enabled = !target
 				this.wireError = true
-				this.wireMessage = this.t('souvera_central', 'Verdrahten fehlgeschlagen — siehe Logs')
-			}
-		},
-		async unwireStalwart() {
-			this.wireError = false
-			try {
-				const r = await axios.post(generateUrl('/apps/souvera_central/api/signature-admin/unwire'))
-				const data = unwrap(r) || {}
-				this.wireError = !data.ok
-				this.wireMessage = data.ok ? this.t('souvera_central', 'Rollback OK — vorherige Stalwart-Konfiguration wiederhergestellt.') : (data.error || 'Rollback failed')
-				this.loadStalwartStatus()
-			} catch (e) {
-				console.error(e)
-				this.wireError = true
-				this.wireMessage = this.t('souvera_central', 'Rollback fehlgeschlagen — siehe Logs')
-			}
-		},
-		async loadStalwartStatus() {
-			try {
-				const r = await axios.get(generateUrl('/apps/souvera_central/api/signature-admin/stalwart-status'))
-				const data = unwrap(r) || {}
-				if (data.ok) {
-					this.hookConfigured = !!data.hookConfigured
-					this.foreignHooks = Object.keys(data.foreignHooks || {})
-					this.stalwartKeys = Object.keys(data.signatureHook || {})
-					this.wireError = false
-					this.wireMessage = this.hookConfigured
-						? this.t('souvera_central', 'Stalwart-Status geladen — Hook aktiv.')
-						: this.t('souvera_central', 'Stalwart-Status geladen — Hook noch nicht verdrahtet, bitte „Anwenden".')
-				} else {
-					this.wireError = true
-					this.wireMessage = data.error || 'Status failed'
-				}
-			} catch (e) {
-				console.error(e)
-				this.wireError = true
-				this.wireMessage = this.t('souvera_central', 'Stalwart-Status fehlgeschlagen — ist souvera_central.stalwart_api_url konfiguriert?')
+				this.wireMessage = this.t('souvera_central', 'Fehlgeschlagen — siehe Logs')
+			} finally {
+				this.hookBusy = false
 			}
 		},
 		async resolveTest() {

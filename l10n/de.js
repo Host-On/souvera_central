@@ -2,6 +2,10 @@ OC.L10N.register(
     "souvera_central",
     {
     "E-Mail-Signaturen" : "E-Mail-Signaturen",
+    "Stalwart wird automatisch verdrahtet…" : "Stalwart wird automatisch verdrahtet…",
+    "Automatisch mit Stalwart verdrahtet — die serverseitige Injektion ist ab sofort aktiv." : "Automatisch mit Stalwart verdrahtet — die serverseitige Injektion ist ab sofort aktiv.",
+    "Serverseitige Injektion deaktiviert und Stalwart automatisch ausgekabelt." : "Serverseitige Injektion deaktiviert und Stalwart automatisch ausgekabelt.",
+    "enabled fehlt im Request-Body" : "enabled fehlt im Request-Body",
     "Hook ist in Stalwart verdrahtet (session.hook.souvera-signature)." : "Hook ist in Stalwart verdrahtet (session.hook.souvera-signature).",
     "Weitere (fremde) Hooks vorhanden — bleiben unberührt:" : "Weitere (fremde) Hooks vorhanden — bleiben unberührt:",
     "Verdrahten… (Pre-Check → Schreiben → Reload → Verify)" : "Verdrahten… (Pre-Check → Schreiben → Reload → Verify)",
