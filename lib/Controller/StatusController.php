@@ -64,6 +64,11 @@ class StatusController extends Controller
 
             $result[$appId] = [
                 'installed' => $version,
+                // Nur für souvera_central: die im laufenden Bytecode
+                // kompilierte Version. Mismatch vs. installed = stale opcache.
+                'code_version' => ($appId === 'souvera_central')
+                    ? \OCA\SouveraCentral\AppInfo\Application::CODE_VERSION
+                    : null,
                 'channel' => $channel,
                 'last_check_ago_min' => $lastCheck ? intval((time() - $lastCheck) / 60) : null,
                 'releases' => $releases,

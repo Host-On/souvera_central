@@ -38,6 +38,14 @@ use OCP\User\Events\UserDeletedEvent;
 class Application extends App implements IBootstrap {
     public const APP_ID = 'souvera_central';
 
+    /**
+     * Die im LAUFENDEN Bytecode kompilierte Version — bewusst von der
+     * info.xml/DB-Version getrennt. Zeigt der devops-Status hier einen
+     * anderen Wert als „installed", serviert der php-fpm noch stale
+     * Opcode (validate_timestamps=0) → FPM-RESTART (nicht reload!) nötig.
+     */
+    public const CODE_VERSION = '0.57.1';
+
     public function __construct() {
         parent::__construct(self::APP_ID);
         // Runtime-Dependency (zbateson/mail-mime-parser) für die
