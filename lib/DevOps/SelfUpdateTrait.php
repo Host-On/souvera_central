@@ -256,6 +256,12 @@ trait SelfUpdateTrait
      * Additionally clears PHP opcache + NC caches: a raw file swap leaves
      * stale opcache/container definitions behind (phantom classes like
      * „Command\StalwartService" in the logs).
+     *
+     * After successful migrations the app version from the freshly swapped
+     * info.xml is synced into oc_appconfig ('installed_version'). Without
+     * this sync NC considers the app „upgrade pending" (AppManager::
+     * getAppsNeedingUpgrade compares info.xml > installed_version) and
+     * refuses to load it — all routes 404 until someone runs occ upgrade.
      */
     private function runAppMigrations(string $appId): bool
     {
@@ -270,6 +276,10 @@ trait SelfUpdateTrait
                 ->error('Souvera SelfUpdate: migrations failed for ' . $appId . ': ' . $e->getMessage());
         }
 
+        if ($ok) {
+            $this->syncInstalledVersion($appId);
+        }
+
         // Stale caches nach dem Datei-Tausch leeren
         try {
             if (function_exists('opcache_reset')) {
@@ -282,6 +292,26 @@ trait SelfUpdateTrait
         }
 
         return $ok;
+    }
+
+    /**
+     * installed_version aus der frisch getauschten info.xml in die DB
+     * schreiben — äquivalent zum Versions-Write in AppManager::enableApp.
+     * Best effort: ein Fehlschlag macht das Update selbst nicht kaputt,
+     * lässt NC aber im „upgrade pending"-Zustand (heilbar via occ upgrade).
+     */
+    private function syncInstalledVersion(string $appId): void
+    {
+        try {
+            $version = \OCP\Server::get(\OCP\App\IAppManager::class)->getAppVersion($appId, false);
+            if ($version !== '' && $version !== '0') {
+                \OCP\Server::get(\OCP\IConfig::class)
+                    ->setAppValue($appId, 'installed_version', $version);
+            }
+        } catch (\Throwable $e) {
+            \OCP\Server::get(\Psr\Log\LoggerInterface::class)
+                ->warning('Souvera SelfUpdate: installed_version sync failed for ' . $appId . ': ' . $e->getMessage());
+        }
     }
 
     private function downloadAndApply(string $appId, string $appPath, string $url): array
