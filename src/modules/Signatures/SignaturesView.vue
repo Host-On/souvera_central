@@ -29,24 +29,24 @@
 					<textarea v-model="signature.template" class="signatures-view__textarea" rows="8"
 						placeholder="<p>%first_name% %last_name%</p><p>%title% · %company%</p><p>Phone: %phone%</p>"></textarea>
 
-					<div class="signatures-view__vars">
-						<span class="signatures-view__vars-hint">{{ t('souvera_central', 'Variablen (zum Einfügen anklicken):') }}</span>
-						<button v-for="v in variables" :key="v" type="button" class="signatures-view__var"
-							@click="insertVariable(v)">{{ v }}</button>
-					</div>
-
-					<div class="signatures-view__actions">
-						<button class="signatures-view__btn" :disabled="saving" @click="saveGlobal">
-							{{ saving ? t('souvera_central', 'Speichern…') : t('souvera_central', 'Vorlage speichern') }}
-						</button>
-					</div>
-
-					<label class="signatures-view__label">{{ t('souvera_central', 'Vorschau (mit Beispieldaten)') }}</label>
-					<!-- eslint-disable-next-line vue/no-v-html -->
-					<div class="signatures-view__preview" v-html="renderedPreview"></div>
+				<div class="signatures-view__vars">
+					<span class="signatures-view__vars-hint">{{ t('souvera_central', 'Variablen (zum Einfügen anklicken):') }}</span>
+					<button v-for="v in variables" :key="v" type="button" class="signatures-view__var"
+						@click="insertVariable(v)">{{ v }}</button>
 				</div>
+
+				<label class="signatures-view__label">{{ t('souvera_central', 'Vorschau (mit Beispieldaten)') }}</label>
+				<!-- eslint-disable-next-line vue/no-v-html -->
+				<div class="signatures-view__preview" v-html="renderedPreview"></div>
 			</div>
-		</section>
+
+			<div class="signatures-view__actions">
+				<button class="signatures-view__btn" :disabled="saving" data-testid="sig-global-save" @click="saveGlobal">
+					{{ saving ? t('souvera_central', 'Speichern…') : t('souvera_central', 'Vorlage speichern') }}
+				</button>
+			</div>
+		</div>
+	</section>
 
 		<!-- 2 · Bilder (Multi-Upload) -->
 		<section class="signatures-view__card">
