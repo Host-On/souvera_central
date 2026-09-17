@@ -44,7 +44,7 @@ class Application extends App implements IBootstrap {
      * anderen Wert als „installed", serviert der php-fpm noch stale
      * Opcode (validate_timestamps=0) → FPM-RESTART (nicht reload!) nötig.
      */
-    public const CODE_VERSION = '0.58.0';
+    public const CODE_VERSION = '0.58.1';
 
     public function __construct() {
         parent::__construct(self::APP_ID);

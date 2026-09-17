@@ -155,10 +155,15 @@ trait SelfUpdateTrait
         }
 
         // Dev channel: only download if the branch HEAD changed.
-        $latestSha = $this->fetchBranchSha($repo, $branch);
-        if ($latestSha === null) {
-            return ['error' => 'Cannot fetch branch HEAD'];
+        // RESILIENZ: GitLab primär — bei Ausfall automatically auf den
+        // GitHub-Mirror (Host-On/<app>) ausweichen, damit eine GitLab-
+        // Störung die gesamte Suite-Updates nie wieder blockiert.
+        $head = $this->fetchBranchShaResilient($repo, $branch);
+        if ($head === null) {
+            return ['error' => 'Cannot fetch branch HEAD (GitLab und GitHub-Mirror unerreichbar)'];
         }
+        [$latestSha, $source, $githubRepo] = $head;
+
         $lastSha = trim((string) \OCP\Server::get(\OCP\IConfig::class)
             ->getAppValue($appId, 'devops.last_sha', ''));
         // Reparatur-Modus (occ souvera:self-update): SHA-Gate umgehen — ein
@@ -168,17 +173,21 @@ trait SelfUpdateTrait
             return ['up_to_date' => true, 'sha' => $latestSha];
         }
 
-        if ($this->isGitlabApp()) {
+        if ($source === 'gitlab') {
             // AUFgelösten Commit-SHA statt Branch-Namen: GitLab cachet
             // archive.zip pro SHA-String — "?sha=main" kann einen STALE
             // Stand liefern (Fall 0.46/0.47: Zipball ohne js/css/img).
             $url = $this->gitlabBase() . '/api/v4/projects/'
                 . $this->gitlabProjectEncoded() . '/repository/archive.zip?sha='
                 . rawurlencode($latestSha) . '&_=' . time();
+            $github = false;
         } else {
-            $url = "https://api.github.com/repos/$repo/zipball/$branch";
+            // GitHub-Mirror-Fallback: Zipball mit aufgelöstem SHA (kein
+            // Cache-Problem), öffentliches Repo — kein Token nötig.
+            $url = "https://api.github.com/repos/$githubRepo/zipball/$latestSha";
+            $github = true;
         }
-        $result = $this->downloadAndApply($appId, $appPath, $url);
+        $result = $this->downloadAndApply($appId, $appPath, $url, $github);
         if (!isset($result['error']) && !$this->runAppMigrations($appId)) {
             $result['migrations_failed'] = true;
         }
@@ -187,6 +196,39 @@ trait SelfUpdateTrait
                 ->setAppValue($appId, 'devops.last_sha', $latestSha);
         }
         return $result;
+    }
+
+    /**
+     * Branch-HEAD holen — GitLab primär, GitHub-Mirror als Ausfall-Fallback.
+     * @return array{0: string, 1: string, 2: ?string}|null [sha, source, githubRepo]
+     */
+    private function fetchBranchShaResilient(string $repo, string $branch): ?array
+    {
+        $sha = $this->fetchBranchSha($repo, $branch);
+        if ($sha !== null) {
+            return [$sha, 'gitlab', null];
+        }
+        $mirror = $this->githubMirrorFor();
+        if ($mirror === null) {
+            return null;
+        }
+        $data = $this->apiGet("https://api.github.com/repos/$mirror/commits/$branch");
+        if ($data === null || !isset($data['sha'])) {
+            return null;
+        }
+        return [(string) $data['sha'], 'github', $mirror];
+    }
+
+    /** GitHub-Spiegel-Repo je App (null = kein Spiegel). */
+    private function githubMirrorFor(): ?string
+    {
+        return match ($this->getAppId()) {
+            'souvera_central' => 'Host-On/souvera_central',
+            'souvera_mail' => 'Host-On/souvera_mail',
+            'souvera_shield' => 'Host-On/souvera_shield',
+            'souvera_mailarchiv' => 'Host-On/souvera_mailarchiv',
+            default => null,
+        };
     }
 
     private function downloadTag(string $appId, string $appPath, string $tag): array
@@ -314,7 +356,7 @@ trait SelfUpdateTrait
         }
     }
 
-    private function downloadAndApply(string $appId, string $appPath, string $url): array
+    private function downloadAndApply(string $appId, string $appPath, string $url, bool $github = false): array
     {
         $token = $this->readToken();
         if ($token === '') {
@@ -322,17 +364,25 @@ trait SelfUpdateTrait
         }
 
         $client = \OCP\Server::get(\OCP\Http\Client\IClientService::class)->newClient();
-        if ($this->isGitlabApp()) {
+        $useGitlab = !$github && $this->isGitlabApp();
+        if ($useGitlab) {
             $token = $this->readGitlabToken();
         }
         try {
-            $headers = $this->isGitlabApp()
-                ? ['PRIVATE-TOKEN' => $token, 'User-Agent' => 'Souvera-DevOps']
-                : [
-                    'Authorization' => 'Bearer ' . $token,
+            $headers = $github
+                // GitHub-Mirror: öffentliches Repo — KEINE Auth mitsenden
+                // (GitHub liefert 401 auf ungültige Bearer-Tokens).
+                ? [
                     'User-Agent' => 'Souvera-DevOps',
                     'Accept' => 'application/vnd.github+json',
-                ];
+                ]
+                : ($useGitlab
+                    ? ['PRIVATE-TOKEN' => $token, 'User-Agent' => 'Souvera-DevOps']
+                    : [
+                        'Authorization' => 'Bearer ' . $token,
+                        'User-Agent' => 'Souvera-DevOps',
+                        'Accept' => 'application/vnd.github+json',
+                    ]);
             $response = $client->get($url, [
                 'headers' => $headers,
                 'timeout' => 60,
