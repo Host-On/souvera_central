@@ -100,7 +100,7 @@ class StalwartConfigService {
         // ---- 1. Pre-Check: existiert unser Hook bereits? ----
         $existing = $this->fetchList(self::HOOK_PREFIX);
         if ($existing === null) {
-            $result['error'] = 'Stalwart-Management-API nicht erreichbar (URL/Credentials prüfen — souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password)';
+            $result['error'] = 'Stalwart-Management-API nicht erreichbar [' . ($this->lastHttpError ?? 'unbekannt') . '] — URL/Credentials prüfen (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password)';
             return $result;
         }
         $isUpdate = $existing !== [];
@@ -119,7 +119,7 @@ class StalwartConfigService {
             'assertEmpty' => !$isUpdate,
         ];
         if (!$this->postChanges($changes)) {
-            $result['error'] = 'Schreiben der Hook-Konfiguration fehlgeschlagen (POST /api/settings).';
+            $result['error'] = 'Schreiben der Hook-Konfiguration fehlgeschlagen [' . ($this->lastHttpError ?? 'unbekannt') . '] (POST /api/settings).';
             return $result;
         }
         $result['written'] = [$prefix = self::HOOK_PREFIX => \array_map(static fn ($v) => $v[1], $values)];
@@ -163,7 +163,7 @@ class StalwartConfigService {
     public function status(): array {
         $our = $this->fetchList(self::HOOK_PREFIX);
         if ($our === null) {
-            return ['ok' => false, 'error' => 'Stalwart-Management-API nicht erreichbar (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)'];
+            return ['ok' => false, 'error' => 'Stalwart-Management-API nicht erreichbar [' . ($this->lastHttpError ?? 'unbekannt') . '] — souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen'];
         }
         $foreign = [];
         $all = $this->fetchGroup('session.hook', 'url');
@@ -265,14 +265,25 @@ class StalwartConfigService {
         }
     }
 
+    /** Ursache des letzten HTTP-Fehlers (für präzise UI-Meldungen). */
+    private ?string $lastHttpError = null;
+
+    /** Basic-Auth-Header manuell bauen — kolon-sicher im Passwort. */
+    private function basicAuthHeader(): string {
+        return 'Authorization: Basic ' . \base64_encode(
+            (string) $this->configService->getStalwartAdminUser() . ':' . (string) $this->configService->getStalwartAdminPassword()
+        );
+    }
+
     private function httpGet(string $url): ?array {
+        $this->lastHttpError = null;
         $ch = \curl_init();
         \curl_setopt_array($ch, [
             \CURLOPT_URL => $url,
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_TIMEOUT => 20,
-            \CURLOPT_HTTPHEADER => ['Accept: application/json'],
-            \CURLOPT_USERPWD => $this->configService->getStalwartAdminUser() . ':' . $this->configService->getStalwartAdminPassword(),
+            \CURLOPT_CONNECTTIMEOUT => 8,
+            \CURLOPT_HTTPHEADER => ['Accept: application/json', $this->basicAuthHeader()],
             \CURLOPT_SSL_VERIFYPEER => false,
             \CURLOPT_SSL_VERIFYHOST => 0,
         ]);
@@ -281,7 +292,8 @@ class StalwartConfigService {
         $err = \curl_error($ch);
         \curl_close($ch);
         if ($err || $code < 200 || $code >= 300) {
-            $this->logger->warning('StalwartConfigService: GET settings failed', ['code' => $code, 'error' => $err]);
+            $this->lastHttpError = ($err !== '' ? \mb_substr($err, 0, 120) : 'HTTP ' . $code);
+            $this->logger->warning('StalwartConfigService: GET failed', ['url' => $url, 'code' => $code, 'error' => $err]);
             return null;
         }
         $decoded = \json_decode((string) $body, true);
@@ -289,14 +301,15 @@ class StalwartConfigService {
     }
 
     private function httpPost(string $url, array $values): bool {
+        $this->lastHttpError = null;
         $ch = \curl_init();
         \curl_setopt_array($ch, [
             \CURLOPT_URL => $url,
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_TIMEOUT => 20,
+            \CURLOPT_CONNECTTIMEOUT => 8,
             \CURLOPT_CUSTOMREQUEST => 'POST',
-            \CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
-            \CURLOPT_USERPWD => $this->configService->getStalwartAdminUser() . ':' . $this->configService->getStalwartAdminPassword(),
+            \CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json', $this->basicAuthHeader()],
             \CURLOPT_POSTFIELDS => \json_encode($values, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             \CURLOPT_SSL_VERIFYPEER => false,
             \CURLOPT_SSL_VERIFYHOST => 0,
@@ -306,7 +319,8 @@ class StalwartConfigService {
         $err = \curl_error($ch);
         \curl_close($ch);
         if ($err || $code < 200 || $code >= 300) {
-            $this->logger->warning('StalwartConfigService: POST settings failed', ['code' => $code, 'error' => $err]);
+            $this->lastHttpError = ($err !== '' ? \mb_substr($err, 0, 120) : 'HTTP ' . $code);
+            $this->logger->warning('StalwartConfigService: POST failed', ['url' => $url, 'code' => $code, 'error' => $err]);
             return false;
         }
         return true;
