@@ -2,6 +2,13 @@ OC.L10N.register(
     "souvera_central",
     {
     "E-Mail-Signaturen" : "E-Mail-Signaturen",
+    "Hook ist in Stalwart verdrahtet (session.hook.souvera-signature)." : "Hook ist in Stalwart verdrahtet (session.hook.souvera-signature).",
+    "Weitere (fremde) Hooks vorhanden — bleiben unberührt:" : "Weitere (fremde) Hooks vorhanden — bleiben unberührt:",
+    "Verdrahten… (Pre-Check → Schreiben → Reload → Verify)" : "Verdrahten… (Pre-Check → Schreiben → Reload → Verify)",
+    "Hook automatisch in Stalwart verdrahtet und verifiziert." : "Hook automatisch in Stalwart verdrahtet und verifiziert.",
+    "Verdrahten fehlgeschlagen — siehe Logs" : "Verdrahten fehlgeschlagen — siehe Logs",
+    "Stalwart-Status geladen — Hook aktiv." : "Stalwart-Status geladen — Hook aktiv.",
+    "Stalwart-Status geladen — Hook noch nicht verdrahtet, bitte „Anwenden“." : "Stalwart-Status geladen — Hook noch nicht verdrahtet, bitte „Anwenden“.",
     "Manuelle Verdrahtung (Stalwart 0.16+)" : "Manuelle Verdrahtung (Stalwart 0.16+)",
     "Feldwerte (ID frei wählbar, z. B. souvera-signature):" : "Feldwerte (ID frei wählbar, z. B. souvera-signature):",
     "JSON kopieren" : "JSON kopieren",

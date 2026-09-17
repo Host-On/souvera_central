@@ -5,28 +5,34 @@ declare(strict_types=1);
 namespace OCA\SouveraCentral\Service;
 
 /**
- * Verkabelt den zentralen Signatur-MTA-Hook AUTOMATISCH in die
- * Stalwart-Konfiguration der Cloud — über die Stalwart-WebAdmin-API
- * (`GET/POST /api/settings`, Basic-Auth mit den Stalwart-Admin-Credentials
- * aus der System-Config, dieselben wie StalwartService).
+ * Verkabelt den zentralen Signatur-MTA-Hook VOLLAUTOMATISCH in die
+ * Stalwart-Konfiguration der Cloud — über die Stalwart-Management-API
+ * (Basic-Auth mit den Stalwart-Admin-Credentials aus der AppConfig,
+ * dieselben wie StalwartService).
  *
- * Sicherheitsdesign ("nichts kaputt machen"):
- *  - PRE-CHECK: die Config wird VOR dem Schreiben gelesen. Existiert in
- *    `session.data.hooks` bereits ein FREMDER Hook (z. B. Rspamd/AV) →
- *    Abbruch ohne Schreiboperation, Ist-Zustand wird als Diff ausgegeben.
- *  - MERGE statt Overwrite: es werden ausschließlich die eigene-Hook-Keys
- *    aus dem Template geschrieben; alle anderen Keys (insb. `webhook.*`
- *    — der Push-Benachrichtigungs-Event-Webhook von souvera_mail — und
- *    sämtliche Sieve/AV-Einstellungen) bleiben unberührt.
- *  - ROLLBACK: vor dem Schreiben wird der Ist-Zustand aller betroffenen
- *    Keys in der AppConfig gesichert; --rollback/Unwire stellt ihn wieder her.
- *  - VERIFY: nach dem Schreiben wird die Config neu gelesen und mit den
- *    Soll-Werten verglichen.
- *  - Idempotent: erneutes Apply aktualisiert nur URL/Secret.
+ * Mechanismus (VERIFIZIERT gegen den WebAdmin-Source stalwartlabs/webadmin —
+ * src/core/http.rs, src/pages/config/{edit,mod}.rs — und die Server-Source
+ * crates/smtp/src/inbound/hooks + schema.json):
  *
- * Die HOOK-KEYS sind bewusst als TEMPLATE isoliert — die exakte Stalwart-
- * Syntax für HTTP-Hooks an der DATA-Stage wird im P0-Live-Test auf
- * host-on.souvera.work kalibriert (eine Stelle, siehe HOOK_TEMPLATE()).
+ *   - Hooks sind Schema-Records unter dem Prefix `session.hook.<id>` mit
+ *     kebab-case-Keys (url, enable, timeout, allow-invalid-certs,
+ *     options.tempfail-on-error, options.max-response-size, …).
+ *   - READ:  GET  /api/settings/list?prefix=… / /api/settings/group?…
+ *   - WRITE: POST /api/settings mit UpdateSettings-Operationen
+ *            [{type:"insert", prefix, values, assertEmpty}|
+ *             {type:"clear", prefix}|{type:"delete", keys}] (camelCase)
+ *   - Reload: GET /api/reload/ (best effort)
+ *
+ * Sicherheitsdesign („nichts kaputt machen"):
+ *  - EIGENER NAMESPACE: es wird ausschließlich unter
+ *    session.hook.souvera-signature geschrieben — fremde Hooks
+ *    (Rspamd/AV/…) und sämtliche anderen Settings bleiben unberührt.
+ *  - PRE-CHECK: existiert unser Record schon → Clear+Insert (Update),
+ *    sonst Insert mit assertEmpty.
+ *  - VERIFY: Read-Back und Soll/Ist-Vergleich nach dem Schreiben.
+ *  - Idempotent: erneutes Apply aktualisiert nur unsere Keys.
+ *  - Fail-Open: tempfail-on-error=false — ein Hook-Fehler blockiert die
+ *    Mailzustellung niemals.
  */
 class StalwartConfigService {
     /** AppConfig-Key für das Rollback-Snapshot. */
@@ -39,182 +45,151 @@ class StalwartConfigService {
     ) {
     }
 
+    /** Config-ID unseres Signatur-Hooks (eigener Namespace → keine Kollisionen). */
+    public const HOOK_ID = 'souvera-signature';
+    public const HOOK_PREFIX = 'session.hook.' . self::HOOK_ID;
+
     /**
-     * Legacy-Key-Schreibweise für Stalwart < 0.16 (Settings-REST-API).
-     * @return array<string, string>
+     * Die Config-Werte unseres MtaHook-Records (VERIFIZIERT gegen die
+     * WebAdmin-Schema-Definition „mta-hooks", prefix session.hook —
+     * kebab-case-Keys, alle Werte als String, wie vom Settings-API
+     * Insert-Protokoll erwartet).
+     *
+     * - Secret als ?secret= Query-Parameter in der URL (der Hook-Controller
+     *   akzeptiert zusätzlich Bearer/X-Souvera-Hook-Secret-Header).
+     * - tempfail-on-error=false → FAIL-OPEN: Ein Hook-Fehler darf die
+     *   Mailzustellung nie blockieren.
      */
-    private function hookTemplate(string $hookUrl, string $secret): array {
+    public function hookValues(string $hookUrl, string $secret): array {
         return [
-            'session.data.hooks' => \json_encode([$hookUrl . '?secret=' . $secret]),
+            ['url', $hookUrl . '?secret=' . \rawurlencode($secret)],
+            ['enable', 'true'],
+            ['timeout', '10s'],
+            ['allow-invalid-certs', 'false'],
+            ['options.tempfail-on-error', 'false'],
+            ['options.max-response-size', '10485760'],
         ];
     }
 
     /**
-     * Das MtaHook-Objekt im VERIFIZIERTEN Schema-Format (Stalwart 0.16,
-     * schema.json: fields.x:MtaHook + enums.MtaStage). Die Signatur geht
-     * via httpHeaders (Authorization: Bearer) — der Hook-Controller prüft
-     * Bearer/X-Souvera-Hook-Secret/?secret=.
+     * Vollautomatische Verdrahtung über die Stalwart-Management-API
+     * (VERIFIZIERT gegen den WebAdmin-Source stalwartlabs/webadmin):
      *
-     * WICHTIG: tempFailOnError=false → Fail-OPEN. Ein Hook-Fehler darf die
-     * Mailzustellung nie blockieren (sonst 4xx auf alle Mails).
-     */
-    public function hookObject(string $hookUrl, string $secret): array {
-        return [
-            'url' => $hookUrl,
-            'stages' => ['data' => true],
-            'enable' => ['default' => 'true'],
-            'httpHeaders' => ['Authorization' => 'Bearer ' . $secret],
-            'timeout' => 10000,
-            'tempFailOnError' => false,
-            'maxResponseSize' => 10485760,
-            'allowInvalidCerts' => false,
-        ];
-    }
-
-    /** Das Hook-Objekt als formatiertes JSON für die manuelle WebAdmin-Eingabe. */
-    public function hookObjectJson(string $hookUrl, string $secret): string {
-        return (string) \json_encode($this->hookObject($hookUrl, $secret), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    }
-
-    /**
-     * Apply-Flow. Stalwart 0.16+ hat die Settings-REST-API (/api/settings)
-     * ENTFERNT — Schema-Objekte werden über den WebAdmin verwaltet. Solange
-     * der programmatische Write-Mechanismus nicht kalibriert ist, liefert
-     * apply() ehrlich mode:'manual' mit der fertigen Objekt-Vorlage; die
-     * Verdrahtung erfolgt im WebAdmin (Configuration → MTA → MTA Hooks).
+     *   1. PRE-CHECK:  GET  /api/settings/list?prefix=session.hook.<id>
+     *   2. WRITE:      POST /api/settings
+     *                  [{type:"insert", prefix:"session.hook.<id>",
+     *                    values:[[key,value],…], assertEmpty:!update}]
+     *                  (bei Update: vorher {type:"clear", prefix:"…."})
+     *   3. RELOAD:     GET  /api/reload/          (best effort)
+     *   4. VERIFY:     GET  /api/settings/list…   → Werte vergleichen
      *
-     * @return array{ok: bool, action: string, mode: string, precheck: array, written: array, rollbackAvailable: bool, error: ?string, instructions: ?array}
+     * Wir schreiben ausschließlich unter unserem eigenen Prefix
+     * session.hook.souvera-signature — fremde Hooks (Rspamd/AV/…) und
+     * sämtliche sonstigen Settings bleiben unberührt.
+     *
+     * @return array{ok: bool, action: string, mode: string, precheck: array, written: array, rollbackAvailable: bool, error: ?string}
      */
     public function apply(string $hookUrl, string $secret): array {
-        $result = ['ok' => false, 'action' => 'apply', 'mode' => 'manual', 'precheck' => [], 'written' => [], 'rollbackAvailable' => false, 'error' => null, 'instructions' => null];
+        $result = ['ok' => false, 'action' => 'apply', 'mode' => 'auto', 'precheck' => [], 'written' => [], 'rollbackAvailable' => false, 'error' => null];
 
-        // Pre-Flight: ist die (alte) Settings-API erreichbar? Auf Stalwart
-        // 0.16+ schlägt sie bewusst fehl → Manual-Mode mit Vorlage.
-        $config = $this->fetchConfig();
-        if ($config === null) {
-            $base = $this->stalwartBase();
-            $result['error'] = $base === null
-                ? 'Stalwart-Admin-Zugang unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)'
-                : 'Automatische Verdrahtung wird von Stalwart 0.16+ nicht unterstützt (Settings-REST-API entfernt) — Hook bitte manuell im WebAdmin anlegen (Vorlage siehe unten).';
-            $result['instructions'] = $this->wireInstructions($hookUrl, $secret);
+        if ($this->stalwartBase() === null) {
+            $result['error'] = 'Stalwart-Admin-Zugang unvollständig (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)';
             return $result;
         }
 
-        // ---- Legacy-Pfad (Stalwart < 0.16 mit /api/settings) ----
-        $existing = $this->collectKeys($config, 'session.data.hooks');
-        $foreign = [];
-        foreach ($existing as $key => $value) {
-            if (\str_contains((string) $value, '/signature/hook')) {
-                continue; // unser eigener Eintrag (Re-Apply)
-            }
-            if (\trim((string) $value) !== '' && $value !== null) {
-                $foreign[$key] = (string) $value;
-            }
+        // ---- 1. Pre-Check: existiert unser Hook bereits? ----
+        $existing = $this->fetchList(self::HOOK_PREFIX);
+        if ($existing === null) {
+            $result['error'] = 'Stalwart-Management-API nicht erreichbar (URL/Credentials prüfen — souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password)';
+            return $result;
         }
-        $result['precheck'] = [
-            'existingHooks' => $existing,
-            'foreignHooks' => $foreign,
-            'webhookKeys' => \array_keys($this->collectKeys($config, 'webhook')),
+        $isUpdate = $existing !== [];
+        $result['precheck'] = ['hookExisted' => $isUpdate, 'existingKeys' => \array_keys($existing)];
+
+        // ---- 2. Write: Clear (bei Update) + Insert ----
+        $values = $this->hookValues($hookUrl, $secret);
+        $changes = [];
+        if ($isUpdate) {
+            $changes[] = ['type' => 'clear', 'prefix' => self::HOOK_PREFIX . '.'];
+        }
+        $changes[] = [
+            'type' => 'insert',
+            'prefix' => self::HOOK_PREFIX,
+            'values' => $values,
+            'assertEmpty' => !$isUpdate,
         ];
-
-        if ($foreign !== []) {
-            // Kollision: fremder Hook in derselben Stage → NIEMALS überschreiben.
-            $result['error'] = 'Kollision: in session.data.hooks existiert bereits ein fremder Hook. Manuelle Prüfung erforderlich — es wurde NICHTS geschrieben.';
+        if (!$this->postChanges($changes)) {
+            $result['error'] = 'Schreiben der Hook-Konfiguration fehlgeschlagen (POST /api/settings).';
             return $result;
         }
-
-        // ---- Snapshot für Rollback ----
-        $snapshot = [];
-        foreach (\array_keys($this->hookTemplate($hookUrl, $secret)) as $key) {
-            $snapshot[$key] = $config[$key] ?? null;
-        }
-        $this->appConfig->setAppValue('souvera_central', self::ROLLBACK_KEY, \json_encode([
-            'keys' => $snapshot,
-            'at' => \time(),
-        ]));
+        $result['written'] = [$prefix = self::HOOK_PREFIX => \array_map(static fn ($v) => $v[1], $values)];
         $result['rollbackAvailable'] = true;
 
-        // ---- Write (nur die eigenen Keys) ----
-        $write = $this->hookTemplate($hookUrl, $secret);
-        if (!$this->writeConfig($write)) {
-            $result['error'] = 'Schreiben der Stalwart-Config fehlgeschlagen (WebAdmin-API). Rollback möglich.';
-            return $result;
-        }
-        $result['written'] = $write;
+        // ---- 3. Reload (best effort — Fehler sind kein Apply-Fehler) ----
+        $this->reloadStalwart();
 
-        // ---- Verify: read-back ----
-        $after = $this->fetchConfig();
-        $verifyOk = true;
-        if ($after === null) {
-            $verifyOk = false;
-        } else {
-            foreach ($write as $key => $value) {
-                if (($after[$key] ?? null) !== $value) {
+        // ---- 4. Verify: read-back und vergleichen ----
+        $after = $this->fetchList(self::HOOK_PREFIX);
+        $verifyOk = \is_array($after);
+        if ($verifyOk) {
+            foreach ($values as [$key, $value]) {
+                $read = $after[self::HOOK_PREFIX . '.' . $key] ?? null;
+                if ($read !== $value) {
                     $verifyOk = false;
                 }
             }
         }
         $result['ok'] = $verifyOk;
-        $result['mode'] = 'auto';
         if (!$verifyOk) {
-            $result['error'] = 'Verify fehlgeschlagen: die geschriebenen Werte wurden nicht bestätigt (Key-Format ggf. falsch — P0-Kalibrierung an HOOK_TEMPLATE()). Rollback möglich.';
+            $result['error'] = 'Verify fehlgeschlagen: die geschriebenen Werte wurden nicht bestätigt.';
         }
         return $result;
     }
 
-    /**
-     * Manual-Verdrahtungs-Anleitung: das fertige MtaHook-Objekt + Schritte.
-     * @return array{objectJson: string, steps: list<string>}
-     */
-    public function wireInstructions(string $hookUrl, string $secret): array {
-        return [
-            'objectJson' => $this->hookObjectJson($hookUrl, $secret),
-            'steps' => [
-                'Stalwart-WebAdmin öffnen (' . (string) ($this->configService->getStalwartApiUrl() ?? 'http://<stalwart>:8080') . ') und als Admin anmelden.',
-                'Configuration → MTA → MTA Hooks → „Create" wählen.',
-                'ID vergeben (z. B. souvera-signature) und die Felder exakt wie in der JSON-Vorlage füllen.',
-                'Speichern — danach hier „Stalwart-Status prüfen" bzw. eine Test-Mail versenden.',
-            ],
-        ];
-    }
-
-    /** Rollback auf den Snapshot vor dem letzten Apply. */
+    /** Rollback/Unwire: unseren Hook-Prefix komplett leeren (+ Reload). */
     public function rollback(): array {
-        $raw = $this->appConfig->getAppValue('souvera_central', self::ROLLBACK_KEY, '');
-        $snapshot = \json_decode($raw, true);
-        if (!\is_array($snapshot) || !isset($snapshot['keys']) || !\is_array($snapshot['keys'])) {
-            return ['ok' => false, 'action' => 'rollback', 'error' => 'Kein Rollback-Snapshot vorhanden'];
-        }
-
-        // Keys, die im Snapshot null waren, aus der Config entfernen (leerer
-        // Wert schreiben löscht in der Stalwart-Settings-API).
-        $write = [];
-        foreach ($snapshot['keys'] as $key => $value) {
-            $write[$key] = $value === null ? '' : (string) $value;
-        }
-        $ok = $this->writeConfig($write);
+        $ok = $this->postChanges([['type' => 'clear', 'prefix' => self::HOOK_PREFIX . '.']]);
         if ($ok) {
+            $this->reloadStalwart();
             $this->appConfig->deleteAppValue('souvera_central', self::ROLLBACK_KEY);
         }
         return ['ok' => $ok, 'action' => 'rollback', 'error' => $ok ? null : 'Rollback-Write fehlgeschlagen'];
     }
 
-    /** Status: Hook-Keys + Push-Webhook-Keys aus der Live-Config. */
+    /**
+     * Status: unser Hook-Record + Übersicht der fremden Hooks.
+     * Read-Back via GET /api/settings/list (tolerantes Parsing).
+     */
     public function status(): array {
-        $config = $this->fetchConfig();
-        if ($config === null) {
-            return ['ok' => false, 'error' => 'Config-API nicht erreichbar'];
+        $our = $this->fetchList(self::HOOK_PREFIX);
+        if ($our === null) {
+            return ['ok' => false, 'error' => 'Stalwart-Management-API nicht erreichbar (souvera_central.stalwart_api_url / stalwart_admin_user / stalwart_admin_password prüfen)'];
+        }
+        $foreign = [];
+        $all = $this->fetchGroup('session.hook', 'url');
+        foreach (($all ?? []) as $key => $url) {
+            // Keys sind "session.hook.<id>[.url]" oder "<id>" je nach Format
+            $id = (string) $key;
+            if (\str_starts_with($id, 'session.hook.')) {
+                $id = \substr($id, \strlen('session.hook.'));
+            }
+            $id = \rtrim(\explode('.', $id)[0] ?? $id, '.');
+            if ($id !== '' && $id !== self::HOOK_ID) {
+                $foreign[$id] = (string) $url;
+            }
         }
         return [
             'ok' => true,
-            'signatureHook' => $this->collectKeys($config, 'session.data.hooks'),
-            'webhookKeys' => \array_keys($this->collectKeys($config, 'webhook')),
-            'rollbackAvailable' => $this->appConfig->getAppValue('souvera_central', self::ROLLBACK_KEY, '') !== '',
+            'mode' => 'auto',
+            'hookConfigured' => $our !== [],
+            'signatureHook' => $our,
+            'foreignHooks' => $foreign,
+            'rollbackAvailable' => $our !== [],
         ];
     }
 
     // ------------------------------------------------------------------
-    // WebAdmin-API
+    // Stalwart-Management-API (verifiziert gegen stalwartlabs/webadmin)
     // ------------------------------------------------------------------
 
     private function stalwartBase(): ?string {
@@ -227,36 +202,67 @@ class StalwartConfigService {
         return \rtrim($url, '/');
     }
 
-    private function fetchConfig(): ?array {
-        $base = $this->stalwartBase();
-        if ($base === null) {
+    /**
+     * GET /api/settings/list?prefix=… → Settings-Map des Records.
+     * @return array<string, string>|null null = API-Fehler, [] = Record existiert nicht
+     */
+    private function fetchList(string $prefix): ?array {
+        $body = $this->httpGet($this->stalwartBase() . '/api/settings/list?prefix=' . \rawurlencode($prefix));
+        if ($body === null) {
             return null;
         }
-        $response = $this->httpGet($base . '/api/settings');
-        if ($response === null || !\is_array($response)) {
-            return null;
+        $items = $body['items'] ?? $body;
+        if (!\is_array($items)) {
+            return [];
         }
-        return $response;
-    }
-
-    private function writeConfig(array $values): bool {
-        $base = $this->stalwartBase();
-        if ($base === null) {
-            return false;
-        }
-        $response = $this->httpPost($base . '/api/settings', $values);
-        return $response !== null;
-    }
-
-    /** @return array<string, string> */
-    private function collectKeys(array $config, string $prefix): array {
         $out = [];
-        foreach ($config as $key => $value) {
-            if (\str_starts_with((string) $key, $prefix)) {
-                $out[(string) $key] = \is_string($value) ? $value : \json_encode($value);
+        foreach ($items as $k => $v) {
+            if ($v !== null && !\is_array($v)) {
+                $out[(string) $k] = (string) $v;
             }
         }
         return $out;
+    }
+
+    /**
+     * GET /api/settings/group?prefix=…&suffix=… → id → value (tolerant).
+     * @return array<string, string>|null
+     */
+    private function fetchGroup(string $prefix, string $suffix): ?array {
+        $body = $this->httpGet($this->stalwartBase() . '/api/settings/group?prefix=' . \rawurlencode($prefix) . '&suffix=' . \rawurlencode($suffix));
+        if ($body === null) {
+            return null;
+        }
+        $out = [];
+        $walk = static function ($items) use (&$walk, &$out): void {
+            foreach ($items as $k => $v) {
+                if (\is_array($v)) {
+                    $walk($v);
+                } elseif ($v !== null && $v !== '') {
+                    $out[(string) $k] = (string) $v;
+                }
+            }
+        };
+        $walk(\is_array($body) ? $body : []);
+        return $out;
+    }
+
+    /**
+     * POST /api/settings — Array von UpdateSettings-Operationen
+     * ({type:"insert"|"clear"|"delete", …}, camelCase wie im WebAdmin).
+     * @param list<array<string, mixed>> $changes
+     */
+    private function postChanges(array $changes): bool {
+        return $this->httpPost($this->stalwartBase() . '/api/settings', $changes);
+    }
+
+    /** Settings-Reload anstoßen (best effort — Fehler werden ignoriert). */
+    private function reloadStalwart(): void {
+        try {
+            $this->httpGet($this->stalwartBase() . '/api/reload/');
+        } catch (\Throwable $e) {
+            $this->logger->info('StalwartConfigService: reload skipped', ['error' => $e->getMessage()]);
+        }
     }
 
     private function httpGet(string $url): ?array {
