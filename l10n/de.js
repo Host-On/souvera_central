@@ -2,6 +2,11 @@ OC.L10N.register(
     "souvera_central",
     {
     "E-Mail-Signaturen" : "E-Mail-Signaturen",
+    "Bild-Breiten reparieren" : "Bild-Breiten reparieren",
+    "Setzt bei jedem Bild eine feste Breite (max. 460 px) + max-width, damit die Tabelle nicht aufgeweitet wird." : "Setzt bei jedem Bild eine feste Breite (max. 460 px) + max-width, damit die Tabelle nicht aufgeweitet wird.",
+    "{n} Bild-Tag(s) repariert — jetzt speichern." : "{n} Bild-Tag(s) repariert — jetzt speichern.",
+    "Alle Bild-Tags haben bereits Breitenangaben." : "Alle Bild-Tags haben bereits Breitenangaben.",
+    "So sieht die Signatur im E-Mail-Programm aus (Lesefenster ~640 px)." : "So sieht die Signatur im E-Mail-Programm aus (Lesefenster ~640 px).",
     "Wird hochgeladen…" : "Wird hochgeladen…",
     "{ok} gespeichert, {n} fehlgeschlagen: {err}" : "{ok} gespeichert, {n} fehlgeschlagen: {err}",
     "Variablen:" : "Variablen:",

@@ -48,13 +48,19 @@
 				</div>
 
 				<label class="signatures-view__label">{{ t('souvera_central', 'Vorschau (mit Beispieldaten)') }}</label>
-				<!-- eslint-disable-next-line vue/no-v-html -->
-				<div class="signatures-view__preview" v-html="renderedPreview"></div>
+				<iframe class="signatures-view__preview-frame" :srcdoc="previewDoc" sandbox="allow-same-origin"
+					data-testid="sig-preview-frame" @load="fitPreview($event)"></iframe>
+				<p class="signatures-view__hint">{{ t('souvera_central', 'So sieht die Signatur im E-Mail-Programm aus (Lesefenster ~640 px).') }}</p>
 			</div>
 
 			<div class="signatures-view__actions">
 				<button class="signatures-view__btn" :disabled="saving" data-testid="sig-global-save" @click="saveGlobal">
 					{{ saving ? t('souvera_central', 'Speichern…') : t('souvera_central', 'Vorlage speichern') }}
+				</button>
+				<button v-if="assets.length" class="signatures-view__btn" data-testid="sig-repair-widths"
+					:title="t('souvera_central', 'Setzt bei jedem Bild eine feste Breite (max. 460 px) + max-width, damit die Tabelle nicht aufgeweitet wird.')"
+					@click="repairImageWidths">
+					{{ t('souvera_central', 'Bild-Breiten reparieren') }}
 				</button>
 			</div>
 		</div>
@@ -239,11 +245,11 @@
 			<div class="signatures-view__body">
 				<div class="signatures-view__resolve">
 					<input v-model="testEmail" class="signatures-view__input signatures-view__input--small"
-						:placeholder="t('souvera_central', 'user@example.com')" />
+						:placeholder="t('souvera_central', 'user@example.com')">
 					<button class="signatures-view__btn" @click="resolveTest">{{ t('souvera_central', 'Vorschau') }}</button>
 				</div>
-				<!-- eslint-disable-next-line vue/no-v-html -->
-				<div v-if="previewHtml" class="signatures-view__preview" v-html="previewHtml"></div>
+				<iframe v-if="previewHtml" class="signatures-view__preview-frame" :srcdoc="resolveDoc"
+					sandbox="allow-same-origin" data-testid="sig-resolve-frame" @load="fitPreview($event)"></iframe>
 				<p v-if="previewNotFound" class="signatures-view__muted">{{ t('souvera_central', 'Für diese Adresse löst keine Signatur auf (kein Nutzer gefunden oder nicht aktiv).') }}</p>
 			</div>
 		</section>
@@ -305,6 +311,14 @@ export default {
 				'%company%': 'Souvera',
 			}
 			return this.signature.template.replace(/%\w+%/g, (m2) => vars[m2] ?? m2)
+		},
+		/** Komplettes HTML-Dokument für die iframe-Vorschau — cid:Bilder aufgelöst. */
+		previewDoc() {
+			return this.buildPreviewDoc(this.renderedPreview)
+		},
+		/** Dito für den Auflösungstest (Sektion 6). */
+		resolveDoc() {
+			return this.buildPreviewDoc(this.previewHtml)
 		},
 	},
 	mounted() {
@@ -399,11 +413,92 @@ export default {
 		insertVariable(v) {
 			this.insertAtCursor(v)
 		},
-		/** Fügt das Bild als <img src="cid:…"> an der Cursor-Position ein. */
+		/**
+		 * Fügt das Bild als <img src="cid:…"> an der Cursor-Position ein.
+		 * max-width/height verhindern, dass das Bild die Signatur-Tabelle
+		 * aufweitet (HTML-Tabellen behandeln width als MINDEST-Breite!).
+		 */
 		insertImage(asset) {
 			const alt = String(asset.name || '').replace(/"/g, '&quot;')
-			this.insertAtCursor(`<img src="cid:${asset.cid}" alt="${alt}">`)
+			this.insertAtCursor(`<img src="cid:${asset.cid}" alt="${alt}" style="max-width:100%; height:auto;">`)
 			this.toast('success', this.t('souvera_central', 'Bild in die Vorlage eingefügt — nicht vergessen zu speichern.'))
+		},
+		/**
+		 * Baut das srcdoc-Dokument für die iframe-Vorschau: cid:Bilder werden
+		 * gegen die geladenen Blob-URLs getauscht, damit sie im Browser
+		 * überhaupt sichtbar sind (cid: ist kein Browser-Schema).
+		 */
+		buildPreviewDoc(html) {
+			const body = (html || '').replace(/src=["']cid:([^"']+)["']/gi, (m, cid) => {
+				const slug = String(cid).replace(/^souvera-sig-/i, '')
+				const url = this.thumbs[slug] || this.thumbs[String(cid)]
+				return url ? 'src="' + url + '"' : m
+			})
+			return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+				+ 'body{margin:0;padding:0;background:#ffffff;color:#222222;font-family:Arial,sans-serif;}'
+				+ 'img{max-width:100%;height:auto;}'
+				+ '</style></head><body>' + body + '</body></html>'
+		},
+		/** iframe-Höhe an den Inhalt anpassen (sandbox erlaubt lesenden Zugriff). */
+		fitPreview(ev) {
+			const f = ev.target
+			try {
+				const doc = f.contentDocument
+				if (doc && doc.body) {
+					f.style.height = Math.max(60, doc.body.scrollHeight + 16) + 'px'
+				}
+			} catch (e) {
+				// Fallback: CSS-Mindesthöhe greift
+			}
+		},
+		/**
+		 * Setzt bei allen cid-Bildern des Templates eine feste Breite
+		 * (natürliche Pixelbreite, gekappt bei 460 px) plus max-width-Style.
+		 * Ohne width-Attribut weitet der Inhalt (v. a. Banner) die Tabelle —
+		 * HTML-Tabellen behandeln width als Mindestbreite.
+		 */
+		async repairImageWidths() {
+			const tpl = this.signature.template || ''
+			if (!tpl.trim()) return
+			// Natürliche Dimensionen aus den Blob-URLs lesen
+			const dims = {}
+			await Promise.all(Object.entries(this.thumbs).map(([slug, url]) => new Promise((resolve) => {
+				const im = new Image()
+				im.onload = () => { dims['souvera-sig-' + slug] = { w: im.naturalWidth, h: im.naturalHeight }; resolve() }
+				im.onerror = () => resolve()
+				im.src = url
+			})))
+			const CAP = 460
+			const doc = new DOMParser().parseFromString('<div id="souvera-repair-root">' + tpl + '</div>', 'text/html')
+			const root = doc.getElementById('souvera-repair-root')
+			if (!root) return
+			let changed = 0
+			root.querySelectorAll('img').forEach((img) => {
+				const src = img.getAttribute('src') || ''
+				const m = src.match(/^cid:(souvera-sig-.+)$/i)
+				if (!m) return
+				let touched = false
+				const dim = dims[m[1]]
+				const cur = parseInt(img.getAttribute('width') || '0', 10)
+				const natural = (dim && dim.w > 0) ? dim.w : 0
+				const target = Math.min(cur > 0 ? cur : natural, CAP)
+				if (target > 0 && target !== cur) {
+					img.setAttribute('width', String(target))
+					touched = true
+				}
+				const style = img.getAttribute('style') || ''
+				if (!/max-width/i.test(style)) {
+					img.setAttribute('style', (style ? style.replace(/;\s*$/, '') + '; ' : '') + 'max-width:100%; height:auto;')
+					touched = true
+				}
+				if (touched) changed++
+			})
+			if (changed > 0) {
+				this.signature.template = root.innerHTML
+				this.toast('success', this.t('souvera_central', '{n} Bild-Tag(s) repariert — jetzt speichern.', { n: changed }))
+			} else {
+				this.toast('success', this.t('souvera_central', 'Alle Bild-Tags haben bereits Breitenangaben.'))
+			}
 		},
 		async saveFallbacks() {
 			try {
@@ -664,13 +759,11 @@ export default {
 .signatures-view__btn:hover { opacity: 0.9; }
 .signatures-view__btn--disabled { opacity: 0.6; cursor: progress; }
 .signatures-view__btn--danger { background: var(--color-error); color: #fff; }
-.signatures-view__preview {
-	border: 1px solid var(--color-border); border-radius: 8px; padding: 14px;
-	min-height: 48px; background: var(--color-main-background);
-	overflow-x: auto; overflow-wrap: anywhere; word-break: break-word;
+.signatures-view__preview-frame {
+	display: block; width: 100%; max-width: 640px; min-height: 80px;
+	border: 1px solid var(--color-border); border-radius: 8px;
+	background: #ffffff;
 }
-.signatures-view__preview img { max-width: 100%; height: auto; }
-.signatures-view__preview table { max-width: 100%; border-collapse: collapse; }
 .signatures-view__fallbacks { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .signatures-view__input { width: 100%; max-width: 420px; }
 .signatures-view__input--small { max-width: 260px; }
