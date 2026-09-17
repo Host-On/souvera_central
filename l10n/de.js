@@ -2,6 +2,8 @@ OC.L10N.register(
     "souvera_central",
     {
     "E-Mail-Signaturen" : "E-Mail-Signaturen",
+    "Wird hochgeladen…" : "Wird hochgeladen…",
+    "{ok} gespeichert, {n} fehlgeschlagen: {err}" : "{ok} gespeichert, {n} fehlgeschlagen: {err}",
     "Variablen:" : "Variablen:",
     "Bilder:" : "Bilder:",
     "An der Cursor-Position einfügen" : "An der Cursor-Position einfügen",

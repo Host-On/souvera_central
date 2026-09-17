@@ -72,12 +72,12 @@
 			<div class="signatures-view__body">
 				<div class="signatures-view__dropzone" :class="{ 'signatures-view__dropzone--over': dragOver }"
 					@dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
-					<label class="signatures-view__btn" data-testid="sig-assets-label">
-						{{ t('souvera_central', 'Bilder auswählen') }}
+					<label class="signatures-view__btn" data-testid="sig-assets-label" :class="{ 'signatures-view__btn--disabled': uploading }">
+						{{ uploading ? t('souvera_central', 'Wird hochgeladen…') : t('souvera_central', 'Bilder auswählen') }}
 						<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple
-							class="signatures-view__file-hidden" data-testid="sig-assets-input" @change="onFileChange">
+							class="signatures-view__file-hidden" data-testid="sig-assets-input" :disabled="uploading" @change="onFileChange">
 					</label>
-					<span class="signatures-view__muted">{{ t('souvera_central', 'oder hierher ziehen') }}</span>
+					<span class="signatures-view__muted">{{ uploading ? '' : t('souvera_central', 'oder hierher ziehen') }}</span>
 				</div>
 
 				<div v-if="assets.length > 0" class="signatures-view__table-wrap">
@@ -283,6 +283,7 @@ export default {
 			pageWarning: '',
 			thumbs: {},
 			dragOver: false,
+			uploading: false,
 		}
 	},
 	computed: {
@@ -462,6 +463,7 @@ export default {
 		},
 		async uploadFiles(files) {
 			if (files.length === 0) return
+			this.uploading = true
 			const fd = new FormData()
 			for (const f of files) fd.append('assets', f)
 			try {
@@ -470,11 +472,18 @@ export default {
 				if (data.error) { this.toast('error', data.error); return }
 				this.assets = data.assets || []
 				this.loadThumbnails()
-				if ((data.errors || []).length) this.toast('error', data.errors.join('; '))
-				this.toast('success', this.t('souvera_central', '{n} Bild(er) hochgeladen', { n: (data.stored || []).length }))
+				const failed = data.errors || []
+				const storedCount = (data.stored || []).length
+				if (failed.length) {
+					this.toast('error', this.t('souvera_central', '{ok} gespeichert, {n} fehlgeschlagen: {err}', { ok: storedCount, n: failed.length, err: failed.join('; ').slice(0, 200) }))
+				} else {
+					this.toast('success', this.t('souvera_central', '{n} Bild(er) hochgeladen', { n: storedCount }))
+				}
 			} catch (e) {
 				console.error(e)
-				this.toast('error', this.t('souvera_central', 'Upload fehlgeschlagen'))
+				this.toast('error', this.t('souvera_central', 'Upload fehlgeschlagen') + (e.response && e.response.status ? ' (HTTP ' + e.response.status + ')' : ''))
+			} finally {
+				this.uploading = false
 			}
 		},
 		async deleteAsset(slug) {
@@ -653,11 +662,15 @@ export default {
 	border: none; border-radius: 8px; padding: 7px 14px; cursor: pointer; font-size: 13px;
 }
 .signatures-view__btn:hover { opacity: 0.9; }
+.signatures-view__btn--disabled { opacity: 0.6; cursor: progress; }
 .signatures-view__btn--danger { background: var(--color-error); color: #fff; }
 .signatures-view__preview {
 	border: 1px solid var(--color-border); border-radius: 8px; padding: 14px;
 	min-height: 48px; background: var(--color-main-background);
+	overflow-x: auto; overflow-wrap: anywhere; word-break: break-word;
 }
+.signatures-view__preview img { max-width: 100%; height: auto; }
+.signatures-view__preview table { max-width: 100%; border-collapse: collapse; }
 .signatures-view__fallbacks { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .signatures-view__input { width: 100%; max-width: 420px; }
 .signatures-view__input--small { max-width: 260px; }
