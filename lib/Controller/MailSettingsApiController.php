@@ -102,4 +102,51 @@ class MailSettingsApiController extends OCSController {
             return new DataDownloadResponse('', 'logo.png', 'image/png');
         }
     }
+
+    /**
+     * Asset-Bytes per Slug für die Composer-Vorschau (angemeldete User).
+     *
+     * Die zentrale Signatur referenziert Bilder als `cid:souvera-sig-<slug>` —
+     * ein Schema, das der Browser im Composer nicht laden kann. souvera_mail
+     * ersetzt die cid-Referenz NUR zur Anzeige durch diese URL; gesendet wird
+     * weiter die cid-Variante (der Stalwart-Hook bettet die Bytes als
+     * MIME-Parts ein — Empfänger sehen die Bilder eingebettet).
+     */
+    #[NoAdminRequired]
+    public function getSignatureAsset(string $slug): DataDownloadResponse {
+        $prefix = \OCA\SouveraCentral\Service\SignatureInjectionService::ASSET_CID_PREFIX;
+        try {
+            // Slug → Dateiname: die Registry speichert den Originalnamen,
+            // der Slug ist die normalisierte Form (identisch zu
+            // SignatureAdminController::slugForFilename / Hook-Controller).
+            $rows = $this->db->executeQuery('SELECT name, mime FROM *PREFIX*souvera_central_sig_assets')->fetchAll();
+            $match = null;
+            foreach ($rows as $row) {
+                $name = (string) ($row['name'] ?? '');
+                $s = \strtolower(\preg_replace('/[^a-z0-9]+/i', '-', \pathinfo($name, PATHINFO_FILENAME)) ?? 'bild');
+                $s = \trim($s, '-') ?: 'bild';
+                if ($prefix . $s === $prefix . $slug) {
+                    $match = $name;
+                    break;
+                }
+            }
+            if ($match === null) {
+                return new DataDownloadResponse('', 'fehlt.png', 'image/png');
+            }
+            $row = $this->db->executeQuery(
+                'SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets WHERE name = ?',
+                [$match]
+            )->fetch();
+            if (!\is_array($row) || !isset($row['data'])) {
+                return new DataDownloadResponse('', 'fehlt.png', 'image/png');
+            }
+            return new DataDownloadResponse(
+                (string) $row['data'],
+                (string) ($row['name'] ?? 'asset'),
+                (string) ($row['mime'] ?? 'image/png')
+            );
+        } catch (\Throwable $e) {
+            return new DataDownloadResponse('', 'fehlt.png', 'image/png');
+        }
+    }
 }

@@ -312,8 +312,22 @@ class ConfigService {
      *
      * @return string|null
      */
+    /**
+     * Stalwart-Settings: Primärquelle ist die SYSTEM-Config (config.php /
+     * `occ config:system:set souvera_central.<key>`), Fallback die APP-Config
+     * (`occ config:app:set souvera_central <key>`) — damit funktionieren
+     * beide occ-Varianten und künftig auch eine Admin-UI.
+     */
+    private function getStalwartSetting(string $key): ?string {
+        $v = $this->config->getSystemValue('souvera_central.' . $key, null);
+        if ($v === null || $v === '') {
+            $v = $this->config->getAppValue('souvera_central', $key, '');
+        }
+        return ($v !== null && $v !== '') ? (string) $v : null;
+    }
+
     public function getStalwartApiUrl(): ?string {
-        return $this->config->getSystemValue('souvera_central.stalwart_api_url', null);
+        return $this->getStalwartSetting('stalwart_api_url');
     }
 
     /**
@@ -322,7 +336,7 @@ class ConfigService {
      * @return string|null
      */
     public function getStalwartAdminUser(): ?string {
-        return $this->config->getSystemValue('souvera_central.stalwart_admin_user', null);
+        return $this->getStalwartSetting('stalwart_admin_user');
     }
 
     /**
@@ -331,7 +345,7 @@ class ConfigService {
      * @return string|null
      */
     public function getStalwartAdminPassword(): ?string {
-        return $this->config->getSystemValue('souvera_central.stalwart_admin_password', null);
+        return $this->getStalwartSetting('stalwart_admin_password');
     }
 
     /**

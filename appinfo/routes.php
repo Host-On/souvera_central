@@ -63,6 +63,7 @@ return [
         ['name' => 'mail_settings_api#getMailSettings', 'url' => '/api/mail-settings', 'verb' => 'GET'],
         ['name' => 'mail_settings_api#getResolvedSignature', 'url' => '/api/mail-settings/signature', 'verb' => 'GET'],
         ['name' => 'mail_settings_api#getSignatureLogo', 'url' => '/api/mail-settings/signature-logo', 'verb' => 'GET'],
+        ['name' => 'mail_settings_api#getSignatureAsset', 'url' => '/api/mail-settings/signature-assets/{slug}', 'verb' => 'GET'],
         // Stalwart MTA-Hook (PublicPage + Bearer-Secret, siehe SignatureHookController)
         ['name' => 'signature_hook#hook', 'url' => '/signature/hook', 'verb' => 'POST'],
         // Signatur-Admin-API (Souvera-Admins, via SouveraAdminMiddleware)
