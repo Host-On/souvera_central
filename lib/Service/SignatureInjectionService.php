@@ -36,6 +36,95 @@ class SignatureInjectionService {
     }
 
     /**
+     * WEBMAIL-Sonderfall: der Composer bettet die zentrale Signatur direkt
+     * in den Mail-Body ein (Marker → die komplette Injektion muss skippen),
+     * kann aber die `cid:souvera-sig-*`-Bildreferenzen selbst nicht als
+     * MIME-Parts einbetten. Ohne diesen Schritt sehen EMPFÄNGER die Bilder
+     * nicht (und die Sent-Ansicht ebenso).
+     *
+     * Diese Methode ergänzt für eine bereits markierte Mail NUR die fehlenden
+     * Inline-Parts (idempotent: vorhandene Content-IDs bleiben unberührt).
+     *
+     * @param string $rawMessage die Roh-Mail (Marker bereits enthalten)
+     * @param list<array{cid: string, name: string, mime: string, data: string}>|null $assets
+     * @return string|null modifizierte Roh-Mail oder null (unverändert)
+     */
+    public function ensureCidParts(string $rawMessage, ?array $assets = null): ?string {
+        try {
+            if (!$this->isAlreadySigned($rawMessage)) {
+                return null; // Nur für Marker-Mails (Webmail-Composer-Pfad)
+            }
+
+            $parser = new MailMimeParser();
+            $message = $parser->parse($rawMessage, false);
+
+            if ($this->isCryptoOrCalendar($message)) {
+                return null;
+            }
+
+            $htmlPart = $message->getHtmlPart();
+            if ($htmlPart === null) {
+                return null;
+            }
+            $body = (string) $htmlPart->getContent();
+
+            // Welche CIDs verlangt der Body?
+            $wanted = [];
+            if (\preg_match_all('/cid:([a-z0-9\-_]+)/i', $body, $m)) {
+                foreach (\array_unique($m[1]) as $cid) {
+                    $wanted[\strtolower($cid)] = true;
+                }
+            }
+            if ($wanted === []) {
+                return null;
+            }
+
+            // Welche Content-IDs existieren bereits als Parts?
+            $existing = [];
+            $count = $message->getAttachmentCount();
+            for ($i = 0; $i < $count; $i++) {
+                $part = $message->getAttachmentPart($i);
+                $cidHeader = $part?->getHeaderValue('Content-ID');
+                if (\is_string($cidHeader)) {
+                    $existing[\trim(\strtolower(\trim($cidHeader), '<>'))] = true;
+                }
+            }
+
+            $changed = false;
+            foreach (($assets ?? []) as $asset) {
+                if (!isset($asset['cid'], $asset['mime'], $asset['data']) || $asset['data'] === '') {
+                    continue;
+                }
+                $cid = \strtolower((string) $asset['cid']);
+                if (!isset($wanted[$cid]) || isset($existing[$cid])) {
+                    continue; // nicht referenziert oder bereits eingebettet
+                }
+                $message->addAttachmentPart($asset['data'], $asset['mime'], $asset['name'] ?? 'bild', 'inline');
+                $acount = $message->getAttachmentCount();
+                $part = $acount > 0 ? $message->getAttachmentPart($acount - 1) : null;
+                $part?->setRawHeader('Content-ID', '<' . $asset['cid'] . '>');
+                $changed = true;
+            }
+
+            if (!$changed) {
+                return null;
+            }
+
+            $message->setRawHeader(self::MARKER_HEADER, 'injected');
+            $out = $message->getStream()->getContents();
+            if ($out === '' || $out === $rawMessage) {
+                return null;
+            }
+            return $out;
+        } catch (\Throwable $e) {
+            $this->logger->error('Souvera signature: ensureCidParts failed (fail-open): ' . $e->getMessage(), [
+                'app' => 'souvera_central', 'exception' => $e,
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * @param array{html: string, text: string} $sig
      * @param list<array{cid: string, name: string, mime: string, data: string}>|null $assets
      * @param array{name: string, mime: string, data: string}|null $logo

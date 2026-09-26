@@ -82,9 +82,17 @@ class SignatureHookController extends Controller {
                 return new JSONResponse(HookPayload::acceptResponse(null));
             }
 
-            // Eigene Skip-Regeln, die den Roh-Text brauchen (Marker-Header).
-            $injection = $this->injection;
-            if ($injection->isAlreadySigned($raw)) {
+            // WEBMAIL-Pfad: der Composer bettet die Signatur mit Marker direkt
+            // in den Body ein — die komplette Injektion skippt, aber die
+            // cid:-Bildreferenzen brauchen die MIME-Parts. ensureCidParts
+            // hängt genau die fehlenden Inline-Parts an (idempotent).
+            if ($this->injection->isAlreadySigned($raw)) {
+                $assets = $this->loadAssets();
+                $withParts = $this->injection->ensureCidParts($raw, $assets);
+                if ($withParts !== null) {
+                    $this->logger->info('Souvera signature: cid parts attached for webmail marker mail', ['app' => Application::APP_ID]);
+                    return new JSONResponse(HookPayload::acceptResponse($withParts));
+                }
                 return new JSONResponse(HookPayload::acceptResponse(null));
             }
 
