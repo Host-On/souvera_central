@@ -78,7 +78,46 @@ class MailSettingsApiController extends OCSController {
             'text' => $sig['text'],
             'source' => $sig['source'],
             'assetCidPrefix' => SignatureInjectionService::ASSET_CID_PREFIX,
+            // Die referenzierten Assets als Data-URLs — der Composer bettet
+            // sie direkt ins srcdoc ein (netzwerk- und flapping-unabhängig).
+            'assets' => $this->assetsAsDataUrls((string) $sig['html']),
         ]);
+    }
+
+    /**
+     * Liefert alle im Signatur-HTML referenzierten Assets (cid:souvera-sig-*)
+     * als [{cid, dataUrl}] — für die flapping-freie Composer-Vorschau.
+     *
+     * @return list<array{cid: string, dataUrl: string}>
+     */
+    private function assetsAsDataUrls(string $html): array {
+        $out = [];
+        $prefix = SignatureInjectionService::ASSET_CID_PREFIX;
+        if (!\preg_match_all('/cid:(' . \preg_quote($prefix, '/') . '[a-z0-9\-_]+)/i', $html, $m)) {
+            return $out;
+        }
+        try {
+            $rows = $this->db->executeQuery('SELECT name, mime, data FROM *PREFIX*souvera_central_sig_assets')->fetchAll();
+        } catch (\Throwable $e) {
+            return $out;
+        }
+        // Slug-Ableitung identisch zu getSignatureAsset / Hook-Controller.
+        $byCid = [];
+        foreach ($rows as $row) {
+            $name = (string) ($row['name'] ?? '');
+            $slug = \strtolower(\preg_replace('/[^a-z0-9]+/i', '-', \pathinfo($name, PATHINFO_FILENAME)) ?? 'bild');
+            $slug = \trim($slug, '-') ?: 'bild';
+            $byCid[$prefix . $slug] = $row;
+        }
+        foreach (\array_unique($m[1]) as $cid) {
+            $row = $byCid[\strtolower($cid)] ?? null;
+            if ($row === null || !isset($row['data']) || $row['data'] === '') { continue; }
+            $out[] = [
+                'cid' => $cid,
+                'dataUrl' => 'data:' . (string) ($row['mime'] ?? 'image/png') . ';base64,' . \base64_encode((string) $row['data']),
+            ];
+        }
+        return $out;
     }
 
     /**
