@@ -35,8 +35,8 @@ class SelfUpdate extends Command {
     protected function configure(): void {
         $this
             ->setName('souvera:self-update')
-            // Legacy name from before the suite updater existed
-            ->setAliases(['souvera_central:self-update'])
+            // Kurzer Alias (primär dokumentiert) + Legacy-Name
+            ->setAliases(['souvera:update', 'souvera_central:self-update'])
             ->setDescription('Update ALL installed Souvera apps according to the central update channel (dev = main HEAD, stable = latest release)');
     }
 
@@ -44,13 +44,19 @@ class SelfUpdate extends Command {
         return $this->appId;
     }
 
+    /** Alle Souvera-Apps der Suite, in Update-Reihenfolge. */
+    public const SUITE_APPS = [
+        'souvera_mail', 'souvera_central', 'souvera_shield',
+        'souvera_mailarchiv', 'souvera_documents',
+    ];
+
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $ok = true;
         $appManager = \OCP\Server::get(\OCP\App\IAppManager::class);
         $channel = \OCP\Server::get(\OCA\SouveraCentral\Service\ConfigService::class)->getSuiteUpdateChannel();
         $output->writeln('<info>Suite update channel: ' . $channel . '</info>');
 
-        foreach (['souvera_mail', 'souvera_central', 'souvera_shield', 'souvera_mailarchiv', 'souvera_documents'] as $appId) {
+        foreach (self::SUITE_APPS as $appId) {
             if (!$appManager->isInstalled($appId)) {
                 $output->writeln($appId . ': not installed — skipped');
                 continue;
@@ -69,6 +75,37 @@ class SelfUpdate extends Command {
                 $ok = false;
             }
         }
+        // ---- Phase 2: Upgrade-Reconciliation (per-App `occ upgrade`-Äquivalent) ----
+        // Ein Zipball-Swap setzt nur Dateien ein; laufen Migrationen schief oder
+        // hängt NC im „upgrade pending"-Zustand (info.xml-Version > installed_version),
+        // lädt NC die App gar nicht mehr (alle Routen 404). Hier schließt die
+        // offizielle Upgrade-Routine die Lücke: OC_App::updateApp führt die
+        // App-Migrationen aus und schreibt installed_version — für JEDE
+        // Souvera-App, deren Code-Version vor der DB-Version liegt.
+        $config = \OCP\Server::get(\OCP\IConfig::class);
+        foreach (self::SUITE_APPS as $appId) {
+            if (!$appManager->isInstalled($appId)) {
+                continue;
+            }
+            try {
+                $codeVersion = $appManager->getAppVersion($appId, false);
+                $installedVersion = trim((string) $config->getAppValue($appId, 'installed_version', ''));
+                if ($codeVersion === '' || $codeVersion === '0' || $installedVersion === '') {
+                    continue;
+                }
+                if (version_compare($codeVersion, $installedVersion, '>')) {
+                    $output->writeln($appId . ': upgrade pending (' . $installedVersion
+                        . ' → ' . $codeVersion . ') — running app upgrade …');
+                    \OC_App::updateApp($appId);
+                    $config->setAppValue($appId, 'installed_version', $codeVersion);
+                    $output->writeln($appId . ': upgrade resolved');
+                }
+            } catch (\Throwable $e) {
+                $output->writeln('<error>' . $appId . ': upgrade reconciliation failed: ' . $e->getMessage() . '</error>');
+                $ok = false;
+            }
+        }
+
         return $ok ? Command::SUCCESS : Command::FAILURE;
     }
 }
